@@ -6,6 +6,7 @@ import Footer from './components/Footer'
 import ProtectedAdminRoute from './components/admin/ProtectedAdminRoute'
 import AdminLayout from './components/admin/AdminLayout'
 import AdminUsersPage from './pages/admin/AdminUsersPage'
+import AdminReportsPage from './pages/admin/AdminReportsPage'
 import AdminComingSoonPage from './pages/admin/AdminComingSoonPage'
 import ProtectedCreatorRoute from './components/creator/ProtectedCreatorRoute'
 import CreatorLayout from './components/creator/CreatorLayout'
@@ -45,6 +46,7 @@ export default function App() {
           <Route element={<AdminLayout />}>
             <Route index element={<Navigate to="users" replace />} />
             <Route path="users" element={<AdminUsersPage />} />
+            <Route path="reports" element={<AdminReportsPage />} />
             <Route path="*" element={<AdminComingSoonPage />} />
           </Route>
         </Route>

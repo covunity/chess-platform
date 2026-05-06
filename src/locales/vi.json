@@ -221,6 +221,62 @@
       "confirm": "Xóa"
     }
   },
+  "reviews": {
+    "eyebrow": "ĐÁNH GIÁ KHÓA HỌC",
+    "heading": "Bạn thấy khóa học thế nào?",
+    "titlePlaceholder": "Đặt tiêu đề cho đánh giá (tùy chọn)",
+    "bodyPlaceholder": "Chia sẻ trải nghiệm học của bạn...",
+    "submit": "Gửi đánh giá",
+    "submitted": "Cảm ơn bạn đã đánh giá",
+    "edit": "Chỉnh sửa",
+    "charCount": "{{count}}/2000 ký tự",
+    "loginRequired": "Đăng nhập để đánh giá",
+    "enrollRequired": "Đăng ký khóa học để đánh giá",
+    "editHeading": "Chỉnh sửa đánh giá của bạn",
+    "update": "Cập nhật đánh giá"
+  },
+  "comments": {
+    "heading": "Thảo luận",
+    "count": "{{count}} bình luận",
+    "composer": "Viết bình luận...",
+    "post": "Đăng bình luận",
+    "edited": "đã chỉnh sửa",
+    "edit": "Chỉnh sửa",
+    "delete": "Xóa",
+    "report": "Báo cáo",
+    "loadMore": "Xem thêm bình luận",
+    "hidden": "[Bình luận đã bị ẩn bởi quản trị viên]",
+    "enrollRequired": "Đăng ký khóa học để tham gia thảo luận.",
+    "deleteConfirm": "Xóa bình luận này?",
+    "saveEdit": "Lưu",
+    "cancelEdit": "Hủy",
+    "reportDialog": {
+      "heading": "Báo cáo bình luận",
+      "inappropriate": "Nội dung không phù hợp",
+      "spam": "Spam",
+      "misleading": "Thông tin gây hiểu lầm",
+      "contextPlaceholder": "Có điều gì khác muốn chia sẻ? (tùy chọn)",
+      "cancel": "Hủy",
+      "submit": "Gửi báo cáo",
+      "successMsg": "Đã gửi báo cáo. Cảm ơn bạn!"
+    }
+  },
+  "adminReports": {
+    "pageTitle": "Báo cáo",
+    "pending": "{{count}} chờ xử lý",
+    "noReports": "Không có bình luận nào bị báo cáo.",
+    "reportsCount": "{{count}} báo cáo",
+    "reporterList": "Người báo cáo",
+    "hide": "Ẩn bình luận",
+    "dismiss": "Bỏ qua báo cáo",
+    "reasonInappropriate": "Không phù hợp",
+    "reasonSpam": "Spam",
+    "reasonMisleading": "Gây hiểu lầm",
+    "commentBy": "Bởi {{name}}",
+    "inCourse": "Trong khóa học: {{title}}",
+    "hiddenLabel": "Đã ẩn",
+    "selectToView": "Chọn một bình luận để xem chi tiết."
+  },
   "courseDetail": {
     "loading": "Đang tải...",
     "notFound": "Không tìm thấy khóa học.",

@@ -7,6 +7,8 @@ import i18n from '../i18n'
 import CourseDetailPage from './CourseDetailPage'
 import * as coursesApi from '../lib/coursesApi'
 import * as enrollmentApi from '../lib/enrollmentApi'
+import * as reviewsApi from '../lib/reviewsApi'
+import * as commentsApi from '../lib/commentsApi'
 import type { CourseDetail } from '../lib/coursesApi'
 import { AuthContext } from '../context/AuthContext'
 import type { AuthContextValue } from '../context/AuthContext'
@@ -24,6 +26,12 @@ vi.mock('../lib/supabase', () => ({
     }),
   },
 }))
+
+const mockGetUserReview = vi.spyOn(reviewsApi, 'getUserReview')
+const mockSubmitReview = vi.spyOn(reviewsApi, 'submitReview')
+const mockListComments = vi.spyOn(commentsApi, 'listComments')
+const mockCreateComment = vi.spyOn(commentsApi, 'createComment')
+const mockReportComment = vi.spyOn(commentsApi, 'reportComment')
 
 const mockGetCourseDetail = vi.spyOn(coursesApi, 'getCourseDetail')
 const mockCheckUserEnrollment = vi.spyOn(coursesApi, 'checkUserEnrollment')
@@ -133,6 +141,11 @@ describe('CourseDetailPage', () => {
     mockCheckUserEnrollment.mockResolvedValue(false)
     mockEnrollForFree.mockResolvedValue({ enrollmentId: 'e1', orderId: 'o1', error: null })
     mockGetFirstLesson.mockResolvedValue({ lessonId: 'l1', error: null })
+    mockGetUserReview.mockResolvedValue({ review: null, error: null })
+    mockListComments.mockResolvedValue({ comments: [], total: 0, error: null })
+    mockSubmitReview.mockResolvedValue({ review: null, error: null })
+    mockCreateComment.mockResolvedValue({ comment: null, error: null })
+    mockReportComment.mockResolvedValue({ error: null })
   })
 
   describe('loading state', () => {
@@ -412,6 +425,241 @@ describe('CourseDetailPage', () => {
       await user.click(screen.getByTestId('close-lock-prompt'))
       await waitFor(() => {
         expect(screen.queryByTestId('lock-prompt')).not.toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('write review block', () => {
+    it('shows write-review block for enrolled learner who has not reviewed', async () => {
+      mockGetCourseDetail.mockResolvedValue({ course: sampleCourse, error: null })
+      mockCheckUserEnrollment.mockResolvedValue(true)
+      mockGetUserReview.mockResolvedValue({ review: null, error: null })
+      renderPage(loggedInContext)
+      await waitFor(() => {
+        expect(screen.getByTestId('write-review-block')).toBeInTheDocument()
+      })
+    })
+
+    it('hides write-review block for non-enrolled user', async () => {
+      mockGetCourseDetail.mockResolvedValue({ course: sampleCourse, error: null })
+      mockCheckUserEnrollment.mockResolvedValue(false)
+      renderPage(loggedInContext)
+      await waitFor(() => screen.getByRole('heading', { level: 1, name: /italian game/i }))
+      expect(screen.queryByTestId('write-review-block')).not.toBeInTheDocument()
+    })
+
+    it('hides write-review block for unauthenticated visitor', async () => {
+      mockGetCourseDetail.mockResolvedValue({ course: sampleCourse, error: null })
+      renderPage(noAuthContext)
+      await waitFor(() => screen.getByRole('heading', { level: 1, name: /italian game/i }))
+      expect(screen.queryByTestId('write-review-block')).not.toBeInTheDocument()
+    })
+
+    it('shows "Edit your review" link when user already has a review', async () => {
+      const existingReview = {
+        id: 'r-own',
+        course_id: 'c1',
+        reviewer_id: 'u99',
+        rating: 4,
+        title: 'Good',
+        body: 'Nice',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
+      }
+      mockGetCourseDetail.mockResolvedValue({ course: sampleCourse, error: null })
+      mockCheckUserEnrollment.mockResolvedValue(true)
+      mockGetUserReview.mockResolvedValue({ review: existingReview, error: null })
+      renderPage(loggedInContext)
+      await waitFor(() => {
+        expect(screen.getByTestId('edit-review-link')).toBeInTheDocument()
+      })
+    })
+
+    it('clicking a star sets rating and enables submit button', async () => {
+      const user = userEvent.setup()
+      mockGetCourseDetail.mockResolvedValue({ course: sampleCourse, error: null })
+      mockCheckUserEnrollment.mockResolvedValue(true)
+      renderPage(loggedInContext)
+      await waitFor(() => screen.getByTestId('write-review-block'))
+      await user.click(screen.getByTestId('star-input-5'))
+      expect(screen.getByTestId('submit-review-btn')).not.toBeDisabled()
+    })
+
+    it('submit button is disabled when no star selected', async () => {
+      mockGetCourseDetail.mockResolvedValue({ course: sampleCourse, error: null })
+      mockCheckUserEnrollment.mockResolvedValue(true)
+      renderPage(loggedInContext)
+      await waitFor(() => screen.getByTestId('write-review-block'))
+      expect(screen.getByTestId('submit-review-btn')).toBeDisabled()
+    })
+
+    it('submitting review calls submitReview with correct args', async () => {
+      const user = userEvent.setup()
+      const savedReview = {
+        id: 'r-new',
+        course_id: 'c1',
+        reviewer_id: 'u99',
+        rating: 5,
+        title: '',
+        body: '',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
+      }
+      mockGetCourseDetail.mockResolvedValue({ course: sampleCourse, error: null })
+      mockCheckUserEnrollment.mockResolvedValue(true)
+      mockSubmitReview.mockResolvedValue({ review: savedReview, error: null })
+      renderPage(loggedInContext)
+      await waitFor(() => screen.getByTestId('write-review-block'))
+      await user.click(screen.getByTestId('star-input-5'))
+      await user.click(screen.getByTestId('submit-review-btn'))
+      await waitFor(() => {
+        expect(mockSubmitReview).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.objectContaining({ courseId: 'c1', reviewerId: 'u99', rating: 5 })
+        )
+      })
+    })
+
+    it('shows thank-you state after successful submission', async () => {
+      const user = userEvent.setup()
+      const savedReview = {
+        id: 'r-new',
+        course_id: 'c1',
+        reviewer_id: 'u99',
+        rating: 5,
+        title: null,
+        body: null,
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
+      }
+      mockGetCourseDetail.mockResolvedValue({ course: sampleCourse, error: null })
+      mockCheckUserEnrollment.mockResolvedValue(true)
+      mockSubmitReview.mockResolvedValue({ review: savedReview, error: null })
+      renderPage(loggedInContext)
+      await waitFor(() => screen.getByTestId('write-review-block'))
+      await user.click(screen.getByTestId('star-input-5'))
+      await user.click(screen.getByTestId('submit-review-btn'))
+      await waitFor(() => {
+        expect(screen.getByTestId('review-submitted-thanks')).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('comments section', () => {
+    it('renders the comments section heading', async () => {
+      mockGetCourseDetail.mockResolvedValue({ course: sampleCourse, error: null })
+      renderPage(noAuthContext)
+      await waitFor(() => {
+        expect(screen.getByTestId('comments-section')).toBeInTheDocument()
+      })
+    })
+
+    it('shows comment composer for enrolled learner', async () => {
+      mockGetCourseDetail.mockResolvedValue({ course: sampleCourse, error: null })
+      mockCheckUserEnrollment.mockResolvedValue(true)
+      renderPage(loggedInContext)
+      await waitFor(() => {
+        expect(screen.getByTestId('comment-composer')).toBeInTheDocument()
+      })
+    })
+
+    it('hides comment composer for non-enrolled user, shows enroll prompt', async () => {
+      mockGetCourseDetail.mockResolvedValue({ course: sampleCourse, error: null })
+      mockCheckUserEnrollment.mockResolvedValue(false)
+      renderPage(loggedInContext)
+      await waitFor(() => screen.getByTestId('comments-section'))
+      expect(screen.queryByTestId('comment-composer')).not.toBeInTheDocument()
+      expect(screen.getByTestId('comments-enroll-prompt')).toBeInTheDocument()
+    })
+
+    it('renders loaded comments in the list', async () => {
+      const sampleCommentRow = {
+        id: 'cmt-1',
+        course_id: 'c1',
+        author_id: 'u2',
+        body: 'Khóa học rất hay!',
+        is_hidden: false,
+        created_at: '2026-01-10T00:00:00Z',
+        updated_at: '2026-01-10T00:00:00Z',
+        author: { name: 'Người dùng B' },
+      }
+      mockGetCourseDetail.mockResolvedValue({ course: sampleCourse, error: null })
+      mockListComments.mockResolvedValue({ comments: [sampleCommentRow], total: 1, error: null })
+      renderPage(noAuthContext)
+      await waitFor(() => {
+        expect(screen.getByText('Khóa học rất hay!')).toBeInTheDocument()
+        expect(screen.getByText('Người dùng B')).toBeInTheDocument()
+      })
+    })
+
+    it('shows placeholder for hidden comments', async () => {
+      const hiddenComment = {
+        id: 'cmt-2',
+        course_id: 'c1',
+        author_id: 'u3',
+        body: 'Bad content',
+        is_hidden: true,
+        created_at: '2026-01-11T00:00:00Z',
+        updated_at: '2026-01-11T00:00:00Z',
+        author: { name: 'User C' },
+      }
+      mockGetCourseDetail.mockResolvedValue({ course: sampleCourse, error: null })
+      mockListComments.mockResolvedValue({ comments: [hiddenComment], total: 1, error: null })
+      renderPage(noAuthContext)
+      await waitFor(() => {
+        expect(screen.getByTestId('comment-hidden-placeholder-cmt-2')).toBeInTheDocument()
+      })
+    })
+
+    it('posting a comment calls createComment and adds it to the list', async () => {
+      const user = userEvent.setup()
+      const newComment = {
+        id: 'cmt-new',
+        course_id: 'c1',
+        author_id: 'u99',
+        body: 'Tuyệt vời!',
+        is_hidden: false,
+        created_at: '2026-01-20T00:00:00Z',
+        updated_at: '2026-01-20T00:00:00Z',
+        author: { name: 'Test User' },
+      }
+      mockGetCourseDetail.mockResolvedValue({ course: sampleCourse, error: null })
+      mockCheckUserEnrollment.mockResolvedValue(true)
+      mockCreateComment.mockResolvedValue({ comment: newComment, error: null })
+      renderPage(loggedInContext)
+      await waitFor(() => screen.getByTestId('comment-composer'))
+      await user.type(screen.getByTestId('comment-textarea'), 'Tuyệt vời!')
+      await user.click(screen.getByTestId('post-comment-btn'))
+      await waitFor(() => {
+        expect(mockCreateComment).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.objectContaining({ courseId: 'c1', authorId: 'u99', body: 'Tuyệt vời!' })
+        )
+      })
+    })
+
+    it('shows report dialog when Report is clicked on a comment', async () => {
+      const user = userEvent.setup()
+      const commentRow = {
+        id: 'cmt-3',
+        course_id: 'c1',
+        author_id: 'u2',
+        body: 'Test comment',
+        is_hidden: false,
+        created_at: '2026-01-10T00:00:00Z',
+        updated_at: '2026-01-10T00:00:00Z',
+        author: { name: 'User D' },
+      }
+      mockGetCourseDetail.mockResolvedValue({ course: sampleCourse, error: null })
+      mockCheckUserEnrollment.mockResolvedValue(true)
+      mockListComments.mockResolvedValue({ comments: [commentRow], total: 1, error: null })
+      renderPage(loggedInContext)
+      await waitFor(() => screen.getByText('Test comment'))
+      await user.click(screen.getByTestId('comment-kebab-cmt-3'))
+      await waitFor(() => screen.getByTestId('kebab-menu-cmt-3'))
+      await user.click(screen.getByTestId('report-btn-cmt-3'))
+      await waitFor(() => {
+        expect(screen.getByTestId('report-dialog')).toBeInTheDocument()
       })
     })
   })

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
@@ -8,6 +8,10 @@ import {
 } from '../lib/coursesApi'
 import type { CourseDetail, CourseDetailLesson, CourseDetailChapter } from '../lib/coursesApi'
 import { enrollForFree, getFirstLesson } from '../lib/enrollmentApi'
+import { getUserReview, submitReview } from '../lib/reviewsApi'
+import type { Review } from '../lib/reviewsApi'
+import { listComments, createComment, reportComment } from '../lib/commentsApi'
+import type { Comment, ReportReason } from '../lib/commentsApi'
 import { useAuth } from '../context/AuthContext'
 import ChessBoard from '../components/ChessBoard/ChessBoard'
 
@@ -519,6 +523,547 @@ function LockPrompt({ onClose }: { onClose: () => void }) {
   )
 }
 
+// ── WriteReviewBlock ──────────────────────────────────────────────────────────
+
+function WriteReviewBlock({
+  courseId,
+  userId,
+  existingReview,
+  onSubmitted,
+}: {
+  courseId: string
+  userId: string
+  existingReview: Review | null
+  onSubmitted: (review: Review) => void
+}) {
+  const { t } = useTranslation()
+  const [rating, setRating] = useState(existingReview?.rating ?? 0)
+  const [hovered, setHovered] = useState(0)
+  const [title, setTitle] = useState(existingReview?.title ?? '')
+  const [body, setBody] = useState(existingReview?.body ?? '')
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [editing, setEditing] = useState(!existingReview)
+
+  if (submitted && !editing) {
+    return (
+      <div
+        data-testid="review-submitted-thanks"
+        style={{
+          padding: '16px 24px',
+          background: 'var(--accent-soft)',
+          border: '1px solid var(--accent-border)',
+          borderRadius: 'var(--r-lg)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <span style={{ fontSize: 14, color: 'var(--accent-ink)' }}>
+          {t('reviews.submitted')}
+        </span>
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm"
+          data-testid="edit-review-link"
+          onClick={() => { setEditing(true); setSubmitted(false) }}
+        >
+          {t('reviews.edit')}
+        </button>
+      </div>
+    )
+  }
+
+  if (existingReview && !editing) {
+    return (
+      <div
+        data-testid="review-submitted-thanks"
+        style={{
+          padding: '16px 24px',
+          background: 'var(--accent-soft)',
+          border: '1px solid var(--accent-border)',
+          borderRadius: 'var(--r-lg)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <StarRow rating={existingReview.rating} size={14} />
+          <span style={{ fontSize: 14, color: 'var(--accent-ink)' }}>{t('reviews.submitted')}</span>
+        </div>
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm"
+          data-testid="edit-review-link"
+          onClick={() => setEditing(true)}
+        >
+          {t('reviews.edit')}
+        </button>
+      </div>
+    )
+  }
+
+  async function handleSubmit() {
+    if (rating === 0) return
+    setSubmitting(true)
+    const { review: saved } = await submitReview(supabase, {
+      courseId,
+      reviewerId: userId,
+      rating,
+      title: title.trim() || null,
+      body: body.trim() || null,
+    })
+    setSubmitting(false)
+    if (saved) {
+      onSubmitted(saved)
+      setSubmitted(true)
+      setEditing(false)
+    }
+  }
+
+  const charCount = body.length
+
+  return (
+    <div
+      data-testid="write-review-block"
+      style={{
+        padding: 24,
+        background: 'var(--accent-soft)',
+        border: '1px solid var(--accent-border)',
+        borderRadius: 'var(--r-lg)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 14,
+      }}
+    >
+      <div>
+        <p style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--accent-ink)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 4px' }}>
+          {t('reviews.eyebrow')}
+        </p>
+        <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink-1)', margin: 0 }}>
+          {t('reviews.heading')}
+        </h3>
+      </div>
+      {/* Star input */}
+      <div style={{ display: 'flex', gap: 6 }}>
+        {[1, 2, 3, 4, 5].map(i => (
+          <button
+            key={i}
+            type="button"
+            data-testid={`star-input-${i}`}
+            onMouseEnter={() => setHovered(i)}
+            onMouseLeave={() => setHovered(0)}
+            onClick={() => setRating(i)}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 2,
+              fontSize: 28,
+              color: i <= (hovered || rating) ? 'oklch(0.7 0.16 80)' : 'var(--ink-4)',
+              lineHeight: 1,
+            }}
+          >
+            ★
+          </button>
+        ))}
+      </div>
+      {/* Title input */}
+      <input
+        type="text"
+        className="input"
+        maxLength={100}
+        value={title}
+        onChange={e => setTitle(e.target.value)}
+        placeholder={t('reviews.titlePlaceholder')}
+        style={{ width: '100%' }}
+      />
+      {/* Body textarea */}
+      <textarea
+        className="input"
+        maxLength={2000}
+        rows={4}
+        value={body}
+        onChange={e => setBody(e.target.value)}
+        placeholder={t('reviews.bodyPlaceholder')}
+        style={{ width: '100%', resize: 'vertical' }}
+      />
+      {/* Footer */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>
+          {t('reviews.charCount', { count: charCount })}
+        </span>
+        <button
+          type="button"
+          data-testid="submit-review-btn"
+          className="btn btn-accent"
+          disabled={rating === 0 || submitting}
+          onClick={handleSubmit}
+        >
+          {existingReview ? t('reviews.update') : t('reviews.submit')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── ReportDialog ──────────────────────────────────────────────────────────────
+
+function ReportDialog({
+  commentId,
+  userId,
+  onClose,
+}: {
+  commentId: string
+  userId: string
+  onClose: () => void
+}) {
+  const { t } = useTranslation()
+  const [reason, setReason] = useState<ReportReason | ''>('')
+  const [context, setContext] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [done, setDone] = useState(false)
+
+  async function handleSubmit() {
+    if (!reason) return
+    setSubmitting(true)
+    await reportComment(supabase, commentId, userId, reason as ReportReason, context.trim() || undefined)
+    setSubmitting(false)
+    setDone(true)
+    setTimeout(onClose, 1200)
+  }
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, background: 'rgba(15,17,20,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}
+      onClick={onClose}
+    >
+      <div
+        data-testid="report-dialog"
+        className="card"
+        style={{ width: 440, padding: 28, position: 'relative' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--ink-1)', margin: '0 0 18px' }}>
+          {t('comments.reportDialog.heading')}
+        </h2>
+        {done ? (
+          <p style={{ fontSize: 14, color: 'var(--success)' }}>{t('comments.reportDialog.successMsg')}</p>
+        ) : (
+          <>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+              {(['inappropriate', 'spam', 'misleading'] as ReportReason[]).map(r => (
+                <button
+                  key={r}
+                  type="button"
+                  data-testid={`report-reason-${r}`}
+                  onClick={() => setReason(r)}
+                  style={{
+                    height: 56,
+                    padding: '0 16px',
+                    border: `1px solid ${reason === r ? 'var(--accent)' : 'var(--border-strong)'}`,
+                    borderRadius: 'var(--r-md)',
+                    background: reason === r ? 'var(--accent-soft)' : 'var(--surface)',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    fontSize: 13.5,
+                    fontWeight: reason === r ? 600 : 400,
+                    color: 'var(--ink-1)',
+                  }}
+                >
+                  {t(`comments.reportDialog.${r}`)}
+                </button>
+              ))}
+            </div>
+            <textarea
+              className="input"
+              rows={3}
+              value={context}
+              onChange={e => setContext(e.target.value)}
+              placeholder={t('comments.reportDialog.contextPlaceholder')}
+              style={{ width: '100%', marginBottom: 16, resize: 'vertical' }}
+            />
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button type="button" className="btn btn-ghost" onClick={onClose}>
+                {t('comments.reportDialog.cancel')}
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={!reason || submitting}
+                onClick={handleSubmit}
+              >
+                {t('comments.reportDialog.submit')}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── CommentRow ────────────────────────────────────────────────────────────────
+
+function CommentRow({
+  comment,
+  currentUserId,
+  onReport,
+}: {
+  comment: Comment
+  currentUserId: string | null
+  onReport: (commentId: string) => void
+}) {
+  const { t } = useTranslation()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  const isOwner = currentUserId === comment.author_id
+  const authorName = comment.author?.name ?? '—'
+  const initials = authorName.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)
+  const date = new Date(comment.created_at).toLocaleDateString('vi-VN', { day: 'numeric', month: 'short', year: 'numeric' })
+  const isEdited = comment.updated_at !== comment.created_at
+
+  if (comment.is_hidden) {
+    return (
+      <div
+        data-testid={`comment-hidden-placeholder-${comment.id}`}
+        style={{ padding: '14px 0', borderTop: '1px solid var(--border)' }}
+      >
+        <span
+          style={{
+            fontSize: 13,
+            color: 'var(--ink-3)',
+            fontStyle: 'italic',
+            background: 'var(--surface-2)',
+            padding: '4px 10px',
+            borderRadius: 999,
+          }}
+        >
+          {t('comments.hidden')}
+        </span>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ padding: '16px 0', borderTop: '1px solid var(--border)', display: 'flex', gap: 12 }}>
+      <div
+        className="avatar"
+        style={{ width: 32, height: 32, fontSize: 11, fontWeight: 600, background: 'oklch(0.88 0.06 60)', color: 'var(--ink-1)', flexShrink: 0 }}
+      >
+        {initials}
+      </div>
+      <div style={{ flex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-1)' }}>{authorName}</span>
+            <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>{date}</span>
+            {isEdited && (
+              <span style={{ fontSize: 11, color: 'var(--ink-4)' }}>· {t('comments.edited')}</span>
+            )}
+          </div>
+          {/* Kebab menu */}
+          <div style={{ position: 'relative' }} ref={menuRef}>
+            <button
+              type="button"
+              data-testid={`comment-kebab-${comment.id}`}
+              onClick={() => setMenuOpen(v => !v)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', fontSize: 16, padding: '2px 6px' }}
+            >
+              •••
+            </button>
+            {menuOpen && (
+              <div
+                data-testid={`kebab-menu-${comment.id}`}
+                className="card"
+                style={{ position: 'absolute', right: 0, top: '100%', zIndex: 100, minWidth: 140, padding: 4, boxShadow: 'var(--sh-2)' }}
+              >
+                {isOwner ? (
+                  <>
+                    <button
+                      type="button"
+                      data-testid={`edit-btn-${comment.id}`}
+                      onClick={() => setMenuOpen(false)}
+                      style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 12px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: 'var(--ink-1)', height: 28 }}
+                    >
+                      {t('comments.edit')}
+                    </button>
+                    <button
+                      type="button"
+                      data-testid={`delete-btn-${comment.id}`}
+                      onClick={() => setMenuOpen(false)}
+                      style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 12px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: 'var(--danger)', height: 28 }}
+                    >
+                      {t('comments.delete')}
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    data-testid={`report-btn-${comment.id}`}
+                    onClick={() => { setMenuOpen(false); onReport(comment.id) }}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 12px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: 'var(--ink-1)', height: 28 }}
+                  >
+                    {t('comments.report')}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+        <p style={{ margin: 0, fontSize: 13.5, color: 'var(--ink-2)', lineHeight: 1.55 }}>{comment.body}</p>
+      </div>
+    </div>
+  )
+}
+
+// ── CommentsSection ───────────────────────────────────────────────────────────
+
+function CommentsSection({
+  courseId,
+  isEnrolled,
+  currentUserId,
+}: {
+  courseId: string
+  isEnrolled: boolean
+  currentUserId: string | null
+}) {
+  const { t } = useTranslation()
+  const [comments, setComments] = useState<Comment[]>([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [composerBody, setComposerBody] = useState('')
+  const [posting, setPosting] = useState(false)
+  const [reportTarget, setReportTarget] = useState<string | null>(null)
+
+  useEffect(() => {
+    listComments(supabase, courseId, 1).then(({ comments: rows, total: t }) => {
+      setComments(rows)
+      setTotal(t)
+    })
+  }, [courseId])
+
+  async function handlePost() {
+    if (!composerBody.trim() || !currentUserId) return
+    setPosting(true)
+    const { comment } = await createComment(supabase, {
+      courseId,
+      authorId: currentUserId,
+      body: composerBody.trim(),
+    })
+    setPosting(false)
+    if (comment) {
+      setComments(prev => [comment, ...prev])
+      setTotal(prev => prev + 1)
+      setComposerBody('')
+    }
+  }
+
+  async function handleLoadMore() {
+    const nextPage = page + 1
+    const { comments: more } = await listComments(supabase, courseId, nextPage)
+    setComments(prev => [...prev, ...more])
+    setPage(nextPage)
+  }
+
+  return (
+    <div data-testid="comments-section">
+      <div style={{ marginBottom: 20 }}>
+        <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 28, color: 'var(--ink-1)', margin: '0 0 2px' }}>
+          {t('comments.heading')}
+        </h2>
+        <p style={{ fontSize: 13, color: 'var(--ink-3)', margin: 0 }}>
+          {t('comments.count', { count: total })}
+        </p>
+      </div>
+
+      {/* Composer or enroll prompt */}
+      {isEnrolled && currentUserId ? (
+        <div data-testid="comment-composer" style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
+          <div className="avatar" style={{ width: 48, height: 48, fontSize: 14, fontWeight: 600, background: 'oklch(0.85 0.07 200)', color: 'var(--ink-1)', flexShrink: 0 }}>
+            U
+          </div>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <textarea
+              data-testid="comment-textarea"
+              className="input"
+              rows={3}
+              value={composerBody}
+              onChange={e => setComposerBody(e.target.value)}
+              maxLength={2000}
+              placeholder={t('comments.composer')}
+              style={{ width: '100%', resize: 'vertical' }}
+            />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>
+                {composerBody.length}/2000
+              </span>
+              <button
+                type="button"
+                data-testid="post-comment-btn"
+                className="btn btn-primary"
+                disabled={!composerBody.trim() || posting}
+                onClick={handlePost}
+              >
+                {t('comments.post')}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div
+          data-testid="comments-enroll-prompt"
+          style={{
+            padding: '16px 20px',
+            background: 'var(--surface-2)',
+            borderRadius: 'var(--r-md)',
+            marginBottom: 24,
+            fontSize: 14,
+            color: 'var(--ink-3)',
+          }}
+        >
+          {t('comments.enrollRequired')}
+        </div>
+      )}
+
+      {/* Comments list */}
+      <div>
+        {comments.map(comment => (
+          <CommentRow
+            key={comment.id}
+            comment={comment}
+            currentUserId={currentUserId}
+            onReport={id => setReportTarget(id)}
+          />
+        ))}
+      </div>
+
+      {/* Load more */}
+      {comments.length < total && (
+        <button
+          type="button"
+          className="btn btn-ghost"
+          style={{ marginTop: 16 }}
+          onClick={handleLoadMore}
+        >
+          {t('comments.loadMore')}
+        </button>
+      )}
+
+      {/* Report dialog */}
+      {reportTarget && currentUserId && (
+        <ReportDialog
+          commentId={reportTarget}
+          userId={currentUserId}
+          onClose={() => setReportTarget(null)}
+        />
+      )}
+    </div>
+  )
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function CourseDetailPage() {
@@ -534,6 +1079,7 @@ export default function CourseDetailPage() {
   const [previewLesson, setPreviewLesson] = useState<CourseDetailLesson | null>(null)
   const [lockPromptOpen, setLockPromptOpen] = useState(false)
   const [enrolling, setEnrolling] = useState(false)
+  const [userReview, setUserReview] = useState<Review | null>(null)
 
   useEffect(() => {
     if (!courseId) return
@@ -551,6 +1097,9 @@ export default function CourseDetailPage() {
     if (!user || !courseId) return
     checkUserEnrollment(supabase, courseId, user.id).then(enrolled => {
       setIsEnrolled(enrolled)
+    })
+    getUserReview(supabase, courseId, user.id).then(({ review }) => {
+      setUserReview(review)
     })
   }, [user, courseId])
 
@@ -949,6 +1498,19 @@ export default function CourseDetailPage() {
                 {t('courseDetail.studentReviews')}
               </h2>
               <RatingsHistogram course={course} />
+
+              {/* Write review block — visible only to enrolled learners */}
+              {isEnrolled && user && (
+                <div style={{ marginTop: 20 }}>
+                  <WriteReviewBlock
+                    courseId={course.id}
+                    userId={user.id}
+                    existingReview={userReview}
+                    onSubmitted={review => setUserReview(review)}
+                  />
+                </div>
+              )}
+
               {course.reviews.length > 0 && (
                 <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {course.reviews.map(review => (
@@ -957,6 +1519,15 @@ export default function CourseDetailPage() {
                 </div>
               )}
             </div>
+
+            {/* Comments section */}
+            {courseId && (
+              <CommentsSection
+                courseId={courseId}
+                isEnrolled={isEnrolled}
+                currentUserId={user?.id ?? null}
+              />
+            )}
           </div>
 
           {/* Right — Sidebar cards */}

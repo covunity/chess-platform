@@ -168,6 +168,62 @@
       "confirm": "Delete"
     }
   },
+  "reviews": {
+    "eyebrow": "RATE THIS COURSE",
+    "heading": "How was your study?",
+    "titlePlaceholder": "Give your review a title (optional)",
+    "bodyPlaceholder": "Share your learning experience...",
+    "submit": "Submit review",
+    "submitted": "Thanks for your review",
+    "edit": "Edit",
+    "charCount": "{{count}}/2000 characters",
+    "loginRequired": "Sign in to write a review",
+    "enrollRequired": "Enroll to write a review",
+    "editHeading": "Edit your review",
+    "update": "Update review"
+  },
+  "comments": {
+    "heading": "Discussion",
+    "count": "{{count}} comments",
+    "composer": "Write a comment...",
+    "post": "Post comment",
+    "edited": "edited",
+    "edit": "Edit",
+    "delete": "Delete",
+    "report": "Report",
+    "loadMore": "Load more comments",
+    "hidden": "[Comment hidden by moderator]",
+    "enrollRequired": "Enroll to join the discussion.",
+    "deleteConfirm": "Delete this comment?",
+    "saveEdit": "Save",
+    "cancelEdit": "Cancel",
+    "reportDialog": {
+      "heading": "Report this comment",
+      "inappropriate": "Inappropriate content",
+      "spam": "Spam",
+      "misleading": "Misleading information",
+      "contextPlaceholder": "Anything else to share? (optional)",
+      "cancel": "Cancel",
+      "submit": "Submit report",
+      "successMsg": "Report submitted. Thank you!"
+    }
+  },
+  "adminReports": {
+    "pageTitle": "Reports",
+    "pending": "{{count}} pending",
+    "noReports": "No reported comments.",
+    "reportsCount": "{{count}} reports",
+    "reporterList": "Reporters",
+    "hide": "Hide comment",
+    "dismiss": "Dismiss reports",
+    "reasonInappropriate": "Inappropriate",
+    "reasonSpam": "Spam",
+    "reasonMisleading": "Misleading",
+    "commentBy": "By {{name}}",
+    "inCourse": "In course: {{title}}",
+    "hiddenLabel": "Hidden",
+    "selectToView": "Select a comment to view details."
+  },
   "courseDetail": {
     "loading": "Loading...",
     "notFound": "Course not found.",
