@@ -335,3 +335,139 @@ export async function unpublishCourse(
 
   return { course: (data as Course) ?? null, error: error as Error | null }
 }
+
+export async function submitCourseForReview(
+  client: SupabaseClient,
+  courseId: string
+): Promise<{ course: Course | null; error: Error | null }> {
+  const { data, error } = await client
+    .from('courses')
+    .update({ status: 'pending_review' })
+    .eq('id', courseId)
+    .eq('status', 'draft')
+    .select()
+    .single()
+
+  return { course: (data as Course) ?? null, error: error as Error | null }
+}
+
+// ── Dashboard KPIs ────────────────────────────────────────────────────────
+
+export interface CreatorKpis {
+  totalStudents: number
+  grossRevenue: number
+  totalPayout: number
+  avgRating: number
+  courseCount: number
+}
+
+export interface CourseStats {
+  courseId: string
+  students: number
+  revenue: number
+  rating: number | null
+}
+
+export async function fetchCreatorKpis(
+  client: SupabaseClient,
+  creatorId: string
+): Promise<CreatorKpis> {
+  const { data: courseData } = await client
+    .from('courses')
+    .select('id')
+    .eq('creator_id', creatorId)
+
+  const courseIds = ((courseData ?? []) as { id: string }[]).map(c => c.id)
+
+  if (courseIds.length === 0) {
+    return { totalStudents: 0, grossRevenue: 0, totalPayout: 0, avgRating: 0, courseCount: 0 }
+  }
+
+  const { data: enrollmentData } = await client
+    .from('enrollments')
+    .select('user_id')
+    .in('course_id', courseIds)
+
+  const distinctUsers = new Set(((enrollmentData ?? []) as { user_id: string }[]).map(e => e.user_id))
+
+  const { data: orderData } = await client
+    .from('orders')
+    .select('amount, creator_payout')
+    .eq('status', 'active')
+    .in('course_id', courseIds)
+
+  const orders = (orderData ?? []) as { amount: number; creator_payout: number }[]
+  const grossRevenue = orders.reduce((sum, o) => sum + (o.amount ?? 0), 0)
+  const totalPayout = orders.reduce((sum, o) => sum + (o.creator_payout ?? 0), 0)
+
+  const { data: publishedData } = await client
+    .from('courses')
+    .select('id')
+    .eq('creator_id', creatorId)
+    .eq('status', 'published')
+
+  const publishedIds = ((publishedData ?? []) as { id: string }[]).map(c => c.id)
+
+  let avgRating = 0
+  if (publishedIds.length > 0) {
+    const { data: reviewData } = await client
+      .from('reviews')
+      .select('rating')
+      .in('course_id', publishedIds)
+
+    const reviews = (reviewData ?? []) as { rating: number }[]
+    if (reviews.length > 0) {
+      avgRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+    }
+  }
+
+  return {
+    totalStudents: distinctUsers.size,
+    grossRevenue,
+    totalPayout,
+    avgRating,
+    courseCount: courseIds.length,
+  }
+}
+
+export async function fetchCoursesWithStats(
+  client: SupabaseClient,
+  courseIds: string[]
+): Promise<CourseStats[]> {
+  if (courseIds.length === 0) return []
+
+  const { data: enrollmentData } = await client
+    .from('enrollments')
+    .select('course_id, user_id')
+    .in('course_id', courseIds)
+
+  const { data: orderData } = await client
+    .from('orders')
+    .select('course_id, amount')
+    .eq('status', 'active')
+    .in('course_id', courseIds)
+
+  const { data: reviewData } = await client
+    .from('reviews')
+    .select('course_id, rating')
+    .in('course_id', courseIds)
+
+  const enrollments = (enrollmentData ?? []) as { course_id: string; user_id: string }[]
+  const orders = (orderData ?? []) as { course_id: string; amount: number }[]
+  const reviews = (reviewData ?? []) as { course_id: string; rating: number }[]
+
+  return courseIds.map(courseId => {
+    const courseEnrollments = enrollments.filter(e => e.course_id === courseId)
+    const distinctStudents = new Set(courseEnrollments.map(e => e.user_id)).size
+
+    const courseOrders = orders.filter(o => o.course_id === courseId)
+    const revenue = courseOrders.reduce((sum, o) => sum + (o.amount ?? 0), 0)
+
+    const courseReviews = reviews.filter(r => r.course_id === courseId)
+    const rating = courseReviews.length > 0
+      ? courseReviews.reduce((sum, r) => sum + r.rating, 0) / courseReviews.length
+      : null
+
+    return { courseId, students: distinctStudents, revenue, rating }
+  })
+}

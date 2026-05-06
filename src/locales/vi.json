@@ -112,7 +112,7 @@
       "newCourse": "+ Khóa học mới",
       "kpi": {
         "students": "Tổng học viên",
-        "studentsDetail": "+124 tháng này",
+        "studentsDetail": "Trên {{count}} khóa học",
         "revenue": "Doanh thu gộp",
         "revenueDetail": "Trước phí nền tảng 20%",
         "payout": "Của bạn (80%)",
@@ -142,7 +142,16 @@
         "published": "Đã xuất bản",
         "pending_review": "Chờ duyệt",
         "draft": "Nháp"
-      }
+      },
+      "builderHeading": "Course builder",
+      "builderEditing": "đang chỉnh sửa \"{{title}}\"",
+      "builderLesson": "Bài {{n}}",
+      "builderNoLessons": "Thêm bài học để bắt đầu chỉnh sửa.",
+      "builderSaveDraft": "Lưu nháp",
+      "builderSubmitReview": "Gửi duyệt",
+      "emptyHeading": "Tạo khóa học đầu tiên của bạn.",
+      "emptyBody": "Đưa học viên qua các khai cuộc, chiến thuật và tàn cuộc với PGN chú thích và video. Gửi để duyệt khi bạn sẵn sàng xuất bản.",
+      "emptyCtaLabel": "+ Tạo khóa học mới"
     },
     "newCourse": {
       "pageTitle": "Khóa học mới",

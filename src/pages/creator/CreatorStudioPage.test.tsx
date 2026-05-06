@@ -6,16 +6,35 @@ import { I18nextProvider } from 'react-i18next'
 import i18n from '../../i18n'
 import CreatorStudioPage from './CreatorStudioPage'
 
-const { mockListCourses, mockDeleteCourse, mockCountCourseChildren } = vi.hoisted(() => ({
+const {
+  mockListCourses,
+  mockDeleteCourse,
+  mockCountCourseChildren,
+  mockFetchCreatorKpis,
+  mockFetchCoursesWithStats,
+  mockListChapters,
+  mockUpdateLesson,
+  mockSubmitCourseForReview,
+} = vi.hoisted(() => ({
   mockListCourses: vi.fn(),
   mockDeleteCourse: vi.fn(),
   mockCountCourseChildren: vi.fn(),
+  mockFetchCreatorKpis: vi.fn(),
+  mockFetchCoursesWithStats: vi.fn(),
+  mockListChapters: vi.fn(),
+  mockUpdateLesson: vi.fn(),
+  mockSubmitCourseForReview: vi.fn(),
 }))
 
 vi.mock('../../lib/creatorApi', () => ({
   listCourses: mockListCourses,
   deleteCourse: mockDeleteCourse,
   countCourseChildren: mockCountCourseChildren,
+  fetchCreatorKpis: mockFetchCreatorKpis,
+  fetchCoursesWithStats: mockFetchCoursesWithStats,
+  listChapters: mockListChapters,
+  updateLesson: mockUpdateLesson,
+  submitCourseForReview: mockSubmitCourseForReview,
 }))
 
 vi.mock('../../lib/supabase', () => ({ supabase: {} }))
@@ -36,7 +55,7 @@ const mockCourses = [
     tags: [],
     status: 'published',
     created_at: '2026-01-01T00:00:00Z',
-    updated_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-02-01T00:00:00Z',
   },
   {
     id: 'c2',
@@ -50,7 +69,7 @@ const mockCourses = [
     tags: ['tactics'],
     status: 'draft',
     created_at: '2026-02-01T00:00:00Z',
-    updated_at: '2026-02-01T00:00:00Z',
+    updated_at: '2026-01-15T00:00:00Z',
   },
 ]
 
@@ -70,6 +89,20 @@ describe('CreatorStudioPage', () => {
     mockUseAuth.mockReturnValue({ profile: { id: 'u1', role: 'coach' } })
     mockListCourses.mockResolvedValue({ courses: mockCourses, total: 2, error: null })
     mockCountCourseChildren.mockResolvedValue({ chapters: 3, lessons: 14 })
+    mockFetchCreatorKpis.mockResolvedValue({
+      totalStudents: 42,
+      grossRevenue: 1000000,
+      totalPayout: 800000,
+      avgRating: 4.5,
+      courseCount: 2,
+    })
+    mockFetchCoursesWithStats.mockResolvedValue([
+      { courseId: 'c1', students: 30, revenue: 600000, rating: 4.8 },
+      { courseId: 'c2', students: 12, revenue: 400000, rating: 4.2 },
+    ])
+    mockListChapters.mockResolvedValue({ chapters: [], error: null })
+    mockUpdateLesson.mockResolvedValue({ lesson: null, error: null })
+    mockSubmitCourseForReview.mockResolvedValue({ course: null, error: null })
   })
 
   it('renders the CREATOR STUDIO eyebrow', async () => {
@@ -79,7 +112,6 @@ describe('CreatorStudioPage', () => {
 
   it('renders the page heading', async () => {
     renderPage()
-    // heading is the h1 - testid approach
     await waitFor(() => expect(screen.getByRole('heading')).toBeInTheDocument())
   })
 
@@ -98,6 +130,34 @@ describe('CreatorStudioPage', () => {
     })
   })
 
+  it('shows live total students value from fetchCreatorKpis', async () => {
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('kpi-students')).toHaveTextContent('42')
+    })
+  })
+
+  it('shows live gross revenue formatted from fetchCreatorKpis', async () => {
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('kpi-revenue')).toHaveTextContent('1M ₫')
+    })
+  })
+
+  it('shows live payout value formatted from fetchCreatorKpis', async () => {
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('kpi-payout')).toHaveTextContent('800K ₫')
+    })
+  })
+
+  it('shows live average rating from fetchCreatorKpis', async () => {
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('kpi-rating')).toHaveTextContent('4.5')
+    })
+  })
+
   it('renders status filter pills', async () => {
     renderPage()
     await waitFor(() => {
@@ -112,6 +172,38 @@ describe('CreatorStudioPage', () => {
     await waitFor(() => {
       expect(screen.getByText('Chess Fundamentals')).toBeInTheDocument()
       expect(screen.getByText('Advanced Tactics')).toBeInTheDocument()
+    })
+  })
+
+  it('shows per-course student count in table row', async () => {
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('course-students-c1')).toHaveTextContent('30')
+    })
+  })
+
+  it('shows per-course revenue in table row', async () => {
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('course-revenue-c1')).toHaveTextContent('600K ₫')
+    })
+  })
+
+  it('shows per-course rating in table row', async () => {
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('course-rating-c1')).toHaveTextContent('4.8')
+    })
+  })
+
+  it('shows dash for null rating in table row', async () => {
+    mockFetchCoursesWithStats.mockResolvedValue([
+      { courseId: 'c1', students: 0, revenue: 0, rating: null },
+      { courseId: 'c2', students: 0, revenue: 0, rating: null },
+    ])
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('course-rating-c1')).toHaveTextContent('—')
     })
   })
 
@@ -164,5 +256,67 @@ describe('CreatorStudioPage', () => {
     await waitFor(() => {
       expect(mockDeleteCourse).toHaveBeenCalledWith(expect.anything(), 'c1')
     })
+  })
+
+  it('renders the course builder inline block when courses exist', async () => {
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('course-builder-block')).toBeInTheDocument()
+    })
+  })
+
+  it('shows the most recently edited course title in the builder heading', async () => {
+    renderPage()
+    await waitFor(() => {
+      // c1 has updated_at 2026-02-01, c2 has updated_at 2026-01-15 → c1 is most recent
+      expect(screen.getByTestId('builder-heading')).toHaveTextContent('Chess Fundamentals')
+    })
+  })
+
+  it('shows empty state CTA when creator has no courses', async () => {
+    mockListCourses.mockResolvedValue({ courses: [], total: 0, error: null })
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('empty-state-cta')).toBeInTheDocument()
+    })
+  })
+
+  it('hides builder block when creator has no courses', async () => {
+    mockListCourses.mockResolvedValue({ courses: [], total: 0, error: null })
+    renderPage()
+    await waitFor(() => {
+      expect(screen.queryByTestId('course-builder-block')).not.toBeInTheDocument()
+    })
+  })
+
+  it('export CSV button is rendered', async () => {
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('export-csv-btn')).toBeInTheDocument()
+    })
+  })
+
+  it('export CSV button triggers a file download', async () => {
+    const createObjectURL = vi.fn().mockReturnValue('blob:test')
+    const revokeObjectURL = vi.fn()
+    const clickSpy = vi.fn()
+    const originalCreateElement = document.createElement.bind(document)
+    vi.spyOn(URL, 'createObjectURL').mockImplementation(createObjectURL)
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(revokeObjectURL)
+    vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+      if (tag === 'a') {
+        const el = originalCreateElement('a')
+        el.click = clickSpy
+        return el
+      }
+      return originalCreateElement(tag)
+    })
+
+    renderPage()
+    await waitFor(() => screen.getByTestId('export-csv-btn'))
+    fireEvent.click(screen.getByTestId('export-csv-btn'))
+
+    expect(clickSpy).toHaveBeenCalled()
+    vi.restoreAllMocks()
   })
 })

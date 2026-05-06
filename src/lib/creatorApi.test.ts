@@ -16,6 +16,9 @@ import {
   canPublishCourse,
   publishCourse,
   unpublishCourse,
+  fetchCreatorKpis,
+  fetchCoursesWithStats,
+  submitCourseForReview,
 } from './creatorApi'
 import type { CourseStatus, CreateCourseInput, CreateChapterInput, CreateLessonInput } from './creatorApi'
 
@@ -456,5 +459,157 @@ describe('unpublishCourse', () => {
     await unpublishCourse(client as never, 'c1')
     expect(client.from).toHaveBeenCalledWith('courses')
     expect(chain.update).toHaveBeenCalledWith({ status: 'draft' })
+  })
+})
+
+// ── fetchCreatorKpis ──────────────────────────────────────────────────────
+
+describe('fetchCreatorKpis', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+
+  it('returns zeros when creator has no courses', async () => {
+    const client = makeClient({ data: [], error: null })
+    const result = await fetchCreatorKpis(client as never, 'u1')
+    expect(result.totalStudents).toBe(0)
+    expect(result.grossRevenue).toBe(0)
+    expect(result.totalPayout).toBe(0)
+    expect(result.avgRating).toBe(0)
+    expect(result.courseCount).toBe(0)
+  })
+
+  it('returns correct distinct student count from enrollments', async () => {
+    const chains = [
+      makeChain({ data: [{ id: 'c1' }, { id: 'c2' }], error: null }),
+      makeChain({ data: [{ user_id: 'u1' }, { user_id: 'u2' }, { user_id: 'u1' }], error: null }),
+      makeChain({ data: [], error: null }),
+      makeChain({ data: [], error: null }),
+    ]
+    let call = 0
+    const client = { from: vi.fn(() => chains[call++]) }
+    const result = await fetchCreatorKpis(client as never, 'u1')
+    expect(result.totalStudents).toBe(2)
+    expect(result.courseCount).toBe(2)
+  })
+
+  it('returns correct gross revenue and payout from active orders', async () => {
+    const chains = [
+      makeChain({ data: [{ id: 'c1' }], error: null }),
+      makeChain({ data: [], error: null }),
+      makeChain({ data: [{ amount: 100000, creator_payout: 80000 }, { amount: 200000, creator_payout: 160000 }], error: null }),
+      makeChain({ data: [], error: null }),
+    ]
+    let call = 0
+    const client = { from: vi.fn(() => chains[call++]) }
+    const result = await fetchCreatorKpis(client as never, 'u1')
+    expect(result.grossRevenue).toBe(300000)
+    expect(result.totalPayout).toBe(240000)
+  })
+
+  it('returns correct average rating from published course reviews', async () => {
+    const chains = [
+      makeChain({ data: [{ id: 'c1' }], error: null }),
+      makeChain({ data: [], error: null }),
+      makeChain({ data: [], error: null }),
+      makeChain({ data: [{ id: 'c1' }], error: null }),
+      makeChain({ data: [{ rating: 4 }, { rating: 5 }, { rating: 3 }], error: null }),
+    ]
+    let call = 0
+    const client = { from: vi.fn(() => chains[call++]) }
+    const result = await fetchCreatorKpis(client as never, 'u1')
+    expect(result.avgRating).toBeCloseTo(4.0)
+  })
+
+  it('returns avgRating 0 when no published courses', async () => {
+    const chains = [
+      makeChain({ data: [{ id: 'c1' }], error: null }),
+      makeChain({ data: [], error: null }),
+      makeChain({ data: [], error: null }),
+      makeChain({ data: [], error: null }),
+    ]
+    let call = 0
+    const client = { from: vi.fn(() => chains[call++]) }
+    const result = await fetchCreatorKpis(client as never, 'u1')
+    expect(result.avgRating).toBe(0)
+  })
+})
+
+// ── fetchCoursesWithStats ─────────────────────────────────────────────────
+
+describe('fetchCoursesWithStats', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+
+  it('returns empty array when courseIds is empty', async () => {
+    const client = makeClient({ data: [], error: null })
+    const result = await fetchCoursesWithStats(client as never, [])
+    expect(result).toEqual([])
+    expect(client.from).not.toHaveBeenCalled()
+  })
+
+  it('returns per-course stats with distinct student count, revenue, rating', async () => {
+    const chains = [
+      makeChain({ data: [
+        { course_id: 'c1', user_id: 'u1' },
+        { course_id: 'c1', user_id: 'u2' },
+        { course_id: 'c2', user_id: 'u1' },
+      ], error: null }),
+      makeChain({ data: [
+        { course_id: 'c1', amount: 100000 },
+        { course_id: 'c1', amount: 50000 },
+      ], error: null }),
+      makeChain({ data: [
+        { course_id: 'c1', rating: 4 },
+        { course_id: 'c1', rating: 5 },
+      ], error: null }),
+    ]
+    let call = 0
+    const client = { from: vi.fn(() => chains[call++]) }
+    const result = await fetchCoursesWithStats(client as never, ['c1', 'c2'])
+    const c1 = result.find(r => r.courseId === 'c1')
+    const c2 = result.find(r => r.courseId === 'c2')
+    expect(c1?.students).toBe(2)
+    expect(c1?.revenue).toBe(150000)
+    expect(c1?.rating).toBeCloseTo(4.5)
+    expect(c2?.students).toBe(1)
+    expect(c2?.revenue).toBe(0)
+    expect(c2?.rating).toBeNull()
+  })
+
+  it('returns null rating when no reviews exist for a course', async () => {
+    const chains = [
+      makeChain({ data: [], error: null }),
+      makeChain({ data: [], error: null }),
+      makeChain({ data: [], error: null }),
+    ]
+    let call = 0
+    const client = { from: vi.fn(() => chains[call++]) }
+    const result = await fetchCoursesWithStats(client as never, ['c1'])
+    expect(result[0].rating).toBeNull()
+  })
+})
+
+// ── submitCourseForReview ─────────────────────────────────────────────────
+
+describe('submitCourseForReview', () => {
+  it('returns updated course with pending_review status on success', async () => {
+    const updated = { id: 'c1', status: 'pending_review' as CourseStatus }
+    const client = makeClient({ data: updated, error: null })
+    const result = await submitCourseForReview(client as never, 'c1')
+    expect(result.course?.status).toBe('pending_review')
+    expect(result.error).toBeNull()
+  })
+
+  it('returns error when course is not in draft status', async () => {
+    const client = makeClient({ data: null, error: new Error('no rows updated') })
+    const result = await submitCourseForReview(client as never, 'c1')
+    expect(result.course).toBeNull()
+    expect(result.error).toBeInstanceOf(Error)
+  })
+
+  it('calls update with pending_review status and draft eq filter', async () => {
+    const chain = makeChain({ data: { id: 'c1', status: 'pending_review' }, error: null })
+    const client = { from: vi.fn(() => chain) }
+    await submitCourseForReview(client as never, 'c1')
+    expect(client.from).toHaveBeenCalledWith('courses')
+    expect(chain.update).toHaveBeenCalledWith({ status: 'pending_review' })
   })
 })
