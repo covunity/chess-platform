@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(node --version)",
+      "PowerShell(nvm list)",
+      "PowerShell(Get-Command nvm -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-Command fnm -ErrorAction SilentlyContinue)",
+      "PowerShell($env:NVM_HOME)",
+      "PowerShell($env:NVM_SYMLINK)",
+      "PowerShell(Get-Command winget -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-Command choco -ErrorAction SilentlyContinue)",
+      "Bash(supabase *)",
+      "PowerShell(supabase *)",
+      "Bash(npx supabase *)"
+    ]
+  }
+}

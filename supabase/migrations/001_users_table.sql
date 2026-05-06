@@ -4,7 +4,7 @@ create table public.users (
   email       text not null unique,
   name        text,
   avatar_url  text,
-  role        text not null default 'learner' check (role in ('learner', 'coach', 'admin')),
+  role        text not null default 'learner' check (role in ('learner', 'creator', 'admin')),
   created_at  timestamptz not null default now()
 );
 
