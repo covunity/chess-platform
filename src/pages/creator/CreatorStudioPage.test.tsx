@@ -103,7 +103,6 @@ describe('CreatorStudioPage', () => {
     await waitFor(() => {
       expect(screen.getByTestId('filter-all')).toBeInTheDocument()
       expect(screen.getByTestId('filter-published')).toBeInTheDocument()
-      expect(screen.getByTestId('filter-pending')).toBeInTheDocument()
       expect(screen.getByTestId('filter-draft')).toBeInTheDocument()
     })
   })

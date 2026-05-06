@@ -16,6 +16,9 @@ const {
   mockUpdateLesson,
   mockDeleteLesson,
   mockReorderLessons,
+  mockCanPublishCourse,
+  mockPublishCourse,
+  mockUnpublishCourse,
 } = vi.hoisted(() => ({
   mockListChapters: vi.fn(),
   mockCreateChapter: vi.fn(),
@@ -26,6 +29,9 @@ const {
   mockUpdateLesson: vi.fn(),
   mockDeleteLesson: vi.fn(),
   mockReorderLessons: vi.fn(),
+  mockCanPublishCourse: vi.fn(),
+  mockPublishCourse: vi.fn(),
+  mockUnpublishCourse: vi.fn(),
 }))
 
 vi.mock('../../lib/creatorApi', () => ({
@@ -38,9 +44,25 @@ vi.mock('../../lib/creatorApi', () => ({
   updateLesson: mockUpdateLesson,
   deleteLesson: mockDeleteLesson,
   reorderLessons: mockReorderLessons,
+  canPublishCourse: mockCanPublishCourse,
+  publishCourse: mockPublishCourse,
+  unpublishCourse: mockUnpublishCourse,
 }))
 
-vi.mock('../../lib/supabase', () => ({ supabase: {} }))
+function makeSupabaseChain(data: unknown) {
+  const chain: Record<string, unknown> = {}
+  const methods = ['select', 'eq', 'single', 'update', 'insert', 'delete', 'order', 'in']
+  methods.forEach(m => { chain[m] = vi.fn(() => chain) })
+  ;(chain as { then: (r: (v: unknown) => unknown) => Promise<unknown> }).then = (resolve) =>
+    Promise.resolve(resolve(data))
+  return chain
+}
+
+vi.mock('../../lib/supabase', () => ({
+  supabase: {
+    from: vi.fn(() => makeSupabaseChain({ data: { status: 'draft' }, error: null })),
+  },
+}))
 
 const mockChapters = [
   {
@@ -85,6 +107,9 @@ describe('CourseEditPage', () => {
     mockDeleteChapter.mockResolvedValue({ error: null })
     mockReorderChapters.mockResolvedValue({ error: null })
     mockCreateLesson.mockResolvedValue({ lesson: { id: 'l3', chapter_id: 'ch1', title: 'New Lesson', type: 'video', position: 2, free_preview: false, created_at: '' }, error: null })
+    mockCanPublishCourse.mockResolvedValue({ ready: false, reasons: ['no_lessons'] })
+    mockPublishCourse.mockResolvedValue({ course: null, error: null })
+    mockUnpublishCourse.mockResolvedValue({ course: null, error: null })
     mockUpdateLesson.mockResolvedValue({ lesson: null, error: null })
     mockDeleteLesson.mockResolvedValue({ error: null })
     mockReorderLessons.mockResolvedValue({ error: null })

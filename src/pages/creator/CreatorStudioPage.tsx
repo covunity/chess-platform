@@ -10,7 +10,6 @@ type StatusFilter = CourseStatus | 'all'
 
 const STATUS_PILL: Record<CourseStatus, string> = {
   published: 'pill pill-success',
-  pending: 'pill pill-warning',
   draft: 'pill',
 }
 
@@ -161,7 +160,6 @@ export default function CreatorStudioPage() {
   const filters: { key: StatusFilter; label: string; testid: string }[] = [
     { key: 'all',       label: t('creator.studio.table.filterAll'),       testid: 'filter-all' },
     { key: 'published', label: t('creator.studio.table.filterPublished'), testid: 'filter-published' },
-    { key: 'pending',   label: t('creator.studio.table.filterPending'),   testid: 'filter-pending' },
     { key: 'draft',     label: t('creator.studio.table.filterDraft'),     testid: 'filter-draft' },
   ]
 
@@ -284,8 +282,8 @@ export default function CreatorStudioPage() {
                     </div>
                   </td>
                   <td style={{ padding: '14px 20px' }}>
-                    <span className={STATUS_PILL[course.status]}>
-                      {t(`creator.studio.status${course.status.charAt(0).toUpperCase()}${course.status.slice(1)}`)}
+                    <span className={STATUS_PILL[course.status] ?? 'pill'}>
+                      {t(`creator.studio.status.${course.status}`)}
                     </span>
                   </td>
                   <td style={{ padding: '14px 20px', textAlign: 'right' }} className="text-[--ink-2]">0</td>

@@ -80,7 +80,6 @@
         "heading": "Tất cả khóa học",
         "filterAll": "Tất cả",
         "filterPublished": "Đã xuất bản",
-        "filterPending": "Chờ duyệt",
         "filterDraft": "Nháp",
         "export": "Xuất",
         "colCourse": "Khóa học",
@@ -94,9 +93,10 @@
         "kebabDelete": "Xóa",
         "kebabDuplicate": "Nhân bản"
       },
-      "statusPublished": "Đã xuất bản",
-      "statusPending": "Chờ duyệt",
-      "statusDraft": "Nháp"
+      "status": {
+        "published": "Đã xuất bản",
+        "draft": "Nháp"
+      }
     },
     "newCourse": {
       "pageTitle": "Khóa học mới",
@@ -138,7 +138,20 @@
       "deleteChapter": "Xóa chương",
       "deleteLesson": "Xóa bài học",
       "save": "Lưu",
-      "cancel": "Hủy"
+      "cancel": "Hủy",
+      "publish": {
+        "publish": "Xuất bản",
+        "unpublish": "Gỡ xuất bản",
+        "tooltipTitle": "Cần hoàn thiện trước khi xuất bản:",
+        "reasonTitle": "Thiếu tiêu đề",
+        "reasonDescription": "Thiếu mô tả khóa học",
+        "reasonThumbnail": "Thiếu ảnh bìa",
+        "reasonPrice": "Thiếu giá",
+        "reasonChapters": "Cần ít nhất 1 chương",
+        "reasonLessons": "Cần ít nhất 1 bài học có nội dung",
+        "toastPublished": "Khóa học đã được xuất bản!",
+        "toastUnpublished": "Đã gỡ xuất bản khóa học."
+      }
     },
     "deleteConfirm": {
       "title": "Xóa khóa học?",

@@ -13,6 +13,9 @@ import {
   deleteLesson,
   reorderLessons,
   countCourseChildren,
+  canPublishCourse,
+  publishCourse,
+  unpublishCourse,
 } from './creatorApi'
 import type { CourseStatus, CreateCourseInput, CreateChapterInput, CreateLessonInput } from './creatorApi'
 
@@ -20,7 +23,7 @@ import type { CourseStatus, CreateCourseInput, CreateChapterInput, CreateLessonI
 
 function makeChain(result: unknown) {
   const chain: Record<string, unknown> = {}
-  const methods = ['select', 'insert', 'update', 'upsert', 'delete', 'eq', 'order', 'single', 'in', 'neq', 'returns']
+  const methods = ['select', 'insert', 'update', 'upsert', 'delete', 'eq', 'order', 'single', 'in', 'neq', 'returns', 'head']
   methods.forEach(m => { chain[m] = vi.fn(() => chain) })
   ;(chain as { then: (r: (v: unknown) => unknown) => Promise<unknown> }).then = (resolve) => Promise.resolve(resolve(result))
   return chain
@@ -240,5 +243,218 @@ describe('countCourseChildren', () => {
     const result = await countCourseChildren(client as never, 'c1')
     expect(result.chapters).toBe(3)
     expect(result.lessons).toBe(14)
+  })
+})
+
+// ── canPublishCourse ──────────────────────────────────────────────────────
+
+describe('canPublishCourse', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+
+  it('returns ready=true when course has all fields and ≥1 chapter with ≥1 lesson', async () => {
+    const courseChain = makeChain({ data: { title: 'My Course', description: 'Great course', thumbnail_url: 'http://img.jpg', price: 100000, status: 'draft' }, error: null })
+    const chapterChain = makeChain({ data: [{ id: 'ch1' }], error: null })
+    const lessonChain = makeChain({ count: 3, error: null })
+    let callCount = 0
+    const client = {
+      from: vi.fn(() => {
+        callCount++
+        if (callCount === 1) return courseChain
+        if (callCount === 2) return chapterChain
+        return lessonChain
+      }),
+    }
+    const result = await canPublishCourse(client as never, 'c1')
+    expect(result.ready).toBe(true)
+    expect(result.reasons).toHaveLength(0)
+  })
+
+  it('returns ready=false with missing_title when title is empty', async () => {
+    const courseChain = makeChain({ data: { title: '', description: 'Desc', thumbnail_url: 'http://img.jpg', price: 0, status: 'draft' }, error: null })
+    const chapterChain = makeChain({ data: [{ id: 'ch1' }], error: null })
+    const lessonChain = makeChain({ count: 1, error: null })
+    let callCount = 0
+    const client = {
+      from: vi.fn(() => {
+        callCount++
+        if (callCount === 1) return courseChain
+        if (callCount === 2) return chapterChain
+        return lessonChain
+      }),
+    }
+    const result = await canPublishCourse(client as never, 'c1')
+    expect(result.ready).toBe(false)
+    expect(result.reasons).toContain('missing_title')
+  })
+
+  it('returns ready=false with missing_description when description is null', async () => {
+    const courseChain = makeChain({ data: { title: 'Title', description: null, thumbnail_url: 'http://img.jpg', price: 0, status: 'draft' }, error: null })
+    const chapterChain = makeChain({ data: [{ id: 'ch1' }], error: null })
+    const lessonChain = makeChain({ count: 1, error: null })
+    let callCount = 0
+    const client = {
+      from: vi.fn(() => {
+        callCount++
+        if (callCount === 1) return courseChain
+        if (callCount === 2) return chapterChain
+        return lessonChain
+      }),
+    }
+    const result = await canPublishCourse(client as never, 'c1')
+    expect(result.ready).toBe(false)
+    expect(result.reasons).toContain('missing_description')
+  })
+
+  it('returns ready=false with missing_thumbnail when thumbnail_url is empty', async () => {
+    const courseChain = makeChain({ data: { title: 'Title', description: 'Desc', thumbnail_url: '', price: 0, status: 'draft' }, error: null })
+    const chapterChain = makeChain({ data: [{ id: 'ch1' }], error: null })
+    const lessonChain = makeChain({ count: 1, error: null })
+    let callCount = 0
+    const client = {
+      from: vi.fn(() => {
+        callCount++
+        if (callCount === 1) return courseChain
+        if (callCount === 2) return chapterChain
+        return lessonChain
+      }),
+    }
+    const result = await canPublishCourse(client as never, 'c1')
+    expect(result.ready).toBe(false)
+    expect(result.reasons).toContain('missing_thumbnail')
+  })
+
+  it('returns ready=false with no_chapters when course has no chapters', async () => {
+    const courseChain = makeChain({ data: { title: 'Title', description: 'Desc', thumbnail_url: 'http://img.jpg', price: 0, status: 'draft' }, error: null })
+    const chapterChain = makeChain({ data: [], error: null })
+    let callCount = 0
+    const client = {
+      from: vi.fn(() => {
+        callCount++
+        if (callCount === 1) return courseChain
+        return chapterChain
+      }),
+    }
+    const result = await canPublishCourse(client as never, 'c1')
+    expect(result.ready).toBe(false)
+    expect(result.reasons).toContain('no_chapters')
+  })
+
+  it('returns ready=false with no_lessons when chapters exist but no lessons', async () => {
+    const courseChain = makeChain({ data: { title: 'Title', description: 'Desc', thumbnail_url: 'http://img.jpg', price: 0, status: 'draft' }, error: null })
+    const chapterChain = makeChain({ data: [{ id: 'ch1' }], error: null })
+    const lessonChain = makeChain({ count: 0, error: null })
+    let callCount = 0
+    const client = {
+      from: vi.fn(() => {
+        callCount++
+        if (callCount === 1) return courseChain
+        if (callCount === 2) return chapterChain
+        return lessonChain
+      }),
+    }
+    const result = await canPublishCourse(client as never, 'c1')
+    expect(result.ready).toBe(false)
+    expect(result.reasons).toContain('no_lessons')
+  })
+
+  it('returns course_not_found when course does not exist', async () => {
+    const courseChain = makeChain({ data: null, error: new Error('not found') })
+    const client = { from: vi.fn(() => courseChain) }
+    const result = await canPublishCourse(client as never, 'nonexistent')
+    expect(result.ready).toBe(false)
+    expect(result.reasons).toContain('course_not_found')
+  })
+
+  it('returns status_not_draft when course is already published', async () => {
+    const courseChain = makeChain({ data: { title: 'Title', description: 'Desc', thumbnail_url: 'http://img.jpg', price: 0, status: 'published' }, error: null })
+    const chapterChain = makeChain({ data: [{ id: 'ch1' }], error: null })
+    const lessonChain = makeChain({ count: 1, error: null })
+    let callCount = 0
+    const client = {
+      from: vi.fn(() => {
+        callCount++
+        if (callCount === 1) return courseChain
+        if (callCount === 2) return chapterChain
+        return lessonChain
+      }),
+    }
+    const result = await canPublishCourse(client as never, 'c1')
+    expect(result.ready).toBe(false)
+    expect(result.reasons).toContain('status_not_draft')
+  })
+
+  it('accumulates multiple missing-field reasons', async () => {
+    const courseChain = makeChain({ data: { title: '', description: null, thumbnail_url: null, price: 0, status: 'draft' }, error: null })
+    const chapterChain = makeChain({ data: [], error: null })
+    let callCount = 0
+    const client = {
+      from: vi.fn(() => {
+        callCount++
+        if (callCount === 1) return courseChain
+        return chapterChain
+      }),
+    }
+    const result = await canPublishCourse(client as never, 'c1')
+    expect(result.ready).toBe(false)
+    expect(result.reasons).toContain('missing_title')
+    expect(result.reasons).toContain('missing_description')
+    expect(result.reasons).toContain('missing_thumbnail')
+    expect(result.reasons).toContain('no_chapters')
+  })
+})
+
+// ── publishCourse ─────────────────────────────────────────────────────────
+
+describe('publishCourse', () => {
+  it('returns updated course with published status on success', async () => {
+    const updated = { id: 'c1', title: 'My Course', status: 'published' as CourseStatus, creator_id: 'u1', price: 100000, level: 'beginner', language: 'vi', tags: [], description: 'Desc', thumbnail_url: 'http://img.jpg', created_at: '', updated_at: '' }
+    const client = makeClient({ data: updated, error: null })
+    const result = await publishCourse(client as never, 'c1')
+    expect(result.course).toEqual(updated)
+    expect(result.course?.status).toBe('published')
+    expect(result.error).toBeNull()
+  })
+
+  it('returns error when course is not in draft status', async () => {
+    const client = makeClient({ data: null, error: new Error('no rows updated') })
+    const result = await publishCourse(client as never, 'c1')
+    expect(result.course).toBeNull()
+    expect(result.error).toBeInstanceOf(Error)
+  })
+
+  it('calls update with correct status and eq filters', async () => {
+    const chain = makeChain({ data: { id: 'c1', status: 'published' }, error: null })
+    const client = { from: vi.fn(() => chain) }
+    await publishCourse(client as never, 'c1')
+    expect(client.from).toHaveBeenCalledWith('courses')
+    expect(chain.update).toHaveBeenCalledWith({ status: 'published' })
+  })
+})
+
+// ── unpublishCourse ───────────────────────────────────────────────────────
+
+describe('unpublishCourse', () => {
+  it('returns updated course with draft status on success', async () => {
+    const updated = { id: 'c1', title: 'My Course', status: 'draft' as CourseStatus, creator_id: 'u1', price: 100000, level: 'beginner', language: 'vi', tags: [], description: 'Desc', thumbnail_url: 'http://img.jpg', created_at: '', updated_at: '' }
+    const client = makeClient({ data: updated, error: null })
+    const result = await unpublishCourse(client as never, 'c1')
+    expect(result.course).toEqual(updated)
+    expect(result.course?.status).toBe('draft')
+    expect(result.error).toBeNull()
+  })
+
+  it('returns error when course is not in published status', async () => {
+    const client = makeClient({ data: null, error: new Error('no rows updated') })
+    const result = await unpublishCourse(client as never, 'c1')
+    expect(result.course).toBeNull()
+    expect(result.error).toBeInstanceOf(Error)
+  })
+
+  it('calls update with draft status and published eq filter', async () => {
+    const chain = makeChain({ data: { id: 'c1', status: 'draft' }, error: null })
+    const client = { from: vi.fn(() => chain) }
+    await unpublishCourse(client as never, 'c1')
+    expect(client.from).toHaveBeenCalledWith('courses')
+    expect(chain.update).toHaveBeenCalledWith({ status: 'draft' })
   })
 })

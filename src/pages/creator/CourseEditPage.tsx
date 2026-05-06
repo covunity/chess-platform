@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
@@ -10,8 +10,11 @@ import {
   createLesson,
   updateLesson,
   deleteLesson,
+  canPublishCourse,
+  publishCourse,
+  unpublishCourse,
 } from '../../lib/creatorApi'
-import type { Chapter, Lesson, LessonType } from '../../lib/creatorApi'
+import type { Chapter, CourseStatus, Lesson, LessonType, PublishReadiness } from '../../lib/creatorApi'
 import LessonEditor from '../../components/LessonEditor/LessonEditor'
 
 const LESSON_TYPE_ICON: Record<LessonType, string> = {
@@ -215,23 +218,154 @@ function ChapterBlock({ chapter, onDeleteChapter, onCreateLesson, onDeleteLesson
   )
 }
 
+const REASON_LABEL: Record<string, string> = {
+  missing_title: 'creator.courseEdit.publish.reasonTitle',
+  missing_description: 'creator.courseEdit.publish.reasonDescription',
+  missing_thumbnail: 'creator.courseEdit.publish.reasonThumbnail',
+  missing_price: 'creator.courseEdit.publish.reasonPrice',
+  no_chapters: 'creator.courseEdit.publish.reasonChapters',
+  no_lessons: 'creator.courseEdit.publish.reasonLessons',
+}
+
+interface PublishBarProps {
+  courseId: string
+  status: CourseStatus
+  readiness: PublishReadiness
+  publishing: boolean
+  onPublish: () => void
+  onUnpublish: () => void
+  t: (k: string) => string
+}
+
+function PublishBar({ status, readiness, publishing, onPublish, onUnpublish, t }: PublishBarProps) {
+  if (status === 'published') {
+    return (
+      <div
+        data-testid="publish-bar"
+        className="flex items-center gap-3"
+        style={{ padding: '12px 20px', borderTop: '1px solid var(--border)', background: 'var(--surface)' }}
+      >
+        <span className="pill pill-success" style={{ fontSize: 12 }}>
+          {t('creator.studio.status.published')}
+        </span>
+        <button
+          type="button"
+          data-testid="unpublish-btn"
+          className="btn btn-secondary btn-sm"
+          onClick={onUnpublish}
+          disabled={publishing}
+        >
+          {t('creator.courseEdit.publish.unpublish')}
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      data-testid="publish-bar"
+      className="flex items-center gap-3"
+      style={{ padding: '12px 20px', borderTop: '1px solid var(--border)', background: 'var(--surface)' }}
+    >
+      <span className="pill" style={{ fontSize: 12 }}>
+        {t('creator.studio.status.draft')}
+      </span>
+      <div className="relative group">
+        <button
+          type="button"
+          data-testid="publish-btn"
+          className="btn btn-accent btn-sm"
+          onClick={onPublish}
+          disabled={!readiness.ready || publishing}
+        >
+          {t('creator.courseEdit.publish.publish')}
+        </button>
+        {!readiness.ready && readiness.reasons.length > 0 && (
+          <div
+            className="card absolute bottom-full mb-2 left-0 hidden group-hover:block"
+            style={{ width: 240, padding: '10px 14px', zIndex: 20 }}
+          >
+            <p className="text-xs font-semibold text-[--ink-1] mb-2">
+              {t('creator.courseEdit.publish.tooltipTitle')}
+            </p>
+            <ul className="space-y-1">
+              {readiness.reasons.map(r => (
+                <li key={r} className="text-xs text-[--ink-2] flex items-start gap-1.5">
+                  <span style={{ color: 'var(--danger)', marginTop: 1 }}>✕</span>
+                  {t(REASON_LABEL[r] ?? r)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function CourseEditPage() {
   const { t } = useTranslation()
   const { courseId } = useParams<{ courseId: string }>()
   const [chapters, setChapters] = useState<Chapter[]>([])
   const [loading, setLoading] = useState(true)
+  const [courseStatus, setCourseStatus] = useState<CourseStatus>('draft')
+  const [readiness, setReadiness] = useState<PublishReadiness>({ ready: false, reasons: [] })
+  const [publishing, setPublishing] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
 
   const [confirmDeleteChapter, setConfirmDeleteChapter] = useState<Chapter | null>(null)
   const [confirmDeleteLesson, setConfirmDeleteLesson] = useState<Lesson | null>(null)
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null)
 
+  const refreshReadiness = useCallback(async () => {
+    if (!courseId) return
+    const result = await canPublishCourse(supabase, courseId)
+    setReadiness(result)
+  }, [courseId])
+
   useEffect(() => {
     if (!courseId) return
-    listChapters(supabase, courseId).then(({ chapters: ch }) => {
-      setChapters(ch)
+    Promise.all([
+      listChapters(supabase, courseId),
+      supabase.from('courses').select('status').eq('id', courseId).single(),
+    ]).then(([chaptersResult, courseResult]) => {
+      setChapters(chaptersResult.chapters)
+      if (courseResult.data) setCourseStatus(courseResult.data.status as CourseStatus)
       setLoading(false)
     })
   }, [courseId])
+
+  useEffect(() => {
+    if (courseStatus === 'draft') refreshReadiness()
+  }, [courseStatus, refreshReadiness])
+
+  function showToast(msg: string) {
+    setToast(msg)
+    setTimeout(() => setToast(null), 3000)
+  }
+
+  async function handlePublish() {
+    if (!courseId) return
+    setPublishing(true)
+    const { error } = await publishCourse(supabase, courseId)
+    if (!error) {
+      setCourseStatus('published')
+      showToast(t('creator.courseEdit.publish.toastPublished'))
+    }
+    setPublishing(false)
+  }
+
+  async function handleUnpublish() {
+    if (!courseId) return
+    setPublishing(true)
+    const { error } = await unpublishCourse(supabase, courseId)
+    if (!error) {
+      setCourseStatus('draft')
+      await refreshReadiness()
+      showToast(t('creator.courseEdit.publish.toastUnpublished'))
+    }
+    setPublishing(false)
+  }
 
   async function handleAddChapter() {
     if (!courseId) return
@@ -240,7 +374,10 @@ export default function CourseEditPage() {
       title: `${t('creator.courseEdit.chapterPlaceholder')} ${position + 1}`,
       position,
     })
-    if (chapter) setChapters(prev => [...prev, { ...chapter, lessons: [] }])
+    if (chapter) {
+      setChapters(prev => [...prev, { ...chapter, lessons: [] }])
+      await refreshReadiness()
+    }
   }
 
   async function handleDeleteChapterConfirm() {
@@ -248,6 +385,7 @@ export default function CourseEditPage() {
     await deleteChapter(supabase, confirmDeleteChapter.id)
     setChapters(prev => prev.filter(ch => ch.id !== confirmDeleteChapter.id))
     setConfirmDeleteChapter(null)
+    await refreshReadiness()
   }
 
   async function handleAddLesson(chapterId: string) {
@@ -266,6 +404,7 @@ export default function CourseEditPage() {
           ? { ...ch, lessons: [...(ch.lessons ?? []), lesson] }
           : ch
       ))
+      await refreshReadiness()
     }
   }
 
@@ -277,6 +416,7 @@ export default function CourseEditPage() {
       lessons: (ch.lessons ?? []).filter(l => l.id !== confirmDeleteLesson.id),
     })))
     setConfirmDeleteLesson(null)
+    await refreshReadiness()
   }
 
   async function handleToggleFreePreview(lesson: Lesson) {
@@ -305,6 +445,7 @@ export default function CourseEditPage() {
           : l
       ),
     })))
+    await refreshReadiness()
   }
 
   const selectedChapterLessons = selectedLesson
@@ -313,7 +454,7 @@ export default function CourseEditPage() {
     : []
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen relative">
       {/* Curriculum Sidebar */}
       <aside
         data-testid="curriculum-sidebar"
@@ -359,6 +500,19 @@ export default function CourseEditPage() {
             {t('creator.courseEdit.addChapter')}
           </button>
         </div>
+
+        {/* Publish bar */}
+        {!loading && courseId && (
+          <PublishBar
+            courseId={courseId}
+            status={courseStatus}
+            readiness={readiness}
+            publishing={publishing}
+            onPublish={handlePublish}
+            onUnpublish={handleUnpublish}
+            t={t}
+          />
+        )}
       </aside>
 
       {/* Main editor pane */}
@@ -388,6 +542,17 @@ export default function CourseEditPage() {
           </p>
         )}
       </main>
+
+      {/* Toast notification */}
+      {toast && (
+        <div
+          data-testid="toast"
+          className="fixed bottom-6 right-6 card"
+          style={{ padding: '12px 20px', background: 'var(--ink-1)', color: '#fff', fontSize: 13, zIndex: 100 }}
+        >
+          {toast}
+        </div>
+      )}
 
       {/* Confirm delete chapter dialog */}
       {confirmDeleteChapter && (

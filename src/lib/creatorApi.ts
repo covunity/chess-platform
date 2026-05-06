@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-export type CourseStatus = 'draft' | 'pending' | 'published'
+export type CourseStatus = 'draft' | 'published'
 export type CourseLevel  = 'beginner' | 'intermediate' | 'advanced'
 export type LessonType   = 'video' | 'chess' | 'puzzle'
 
@@ -256,4 +256,82 @@ export async function countCourseChildren(
   }
 
   return { chapters: chapterCount ?? 0, lessons: lessonCount }
+}
+
+// ── Publish flow ──────────────────────────────────────────────────────────
+
+export interface PublishReadiness {
+  ready: boolean
+  reasons: string[]
+}
+
+export async function canPublishCourse(
+  client: SupabaseClient,
+  courseId: string
+): Promise<PublishReadiness> {
+  const reasons: string[] = []
+
+  const { data: course } = await client
+    .from('courses')
+    .select('title, description, thumbnail_url, price, status')
+    .eq('id', courseId)
+    .single()
+
+  if (!course) return { ready: false, reasons: ['course_not_found'] }
+
+  if (!course.title?.trim()) reasons.push('missing_title')
+  if (!course.description?.trim()) reasons.push('missing_description')
+  if (!course.thumbnail_url?.trim()) reasons.push('missing_thumbnail')
+  if (course.price == null) reasons.push('missing_price')
+  if (course.status !== 'draft') reasons.push('status_not_draft')
+
+  const { data: chapterData } = await client
+    .from('chapters')
+    .select('id')
+    .eq('course_id', courseId)
+
+  const chapterIds = ((chapterData ?? []) as { id: string }[]).map(ch => ch.id)
+
+  if (chapterIds.length === 0) {
+    reasons.push('no_chapters')
+  } else {
+    const { count } = await client
+      .from('lessons')
+      .select('*', { count: 'exact', head: true })
+      .in('chapter_id', chapterIds)
+
+    if ((count ?? 0) === 0) reasons.push('no_lessons')
+  }
+
+  return { ready: reasons.length === 0, reasons }
+}
+
+export async function publishCourse(
+  client: SupabaseClient,
+  courseId: string
+): Promise<{ course: Course | null; error: Error | null }> {
+  const { data, error } = await client
+    .from('courses')
+    .update({ status: 'published' })
+    .eq('id', courseId)
+    .eq('status', 'draft')
+    .select()
+    .single()
+
+  return { course: (data as Course) ?? null, error: error as Error | null }
+}
+
+export async function unpublishCourse(
+  client: SupabaseClient,
+  courseId: string
+): Promise<{ course: Course | null; error: Error | null }> {
+  const { data, error } = await client
+    .from('courses')
+    .update({ status: 'draft' })
+    .eq('id', courseId)
+    .eq('status', 'published')
+    .select()
+    .single()
+
+  return { course: (data as Course) ?? null, error: error as Error | null }
 }
