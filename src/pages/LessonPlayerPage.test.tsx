@@ -7,6 +7,7 @@ import i18n from '../i18n'
 import LessonPlayerPage from './LessonPlayerPage'
 import * as enrollmentApi from '../lib/enrollmentApi'
 import * as coursesApi from '../lib/coursesApi'
+import * as lessonPlayerApi from '../lib/lessonPlayerApi'
 import { AuthContext } from '../context/AuthContext'
 import type { AuthContextValue } from '../context/AuthContext'
 import type { CourseDetail } from '../lib/coursesApi'
@@ -31,6 +32,8 @@ const mockCheckUserEnrollment = vi.spyOn(coursesApi, 'checkUserEnrollment')
 const mockGetCourseDetail = vi.spyOn(coursesApi, 'getCourseDetail')
 const mockGetLastViewedLesson = vi.spyOn(enrollmentApi, 'getLastViewedLesson')
 const mockGetFirstLesson = vi.spyOn(enrollmentApi, 'getFirstLesson')
+const mockGetLessonForPlayer = vi.spyOn(lessonPlayerApi, 'getLessonForPlayer')
+const mockMarkLessonCompleted = vi.spyOn(lessonPlayerApi, 'markLessonCompleted')
 
 const sampleCourse: CourseDetail = {
   id: 'c1',
@@ -131,6 +134,18 @@ describe('LessonPlayerPage', () => {
     mockCheckUserEnrollment.mockResolvedValue(true)
     mockGetLastViewedLesson.mockResolvedValue({ lessonId: null, error: null })
     mockGetFirstLesson.mockResolvedValue({ lessonId: 'l1', error: null })
+    mockGetLessonForPlayer.mockResolvedValue({
+      lesson: {
+        id: 'l2',
+        title: 'The Opening',
+        type: 'chess',
+        pgn_data: '1. e4 e5',
+        board_perspective: 'white',
+        coach_note: null,
+      },
+      error: null,
+    })
+    mockMarkLessonCompleted.mockResolvedValue({ error: null })
   })
 
   describe('access control', () => {
@@ -278,6 +293,41 @@ describe('LessonPlayerPage', () => {
       renderPlayer(enrolledUser, '/learn/c1')
       await waitFor(() => {
         expect(screen.getByTestId('lesson-item-l1')).toHaveAttribute('data-current', 'true')
+      })
+    })
+  })
+
+  describe('chess lesson — guided player', () => {
+    it('renders the guided chess player when current lesson type is "chess"', async () => {
+      renderPlayer(enrolledUser, '/learn/c1/l2')
+      await waitFor(() => {
+        expect(screen.getByTestId('guided-player-root')).toBeInTheDocument()
+      })
+    })
+
+    it('passes the lesson title to the guided player', async () => {
+      renderPlayer(enrolledUser, '/learn/c1/l2')
+      await waitFor(() => {
+        expect(screen.getByTestId('guided-player-title')).toHaveTextContent('The Opening')
+      })
+    })
+
+    it('calls markLessonCompleted when the player reports completion', async () => {
+      const user = userEvent.setup()
+      renderPlayer(enrolledUser, '/learn/c1/l2')
+      const board = await screen.findByTestId('guided-player-board')
+
+      // PGN is "1. e4 e5" → play through both plies to fire onComplete
+      await user.click(board.querySelector('[data-square="e2"]')!)
+      await user.click(board.querySelector('[data-square="e4"]')!)
+      await user.click(board.querySelector('[data-square="e7"]')!)
+      await user.click(board.querySelector('[data-square="e5"]')!)
+
+      await waitFor(() => {
+        expect(mockMarkLessonCompleted).toHaveBeenCalledWith(
+          expect.anything(),
+          { courseId: 'c1', lessonId: 'l2', userId: 'u99' }
+        )
       })
     })
   })

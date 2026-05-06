@@ -5,7 +5,10 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { getCourseDetail, checkUserEnrollment } from '../lib/coursesApi'
 import { getFirstLesson, getLastViewedLesson } from '../lib/enrollmentApi'
+import { getLessonForPlayer, markLessonCompleted } from '../lib/lessonPlayerApi'
+import type { PlayerLesson } from '../lib/lessonPlayerApi'
 import type { CourseDetail, CourseDetailChapter } from '../lib/coursesApi'
+import GuidedChessPlayer from '../components/GuidedChessPlayer/GuidedChessPlayer'
 
 type LoadState = 'loading' | 'redirect-course' | 'redirect-lesson' | 'ready'
 
@@ -251,6 +254,7 @@ export default function LessonPlayerPage() {
   const [currentLessonId, setCurrentLessonId] = useState<string>('')
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set())
   const [showToast, setShowToast] = useState(false)
+  const [playerLesson, setPlayerLesson] = useState<PlayerLesson | null>(null)
 
   const enrolled = searchParams.get('enrolled') === 'true'
 
@@ -336,6 +340,33 @@ export default function LessonPlayerPage() {
     navigate(`/learn/${courseId}/${newLessonId}`, { replace: true })
   }
 
+  // Load the current lesson's player data when it changes to a chess lesson
+  useEffect(() => {
+    if (loadState !== 'ready' || !course || !currentLessonId) return
+
+    const lesson = course.chapters
+      .flatMap(ch => ch.lessons)
+      .find(l => l.id === currentLessonId)
+
+    if (!lesson || lesson.type !== 'chess') return
+
+    let cancelled = false
+    getLessonForPlayer(supabase, currentLessonId).then(({ lesson: pl }) => {
+      if (cancelled) return
+      setPlayerLesson(pl)
+    })
+    return () => { cancelled = true }
+  }, [loadState, course, currentLessonId])
+
+  async function handleLessonComplete() {
+    if (!user || !courseId || !currentLessonId) return
+    await markLessonCompleted(supabase, {
+      courseId,
+      lessonId: currentLessonId,
+      userId: user.id,
+    })
+  }
+
   if (loadState === 'loading') {
     return (
       <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>
@@ -350,6 +381,8 @@ export default function LessonPlayerPage() {
 
   const currentChapter = course.chapters.find(ch => ch.lessons.some(l => l.id === currentLessonId))
   const currentLesson = currentChapter?.lessons.find(l => l.id === currentLessonId)
+  const allLessons = course.chapters.flatMap(ch => ch.lessons)
+  const lessonIndex = allLessons.findIndex(l => l.id === currentLessonId)
 
   return (
     <div
@@ -454,15 +487,26 @@ export default function LessonPlayerPage() {
         {/* Content slot */}
         <div
           data-testid="lesson-content-slot"
-          style={{ flex: 1, overflow: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          style={{ flex: 1, overflow: 'auto', display: 'flex', alignItems: 'stretch', justifyContent: 'center' }}
         >
-          <div style={{ textAlign: 'center', color: 'var(--ink-3)' }}>
-            <div style={{ fontSize: 32, marginBottom: 12 }}>🎯</div>
-            <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--ink-2)', marginBottom: 6 }}>
-              {currentLesson?.title}
+          {currentLesson?.type === 'chess' && playerLesson && playerLesson.id === currentLessonId ? (
+            <GuidedChessPlayer
+              lesson={playerLesson}
+              lessonNumber={lessonIndex + 1}
+              totalLessons={allLessons.length}
+              onComplete={handleLessonComplete}
+            />
+          ) : (
+            <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ textAlign: 'center', color: 'var(--ink-3)' }}>
+                <div style={{ fontSize: 32, marginBottom: 12 }}>🎯</div>
+                <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--ink-2)', marginBottom: 6 }}>
+                  {currentLesson?.title}
+                </div>
+                <div style={{ fontSize: 13 }}>{t('player.contentPlaceholder', 'Nội dung bài học sẽ hiển thị ở đây')}</div>
+              </div>
             </div>
-            <div style={{ fontSize: 13 }}>{t('player.contentPlaceholder', 'Nội dung bài học sẽ hiển thị ở đây')}</div>
-          </div>
+          )}
         </div>
       </div>
     </div>
