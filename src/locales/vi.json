@@ -2,6 +2,10 @@
   "nav": {
     "title": "Gambitly",
     "home": "Trang chủ",
+    "browse": "Khám phá",
+    "practice": "Luyện tập",
+    "library": "Thư viện",
+    "notifications": "Thông báo",
     "signIn": "Đăng nhập",
     "createAccount": "Tạo tài khoản",
     "logout": "Đăng xuất",

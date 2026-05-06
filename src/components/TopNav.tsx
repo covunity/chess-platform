@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, NavLink, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 
@@ -53,14 +53,40 @@ export default function TopNav() {
     : user?.email?.charAt(0).toUpperCase() ?? '?'
 
   return (
-    <header role="banner" className="h-16 flex items-center px-14 border-b border-[--border] bg-[--surface]">
-      <Link to="/" className="flex items-center gap-2" aria-label="Gambitly home">
+    <header role="banner" className="h-16 flex items-center border-b border-[--border] bg-[--surface]" style={{ padding: '0 32px', gap: 24 }}>
+      <Link to="/" className="flex items-center gap-2" aria-label="Gambitly home" style={{ flexShrink: 0 }}>
         <span className="logo-mark" aria-hidden="true" />
-        <span className="font-serif text-lg text-[--ink-1]">Gambitly</span>
+        <span style={{ fontFamily: 'var(--font-serif)', fontSize: 20, color: 'var(--ink-1)' }}>Gambitly</span>
       </Link>
 
+      {/* Nav links */}
+      <nav className="flex items-center" style={{ gap: 4 }}>
+        {[
+          { to: '/', labelKey: 'nav.browse', end: true },
+          { to: '/practice', labelKey: 'nav.practice', end: false },
+          { to: '/library', labelKey: 'nav.library', end: false },
+        ].map(link => (
+          <NavLink
+            key={link.to}
+            to={link.to}
+            end={link.end}
+            style={({ isActive }) => ({
+              padding: '8px 12px',
+              borderRadius: 'var(--r-md)',
+              fontSize: 14,
+              color: isActive ? 'var(--ink-1)' : 'var(--ink-2)',
+              background: isActive ? 'var(--surface-2)' : 'transparent',
+              textDecoration: 'none',
+              fontWeight: 500,
+            })}
+          >
+            {t(link.labelKey)}
+          </NavLink>
+        ))}
+      </nav>
+
       {/* Search box */}
-      <div style={{ position: 'relative', marginLeft: 24 }}>
+      <div style={{ position: 'relative', flex: 1, maxWidth: 320 }}>
         <input
           ref={searchRef}
           role="searchbox"
@@ -69,7 +95,7 @@ export default function TopNav() {
           onChange={handleSearchChange}
           placeholder={t('home.searchPlaceholder')}
           style={{
-            width: 320,
+            width: '100%',
             height: 38,
             padding: '0 40px 0 14px',
             borderRadius: 'var(--r-md)',
@@ -99,8 +125,29 @@ export default function TopNav() {
         </span>
       </div>
 
-      <nav className="ml-auto flex items-center gap-4 text-sm text-[--ink-2]">
-        <Link to="/">{t('nav.home')}</Link>
+      <div className="flex items-center" style={{ marginLeft: 'auto', gap: 8 }}>
+        {/* Bell icon */}
+        <button
+          type="button"
+          aria-label={t('nav.notifications')}
+          style={{
+            width: 38,
+            height: 38,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'transparent',
+            border: 'none',
+            borderRadius: 'var(--r-md)',
+            cursor: 'pointer',
+            color: 'var(--ink-2)',
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+          </svg>
+        </button>
 
         {user ? (
           <div className="nav-avatar-menu" ref={menuRef}>
@@ -135,7 +182,7 @@ export default function TopNav() {
             <Link to="/signup" className="btn btn-accent btn-sm">{t('nav.createAccount')}</Link>
           </>
         )}
-      </nav>
+      </div>
     </header>
   )
 }

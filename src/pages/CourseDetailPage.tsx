@@ -169,7 +169,7 @@ function LessonRow({
             type="button"
             data-testid={`free-preview-pill-${lesson.id}`}
             onClick={e => { e.stopPropagation(); onPreview(lesson) }}
-            className="pill pill-accent"
+            className="pill pill-success"
             style={{ cursor: 'pointer', border: 'none' }}
           >
             {t('courseDetail.freePreviewPill')}

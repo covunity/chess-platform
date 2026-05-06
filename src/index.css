@@ -36,7 +36,14 @@
   --board-light: #EFE3C7;
   --board-dark: #B58863;
   --board-border: #4A3722;
-  --board-move: rgba(255, 200, 100, 0.55);
+  --board-highlight: oklch(0.85 0.14 95 / 0.55);
+  --board-move: oklch(0.78 0.13 145 / 0.42);
+  --board-error: oklch(0.65 0.18 25 / 0.55);
+
+  /* Shadows */
+  --sh-1: 0 1px 3px rgba(20,22,26,0.06), 0 1px 2px rgba(20,22,26,0.04);
+  --sh-2: 0 4px 12px rgba(20,22,26,0.08), 0 2px 4px rgba(20,22,26,0.05);
+  --sh-3: 0 12px 36px rgba(20,22,26,0.12), 0 2px 8px rgba(20,22,26,0.06);
 
   /* Typography */
   --font-sans: 'Inter', system-ui, sans-serif;
@@ -113,7 +120,7 @@ body {
   height: 44px;
   padding: 0 12px;
   border-radius: var(--r-md);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   font-family: var(--font-sans);
   font-size: 14px;
   color: var(--ink-1);
