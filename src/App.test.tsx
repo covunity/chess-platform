@@ -12,6 +12,10 @@ vi.mock('./lib/supabase', () => ({
   },
 }))
 
+vi.mock('./lib/coursesApi', () => ({
+  listPublishedCourses: vi.fn().mockResolvedValue({ courses: [], error: null }),
+}))
+
 describe('App', () => {
   it('renders without crashing', () => {
     render(

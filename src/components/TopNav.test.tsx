@@ -112,4 +112,17 @@ describe('TopNav', () => {
       })
     })
   })
+
+  describe('search box', () => {
+    it('renders a search input in the nav', () => {
+      renderNav()
+      expect(screen.getByRole('searchbox')).toBeInTheDocument()
+    })
+
+    it('search input has placeholder text', () => {
+      renderNav()
+      const input = screen.getByRole('searchbox')
+      expect(input).toHaveAttribute('placeholder')
+    })
+  })
 })

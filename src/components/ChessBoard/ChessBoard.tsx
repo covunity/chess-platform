@@ -9,6 +9,7 @@ export interface ChessBoardProps {
   perspective?: "white" | "black";
   lastMove?: LastMove;
   size?: number;
+  showCoords?: boolean;
 }
 
 // Unicode chess pieces by piece type and color
@@ -51,6 +52,7 @@ export default function ChessBoard({
   perspective = "white",
   lastMove,
   size = 320,
+  showCoords: _showCoords = true,
 }: ChessBoardProps) {
   const board = parseFen(fen);
   const squareSize = size / 8;

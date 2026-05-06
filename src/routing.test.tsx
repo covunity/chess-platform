@@ -19,6 +19,10 @@ vi.mock('./lib/creatorApi', () => ({
   listChapters: vi.fn().mockResolvedValue({ chapters: [], error: null }),
 }))
 
+vi.mock('./lib/coursesApi', () => ({
+  listPublishedCourses: vi.fn().mockResolvedValue({ courses: [], error: null }),
+}))
+
 function renderAt(path: string) {
   return render(
     <MemoryRouter initialEntries={[path]}>
