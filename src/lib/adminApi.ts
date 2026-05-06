@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-export type UserRole = 'learner' | 'coach' | 'admin'
+export type UserRole = 'learner' | 'creator' | 'admin'
 
 export interface AdminUser {
   id: string

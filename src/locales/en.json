@@ -42,7 +42,7 @@
       "colCoursesPurchased": "Courses purchased",
       "colCoursesCreated": "Courses created",
       "rolelearner": "Learner",
-      "rolecoach": "Creator",
+      "rolecreator": "Creator",
       "roleadmin": "Admin",
       "changeRole": "Change role",
       "changeRoleTitle": "Change role?",

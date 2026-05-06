@@ -14,7 +14,7 @@ export default function ProtectedCreatorRoute() {
     return <Navigate to="/login" replace />
   }
 
-  if (profile?.role !== 'coach' && profile?.role !== 'admin') {
+  if (profile?.role !== 'creator' && profile?.role !== 'admin') {
     return (
       <div
         data-testid="forbidden-creator"

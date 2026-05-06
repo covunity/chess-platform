@@ -34,7 +34,7 @@ const mockUsers = [
     email: 'bob@test.com',
     name: 'Bob',
     avatar_url: null,
-    role: 'coach' as const,
+    role: 'creator' as const,
     created_at: '2026-02-20T12:00:00Z',
   },
 ]
@@ -94,17 +94,14 @@ describe('AdminUsersPage', () => {
     vi.useFakeTimers()
     renderPage()
 
-    // Flush initial render effects
     await act(async () => {})
     expect(mockListUsers).toHaveBeenCalledTimes(1)
 
     const search = screen.getByRole('searchbox')
     fireEvent.change(search, { target: { value: 'alice' } })
 
-    // Before debounce fires — still only one call
     expect(mockListUsers).toHaveBeenCalledTimes(1)
 
-    // Advance past debounce
     await act(async () => {
       vi.advanceTimersByTime(300)
     })
@@ -150,7 +147,7 @@ describe('AdminUsersPage', () => {
   })
 
   it('calls changeUserRole and updates pill on Confirm', async () => {
-    const updatedAlice = { ...mockUsers[0], role: 'coach' as const }
+    const updatedAlice = { ...mockUsers[0], role: 'creator' as const }
     mockChangeUserRole.mockResolvedValue({ user: updatedAlice, error: null })
 
     renderPage()
@@ -163,11 +160,10 @@ describe('AdminUsersPage', () => {
       expect(mockChangeUserRole).toHaveBeenCalledWith(
         expect.anything(),
         'u1',
-        'coach'
+        'creator'
       )
     })
 
-    // Alice's pill should now show "Người tạo"
     await waitFor(() => {
       const pills = screen.getAllByText('Người tạo')
       expect(pills.length).toBeGreaterThanOrEqual(2)

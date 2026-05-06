@@ -38,7 +38,7 @@ describe('ProtectedCreatorRoute', () => {
     expect(screen.queryByTestId('forbidden-creator')).not.toBeInTheDocument()
   })
 
-  it('shows forbidden page when user is not a coach or admin', () => {
+  it('shows forbidden page when user is not a creator or admin', () => {
     mockUseAuth.mockReturnValue({
       user: { id: 'u1' },
       loading: false,
@@ -49,11 +49,11 @@ describe('ProtectedCreatorRoute', () => {
     expect(screen.getByTestId('forbidden-creator')).toBeInTheDocument()
   })
 
-  it('renders outlet for coach role', () => {
+  it('renders outlet for creator role', () => {
     mockUseAuth.mockReturnValue({
       user: { id: 'u1' },
       loading: false,
-      profile: { id: 'u1', role: 'coach' },
+      profile: { id: 'u1', role: 'creator' },
       profileLoading: false,
     })
     const { container } = renderRoute()

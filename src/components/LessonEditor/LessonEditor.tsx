@@ -3,18 +3,35 @@ import ChessBoard from "../ChessBoard/ChessBoard";
 import { parsePgn } from "../../utils/parsePgn";
 import type { PgnParseResult } from "../../utils/parsePgn";
 
+export type LessonType = 'video' | 'chess' | 'puzzle';
+
 export interface Lesson {
   id: string;
   title: string;
   pgn_data: string;
   board_perspective: "white" | "black";
   is_free_preview: boolean;
+  type?: LessonType;
 }
 
 export interface LessonEditorProps {
   lesson: Lesson;
   onSave: (data: Pick<Lesson, "pgn_data" | "board_perspective" | "is_free_preview" | "title">) => void;
+  chapterLessons?: Array<{ id: string; title: string; type: LessonType }>;
+  onSelectLesson?: (id: string) => void;
 }
+
+const LESSON_TYPE_ICON: Record<LessonType, string> = {
+  video: '▶',
+  chess: '♟',
+  puzzle: '📋',
+};
+
+const LESSON_TABS: Array<{ value: LessonType; label: string }> = [
+  { value: 'video', label: 'Video' },
+  { value: 'chess', label: 'Chess lesson' },
+  { value: 'puzzle', label: 'Puzzle' },
+];
 
 const MAX_PGN_CHARS = 5000;
 
@@ -31,12 +48,13 @@ function formatNumber(n: number): string {
   return n.toLocaleString("en-US");
 }
 
-export default function LessonEditor({ lesson, onSave }: LessonEditorProps) {
+export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectLesson }: LessonEditorProps) {
   const [title, setTitle] = useState(lesson.title);
   const [pgn, setPgn] = useState(lesson.pgn_data);
   const [perspective, setPerspective] = useState<"white" | "black">(lesson.board_perspective);
   const [isFreePreview, setIsFreePreview] = useState(lesson.is_free_preview);
   const [parseResult, setParseResult] = useState<PgnParseResult | null>(null);
+  const [activeTab, setActiveTab] = useState<LessonType>(lesson.type ?? 'chess');
 
   const parsePgnValue = useCallback((value: string) => {
     if (!value.trim()) {
@@ -63,10 +81,9 @@ export default function LessonEditor({ lesson, onSave }: LessonEditorProps) {
     ? parseResult.moves[parseResult.moves.length - 1]
     : null;
 
-  // Convert algebraic from/to (e.g. "e2", "e4") to [row, col] in white perspective
   function sqToRowCol(sq: string): [number, number] {
-    const col = sq.charCodeAt(0) - 97; // a=0
-    const row = 8 - parseInt(sq[1], 10); // rank 8 = row 0
+    const col = sq.charCodeAt(0) - 97;
+    const row = 8 - parseInt(sq[1], 10);
     return [row, col];
   }
 
@@ -74,7 +91,6 @@ export default function LessonEditor({ lesson, onSave }: LessonEditorProps) {
     ? { from: sqToRowCol(lastMoveInfo.from), to: sqToRowCol(lastMoveInfo.to) }
     : undefined;
 
-  // Find current annotation (for the last move)
   const currentAnnotation = lastMoveInfo
     ? parseResult?.annotations.find((a) => a.moveNumber === lastMoveInfo.moveNumber)
     : undefined;
@@ -111,7 +127,7 @@ export default function LessonEditor({ lesson, onSave }: LessonEditorProps) {
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "1fr 380px",
+        gridTemplateColumns: "260px 1fr 380px",
         gap: 0,
         background: "var(--surface)",
         border: "1px solid var(--border)",
@@ -120,96 +136,199 @@ export default function LessonEditor({ lesson, onSave }: LessonEditorProps) {
         minHeight: 560,
       }}
     >
-      {/* Left: Editor form */}
-      <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
-        {/* Lesson title */}
-        <div>
-          <label className="label" htmlFor="lesson-title">
-            Lesson title
-          </label>
-          <input
-            id="lesson-title"
-            className="input"
-            type="text"
-            aria-label="Lesson title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
+      {/* Sidebar: lesson list for current chapter */}
+      <div
+        data-testid="lesson-editor-sidebar"
+        style={{
+          background: "var(--surface-2)",
+          borderRight: "1px solid var(--border)",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+      >
+        <div style={{ padding: "16px 16px 8px", borderBottom: "1px solid var(--border)" }}>
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 600,
+              color: "var(--ink-3)",
+              textTransform: "uppercase" as const,
+              letterSpacing: "0.1em",
+            }}
+          >
+            Lessons
+          </span>
         </div>
-
-        {/* Perspective + Free preview row */}
-        <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
-          <div style={{ flex: 1 }}>
-            <span className="label">Board perspective</span>
-            <div style={{ display: "flex", gap: 8 }}>
-              {perspectiveButton("white", "White")}
-              {perspectiveButton("black", "Black")}
-            </div>
-          </div>
-          <div style={{ width: 180 }}>
-            <span className="label">Free preview</span>
+        <div style={{ flex: 1, overflowY: "auto" }}>
+          {(chapterLessons ?? []).map((l) => (
             <button
+              key={l.id}
               type="button"
-              role="button"
-              aria-label="Free preview"
-              aria-pressed={isFreePreview}
-              onClick={() => setIsFreePreview((v) => !v)}
+              data-testid={`sidebar-lesson-${l.id}`}
+              onClick={() => onSelectLesson?.(l.id)}
               style={{
                 width: "100%",
-                height: 36,
+                textAlign: "left",
+                padding: "8px 16px",
+                background: l.id === lesson.id ? "var(--surface-3)" : "transparent",
+                border: "none",
+                borderBottom: "1px solid var(--border)",
+                cursor: "pointer",
+                display: "flex",
+                gap: 8,
+                alignItems: "center",
+                fontSize: 12.5,
+                color: l.id === lesson.id ? "var(--ink-1)" : "var(--ink-2)",
+              }}
+            >
+              <span style={{ width: 16, textAlign: "center", color: "var(--ink-3)", flexShrink: 0 }}>
+                {LESSON_TYPE_ICON[l.type]}
+              </span>
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {l.title}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Center: Editor form */}
+      <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+        {/* Lesson type tabs */}
+        <div style={{ display: "flex", gap: 6 }}>
+          {LESSON_TABS.map((tab) => (
+            <button
+              key={tab.value}
+              type="button"
+              data-testid={`lesson-type-tab-${tab.value}`}
+              aria-pressed={activeTab === tab.value}
+              onClick={() => setActiveTab(tab.value)}
+              style={{
+                padding: "6px 14px",
+                borderRadius: 999,
                 border: "1px solid var(--border)",
-                borderRadius: "var(--r-sm)",
-                background: isFreePreview ? "var(--accent)" : "var(--surface)",
-                color: isFreePreview ? "#fff" : "var(--ink-1)",
+                background: activeTab === tab.value ? "var(--ink-1)" : "var(--surface)",
+                color: activeTab === tab.value ? "#fff" : "var(--ink-2)",
+                fontSize: 12.5,
                 fontWeight: 500,
-                fontSize: 13,
                 cursor: "pointer",
               }}
             >
-              {isFreePreview ? "On" : "Off"}
+              {tab.label}
             </button>
-          </div>
+          ))}
         </div>
 
-        {/* PGN textarea */}
-        <div style={{ flex: 1 }}>
-          <label className="label" htmlFor="pgn-textarea">
-            PGN (with annotations in <code>{"{}"}</code>)
-          </label>
-          <textarea
-            id="pgn-textarea"
-            className="input mono"
-            aria-label="PGN"
-            placeholder={PLACEHOLDER_PGN}
-            value={pgn}
-            onChange={(e) => setPgn(e.target.value)}
-            style={{ height: 180, display: "block" }}
-            maxLength={MAX_PGN_CHARS}
-          />
-
-          {/* Status row */}
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, alignItems: "center" }}>
+        {activeTab === "chess" ? (
+          <>
+            {/* Lesson title */}
             <div>
-              {parseResult === null ? (
-                <span style={{ fontSize: 12, color: "var(--ink-3)" }}>Enter PGN above</span>
-              ) : parseResult.valid ? (
-                <span style={{ fontSize: 12, color: "var(--success)" }}>
-                  ✓ PGN parsed · {moveCount} moves{" "}
-                  {annotationCount > 0
-                    ? `· ${annotationCount} annotation${annotationCount !== 1 ? "s" : ""}`
-                    : "· 0 annotations"}
-                </span>
-              ) : (
-                <span role="alert" style={{ fontSize: 12, color: "var(--danger)" }}>
-                  {parseResult.error ?? "Invalid PGN"}
-                </span>
-              )}
+              <label className="label" htmlFor="lesson-title">
+                Lesson title
+              </label>
+              <input
+                id="lesson-title"
+                className="input"
+                type="text"
+                aria-label="Lesson title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
             </div>
-            <span style={{ fontSize: 12, color: "var(--ink-3)" }}>
-              {formatNumber(pgn.length)} / {formatNumber(MAX_PGN_CHARS)} chars
-            </span>
+
+            {/* Perspective + Free preview row */}
+            <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
+              <div style={{ flex: 1 }}>
+                <span className="label">Board perspective</span>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {perspectiveButton("white", "White")}
+                  {perspectiveButton("black", "Black")}
+                </div>
+              </div>
+              <div style={{ width: 180 }}>
+                <span className="label">Free preview</span>
+                <button
+                  type="button"
+                  role="button"
+                  aria-label="Free preview"
+                  aria-pressed={isFreePreview}
+                  onClick={() => setIsFreePreview((v) => !v)}
+                  style={{
+                    width: "100%",
+                    height: 36,
+                    border: "1px solid var(--border)",
+                    borderRadius: "var(--r-sm)",
+                    background: isFreePreview ? "var(--accent)" : "var(--surface)",
+                    color: isFreePreview ? "#fff" : "var(--ink-1)",
+                    fontWeight: 500,
+                    fontSize: 13,
+                    cursor: "pointer",
+                  }}
+                >
+                  {isFreePreview ? "On" : "Off"}
+                </button>
+              </div>
+            </div>
+
+            {/* PGN textarea */}
+            <div style={{ flex: 1 }}>
+              <label className="label" htmlFor="pgn-textarea">
+                PGN (with annotations in <code>{"{}"}</code>)
+              </label>
+              <textarea
+                id="pgn-textarea"
+                className="input mono"
+                aria-label="PGN"
+                placeholder={PLACEHOLDER_PGN}
+                value={pgn}
+                onChange={(e) => setPgn(e.target.value)}
+                style={{ height: 180, display: "block" }}
+                maxLength={MAX_PGN_CHARS}
+              />
+
+              {/* Status row */}
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, alignItems: "center" }}>
+                <div>
+                  {parseResult === null ? (
+                    <span style={{ fontSize: 12, color: "var(--ink-3)" }}>Enter PGN above</span>
+                  ) : parseResult.valid ? (
+                    <span style={{ fontSize: 12, color: "var(--success)" }}>
+                      ✓ PGN parsed · {moveCount} moves{" "}
+                      {annotationCount > 0
+                        ? `· ${annotationCount} annotation${annotationCount !== 1 ? "s" : ""}`
+                        : "· 0 annotations"}
+                    </span>
+                  ) : (
+                    <span role="alert" style={{ fontSize: 12, color: "var(--danger)" }}>
+                      {parseResult.error ?? "Invalid PGN"}
+                    </span>
+                  )}
+                </div>
+                <span style={{ fontSize: 12, color: "var(--ink-3)" }}>
+                  {formatNumber(pgn.length)} / {formatNumber(MAX_PGN_CHARS)} chars
+                </span>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div
+            data-testid={`lesson-type-placeholder-${activeTab}`}
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "var(--ink-3)",
+              fontSize: 13,
+              border: "1px dashed var(--border)",
+              borderRadius: "var(--r-sm)",
+              padding: 32,
+            }}
+          >
+            {activeTab === "video" ? "Video editor coming soon" : "Puzzle editor coming soon"}
           </div>
-        </div>
+        )}
       </div>
 
       {/* Right: Live preview pane */}

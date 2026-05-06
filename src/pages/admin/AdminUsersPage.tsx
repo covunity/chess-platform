@@ -9,7 +9,7 @@ const PAGE_SIZE = 20
 
 const ROLE_PILL_CLASS: Record<UserRole, string> = {
   learner: 'pill',
-  coach: 'pill pill-accent',
+  creator: 'pill pill-accent',
   admin: 'pill',
 }
 
@@ -97,7 +97,7 @@ function UserAvatar({ name, email }: { name: string | null; email: string }) {
 }
 
 function nextRole(current: UserRole): UserRole {
-  return current === 'learner' ? 'coach' : 'learner'
+  return current === 'learner' ? 'creator' : 'learner'
 }
 
 export default function AdminUsersPage() {

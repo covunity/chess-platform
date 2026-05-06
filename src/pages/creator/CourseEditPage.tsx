@@ -95,8 +95,8 @@ function LessonRow({ lesson, onDelete, onToggleFreePreview, onOpenEditor, t }: L
         <span
           className="flex-1 text-[--ink-2] cursor-pointer"
           style={{ fontSize: 12.5 }}
-          onClick={() => lesson.type === 'chess' ? onOpenEditor(lesson) : setEditing(true)}
-          data-testid={lesson.type === 'chess' ? `open-chess-editor-${lesson.id}` : undefined}
+          onClick={() => onOpenEditor(lesson)}
+          data-testid={`open-editor-${lesson.id}`}
         >
           {title}
         </span>
@@ -159,7 +159,7 @@ function ChapterBlock({ chapter, onDeleteChapter, onCreateLesson, onDeleteLesson
         className="flex items-center gap-2 px-3 py-2 hover:bg-[--surface-3] group"
         style={{ cursor: 'grab' }}
       >
-        <span className="text-[--ink-4] text-xs" style={{ userSelect: 'none' }}>⠿</span>
+        <span className="text-[--ink-4] text-xs" style={{ userSelect: 'none' }}>⠷</span>
         {editing ? (
           <input
             className="input flex-1"
@@ -307,6 +307,11 @@ export default function CourseEditPage() {
     })))
   }
 
+  const selectedChapterLessons = selectedLesson
+    ? (chapters.find(ch => ch.id === selectedLesson.chapter_id)?.lessons ?? [])
+        .map(l => ({ id: l.id, title: l.title, type: l.type }))
+    : []
+
   return (
     <div className="flex min-h-screen">
       {/* Curriculum Sidebar */}
@@ -358,7 +363,7 @@ export default function CourseEditPage() {
 
       {/* Main editor pane */}
       <main className="flex-1 p-8 overflow-y-auto">
-        {selectedLesson && selectedLesson.type === 'chess' ? (
+        {selectedLesson ? (
           <LessonEditor
             lesson={{
               id: selectedLesson.id,
@@ -366,6 +371,14 @@ export default function CourseEditPage() {
               pgn_data: selectedLesson.pgn_data ?? '',
               board_perspective: selectedLesson.board_perspective ?? 'white',
               is_free_preview: selectedLesson.free_preview,
+              type: selectedLesson.type,
+            }}
+            chapterLessons={selectedChapterLessons}
+            onSelectLesson={id => {
+              const lesson = chapters
+                .flatMap(ch => ch.lessons ?? [])
+                .find(l => l.id === id)
+              if (lesson) setSelectedLesson(lesson)
             }}
             onSave={handleSaveLesson}
           />
