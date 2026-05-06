@@ -3,7 +3,7 @@ import { Link, NavLink, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 
-export default function TopNav() {
+export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } = {}) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { user, signOut } = useAuth()
@@ -95,7 +95,7 @@ export default function TopNav() {
       </nav>
 
       {/* Search box */}
-      <div style={{ position: 'relative', flex: 1, maxWidth: 320 }}>
+      {!hideSearch && <div style={{ position: 'relative', flex: 1, maxWidth: 320 }}>
         <input
           ref={searchRef}
           role="searchbox"
@@ -132,7 +132,7 @@ export default function TopNav() {
         >
           ⌘K
         </span>
-      </div>
+      </div>}
 
       <div className="flex items-center" style={{ marginLeft: 'auto', gap: 8 }}>
         {/* Bell icon */}
