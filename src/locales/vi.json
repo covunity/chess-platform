@@ -57,6 +57,96 @@
     },
     "comingSoon": "Sắp ra mắt"
   },
+  "creator": {
+    "forbidden": {
+      "title": "403 — Không có quyền truy cập",
+      "body": "Bạn cần tài khoản Người tạo để truy cập trang này."
+    },
+    "studio": {
+      "eyebrow": "CREATOR STUDIO",
+      "heading": "Khóa học của bạn",
+      "newCourse": "+ Khóa học mới",
+      "kpi": {
+        "students": "Tổng học viên",
+        "studentsDetail": "+124 tháng này",
+        "revenue": "Doanh thu gộp",
+        "revenueDetail": "Trước phí nền tảng 20%",
+        "payout": "Của bạn (80%)",
+        "payoutDetail": "Thanh toán hàng tháng",
+        "rating": "Đánh giá TB",
+        "ratingDetail": "Trên {{count}} khóa học"
+      },
+      "table": {
+        "heading": "Tất cả khóa học",
+        "filterAll": "Tất cả",
+        "filterPublished": "Đã xuất bản",
+        "filterPending": "Chờ duyệt",
+        "filterDraft": "Nháp",
+        "export": "Xuất",
+        "colCourse": "Khóa học",
+        "colStatus": "Trạng thái",
+        "colStudents": "Học viên",
+        "colRevenue": "Doanh thu",
+        "colRating": "Đánh giá",
+        "colActions": "",
+        "empty": "Chưa có khóa học. Tạo khóa học đầu tiên của bạn!",
+        "kebabEdit": "Chỉnh sửa",
+        "kebabDelete": "Xóa",
+        "kebabDuplicate": "Nhân bản"
+      },
+      "statusPublished": "Đã xuất bản",
+      "statusPending": "Chờ duyệt",
+      "statusDraft": "Nháp"
+    },
+    "newCourse": {
+      "pageTitle": "Khóa học mới",
+      "heading": "Tạo khóa học mới",
+      "labelTitle": "Tiêu đề",
+      "labelDescription": "Mô tả",
+      "descriptionHelper": "Hỗ trợ Markdown",
+      "labelThumbnail": "Ảnh bìa",
+      "thumbnailHint": "Kéo thả hoặc nhấn để tải lên. JPG/PNG, tối đa 5 MB, tỷ lệ 16:9.",
+      "labelPrice": "Giá (₫)",
+      "priceHelper": "0 cho miễn phí",
+      "labelLevel": "Cấp độ",
+      "levelBeginner": "Cơ bản",
+      "levelIntermediate": "Trung cấp",
+      "levelAdvanced": "Nâng cao",
+      "labelLanguage": "Ngôn ngữ",
+      "languageVi": "Tiếng Việt",
+      "languageEn": "Tiếng Anh",
+      "labelTags": "Thẻ",
+      "tagsHelper": "Phân tách bằng dấu phẩy, tối đa 10 thẻ",
+      "cancel": "Hủy",
+      "submit": "Tạo khóa học",
+      "validationTitle": "Tiêu đề là bắt buộc.",
+      "validationTitleMax": "Tiêu đề không được vượt quá 200 ký tự."
+    },
+    "courseEdit": {
+      "curriculum": "CHƯƠNG TRÌNH HỌC",
+      "addChapter": "+ Thêm chương",
+      "addLesson": "+ Thêm bài học",
+      "chapterPlaceholder": "Tiêu đề chương",
+      "lessonPlaceholder": "Tiêu đề bài học",
+      "deleteChapterConfirm": "Xóa chương này và toàn bộ bài học?",
+      "deleteLessonConfirm": "Xóa bài học này?",
+      "freePreview": "Xem thử miễn phí",
+      "typeVideo": "Video",
+      "typeChess": "Cờ vua",
+      "typePuzzle": "Bài tập",
+      "renameChapter": "Đổi tên chương",
+      "deleteChapter": "Xóa chương",
+      "deleteLesson": "Xóa bài học",
+      "save": "Lưu",
+      "cancel": "Hủy"
+    },
+    "deleteConfirm": {
+      "title": "Xóa khóa học?",
+      "body": "Thao tác này sẽ xóa {{chapters}} chương và {{lessons}} bài học.",
+      "cancel": "Hủy",
+      "confirm": "Xóa"
+    }
+  },
   "auth": {
     "brand": {
       "headline1": "Learn chess",

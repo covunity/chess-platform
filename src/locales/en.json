@@ -57,6 +57,96 @@
     },
     "comingSoon": "Coming soon"
   },
+  "creator": {
+    "forbidden": {
+      "title": "403 — Access Denied",
+      "body": "You need a Creator account to access this page."
+    },
+    "studio": {
+      "eyebrow": "CREATOR STUDIO",
+      "heading": "Your courses",
+      "newCourse": "+ New course",
+      "kpi": {
+        "students": "Total students",
+        "studentsDetail": "+124 this month",
+        "revenue": "Gross revenue",
+        "revenueDetail": "Before 20% platform fee",
+        "payout": "Your payout (80%)",
+        "payoutDetail": "Settled monthly",
+        "rating": "Avg. rating",
+        "ratingDetail": "Across {{count}} courses"
+      },
+      "table": {
+        "heading": "All courses",
+        "filterAll": "All",
+        "filterPublished": "Published",
+        "filterPending": "Pending",
+        "filterDraft": "Draft",
+        "export": "Export",
+        "colCourse": "Course",
+        "colStatus": "Status",
+        "colStudents": "Students",
+        "colRevenue": "Revenue",
+        "colRating": "Rating",
+        "colActions": "",
+        "empty": "No courses yet. Create your first course!",
+        "kebabEdit": "Edit",
+        "kebabDelete": "Delete",
+        "kebabDuplicate": "Duplicate"
+      },
+      "statusPublished": "Published",
+      "statusPending": "Pending",
+      "statusDraft": "Draft"
+    },
+    "newCourse": {
+      "pageTitle": "New course",
+      "heading": "Create a new course",
+      "labelTitle": "Title",
+      "labelDescription": "Description",
+      "descriptionHelper": "Markdown supported",
+      "labelThumbnail": "Thumbnail",
+      "thumbnailHint": "Drag & drop or click to upload. JPG/PNG, max 5 MB, 16:9 recommended.",
+      "labelPrice": "Price (₫)",
+      "priceHelper": "0 for free",
+      "labelLevel": "Level",
+      "levelBeginner": "Beginner",
+      "levelIntermediate": "Intermediate",
+      "levelAdvanced": "Advanced",
+      "labelLanguage": "Language",
+      "languageVi": "Vietnamese",
+      "languageEn": "English",
+      "labelTags": "Tags",
+      "tagsHelper": "Separate with commas, max 10 tags",
+      "cancel": "Cancel",
+      "submit": "Create course",
+      "validationTitle": "Title is required.",
+      "validationTitleMax": "Title must not exceed 200 characters."
+    },
+    "courseEdit": {
+      "curriculum": "CURRICULUM",
+      "addChapter": "+ Add chapter",
+      "addLesson": "+ Add lesson",
+      "chapterPlaceholder": "Chapter title",
+      "lessonPlaceholder": "Lesson title",
+      "deleteChapterConfirm": "Delete this chapter and all its lessons?",
+      "deleteLessonConfirm": "Delete this lesson?",
+      "freePreview": "Free preview",
+      "typeVideo": "Video",
+      "typeChess": "Chess",
+      "typePuzzle": "Puzzle",
+      "renameChapter": "Rename chapter",
+      "deleteChapter": "Delete chapter",
+      "deleteLesson": "Delete lesson",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "deleteConfirm": {
+      "title": "Delete course?",
+      "body": "This will delete {{chapters}} chapters and {{lessons}} lessons.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    }
+  },
   "auth": {
     "brand": {
       "headline1": "Learn chess",
