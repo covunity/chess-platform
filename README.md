@@ -1,73 +1,87 @@
-# React + TypeScript + Vite
+# Gambitly — Chess Course Platform
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern SaaS platform for learning chess through structured courses. Built with React 18, TypeScript, Vite, and Supabase. Vietnamese-first UI with English support.
 
-Currently, two official plugins are available:
+## Tech stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Frontend**: React 18 + TypeScript + Vite
+- **Styling**: Tailwind CSS + custom design tokens + shadcn/ui
+- **Routing**: React Router v7
+- **i18n**: react-i18next (Vietnamese default, English fallback)
+- **Backend**: Supabase (auth, database, storage)
+- **CI/CD**: GitHub Actions → Vercel
 
-## React Compiler
+## Getting started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Prerequisites
 
-## Expanding the ESLint configuration
+- Node.js 20+
+- npm 10+
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 1. Clone and install
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+git clone https://github.com/haunguyen1064/chess-course-platform.git
+cd chess-course-platform
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Configure environment
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cp .env.example .env
 ```
+
+Open `.env` and fill in your Supabase credentials:
+
+```
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
+
+### 3. Start dev server
+
+```bash
+npm run dev
+```
+
+App runs at **http://localhost:5173**.
+
+## Available scripts
+
+| Command | Description |
+|---|---|
+| `npm run dev` | Start development server with HMR |
+| `npm run build` | Type-check and build for production |
+| `npm run preview` | Preview the production build locally |
+| `npm test` | Run test suite (Vitest) |
+| `npm run test:watch` | Run tests in watch mode |
+| `npm run lint` | Lint with ESLint |
+
+## Project structure
+
+```
+src/
+├── components/       # Shared UI components (TopNav, Footer)
+├── pages/            # Route-level page components
+├── locales/          # Translation files (vi.json, en.json)
+├── lib/              # Utilities (supabase client, cn helper)
+├── i18n.ts           # i18next configuration
+└── main.tsx          # App entry point
+```
+
+## Design system
+
+Design tokens are defined as CSS custom properties in `src/index.css`:
+
+- **Colors**: `--bg`, `--surface`, `--ink-1..4`, `--accent` (teal), semantic `--success/warning/danger`
+- **Typography**: Inter (UI), Newsreader (display/serif), JetBrains Mono (code/PGN)
+- **Radius**: `--r-sm` (6px) → `--r-2xl` (28px)
+- **Shared classes**: `.btn`, `.card`, `.pill`, `.input`, `.avatar`, `.logo-mark`
+
+## Deployment
+
+Pushes to `main` automatically deploy to Vercel via GitHub Actions. Set the following environment variables in your Vercel project settings:
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
