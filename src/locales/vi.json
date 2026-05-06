@@ -1,0 +1,21 @@
+{
+  "nav": {
+    "title": "Gambitly",
+    "home": "Trang chủ"
+  },
+  "home": {
+    "headline": "Học cờ vua cùng các đại kiện tướng",
+    "subheadline": "Khóa học cờ vua chuyên sâu dành cho mọi trình độ"
+  },
+  "terms": {
+    "title": "Điều khoản dịch vụ"
+  },
+  "privacy": {
+    "title": "Chính sách quyền riêng tư"
+  },
+  "notFound": {
+    "heading": "Looks like this position isn't on the board.",
+    "body": "Trang bạn tìm kiếm không tồn tại.",
+    "cta": "Về trang chủ"
+  }
+}

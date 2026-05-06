@@ -1,0 +1,21 @@
+{
+  "nav": {
+    "title": "Gambitly",
+    "home": "Home"
+  },
+  "home": {
+    "headline": "Learn chess with grandmasters",
+    "subheadline": "In-depth chess courses for all skill levels"
+  },
+  "terms": {
+    "title": "Terms of Service"
+  },
+  "privacy": {
+    "title": "Privacy Policy"
+  },
+  "notFound": {
+    "heading": "Looks like this position isn't on the board.",
+    "body": "The page you're looking for doesn't exist.",
+    "cta": "Back to home"
+  }
+}

@@ -1,0 +1,152 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Newsreader:ital,wght@0,400;0,600;1,400;1,600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@import "tailwindcss";
+
+:root {
+  /* Backgrounds */
+  --bg: #FAFAF7;
+  --surface: #FFFFFF;
+  --surface-2: #F4F2EC;
+  --surface-3: #ECE9E1;
+
+  /* Ink */
+  --ink-1: #15171A;
+  --ink-2: #4A5058;
+  --ink-3: #7A808A;
+  --ink-4: #A8AEB6;
+
+  /* Borders */
+  --border: #EAE7DD;
+  --border-strong: #D9D5C7;
+
+  /* Accent (teal) */
+  --accent: oklch(0.62 0.12 200);
+  --accent-soft: oklch(0.95 0.03 200);
+  --accent-ink: oklch(0.32 0.08 200);
+
+  /* Semantic */
+  --success: oklch(0.62 0.12 150);
+  --success-soft: oklch(0.95 0.03 150);
+  --warning: oklch(0.72 0.13 75);
+  --warning-soft: oklch(0.97 0.04 75);
+  --danger: oklch(0.58 0.16 25);
+  --danger-soft: oklch(0.97 0.03 25);
+
+  /* Chess board */
+  --board-light: #EFE3C7;
+  --board-dark: #B58863;
+  --board-border: #4A3722;
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-serif: 'Newsreader', Georgia, serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Radius */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 20px;
+  --r-2xl: 28px;
+
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--ink-1);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+}
+
+/* ── Shared components ── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: var(--r-md);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: opacity 0.15s;
+}
+.btn:hover { opacity: 0.88; }
+
+.btn-sm { height: 32px; padding: 0 14px; font-size: 13px; }
+.btn-lg { height: 52px; padding: 0 28px; font-size: 15px; }
+
+.btn-primary  { background: var(--ink-1); color: #fff; }
+.btn-accent   { background: var(--accent); color: #fff; }
+.btn-secondary{ background: transparent; color: var(--ink-1); border-color: var(--border-strong); }
+.btn-ghost    { background: transparent; color: var(--ink-2); }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--surface-3);
+  color: var(--ink-2);
+}
+.pill-accent  { background: var(--accent-soft);   color: var(--accent-ink); }
+.pill-success { background: var(--success-soft);  color: var(--success); }
+.pill-warning { background: var(--warning-soft);  color: var(--warning); }
+.pill-danger  { background: var(--danger-soft);   color: var(--danger); }
+
+.input {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--ink-1);
+  background: var(--surface);
+  outline: none;
+}
+.input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.logo-mark {
+  width: 24px;
+  height: 24px;
+  background:
+    linear-gradient(135deg, var(--ink-1) 25%, transparent 25%) 0 0,
+    linear-gradient(135deg, transparent 75%, var(--ink-1) 75%) 0 0,
+    linear-gradient(135deg, transparent 25%, var(--ink-1) 25%) 6px 6px,
+    linear-gradient(135deg, var(--ink-1) 75%, transparent 75%) 6px 6px;
+  background-size: 12px 12px;
+  background-color: var(--surface-3);
+  border-radius: var(--r-sm);
+  display: inline-block;
+}
