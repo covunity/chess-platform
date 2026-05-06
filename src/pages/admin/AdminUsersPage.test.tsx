@@ -1,0 +1,176 @@
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { vi, beforeEach, afterEach } from 'vitest'
+import { MemoryRouter } from 'react-router-dom'
+import { I18nextProvider } from 'react-i18next'
+import i18n from '../../i18n'
+import AdminUsersPage from './AdminUsersPage'
+
+const { mockListUsers, mockChangeUserRole } = vi.hoisted(() => ({
+  mockListUsers: vi.fn(),
+  mockChangeUserRole: vi.fn(),
+}))
+
+vi.mock('../../lib/adminApi', () => ({
+  listUsers: mockListUsers,
+  changeUserRole: mockChangeUserRole,
+}))
+
+vi.mock('../../lib/supabase', () => ({
+  supabase: {},
+}))
+
+const mockUsers = [
+  {
+    id: 'u1',
+    email: 'alice@test.com',
+    name: 'Alice',
+    avatar_url: null,
+    role: 'learner' as const,
+    created_at: '2026-01-15T10:00:00Z',
+  },
+  {
+    id: 'u2',
+    email: 'bob@test.com',
+    name: 'Bob',
+    avatar_url: null,
+    role: 'coach' as const,
+    created_at: '2026-02-20T12:00:00Z',
+  },
+]
+
+function renderPage() {
+  return render(
+    <I18nextProvider i18n={i18n}>
+      <MemoryRouter>
+        <AdminUsersPage />
+      </MemoryRouter>
+    </I18nextProvider>
+  )
+}
+
+describe('AdminUsersPage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockListUsers.mockResolvedValue({ users: mockUsers, total: 2, error: null })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('renders search input', () => {
+    renderPage()
+    expect(screen.getByRole('searchbox')).toBeInTheDocument()
+  })
+
+  it('renders table column headers', () => {
+    renderPage()
+    expect(screen.getByText(/tên/i)).toBeInTheDocument()
+    expect(screen.getByText(/email/i)).toBeInTheDocument()
+    expect(screen.getByText(/vai trò/i)).toBeInTheDocument()
+    expect(screen.getByText(/ngày đăng ký/i)).toBeInTheDocument()
+    expect(screen.getByText(/khóa học đã mua/i)).toBeInTheDocument()
+    expect(screen.getByText(/khóa học đã tạo/i)).toBeInTheDocument()
+  })
+
+  it('renders user rows after loading', async () => {
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByText('Alice')).toBeInTheDocument()
+      expect(screen.getByText('Bob')).toBeInTheDocument()
+    })
+  })
+
+  it('renders role pills for each user', async () => {
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByText('Học viên')).toBeInTheDocument()
+      expect(screen.getByText('Người tạo')).toBeInTheDocument()
+    })
+  })
+
+  it('calls listUsers with search term after debounce (300ms)', async () => {
+    vi.useFakeTimers()
+    renderPage()
+
+    // Flush initial render effects
+    await act(async () => {})
+    expect(mockListUsers).toHaveBeenCalledTimes(1)
+
+    const search = screen.getByRole('searchbox')
+    fireEvent.change(search, { target: { value: 'alice' } })
+
+    // Before debounce fires — still only one call
+    expect(mockListUsers).toHaveBeenCalledTimes(1)
+
+    // Advance past debounce
+    await act(async () => {
+      vi.advanceTimersByTime(300)
+    })
+
+    expect(mockListUsers).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ search: 'alice', page: 1 })
+    )
+  })
+
+  it('opens role change dialog when action button clicked', async () => {
+    renderPage()
+    await waitFor(() => screen.getByText('Alice'))
+
+    const actionButtons = screen.getAllByRole('button', { name: /đổi vai trò/i })
+    await userEvent.click(actionButtons[0])
+
+    expect(screen.getByTestId('role-change-dialog')).toBeInTheDocument()
+    expect(screen.getByText(/thay đổi vai trò\?/i)).toBeInTheDocument()
+  })
+
+  it('dialog shows user name and role transition', async () => {
+    renderPage()
+    await waitFor(() => screen.getByText('Alice'))
+
+    await userEvent.click(screen.getAllByRole('button', { name: /đổi vai trò/i })[0])
+
+    const dialog = screen.getByTestId('role-change-dialog')
+    expect(dialog).toHaveTextContent('Alice')
+    expect(dialog).toHaveTextContent('Học viên')
+    expect(dialog).toHaveTextContent('Người tạo')
+  })
+
+  it('closes dialog on Cancel click', async () => {
+    renderPage()
+    await waitFor(() => screen.getByText('Alice'))
+
+    await userEvent.click(screen.getAllByRole('button', { name: /đổi vai trò/i })[0])
+    expect(screen.getByTestId('role-change-dialog')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: /hủy/i }))
+    expect(screen.queryByTestId('role-change-dialog')).not.toBeInTheDocument()
+  })
+
+  it('calls changeUserRole and updates pill on Confirm', async () => {
+    const updatedAlice = { ...mockUsers[0], role: 'coach' as const }
+    mockChangeUserRole.mockResolvedValue({ user: updatedAlice, error: null })
+
+    renderPage()
+    await waitFor(() => screen.getByText('Alice'))
+
+    await userEvent.click(screen.getAllByRole('button', { name: /đổi vai trò/i })[0])
+    await userEvent.click(screen.getByRole('button', { name: /xác nhận/i }))
+
+    await waitFor(() => {
+      expect(mockChangeUserRole).toHaveBeenCalledWith(
+        expect.anything(),
+        'u1',
+        'coach'
+      )
+    })
+
+    // Alice's pill should now show "Người tạo"
+    await waitFor(() => {
+      const pills = screen.getAllByText('Người tạo')
+      expect(pills.length).toBeGreaterThanOrEqual(2)
+    })
+  })
+})

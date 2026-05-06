@@ -22,6 +22,41 @@
     "body": "Trang bạn tìm kiếm không tồn tại.",
     "cta": "Về trang chủ"
   },
+  "admin": {
+    "sidebar": {
+      "eyebrow": "ADMIN",
+      "overview": "Tổng quan",
+      "courseReview": "Duyệt khóa học",
+      "orders": "Đơn hàng",
+      "users": "Người dùng",
+      "reports": "Báo cáo",
+      "settings": "Cài đặt"
+    },
+    "users": {
+      "pageTitle": "Người dùng",
+      "searchPlaceholder": "Tìm theo tên hoặc email...",
+      "colName": "Tên",
+      "colEmail": "Email",
+      "colRole": "Vai trò",
+      "colCreatedAt": "Ngày đăng ký",
+      "colCoursesPurchased": "Khóa học đã mua",
+      "colCoursesCreated": "Khóa học đã tạo",
+      "rolelearner": "Học viên",
+      "rolecoach": "Người tạo",
+      "roleadmin": "Quản trị viên",
+      "changeRole": "Đổi vai trò",
+      "changeRoleTitle": "Thay đổi vai trò?",
+      "changeRoleBody": "Thay đổi {{name}} từ {{from}} thành {{to}}?",
+      "changeRoleWarning": "Thao tác này sẽ cập nhật quyền truy cập của người dùng ngay lập tức.",
+      "cancel": "Hủy",
+      "confirm": "Xác nhận"
+    },
+    "forbidden": {
+      "title": "403 — Không có quyền truy cập",
+      "body": "Bạn không có quyền truy cập trang này."
+    },
+    "comingSoon": "Sắp ra mắt"
+  },
   "auth": {
     "brand": {
       "headline1": "Learn chess",

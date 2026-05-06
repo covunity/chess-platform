@@ -22,6 +22,41 @@
     "body": "The page you're looking for doesn't exist.",
     "cta": "Back to home"
   },
+  "admin": {
+    "sidebar": {
+      "eyebrow": "ADMIN",
+      "overview": "Overview",
+      "courseReview": "Course review",
+      "orders": "Orders",
+      "users": "Users",
+      "reports": "Reports",
+      "settings": "Settings"
+    },
+    "users": {
+      "pageTitle": "Users",
+      "searchPlaceholder": "Search by name or email...",
+      "colName": "Name",
+      "colEmail": "Email",
+      "colRole": "Role",
+      "colCreatedAt": "Registration date",
+      "colCoursesPurchased": "Courses purchased",
+      "colCoursesCreated": "Courses created",
+      "rolelearner": "Learner",
+      "rolecoach": "Creator",
+      "roleadmin": "Admin",
+      "changeRole": "Change role",
+      "changeRoleTitle": "Change role?",
+      "changeRoleBody": "Change {{name}} from {{from}} to {{to}}?",
+      "changeRoleWarning": "This will update the user's access immediately.",
+      "cancel": "Cancel",
+      "confirm": "Confirm"
+    },
+    "forbidden": {
+      "title": "403 — Access Denied",
+      "body": "You don't have permission to access this page."
+    },
+    "comingSoon": "Coming soon"
+  },
   "auth": {
     "brand": {
       "headline1": "Learn chess",

@@ -3,7 +3,7 @@ import { vi, beforeEach } from 'vitest'
 import { AuthProvider, useAuth } from './AuthContext'
 
 const { mockGetSession, mockOnAuthStateChange, mockSignUp, mockSignInWithPassword,
-        mockSignOut, mockResetPasswordForEmail, mockUpdateUser } = vi.hoisted(() => ({
+        mockSignOut, mockResetPasswordForEmail, mockUpdateUser, mockFrom } = vi.hoisted(() => ({
   mockGetSession: vi.fn(),
   mockOnAuthStateChange: vi.fn(),
   mockSignUp: vi.fn(),
@@ -11,6 +11,7 @@ const { mockGetSession, mockOnAuthStateChange, mockSignUp, mockSignInWithPasswor
   mockSignOut: vi.fn(),
   mockResetPasswordForEmail: vi.fn(),
   mockUpdateUser: vi.fn(),
+  mockFrom: vi.fn(),
 }))
 
 vi.mock('../lib/supabase', () => ({
@@ -24,6 +25,7 @@ vi.mock('../lib/supabase', () => ({
       resetPasswordForEmail: mockResetPasswordForEmail,
       updateUser: mockUpdateUser,
     },
+    from: mockFrom,
   },
 }))
 
@@ -55,6 +57,10 @@ describe('AuthContext', () => {
     vi.clearAllMocks()
     mockGetSession.mockResolvedValue({ data: { session: null }, error: null })
     mockOnAuthStateChange.mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } })
+    const chain = { select: vi.fn(), eq: vi.fn(), single: vi.fn().mockResolvedValue({ data: null }) }
+    chain.select.mockReturnValue(chain)
+    chain.eq.mockReturnValue(chain)
+    mockFrom.mockReturnValue(chain)
   })
 
   it('starts with loading true then resolves to false', async () => {
