@@ -15,6 +15,7 @@ const {
   mockListChapters,
   mockUpdateLesson,
   mockSubmitCourseForReview,
+  mockDuplicateCourse,
 } = vi.hoisted(() => ({
   mockListCourses: vi.fn(),
   mockDeleteCourse: vi.fn(),
@@ -24,6 +25,7 @@ const {
   mockListChapters: vi.fn(),
   mockUpdateLesson: vi.fn(),
   mockSubmitCourseForReview: vi.fn(),
+  mockDuplicateCourse: vi.fn(),
 }))
 
 vi.mock('../../lib/creatorApi', () => ({
@@ -35,6 +37,7 @@ vi.mock('../../lib/creatorApi', () => ({
   listChapters: mockListChapters,
   updateLesson: mockUpdateLesson,
   submitCourseForReview: mockSubmitCourseForReview,
+  duplicateCourse: mockDuplicateCourse,
 }))
 
 vi.mock('../../lib/supabase', () => ({ supabase: {} }))
@@ -103,6 +106,7 @@ describe('CreatorStudioPage', () => {
     mockListChapters.mockResolvedValue({ chapters: [], error: null })
     mockUpdateLesson.mockResolvedValue({ lesson: null, error: null })
     mockSubmitCourseForReview.mockResolvedValue({ course: null, error: null })
+    mockDuplicateCourse.mockResolvedValue({ course: null, error: null })
   })
 
   it('renders the CREATOR STUDIO eyebrow', async () => {
@@ -293,6 +297,120 @@ describe('CreatorStudioPage', () => {
     renderPage()
     await waitFor(() => {
       expect(screen.getByTestId('export-csv-btn')).toBeInTheDocument()
+    })
+  })
+
+  it('kebab menu shows Edit, Duplicate, Delete in that order', async () => {
+    renderPage()
+    await waitFor(() => screen.getByText('Chess Fundamentals'))
+
+    const kebabs = screen.getAllByTestId('kebab-btn')
+    await userEvent.click(kebabs[0])
+
+    const edit = screen.getByTestId('kebab-edit-c1')
+    const duplicate = screen.getByTestId('kebab-duplicate-c1')
+    const del = screen.getByTestId('kebab-delete-c1')
+
+    expect(edit.compareDocumentPosition(duplicate) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(duplicate.compareDocumentPosition(del) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('calls duplicateCourse with course id when Duplicate is clicked', async () => {
+    const newCourse = {
+      id: 'c1-copy',
+      creator_id: 'u1',
+      title: 'Copy of Chess Fundamentals',
+      description: null,
+      thumbnail_url: null,
+      price: 0,
+      level: 'beginner',
+      language: 'vi',
+      tags: [],
+      status: 'draft',
+      created_at: '2026-03-01T00:00:00Z',
+      updated_at: '2026-03-01T00:00:00Z',
+    }
+    mockDuplicateCourse.mockResolvedValue({ course: newCourse, error: null })
+
+    renderPage()
+    await waitFor(() => screen.getByText('Chess Fundamentals'))
+
+    const kebabs = screen.getAllByTestId('kebab-btn')
+    await userEvent.click(kebabs[0])
+    await userEvent.click(screen.getByTestId('kebab-duplicate-c1'))
+
+    await waitFor(() => {
+      expect(mockDuplicateCourse).toHaveBeenCalledWith(expect.anything(), 'c1')
+    })
+  })
+
+  it('prepends the duplicated course to the table on success', async () => {
+    const newCourse = {
+      id: 'c1-copy',
+      creator_id: 'u1',
+      title: 'Copy of Chess Fundamentals',
+      description: null,
+      thumbnail_url: null,
+      price: 0,
+      level: 'beginner',
+      language: 'vi',
+      tags: [],
+      status: 'draft',
+      created_at: '2026-03-01T00:00:00Z',
+      updated_at: '2026-03-01T00:00:00Z',
+    }
+    mockDuplicateCourse.mockResolvedValue({ course: newCourse, error: null })
+
+    renderPage()
+    await waitFor(() => screen.getByText('Chess Fundamentals'))
+
+    await userEvent.click(screen.getAllByTestId('kebab-btn')[0])
+    await userEvent.click(screen.getByTestId('kebab-duplicate-c1'))
+
+    await waitFor(() => {
+      expect(screen.getByText('Copy of Chess Fundamentals')).toBeInTheDocument()
+    })
+  })
+
+  it('shows success toast after successful duplication', async () => {
+    const newCourse = {
+      id: 'c1-copy',
+      creator_id: 'u1',
+      title: 'Copy of Chess Fundamentals',
+      description: null,
+      thumbnail_url: null,
+      price: 0,
+      level: 'beginner',
+      language: 'vi',
+      tags: [],
+      status: 'draft',
+      created_at: '2026-03-01T00:00:00Z',
+      updated_at: '2026-03-01T00:00:00Z',
+    }
+    mockDuplicateCourse.mockResolvedValue({ course: newCourse, error: null })
+
+    renderPage()
+    await waitFor(() => screen.getByText('Chess Fundamentals'))
+
+    await userEvent.click(screen.getAllByTestId('kebab-btn')[0])
+    await userEvent.click(screen.getByTestId('kebab-duplicate-c1'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('duplicate-toast')).toBeInTheDocument()
+    })
+  })
+
+  it('shows error toast when duplication fails', async () => {
+    mockDuplicateCourse.mockResolvedValue({ course: null, error: new Error('failed') })
+
+    renderPage()
+    await waitFor(() => screen.getByText('Chess Fundamentals'))
+
+    await userEvent.click(screen.getAllByTestId('kebab-btn')[0])
+    await userEvent.click(screen.getByTestId('kebab-duplicate-c1'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('duplicate-error-toast')).toBeInTheDocument()
     })
   })
 

@@ -98,7 +98,9 @@
         "published": "Published",
         "pending_review": "Pending review",
         "draft": "Draft"
-      }
+      },
+      "duplicateToast": "Course duplicated",
+      "duplicateError": "Could not duplicate course"
     },
     "newCourse": {
       "pageTitle": "New course",

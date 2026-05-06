@@ -19,6 +19,7 @@ import {
   fetchCreatorKpis,
   fetchCoursesWithStats,
   submitCourseForReview,
+  duplicateCourse,
 } from './creatorApi'
 import type { CourseStatus, CreateCourseInput, CreateChapterInput, CreateLessonInput } from './creatorApi'
 
@@ -584,6 +585,119 @@ describe('fetchCoursesWithStats', () => {
     const client = { from: vi.fn(() => chains[call++]) }
     const result = await fetchCoursesWithStats(client as never, ['c1'])
     expect(result[0].rating).toBeNull()
+  })
+})
+
+// ── duplicateCourse ───────────────────────────────────────────────────────
+
+describe('duplicateCourse', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+
+  it('returns new course with "Copy of " title prefix and draft status on success', async () => {
+    const original = {
+      id: 'c1', creator_id: 'u1', title: 'Original', description: 'd', thumbnail_url: 't',
+      price: 100, level: 'beginner', language: 'vi', tags: ['a'], status: 'published',
+      created_at: '2026-01-01', updated_at: '2026-01-02',
+    }
+    const newCourse = {
+      ...original, id: 'c1-copy', title: 'Copy of Original', status: 'draft' as CourseStatus,
+      created_at: '2026-02-01', updated_at: '2026-02-01',
+    }
+    const chains = [
+      makeChain({ data: original, error: null }),
+      makeChain({ data: newCourse, error: null }),
+      makeChain({ data: [], error: null }),
+    ]
+    let call = 0
+    const client = { from: vi.fn(() => chains[call++]) }
+    const result = await duplicateCourse(client as never, 'c1')
+    expect(result.course?.title).toBe('Copy of Original')
+    expect(result.course?.status).toBe('draft')
+    expect(result.error).toBeNull()
+  })
+
+  it('inserts the new course with status=draft and Copy-of title', async () => {
+    const original = {
+      id: 'c1', creator_id: 'u1', title: 'Mỏ chiến thuật', description: 'd', thumbnail_url: 't',
+      price: 0, level: 'beginner', language: 'vi', tags: [], status: 'draft',
+      created_at: '', updated_at: '',
+    }
+    const newCourse = { ...original, id: 'c1-copy', title: 'Copy of Mỏ chiến thuật', status: 'draft' as CourseStatus }
+    const insertChain = makeChain({ data: newCourse, error: null })
+    const chains = [
+      makeChain({ data: original, error: null }),
+      insertChain,
+      makeChain({ data: [], error: null }),
+    ]
+    let call = 0
+    const client = { from: vi.fn(() => chains[call++]) }
+    await duplicateCourse(client as never, 'c1')
+    expect(insertChain.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Copy of Mỏ chiến thuật', status: 'draft', creator_id: 'u1' })
+    )
+  })
+
+  it('returns error when original course not found', async () => {
+    const client = makeClient({ data: null, error: new Error('not found') })
+    const result = await duplicateCourse(client as never, 'nonexistent')
+    expect(result.course).toBeNull()
+    expect(result.error).toBeInstanceOf(Error)
+  })
+
+  it('returns error when insert of new course fails', async () => {
+    const original = {
+      id: 'c1', creator_id: 'u1', title: 'X', description: null, thumbnail_url: null,
+      price: 0, level: 'beginner', language: 'vi', tags: [], status: 'draft',
+      created_at: '', updated_at: '',
+    }
+    const chains = [
+      makeChain({ data: original, error: null }),
+      makeChain({ data: null, error: new Error('insert failed') }),
+    ]
+    let call = 0
+    const client = { from: vi.fn(() => chains[call++]) }
+    const result = await duplicateCourse(client as never, 'c1')
+    expect(result.course).toBeNull()
+    expect(result.error).toBeInstanceOf(Error)
+  })
+
+  it('copies chapters and lessons under the new course', async () => {
+    const original = {
+      id: 'c1', creator_id: 'u1', title: 'Original', description: null, thumbnail_url: null,
+      price: 0, level: 'beginner', language: 'vi', tags: [], status: 'draft',
+      created_at: '', updated_at: '',
+    }
+    const newCourse = { ...original, id: 'c1-copy', title: 'Copy of Original', status: 'draft' as CourseStatus }
+    const chapter1 = {
+      id: 'ch1', course_id: 'c1', title: 'Ch1', position: 0, created_at: '',
+      lessons: [
+        { id: 'l1', chapter_id: 'ch1', title: 'L1', type: 'video', position: 0, free_preview: false, pgn_data: '', board_perspective: 'white', created_at: '' },
+        { id: 'l2', chapter_id: 'ch1', title: 'L2', type: 'chess', position: 1, free_preview: true, pgn_data: '1. e4 e5', board_perspective: 'white', created_at: '' },
+      ],
+    }
+    const newCh1 = { id: 'ch1-copy', course_id: 'c1-copy', title: 'Ch1', position: 0, created_at: '' }
+    const lessonsInsertChain = makeChain({ data: null, error: null })
+    const chains = [
+      makeChain({ data: original, error: null }),
+      makeChain({ data: newCourse, error: null }),
+      makeChain({ data: [chapter1], error: null }),
+      makeChain({ data: newCh1, error: null }),
+      lessonsInsertChain,
+    ]
+    let call = 0
+    const fromSpy = vi.fn(() => chains[call++])
+    const client = { from: fromSpy }
+    const result = await duplicateCourse(client as never, 'c1')
+    expect(result.course?.id).toBe('c1-copy')
+    expect(fromSpy).toHaveBeenCalledWith('chapters')
+    expect(fromSpy).toHaveBeenCalledWith('lessons')
+    // Lessons inserted in batch with new chapter_id
+    const lessonsInsertCall = lessonsInsertChain.insert as unknown as { mock: { calls: unknown[][] } }
+    expect(lessonsInsertCall.mock.calls.length).toBe(1)
+    const inserted = lessonsInsertCall.mock.calls[0][0] as { chapter_id: string; title: string }[]
+    expect(inserted).toHaveLength(2)
+    expect(inserted.every(l => l.chapter_id === 'ch1-copy')).toBe(true)
+    expect(inserted.every(l => !('id' in l))).toBe(true)
   })
 })
 

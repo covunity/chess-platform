@@ -120,6 +120,83 @@ export async function deleteCourse(
   return { error: error as Error | null }
 }
 
+export async function duplicateCourse(
+  client: SupabaseClient,
+  courseId: string
+): Promise<{ course: Course | null; error: Error | null }> {
+  const { data: original, error: fetchErr } = await client
+    .from('courses')
+    .select('*')
+    .eq('id', courseId)
+    .single()
+
+  if (fetchErr || !original) {
+    return { course: null, error: (fetchErr as Error | null) ?? new Error('course_not_found') }
+  }
+
+  const orig = original as Course
+  const courseInsert = {
+    creator_id: orig.creator_id,
+    title: `Copy of ${orig.title}`,
+    description: orig.description,
+    thumbnail_url: orig.thumbnail_url,
+    price: orig.price,
+    level: orig.level,
+    language: orig.language,
+    tags: orig.tags,
+    status: 'draft' as const,
+  }
+
+  const { data: newCourseRow, error: insertErr } = await client
+    .from('courses')
+    .insert(courseInsert)
+    .select()
+    .single()
+
+  if (insertErr || !newCourseRow) {
+    return { course: null, error: (insertErr as Error | null) ?? new Error('insert_failed') }
+  }
+
+  const newCourse = newCourseRow as Course
+
+  const { data: chapterRows } = await client
+    .from('chapters')
+    .select('*, lessons(*)')
+    .eq('course_id', courseId)
+    .order('position', { ascending: true })
+
+  const chapters = (chapterRows ?? []) as (Chapter & { lessons?: Lesson[] })[]
+
+  for (const ch of chapters) {
+    const { data: newChapterRow } = await client
+      .from('chapters')
+      .insert({
+        course_id: newCourse.id,
+        title: ch.title,
+        position: ch.position,
+      })
+      .select()
+      .single()
+
+    const newChapter = newChapterRow as Chapter | null
+    const sourceLessons = ch.lessons ?? []
+    if (newChapter && sourceLessons.length > 0) {
+      const lessonsInsert = sourceLessons.map(l => ({
+        chapter_id: newChapter.id,
+        title: l.title,
+        type: l.type,
+        position: l.position,
+        free_preview: l.free_preview,
+        pgn_data: l.pgn_data,
+        board_perspective: l.board_perspective,
+      }))
+      await client.from('lessons').insert(lessonsInsert)
+    }
+  }
+
+  return { course: newCourse, error: null }
+}
+
 // ── Chapters ──────────────────────────────────────────────────────────────
 
 export async function listChapters(

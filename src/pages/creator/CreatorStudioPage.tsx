@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase'
 import {
   listCourses,
   deleteCourse,
+  duplicateCourse,
   countCourseChildren,
   fetchCreatorKpis,
   fetchCoursesWithStats,
@@ -143,10 +144,11 @@ function KpiCard({ label, value, detail, testid }: KpiCardProps) {
 interface KebabMenuProps {
   course: Course
   onDelete: (c: Course) => void
+  onDuplicate: (c: Course) => void
   t: (k: string) => string
 }
 
-function KebabMenu({ course, onDelete, t }: KebabMenuProps) {
+function KebabMenu({ course, onDelete, onDuplicate, t }: KebabMenuProps) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -167,11 +169,20 @@ function KebabMenu({ course, onDelete, t }: KebabMenuProps) {
         >
           <Link
             to={`/creator/courses/${course.id}/edit`}
+            data-testid={`kebab-edit-${course.id}`}
             className="block px-4 py-2 text-sm text-(--ink-1) hover:bg-(--surface-2)"
             onClick={() => setOpen(false)}
           >
             {t('creator.studio.table.kebabEdit')}
           </Link>
+          <button
+            type="button"
+            data-testid={`kebab-duplicate-${course.id}`}
+            className="block w-full text-left px-4 py-2 text-sm text-(--ink-1) hover:bg-(--surface-2)"
+            onClick={() => { setOpen(false); onDuplicate(course) }}
+          >
+            {t('creator.studio.table.kebabDuplicate')}
+          </button>
           <button
             type="button"
             data-testid={`kebab-delete-${course.id}`}
@@ -363,6 +374,7 @@ export default function CreatorStudioPage() {
   const [kpis, setKpis] = useState<CreatorKpis>({ totalStudents: 0, grossRevenue: 0, totalPayout: 0, avgRating: 0, courseCount: 0 })
   const [courseStats, setCourseStats] = useState<CourseStats[]>([])
   const [allCourses, setAllCourses] = useState<Course[]>([])
+  const [duplicateToast, setDuplicateToast] = useState<'success' | 'error' | null>(null)
 
   const loading = !coursesLoaded
 
@@ -418,6 +430,19 @@ export default function CreatorStudioPage() {
 
   function handleExportCsv() {
     downloadCourseCsv(allCourses, courseStats)
+  }
+
+  async function handleDuplicate(course: Course) {
+    const { course: newCourse, error } = await duplicateCourse(supabase, course.id)
+    if (error || !newCourse) {
+      setDuplicateToast('error')
+      setTimeout(() => setDuplicateToast(null), 3000)
+      return
+    }
+    setCourses(prev => [newCourse, ...prev])
+    setAllCourses(prev => [newCourse, ...prev])
+    setDuplicateToast('success')
+    setTimeout(() => setDuplicateToast(null), 3000)
   }
 
   const filters: { key: StatusFilter; label: string; testid: string }[] = [
@@ -609,7 +634,7 @@ export default function CreatorStudioPage() {
                           {s?.rating != null ? s.rating.toFixed(1) : '—'}
                         </td>
                         <td style={{ padding: '14px 20px', textAlign: 'right' }}>
-                          <KebabMenu course={course} onDelete={handleDeleteClick} t={t} />
+                          <KebabMenu course={course} onDelete={handleDeleteClick} onDuplicate={handleDuplicate} t={t} />
                         </td>
                       </tr>
                     )
@@ -628,6 +653,26 @@ export default function CreatorStudioPage() {
             />
           )}
         </>
+      )}
+
+      {/* Duplicate toast */}
+      {duplicateToast === 'success' && (
+        <div
+          data-testid="duplicate-toast"
+          className="fixed bottom-6 right-6 card"
+          style={{ padding: '12px 20px', background: 'var(--ink-1)', color: '#fff', fontSize: 13, zIndex: 100 }}
+        >
+          {t('creator.studio.duplicateToast')}
+        </div>
+      )}
+      {duplicateToast === 'error' && (
+        <div
+          data-testid="duplicate-error-toast"
+          className="fixed bottom-6 right-6 card"
+          style={{ padding: '12px 20px', background: 'var(--danger)', color: '#fff', fontSize: 13, zIndex: 100 }}
+        >
+          {t('creator.studio.duplicateError')}
+        </div>
       )}
 
       {/* Delete confirmation dialog */}
