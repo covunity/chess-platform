@@ -1,9 +1,11 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { I18nextProvider } from 'react-i18next'
+import { vi } from 'vitest'
 import i18n from '../i18n'
 import CourseCard from './CourseCard'
-import type { PublicCourse } from '../lib/coursesApi'
+import { listPublishedCourses, type PublicCourse } from '../lib/coursesApi'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 const freeCourse: PublicCourse = {
   id: 'c1',
@@ -86,5 +88,39 @@ describe('CourseCard', () => {
   it('shows star rating', () => {
     renderCard(freeCourse)
     expect(screen.getByText(/4\.8/)).toBeInTheDocument()
+  })
+
+  it('renders creator name from a course built by listPublishedCourses (users join)', async () => {
+    // Integration: simulate a real Supabase response shape (`users: { name }`)
+    // and verify the creator name flows through the API into the CourseCard.
+    const supabaseRow = {
+      id: 'c-int',
+      title: 'Tích hợp creator name',
+      description: null,
+      thumbnail_url: null,
+      price: 0,
+      level: 'beginner' as const,
+      tags: [],
+      creator_id: 'u-int',
+      created_at: '2026-01-01T00:00:00Z',
+      users: { name: 'GM Tuấn Phạm' },
+      reviews: [],
+      enrollments: [],
+      chapters: [],
+    }
+    const query = {
+      eq: vi.fn().mockReturnThis(),
+      ilike: vi.fn().mockReturnThis(),
+      contains: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({ data: [supabaseRow], error: null }),
+    }
+    const client = {
+      from: vi.fn().mockReturnValue({ select: vi.fn().mockReturnValue(query) }),
+    } as unknown as SupabaseClient
+
+    const { courses } = await listPublishedCourses(client)
+    expect(courses[0].creator_name).toBe('GM Tuấn Phạm')
+    renderCard(courses[0])
+    expect(screen.getByText('GM Tuấn Phạm')).toBeInTheDocument()
   })
 })

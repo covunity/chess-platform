@@ -205,7 +205,7 @@ export async function listPublishedCourses(
       tags,
       creator_id,
       created_at,
-      profiles:creator_id ( full_name ),
+      users:creator_id ( name ),
       reviews ( rating ),
       enrollments ( id ),
       chapters ( lessons ( id ) )
@@ -224,13 +224,9 @@ export async function listPublishedCourses(
     query = query.contains('tags', [options.tag])
   }
 
-  if (options.sort === 'popular') {
-    query = query.order('created_at', { ascending: false })
-  } else if (options.sort === 'rating') {
-    query = query.order('created_at', { ascending: false })
-  } else {
-    query = query.order('created_at', { ascending: false })
-  }
+  // No avg_rating / enrollment_count column on courses yet — popular/rating
+  // are sorted in JS from joined rows below. created_at is the stable base.
+  query = query.order('created_at', { ascending: false })
 
   const { data, error } = await query
 
@@ -245,7 +241,7 @@ export async function listPublishedCourses(
     const lessons = chapters.flatMap(ch => Array.isArray(ch.lessons) ? ch.lessons : [])
     const ratings = reviews.map(r => r.rating)
     const rating_avg = ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0
-    const profiles = row.profiles as { full_name?: string } | null
+    const creator = row.users as { name?: string } | null
 
     return {
       id: row.id as string,
@@ -256,7 +252,7 @@ export async function listPublishedCourses(
       level: row.level as CourseLevel,
       tags: Array.isArray(row.tags) ? row.tags as string[] : [],
       creator_id: row.creator_id as string,
-      creator_name: profiles?.full_name ?? null,
+      creator_name: creator?.name ?? null,
       rating_avg,
       rating_count: ratings.length,
       lessons_count: lessons.length,
@@ -265,6 +261,12 @@ export async function listPublishedCourses(
       enrollment_count: enrollments.length,
     }
   })
+
+  if (options.sort === 'rating') {
+    courses.sort((a, b) => b.rating_avg - a.rating_avg)
+  } else if (options.sort === 'popular') {
+    courses.sort((a, b) => b.enrollment_count - a.enrollment_count)
+  }
 
   return { courses, error: null }
 }
