@@ -97,11 +97,11 @@ function DeleteDialog({ course, chapters, lessons, onCancel, onConfirm, t }: Del
         className="card"
         style={{ width: 440, padding: 28 }}
       >
-        <h2 className="text-lg font-semibold text-[--ink-1] mb-3">{t('creator.deleteConfirm.title')}</h2>
-        <p className="text-sm text-[--ink-2] mb-6">
+        <h2 className="text-lg font-semibold text-(--ink-1) mb-3">{t('creator.deleteConfirm.title')}</h2>
+        <p className="text-sm text-(--ink-2) mb-6">
           {t('creator.deleteConfirm.body', { chapters, lessons })}
         </p>
-        <p className="text-xs text-[--ink-3] mb-6 font-medium">{course.title}</p>
+        <p className="text-xs text-(--ink-3) mb-6 font-medium">{course.title}</p>
         <div className="flex justify-end gap-3">
           <button type="button" className="btn btn-ghost" onClick={onCancel}>
             {t('creator.deleteConfirm.cancel')}
@@ -167,7 +167,7 @@ function KebabMenu({ course, onDelete, t }: KebabMenuProps) {
         >
           <Link
             to={`/creator/courses/${course.id}/edit`}
-            className="block px-4 py-2 text-sm text-[--ink-1] hover:bg-[--surface-2]"
+            className="block px-4 py-2 text-sm text-(--ink-1) hover:bg-(--surface-2)"
             onClick={() => setOpen(false)}
           >
             {t('creator.studio.table.kebabEdit')}
@@ -433,13 +433,13 @@ export default function CreatorStudioPage() {
       <div className="flex items-start justify-between mb-8">
         <div>
           <p
-            className="uppercase font-medium tracking-widest text-[--ink-3] mb-2"
+            className="uppercase font-medium tracking-widest text-(--ink-3) mb-2"
             style={{ fontSize: 11 }}
           >
             {t('creator.studio.eyebrow')}
           </p>
           <h1
-            className="text-[--ink-1]"
+            className="text-(--ink-1)"
             style={{ fontFamily: 'var(--font-serif)', fontSize: 38, lineHeight: 1.1 }}
           >
             {t('creator.studio.heading')}
@@ -507,11 +507,11 @@ export default function CreatorStudioPage() {
           <div className="card overflow-hidden mb-8">
             {/* Table header bar */}
             <div
-              className="flex items-center justify-between border-b border-[--border]"
+              className="flex items-center justify-between border-b border-(--border)"
               style={{ padding: '14px 20px' }}
             >
               <div className="flex items-center gap-3">
-                <span className="font-semibold text-[--ink-1]" style={{ fontSize: 14 }}>
+                <span className="font-semibold text-(--ink-1)" style={{ fontSize: 14 }}>
                   {t('creator.studio.table.heading')}
                 </span>
                 <div className="flex gap-1">
@@ -550,7 +550,7 @@ export default function CreatorStudioPage() {
             {/* Table */}
             <table className="w-full" style={{ fontSize: 13 }}>
               <thead>
-                <tr className="border-b border-[--border]">
+                <tr className="border-b border-(--border)">
                   {[
                     t('creator.studio.table.colCourse'),
                     t('creator.studio.table.colStatus'),
@@ -562,7 +562,7 @@ export default function CreatorStudioPage() {
                     <th
                       key={i}
                       style={{ padding: '14px 20px', fontSize: 11.5, letterSpacing: '0.05em', textAlign: i >= 2 && i <= 4 ? 'right' : 'left' }}
-                      className="uppercase font-medium text-[--ink-3]"
+                      className="uppercase font-medium text-(--ink-3)"
                     >
                       {col}
                     </th>
@@ -572,11 +572,11 @@ export default function CreatorStudioPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="text-center text-[--ink-3] py-10">…</td>
+                    <td colSpan={6} className="text-center text-(--ink-3) py-10">…</td>
                   </tr>
                 ) : courses.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center text-[--ink-3] py-10">
+                    <td colSpan={6} className="text-center text-(--ink-3) py-10">
                       {t('creator.studio.table.empty')}
                     </td>
                   </tr>
@@ -584,14 +584,14 @@ export default function CreatorStudioPage() {
                   courses.map(course => {
                     const s = statsMap[course.id]
                     return (
-                      <tr key={course.id} className="border-b border-[--border] last:border-0">
+                      <tr key={course.id} className="border-b border-(--border) last:border-0">
                         <td style={{ padding: '14px 20px' }}>
                           <div className="flex items-center gap-3">
                             <div
                               style={{ width: 40, height: 40, background: 'var(--surface-3)', borderRadius: 'var(--r-sm)', flexShrink: 0 }}
                               aria-hidden="true"
                             />
-                            <span className="font-medium text-[--ink-1]">{course.title}</span>
+                            <span className="font-medium text-(--ink-1)">{course.title}</span>
                           </div>
                         </td>
                         <td style={{ padding: '14px 20px' }}>
@@ -599,13 +599,13 @@ export default function CreatorStudioPage() {
                             {t(`creator.studio.status.${course.status}`)}
                           </span>
                         </td>
-                        <td data-testid={`course-students-${course.id}`} style={{ padding: '14px 20px', textAlign: 'right' }} className="text-[--ink-2]">
+                        <td data-testid={`course-students-${course.id}`} style={{ padding: '14px 20px', textAlign: 'right' }} className="text-(--ink-2)">
                           {s != null ? s.students : 0}
                         </td>
-                        <td data-testid={`course-revenue-${course.id}`} style={{ padding: '14px 20px', textAlign: 'right' }} className="text-[--ink-2]">
+                        <td data-testid={`course-revenue-${course.id}`} style={{ padding: '14px 20px', textAlign: 'right' }} className="text-(--ink-2)">
                           {s != null ? formatCurrency(s.revenue) : '—'}
                         </td>
-                        <td data-testid={`course-rating-${course.id}`} style={{ padding: '14px 20px', textAlign: 'right' }} className="text-[--ink-2]">
+                        <td data-testid={`course-rating-${course.id}`} style={{ padding: '14px 20px', textAlign: 'right' }} className="text-(--ink-2)">
                           {s?.rating != null ? s.rating.toFixed(1) : '—'}
                         </td>
                         <td style={{ padding: '14px 20px', textAlign: 'right' }}>

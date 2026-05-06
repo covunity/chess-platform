@@ -106,7 +106,7 @@ export default function NewCoursePage() {
     <div className="flex items-start justify-center px-6 py-10">
       <div className="card w-full" style={{ maxWidth: 720, padding: 32, borderRadius: 'var(--r-lg)' }}>
         <h1
-          className="text-[--ink-1] mb-8"
+          className="text-(--ink-1) mb-8"
           style={{ fontFamily: 'var(--font-serif)', fontSize: 28, lineHeight: 1.2 }}
         >
           {t('creator.newCourse.heading')}
@@ -145,7 +145,7 @@ export default function NewCoursePage() {
                 value={description}
                 onChange={e => setDescription(e.target.value)}
               />
-              <p className="text-xs mt-1 text-[--ink-3]">{t('creator.newCourse.descriptionHelper')}</p>
+              <p className="text-xs mt-1 text-(--ink-3)">{t('creator.newCourse.descriptionHelper')}</p>
             </div>
 
             {/* Thumbnail */}
@@ -153,7 +153,7 @@ export default function NewCoursePage() {
               <label className="label">{t('creator.newCourse.labelThumbnail')}</label>
               <div
                 data-testid="thumbnail-upload-zone"
-                className="flex flex-col items-center justify-center cursor-pointer text-[--ink-4]"
+                className="flex flex-col items-center justify-center cursor-pointer text-(--ink-4)"
                 style={{ border: '2px dashed var(--border-strong)', borderRadius: 'var(--r-md)', width: 220, height: 140, fontSize: 13 }}
                 onClick={() => fileRef.current?.click()}
                 onDragOver={e => e.preventDefault()}
@@ -195,7 +195,7 @@ export default function NewCoursePage() {
                   onChange={e => setPrice(Math.max(0, parseInt(e.target.value) || 0))}
                 />
               </div>
-              <p className="text-xs mt-1 text-[--ink-3]">{t('creator.newCourse.priceHelper')}</p>
+              <p className="text-xs mt-1 text-(--ink-3)">{t('creator.newCourse.priceHelper')}</p>
             </div>
 
             {/* Level + Language row */}
@@ -265,7 +265,7 @@ export default function NewCoursePage() {
                 }}
                 onBlur={commitTags}
               />
-              <p className="text-xs mt-1 text-[--ink-3]">{t('creator.newCourse.tagsHelper')}</p>
+              <p className="text-xs mt-1 text-(--ink-3)">{t('creator.newCourse.tagsHelper')}</p>
             </div>
 
           </div>

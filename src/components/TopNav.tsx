@@ -53,7 +53,16 @@ export default function TopNav() {
     : user?.email?.charAt(0).toUpperCase() ?? '?'
 
   return (
-    <header role="banner" className="h-16 flex items-center border-b border-[--border] bg-[--surface]" style={{ padding: '0 32px', gap: 24 }}>
+    <header
+      role="banner"
+      className="h-16 flex items-center"
+      style={{
+        padding: '0 32px',
+        gap: 24,
+        background: 'var(--surface)',
+        borderBottom: '1px solid var(--border-strong)',
+      }}
+    >
       <Link to="/" className="flex items-center gap-2" aria-label="Gambitly home" style={{ flexShrink: 0 }}>
         <span className="logo-mark" aria-hidden="true" />
         <span style={{ fontFamily: 'var(--font-serif)', fontSize: 20, color: 'var(--ink-1)' }}>Gambitly</span>

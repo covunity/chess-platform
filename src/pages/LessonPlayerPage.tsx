@@ -47,14 +47,6 @@ function BookmarkIcon() {
   )
 }
 
-function CheckIcon() {
-  return (
-    <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 8l4 4 6-7" />
-    </svg>
-  )
-}
-
 function VideoIcon() {
   return (
     <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -169,7 +161,6 @@ function PlayerSidebar({ course, currentLessonId, expandedChapters, onToggleChap
                   alignItems: 'center',
                   gap: 8,
                   padding: '12px 20px',
-                  borderBottom: '1px solid var(--border)',
                   background: 'transparent',
                   border: 'none',
                   borderBottom: '1px solid var(--border)',
@@ -203,7 +194,6 @@ function PlayerSidebar({ course, currentLessonId, expandedChapters, onToggleChap
                       gap: 10,
                       padding: '8px 20px 8px 62px',
                       background: isCurrent ? 'var(--accent-soft)' : 'transparent',
-                      borderLeft: isCurrent ? '2px solid var(--accent)' : '2px solid transparent',
                       border: 'none',
                       borderLeft: isCurrent ? '2px solid var(--accent)' : '2px solid transparent',
                       cursor: 'pointer',

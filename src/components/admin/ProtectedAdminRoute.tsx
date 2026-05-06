@@ -20,8 +20,8 @@ export default function ProtectedAdminRoute() {
         data-testid="forbidden-page"
         className="flex flex-col items-center justify-center min-h-screen gap-4 text-center px-6"
       >
-        <h1 className="text-2xl font-semibold text-[--ink-1]">{t('admin.forbidden.title')}</h1>
-        <p className="text-[--ink-3]">{t('admin.forbidden.body')}</p>
+        <h1 className="text-2xl font-semibold text-(--ink-1)">{t('admin.forbidden.title')}</h1>
+        <p className="text-(--ink-3)">{t('admin.forbidden.body')}</p>
       </div>
     )
   }

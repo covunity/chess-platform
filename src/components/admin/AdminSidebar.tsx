@@ -21,7 +21,7 @@ export default function AdminSidebar() {
 
   return (
     <aside
-      className="flex flex-col h-screen border-r border-[--border] bg-[--surface]"
+      className="flex flex-col h-screen border-r border-(--border) bg-(--surface)"
       style={{ width: 220, minWidth: 220 }}
       aria-label="Admin navigation"
     >
@@ -29,10 +29,10 @@ export default function AdminSidebar() {
       <div className="px-4 pt-5 pb-4">
         <div className="flex items-center gap-2 mb-1">
           <span className="logo-mark" aria-hidden="true" style={{ fontSize: 17 }} />
-          <span className="font-serif text-base text-[--ink-1]">Gambitly</span>
+          <span className="font-serif text-base text-(--ink-1)">Gambitly</span>
         </div>
         <p
-          className="text-[--ink-3] uppercase font-medium tracking-widest"
+          className="text-(--ink-3) uppercase font-medium tracking-widest"
           style={{ fontSize: 11, letterSpacing: '0.06em' }}
         >
           {t('admin.sidebar.eyebrow')}
@@ -47,10 +47,10 @@ export default function AdminSidebar() {
             to={to}
             className={({ isActive }) =>
               [
-                'flex items-center gap-2 rounded-[--r-md] px-3 py-2 text-sm transition-colors',
+                'flex items-center gap-2 rounded-(--r-md) px-3 py-2 text-sm transition-colors',
                 isActive
-                  ? 'text-[--ink-1] bg-[--surface-2] font-medium'
-                  : 'text-[--ink-2] hover:bg-[--surface-2] hover:text-[--ink-1]',
+                  ? 'text-(--ink-1) bg-(--surface-2) font-medium'
+                  : 'text-(--ink-2) hover:bg-(--surface-2) hover:text-(--ink-1)',
               ].join(' ')
             }
           >
@@ -61,7 +61,7 @@ export default function AdminSidebar() {
 
       {/* Profile card */}
       {profile && (
-        <div className="mx-2 mb-3 rounded-[--r-md] bg-[--surface-2] px-3 py-2.5 flex items-center gap-2">
+        <div className="mx-2 mb-3 rounded-(--r-md) bg-(--surface-2) px-3 py-2.5 flex items-center gap-2">
           <div
             className="avatar shrink-0"
             style={{ width: 28, height: 28, fontSize: 12 }}
@@ -70,8 +70,8 @@ export default function AdminSidebar() {
             {initials}
           </div>
           <div className="overflow-hidden">
-            <p className="text-xs font-medium text-[--ink-1] truncate">{profile.name}</p>
-            <p className="truncate text-[--ink-3]" style={{ fontSize: 10.5 }}>{profile.email}</p>
+            <p className="text-xs font-medium text-(--ink-1) truncate">{profile.name}</p>
+            <p className="truncate text-(--ink-3)" style={{ fontSize: 10.5 }}>{profile.email}</p>
           </div>
         </div>
       )}

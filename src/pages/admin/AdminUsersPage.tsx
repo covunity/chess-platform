@@ -51,13 +51,13 @@ function RoleChangeDialog({ user, targetRole, saving, onCancel, onConfirm, t }: 
         className="card"
         style={{ width: 440, borderRadius: 'var(--r-lg)', padding: 28 }}
       >
-        <h2 id="dialog-title" className="text-lg font-semibold text-[--ink-1] mb-3">
+        <h2 id="dialog-title" className="text-lg font-semibold text-(--ink-1) mb-3">
           {t('admin.users.changeRoleTitle')}
         </h2>
-        <p className="text-sm text-[--ink-2] mb-2">
+        <p className="text-sm text-(--ink-2) mb-2">
           {t('admin.users.changeRoleBody', { name: displayName, from: fromLabel, to: toLabel })}
         </p>
-        <p className="text-xs text-[--ink-3] mb-6">{t('admin.users.changeRoleWarning')}</p>
+        <p className="text-xs text-(--ink-3) mb-6">{t('admin.users.changeRoleWarning')}</p>
         <div className="flex justify-end gap-3">
           <button
             type="button"
@@ -152,10 +152,10 @@ export default function AdminUsersPage() {
     <div className="flex flex-col h-full">
       {/* Top header */}
       <div
-        className="flex items-center justify-between px-6 border-b border-[--border] bg-[--surface] shrink-0"
+        className="flex items-center justify-between px-6 border-b border-(--border) bg-(--surface) shrink-0"
         style={{ height: 60 }}
       >
-        <h1 className="text-lg font-semibold tracking-tight text-[--ink-1]" style={{ letterSpacing: '-0.01em' }}>
+        <h1 className="text-lg font-semibold tracking-tight text-(--ink-1)" style={{ letterSpacing: '-0.01em' }}>
           {t('admin.users.pageTitle')}
         </h1>
         <input
@@ -177,7 +177,7 @@ export default function AdminUsersPage() {
         <div className="card overflow-hidden">
           <table className="w-full" style={{ fontSize: 13 }}>
             <thead>
-              <tr className="border-b border-[--border]">
+              <tr className="border-b border-(--border)">
                 {[
                   t('admin.users.colName'),
                   t('admin.users.colEmail'),
@@ -189,7 +189,7 @@ export default function AdminUsersPage() {
                 ].map((col, i) => (
                   <th
                     key={i}
-                    className="px-4 text-left font-medium uppercase text-[--ink-3]"
+                    className="px-4 text-left font-medium uppercase text-(--ink-3)"
                     style={{ padding: '14px 16px', fontSize: 11.5, letterSpacing: '0.05em' }}
                   >
                     {col}
@@ -200,32 +200,32 @@ export default function AdminUsersPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="text-center text-[--ink-3] py-10">
+                  <td colSpan={7} className="text-center text-(--ink-3) py-10">
                     …
                   </td>
                 </tr>
               ) : (
                 users.map(user => (
-                  <tr key={user.id} className="border-b border-[--border] last:border-0">
+                  <tr key={user.id} className="border-b border-(--border) last:border-0">
                     <td style={{ padding: '14px 16px' }}>
                       <div className="flex items-center gap-2">
                         <UserAvatar name={user.name} email={user.email} />
-                        <span className="font-medium text-[--ink-1]">{user.name ?? '—'}</span>
+                        <span className="font-medium text-(--ink-1)">{user.name ?? '—'}</span>
                       </div>
                     </td>
-                    <td style={{ padding: '14px 16px' }} className="text-[--ink-2]">
+                    <td style={{ padding: '14px 16px' }} className="text-(--ink-2)">
                       {user.email}
                     </td>
                     <td style={{ padding: '14px 16px' }}>
                       <RolePill role={user.role} t={t} />
                     </td>
-                    <td style={{ padding: '14px 16px' }} className="text-[--ink-2]">
+                    <td style={{ padding: '14px 16px' }} className="text-(--ink-2)">
                       {formatDate(user.created_at)}
                     </td>
-                    <td style={{ padding: '14px 16px' }} className="text-[--ink-2]">
+                    <td style={{ padding: '14px 16px' }} className="text-(--ink-2)">
                       0
                     </td>
-                    <td style={{ padding: '14px 16px' }} className="text-[--ink-2]">
+                    <td style={{ padding: '14px 16px' }} className="text-(--ink-2)">
                       0
                     </td>
                     <td style={{ padding: '14px 16px', textAlign: 'right' }}>
@@ -250,7 +250,7 @@ export default function AdminUsersPage() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-4">
-            <span className="text-sm text-[--ink-3]">{total}</span>
+            <span className="text-sm text-(--ink-3)">{total}</span>
             <div className="flex items-center gap-3">
               <button
                 className="btn btn-secondary btn-sm"
@@ -260,7 +260,7 @@ export default function AdminUsersPage() {
               >
                 ←
               </button>
-              <span className="text-sm text-[--ink-2]">
+              <span className="text-sm text-(--ink-2)">
                 {page} / {totalPages}
               </span>
               <button

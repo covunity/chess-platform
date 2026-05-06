@@ -47,11 +47,11 @@ function NewLessonDialog({ onCancel, onCreate, t }: NewLessonDialogProps) {
       aria-modal="true"
     >
       <div data-testid="new-lesson-dialog" className="card" style={{ width: 400, padding: 24 }}>
-        <p className="font-semibold text-[--ink-1] mb-4" style={{ fontSize: 15 }}>
+        <p className="font-semibold text-(--ink-1) mb-4" style={{ fontSize: 15 }}>
           {t('creator.courseEdit.newLesson.title')}
         </p>
 
-        <p className="text-xs font-medium uppercase tracking-wider text-[--ink-3] mb-2">
+        <p className="text-xs font-medium uppercase tracking-wider text-(--ink-3) mb-2">
           {t('creator.courseEdit.newLesson.typeLabel')}
         </p>
         <div className="flex gap-2 mb-5">
@@ -61,7 +61,7 @@ function NewLessonDialog({ onCancel, onCreate, t }: NewLessonDialogProps) {
               type="button"
               data-testid={`lesson-type-${type}`}
               onClick={() => setSelectedType(type)}
-              className="flex-1 flex flex-col items-center gap-1 py-3 rounded-[--r-md] border transition-colors"
+              className="flex-1 flex flex-col items-center gap-1 py-3 rounded-(--r-md) border transition-colors"
               style={{
                 borderColor: selectedType === type ? 'var(--accent)' : 'var(--border-strong)',
                 background: selectedType === type ? 'var(--accent-soft)' : 'var(--surface)',
@@ -74,7 +74,7 @@ function NewLessonDialog({ onCancel, onCreate, t }: NewLessonDialogProps) {
           ))}
         </div>
 
-        <label className="block text-xs font-medium text-[--ink-2] mb-1">
+        <label className="block text-xs font-medium text-(--ink-2) mb-1">
           {t('creator.courseEdit.newLesson.titleLabel')}
         </label>
         <input
@@ -125,7 +125,7 @@ function ConfirmDialog({ testid, confirmTestid, title, onCancel, onConfirm }: Co
       aria-modal="true"
     >
       <div data-testid={testid} className="card" style={{ width: 380, padding: 24 }}>
-        <p className="text-sm text-[--ink-1] font-medium mb-6">{title}</p>
+        <p className="text-sm text-(--ink-1) font-medium mb-6">{title}</p>
         <div className="flex justify-end gap-3">
           <button type="button" className="btn btn-ghost btn-sm" onClick={onCancel}>Hủy</button>
           <button
@@ -165,7 +165,7 @@ function LessonRow({ lesson, onDelete, onToggleFreePreview, onOpenEditor, t }: L
   return (
     <div
       style={{ paddingLeft: 32, paddingRight: 12, paddingTop: 8, paddingBottom: 8 }}
-      className="flex items-center gap-2 border-b border-[--border] last:border-0 hover:bg-[--surface-2]"
+      className="flex items-center gap-2 border-b border-(--border) last:border-0 hover:bg-(--surface-2)"
     >
       <span style={{ fontSize: 12, color: 'var(--ink-3)', width: 16, textAlign: 'center' }}>
         {LESSON_TYPE_ICON[lesson.type]}
@@ -181,7 +181,7 @@ function LessonRow({ lesson, onDelete, onToggleFreePreview, onOpenEditor, t }: L
         />
       ) : (
         <span
-          className="flex-1 text-[--ink-2] cursor-pointer"
+          className="flex-1 text-(--ink-2) cursor-pointer"
           style={{ fontSize: 12.5 }}
           onClick={() => onOpenEditor(lesson)}
           data-testid={`open-editor-${lesson.id}`}
@@ -244,10 +244,10 @@ function ChapterBlock({ chapter, onDeleteChapter, onOpenNewLessonDialog, onDelet
   return (
     <div className="mb-1">
       <div
-        className="flex items-center gap-2 px-3 py-2 hover:bg-[--surface-3] group"
+        className="flex items-center gap-2 px-3 py-2 hover:bg-(--surface-3) group"
         style={{ cursor: 'grab' }}
       >
-        <span className="text-[--ink-4] text-xs" style={{ userSelect: 'none' }}>⠷</span>
+        <span className="text-(--ink-4) text-xs" style={{ userSelect: 'none' }}>⠷</span>
         {editing ? (
           <input
             className="input flex-1"
@@ -259,7 +259,7 @@ function ChapterBlock({ chapter, onDeleteChapter, onOpenNewLessonDialog, onDelet
           />
         ) : (
           <span
-            className="flex-1 font-semibold text-[--ink-1] cursor-pointer"
+            className="flex-1 font-semibold text-(--ink-1) cursor-pointer"
             style={{ fontSize: 12.5 }}
             onClick={() => setEditing(true)}
           >
@@ -370,12 +370,12 @@ function PublishBar({ status, readiness, publishing, onPublish, onUnpublish, t }
             className="card absolute bottom-full mb-2 left-0 hidden group-hover:block"
             style={{ width: 240, padding: '10px 14px', zIndex: 20 }}
           >
-            <p className="text-xs font-semibold text-[--ink-1] mb-2">
+            <p className="text-xs font-semibold text-(--ink-1) mb-2">
               {t('creator.courseEdit.publish.tooltipTitle')}
             </p>
             <ul className="space-y-1">
               {readiness.reasons.map(r => (
-                <li key={r} className="text-xs text-[--ink-2] flex items-start gap-1.5">
+                <li key={r} className="text-xs text-(--ink-2) flex items-start gap-1.5">
                   <span style={{ color: 'var(--danger)', marginTop: 1 }}>✕</span>
                   {t(REASON_LABEL[r] ?? r)}
                 </li>
@@ -550,7 +550,7 @@ export default function CourseEditPage() {
       >
         <div style={{ padding: '20px 16px 12px' }}>
           <p
-            className="uppercase font-medium tracking-widest text-[--ink-3]"
+            className="uppercase font-medium tracking-widest text-(--ink-3)"
             style={{ fontSize: 10, letterSpacing: '0.1em' }}
           >
             {t('creator.courseEdit.curriculum')}
@@ -559,7 +559,7 @@ export default function CourseEditPage() {
 
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <p className="text-xs text-[--ink-3] px-4 py-2">…</p>
+            <p className="text-xs text-(--ink-3) px-4 py-2">…</p>
           ) : (
             chapters.map(chapter => (
               <ChapterBlock
@@ -624,7 +624,7 @@ export default function CourseEditPage() {
             onSave={handleSaveLesson}
           />
         ) : (
-          <p className="text-[--ink-3] text-sm">
+          <p className="text-(--ink-3) text-sm">
             {t('admin.comingSoon')}
           </p>
         )}
