@@ -1,7 +1,11 @@
 {
   "nav": {
     "title": "Gambitly",
-    "home": "Home"
+    "home": "Home",
+    "signIn": "Sign in",
+    "createAccount": "Create account",
+    "logout": "Log out",
+    "myProfile": "My profile"
   },
   "home": {
     "headline": "Learn chess with grandmasters",
@@ -17,5 +21,90 @@
     "heading": "Looks like this position isn't on the board.",
     "body": "The page you're looking for doesn't exist.",
     "cta": "Back to home"
+  },
+  "auth": {
+    "brand": {
+      "headline1": "Learn chess",
+      "headline2": "the way",
+      "headline3": "masters teach it.",
+      "sub": "Interactive PGN courses, annotated by titled coaches. Bookmark any position, build your repertoire, and review on your schedule.",
+      "stat1Number": "240+",
+      "stat1Label": "Courses",
+      "stat2Number": "38",
+      "stat2Label": "Titled coaches",
+      "stat3Number": "12k",
+      "stat3Label": "Active learners"
+    },
+    "signup": {
+      "eyebrow": "Create account",
+      "heading": "Start your first opening.",
+      "helper": "Free forever. No card required to browse or preview.",
+      "orWithEmail": "or with email",
+      "googleBtn": "Sign in with Google",
+      "facebookBtn": "Sign in with Facebook",
+      "fullName": "Full name",
+      "email": "Email",
+      "password": "Password",
+      "passwordHint": "At least 8 characters with one uppercase letter and one number.",
+      "confirmPassword": "Confirm password",
+      "tosCheckbox": "I agree to the",
+      "tosLink": "Terms of Service",
+      "andWord": "and",
+      "privacyLink": "Privacy Policy",
+      "cta": "Create account",
+      "footerPrompt": "Already have an account?",
+      "footerLink": "Sign in"
+    },
+    "login": {
+      "eyebrow": "Sign in",
+      "heading": "Pick up where you left off.",
+      "helper": "Welcome back! Enter your details to continue.",
+      "orWithEmail": "or with email",
+      "googleBtn": "Sign in with Google",
+      "facebookBtn": "Sign in with Facebook",
+      "email": "Email",
+      "password": "Password",
+      "forgotPassword": "Forgot password?",
+      "cta": "Sign in",
+      "footerPrompt": "New to Gambitly?",
+      "footerLink": "Create one"
+    },
+    "forgotPassword": {
+      "eyebrow": "Reset password",
+      "heading": "Reset your password.",
+      "helper": "Enter your registered email and we'll send a reset link.",
+      "email": "Email",
+      "cta": "Send reset link",
+      "backToLogin": "Back to sign in",
+      "successTitle": "Check your email",
+      "successBody": "We've sent a password reset link to your email. The link expires in 24 hours."
+    },
+    "checkEmail": {
+      "heading": "Check your email",
+      "body": "We've sent a verification email. Click the link in the email to activate your account. The link expires in 24 hours.",
+      "resend": "Resend email",
+      "backToSignup": "Back to sign up"
+    },
+    "resetPassword": {
+      "eyebrow": "Reset password",
+      "heading": "Create a new password.",
+      "newPassword": "New password",
+      "passwordHint": "At least 8 characters with one uppercase letter and one number.",
+      "confirmPassword": "Confirm new password",
+      "cta": "Update password",
+      "successTitle": "Password updated",
+      "successBody": "Your password has been reset successfully. You can now sign in with your new password."
+    },
+    "validation": {
+      "required": "This field is required.",
+      "emailInvalid": "Invalid email address.",
+      "nameTooShort": "Name must be at least 2 characters.",
+      "nameTooLong": "Name must not exceed 100 characters.",
+      "passwordTooShort": "Password must be at least 8 characters.",
+      "passwordNeedsUppercase": "Password must have at least one uppercase letter.",
+      "passwordNeedsNumber": "Password must have at least one number.",
+      "passwordsNoMatch": "Passwords do not match.",
+      "tosRequired": "You must agree to the terms of service."
+    }
   }
 }

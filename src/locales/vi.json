@@ -1,7 +1,11 @@
 {
   "nav": {
     "title": "Gambitly",
-    "home": "Trang chủ"
+    "home": "Trang chủ",
+    "signIn": "Đăng nhập",
+    "createAccount": "Tạo tài khoản",
+    "logout": "Đăng xuất",
+    "myProfile": "Hồ sơ của tôi"
   },
   "home": {
     "headline": "Học cờ vua cùng các đại kiện tướng",
@@ -17,5 +21,90 @@
     "heading": "Looks like this position isn't on the board.",
     "body": "Trang bạn tìm kiếm không tồn tại.",
     "cta": "Về trang chủ"
+  },
+  "auth": {
+    "brand": {
+      "headline1": "Learn chess",
+      "headline2": "the way",
+      "headline3": "masters teach it.",
+      "sub": "Khóa học PGN tương tác, được chú thích bởi các huấn luyện viên có danh hiệu. Đánh dấu bất kỳ vị trí nào, xây dựng hệ thống khai cuộc và ôn luyện theo lịch của bạn.",
+      "stat1Number": "240+",
+      "stat1Label": "Khóa học",
+      "stat2Number": "38",
+      "stat2Label": "Huấn luyện viên có danh hiệu",
+      "stat3Number": "12k",
+      "stat3Label": "Học viên đang học"
+    },
+    "signup": {
+      "eyebrow": "Tạo tài khoản",
+      "heading": "Bắt đầu khai cuộc đầu tiên của bạn.",
+      "helper": "Miễn phí mãi mãi. Không cần thẻ để duyệt hoặc xem trước.",
+      "orWithEmail": "hoặc với email",
+      "googleBtn": "Đăng nhập bằng Google",
+      "facebookBtn": "Đăng nhập bằng Facebook",
+      "fullName": "Họ và tên",
+      "email": "Email",
+      "password": "Mật khẩu",
+      "passwordHint": "Ít nhất 8 ký tự với một chữ hoa và một chữ số.",
+      "confirmPassword": "Xác nhận mật khẩu",
+      "tosCheckbox": "Tôi đồng ý với",
+      "tosLink": "Điều khoản dịch vụ",
+      "andWord": "và",
+      "privacyLink": "Chính sách quyền riêng tư",
+      "cta": "Tạo tài khoản",
+      "footerPrompt": "Đã có tài khoản?",
+      "footerLink": "Đăng nhập"
+    },
+    "login": {
+      "eyebrow": "Đăng nhập",
+      "heading": "Tiếp tục từ nơi bạn dừng lại.",
+      "helper": "Chào mừng trở lại! Nhập thông tin của bạn để tiếp tục.",
+      "orWithEmail": "hoặc với email",
+      "googleBtn": "Đăng nhập bằng Google",
+      "facebookBtn": "Đăng nhập bằng Facebook",
+      "email": "Email",
+      "password": "Mật khẩu",
+      "forgotPassword": "Quên mật khẩu?",
+      "cta": "Đăng nhập",
+      "footerPrompt": "Mới dùng Gambitly?",
+      "footerLink": "Tạo tài khoản"
+    },
+    "forgotPassword": {
+      "eyebrow": "Đặt lại mật khẩu",
+      "heading": "Đặt lại mật khẩu của bạn.",
+      "helper": "Nhập địa chỉ email đã đăng ký và chúng tôi sẽ gửi liên kết đặt lại.",
+      "email": "Email",
+      "cta": "Gửi liên kết đặt lại",
+      "backToLogin": "Quay lại đăng nhập",
+      "successTitle": "Kiểm tra email của bạn",
+      "successBody": "Chúng tôi đã gửi liên kết đặt lại mật khẩu đến email của bạn. Liên kết sẽ hết hạn sau 24 giờ."
+    },
+    "checkEmail": {
+      "heading": "Kiểm tra email của bạn",
+      "body": "Chúng tôi đã gửi email xác minh. Nhấp vào liên kết trong email để kích hoạt tài khoản của bạn. Liên kết sẽ hết hạn sau 24 giờ.",
+      "resend": "Gửi lại email",
+      "backToSignup": "Quay lại đăng ký"
+    },
+    "resetPassword": {
+      "eyebrow": "Đặt lại mật khẩu",
+      "heading": "Tạo mật khẩu mới.",
+      "newPassword": "Mật khẩu mới",
+      "passwordHint": "Ít nhất 8 ký tự với một chữ hoa và một chữ số.",
+      "confirmPassword": "Xác nhận mật khẩu mới",
+      "cta": "Cập nhật mật khẩu",
+      "successTitle": "Mật khẩu đã được cập nhật",
+      "successBody": "Mật khẩu của bạn đã được đặt lại thành công. Bây giờ bạn có thể đăng nhập bằng mật khẩu mới."
+    },
+    "validation": {
+      "required": "Trường này là bắt buộc.",
+      "emailInvalid": "Địa chỉ email không hợp lệ.",
+      "nameTooShort": "Tên phải có ít nhất 2 ký tự.",
+      "nameTooLong": "Tên không được vượt quá 100 ký tự.",
+      "passwordTooShort": "Mật khẩu phải có ít nhất 8 ký tự.",
+      "passwordNeedsUppercase": "Mật khẩu phải có ít nhất một chữ hoa.",
+      "passwordNeedsNumber": "Mật khẩu phải có ít nhất một chữ số.",
+      "passwordsNoMatch": "Mật khẩu xác nhận không khớp.",
+      "tosRequired": "Bạn phải đồng ý với điều khoản dịch vụ."
+    }
   }
 }
