@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import GuidedChessPlayer from '../GuidedChessPlayer'
 
+const OPPONENT_DELAY_MS = 600
+
 const SAMPLE_PGN = '1. e4 e5 2. Nf3 Nc6 {Black develops the knight.} 3. Bb5'
 
 const baseLesson = {
@@ -171,10 +173,15 @@ describe('GuidedChessPlayer', () => {
   })
 
   describe('auto-complete', () => {
-    it('calls onComplete after the final PGN move is played', async () => {
-      const user = userEvent.setup()
+    beforeEach(() => {
+      vi.useFakeTimers()
+    })
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('calls onComplete after the final PGN move is played (opponent auto-play finishes)', () => {
       const onComplete = vi.fn()
-      // Use a 2-ply PGN so we can quickly play through it
       const shortLesson = {
         ...baseLesson,
         pgn_data: '1. e4 e5',
@@ -188,17 +195,18 @@ describe('GuidedChessPlayer', () => {
         />
       )
       const board = screen.getByTestId('guided-player-board')
-      await user.click(board.querySelector('[data-square="e2"]')!)
-      await user.click(board.querySelector('[data-square="e4"]')!)
+      fireEvent.click(board.querySelector('[data-square="e2"]')!)
+      fireEvent.click(board.querySelector('[data-square="e4"]')!)
       expect(onComplete).not.toHaveBeenCalled()
 
-      await user.click(board.querySelector('[data-square="e7"]')!)
-      await user.click(board.querySelector('[data-square="e5"]')!)
+      // Opponent auto-plays e5, completing the lesson.
+      act(() => {
+        vi.advanceTimersByTime(OPPONENT_DELAY_MS)
+      })
       expect(onComplete).toHaveBeenCalledTimes(1)
     })
 
-    it('does not render the "Your turn" prompt once all moves are played', async () => {
-      const user = userEvent.setup()
+    it('does not render the "Your turn" prompt once all moves are played', () => {
       const shortLesson = {
         ...baseLesson,
         pgn_data: '1. e4 e5',
@@ -207,10 +215,12 @@ describe('GuidedChessPlayer', () => {
         <GuidedChessPlayer lesson={shortLesson} lessonNumber={1} totalLessons={5} />
       )
       const board = screen.getByTestId('guided-player-board')
-      await user.click(board.querySelector('[data-square="e2"]')!)
-      await user.click(board.querySelector('[data-square="e4"]')!)
-      await user.click(board.querySelector('[data-square="e7"]')!)
-      await user.click(board.querySelector('[data-square="e5"]')!)
+      fireEvent.click(board.querySelector('[data-square="e2"]')!)
+      fireEvent.click(board.querySelector('[data-square="e4"]')!)
+      // Let opponent auto-play the final ply
+      act(() => {
+        vi.advanceTimersByTime(OPPONENT_DELAY_MS)
+      })
       expect(screen.queryByTestId('your-turn-prompt')).not.toBeInTheDocument()
     })
   })
@@ -381,28 +391,32 @@ describe('GuidedChessPlayer', () => {
       expect(moveBlock).toHaveTextContent('e4')
     })
 
-    it('renders the annotation text for a played annotated move', async () => {
-      const user = userEvent.setup()
+    it('renders the annotation text for a played annotated move', () => {
+      vi.useFakeTimers()
       // SAMPLE_PGN has annotation after move 4 ("Black develops the knight.")
       render(
         <GuidedChessPlayer lesson={baseLesson} lessonNumber={1} totalLessons={5} />
       )
       const board = screen.getByTestId('guided-player-board')
-      // Play through e4, e5, Nf3, Nc6
-      const seq: Array<[string, string]> = [
-        ['e2', 'e4'],
-        ['e7', 'e5'],
-        ['g1', 'f3'],
-        ['b8', 'c6'],
-      ]
-      for (const [from, to] of seq) {
-        await user.click(board.querySelector(`[data-square="${from}"]`)!)
-        await user.click(board.querySelector(`[data-square="${to}"]`)!)
-      }
+      // Learner (white) plays e4
+      fireEvent.click(board.querySelector('[data-square="e2"]')!)
+      fireEvent.click(board.querySelector('[data-square="e4"]')!)
+      // Opponent auto-plays e5
+      act(() => {
+        vi.advanceTimersByTime(OPPONENT_DELAY_MS)
+      })
+      // Learner (white) plays Nf3
+      fireEvent.click(screen.getByTestId('guided-player-board').querySelector('[data-square="g1"]')!)
+      fireEvent.click(screen.getByTestId('guided-player-board').querySelector('[data-square="f3"]')!)
+      // Opponent auto-plays Nc6 — annotation for move 2 should appear
+      act(() => {
+        vi.advanceTimersByTime(OPPONENT_DELAY_MS)
+      })
 
       expect(screen.getByTestId('move-log-annotation-2')).toHaveTextContent(
         'Black develops the knight.'
       )
+      vi.useRealTimers()
     })
 
     it('renders a "Your turn" prompt when there are still pending moves', () => {
@@ -474,6 +488,245 @@ describe('GuidedChessPlayer', () => {
         <GuidedChessPlayer lesson={baseLesson} lessonNumber={2} totalLessons={5} />
       )
       expect(screen.getByTestId('guided-player-helper')).toBeInTheDocument()
+    })
+  })
+
+  describe('opponent auto-play', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+    })
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('keeps existing behavior: when board_perspective is "white", learner plays move 1', () => {
+      render(
+        <GuidedChessPlayer lesson={baseLesson} lessonNumber={1} totalLessons={5} />
+      )
+      const board = screen.getByTestId('guided-player-board')
+      // No auto-play should fire — pawn still on e2 after the delay window.
+      act(() => {
+        vi.advanceTimersByTime(OPPONENT_DELAY_MS + 50)
+      })
+      expect(board.querySelector('[data-square="e2"]')).toHaveTextContent('♙')
+      expect(board.querySelector('[data-square="e4"]')).toHaveTextContent('')
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Move 1 of 5')
+    })
+
+    it('auto-plays white\'s first move after 600ms when board_perspective is "black"', () => {
+      const blackLesson = { ...baseLesson, board_perspective: 'black' as const }
+      render(
+        <GuidedChessPlayer lesson={blackLesson} lessonNumber={1} totalLessons={5} />
+      )
+      const board = screen.getByTestId('guided-player-board')
+      // Before delay: starting position
+      expect(board.querySelector('[data-square="e2"]')).toHaveTextContent('♙')
+      expect(board.querySelector('[data-square="e4"]')).toHaveTextContent('')
+
+      act(() => {
+        vi.advanceTimersByTime(OPPONENT_DELAY_MS)
+      })
+
+      // After delay: white pawn moved to e4
+      expect(screen.getByTestId('guided-player-board').querySelector('[data-square="e2"]'))
+        .toHaveTextContent('')
+      expect(screen.getByTestId('guided-player-board').querySelector('[data-square="e4"]'))
+        .toHaveTextContent('♙')
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Move 2 of 5')
+    })
+
+    it('auto-plays opponent reply 600ms after the learner plays their move', () => {
+      render(
+        <GuidedChessPlayer lesson={baseLesson} lessonNumber={1} totalLessons={5} />
+      )
+      const board = screen.getByTestId('guided-player-board')
+
+      // Learner (white) plays e2 → e4
+      fireEvent.click(board.querySelector('[data-square="e2"]')!)
+      fireEvent.click(board.querySelector('[data-square="e4"]')!)
+
+      // Opponent has not replied yet
+      expect(board.querySelector('[data-square="e7"]')).toHaveTextContent('♟')
+      expect(board.querySelector('[data-square="e5"]')).toHaveTextContent('')
+
+      act(() => {
+        vi.advanceTimersByTime(OPPONENT_DELAY_MS)
+      })
+
+      // Black auto-played e5
+      const updatedBoard = screen.getByTestId('guided-player-board')
+      expect(updatedBoard.querySelector('[data-square="e7"]')).toHaveTextContent('')
+      expect(updatedBoard.querySelector('[data-square="e5"]')).toHaveTextContent('♟')
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Move 3 of 5')
+    })
+
+    it('ignores board clicks while waiting for the opponent', () => {
+      const blackLesson = { ...baseLesson, board_perspective: 'black' as const }
+      render(
+        <GuidedChessPlayer lesson={blackLesson} lessonNumber={1} totalLessons={5} />
+      )
+      const board = screen.getByTestId('guided-player-board')
+
+      // Click a black piece during the opponent delay — should be ignored.
+      fireEvent.click(board.querySelector('[data-square="e7"]')!)
+      fireEvent.click(board.querySelector('[data-square="e5"]')!)
+
+      // Still at starting position before the opponent timer fires
+      expect(board.querySelector('[data-square="e7"]')).toHaveTextContent('♟')
+      expect(board.querySelector('[data-square="e5"]')).toHaveTextContent('')
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Move 1 of 5')
+
+      // Now the opponent auto-plays e4
+      act(() => {
+        vi.advanceTimersByTime(OPPONENT_DELAY_MS)
+      })
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Move 2 of 5')
+    })
+
+    it('renders annotation for an auto-played opponent ply in the move log', () => {
+      render(
+        <GuidedChessPlayer lesson={baseLesson} lessonNumber={1} totalLessons={5} />
+      )
+      const board = screen.getByTestId('guided-player-board')
+
+      // White (learner) plays e4
+      fireEvent.click(board.querySelector('[data-square="e2"]')!)
+      fireEvent.click(board.querySelector('[data-square="e4"]')!)
+      // Black auto-plays e5
+      act(() => {
+        vi.advanceTimersByTime(OPPONENT_DELAY_MS)
+      })
+      // White (learner) plays Nf3
+      fireEvent.click(screen.getByTestId('guided-player-board').querySelector('[data-square="g1"]')!)
+      fireEvent.click(screen.getByTestId('guided-player-board').querySelector('[data-square="f3"]')!)
+      // Black auto-plays Nc6 — annotation for move 2 should appear immediately when this ply plays
+      act(() => {
+        vi.advanceTimersByTime(OPPONENT_DELAY_MS)
+      })
+
+      expect(screen.getByTestId('move-log-annotation-2')).toHaveTextContent(
+        'Black develops the knight.'
+      )
+    })
+
+    it('disables the hint button while it is the opponent\'s turn', () => {
+      const blackLesson = { ...baseLesson, board_perspective: 'black' as const }
+      render(
+        <GuidedChessPlayer lesson={blackLesson} lessonNumber={1} totalLessons={5} />
+      )
+      // Opening is opponent's turn (white) — hint should be disabled
+      expect(screen.getByTestId('guided-player-hint-btn')).toBeDisabled()
+
+      // After opponent plays, learner's turn — hint should be enabled again
+      act(() => {
+        vi.advanceTimersByTime(OPPONENT_DELAY_MS)
+      })
+      expect(screen.getByTestId('guided-player-hint-btn')).not.toBeDisabled()
+    })
+
+    it('does not render "Your turn" prompt while awaiting the opponent', () => {
+      const blackLesson = { ...baseLesson, board_perspective: 'black' as const }
+      render(
+        <GuidedChessPlayer lesson={blackLesson} lessonNumber={1} totalLessons={5} />
+      )
+      // Opening: opponent (white) is to move
+      expect(screen.queryByTestId('your-turn-prompt')).not.toBeInTheDocument()
+
+      // After white auto-plays, it becomes learner's turn → prompt re-appears
+      act(() => {
+        vi.advanceTimersByTime(OPPONENT_DELAY_MS)
+      })
+      expect(screen.getByTestId('your-turn-prompt')).toBeInTheDocument()
+    })
+
+    it('reset cancels the in-flight opponent timer', () => {
+      render(
+        <GuidedChessPlayer lesson={baseLesson} lessonNumber={1} totalLessons={5} />
+      )
+      const board = screen.getByTestId('guided-player-board')
+      // Learner plays e4 → schedules opponent timer
+      fireEvent.click(board.querySelector('[data-square="e2"]')!)
+      fireEvent.click(board.querySelector('[data-square="e4"]')!)
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Move 2 of 5')
+
+      // Open reset dialog and confirm before timer fires
+      fireEvent.click(screen.getByTestId('guided-player-reset-btn'))
+      fireEvent.click(screen.getByTestId('guided-player-reset-confirm'))
+
+      // Advance timers — the cancelled opponent move must NOT play
+      act(() => {
+        vi.advanceTimersByTime(OPPONENT_DELAY_MS + 100)
+      })
+
+      // Back to fresh board, opponent did not play e5
+      const resetBoard = screen.getByTestId('guided-player-board')
+      expect(resetBoard.querySelector('[data-square="e7"]')).toHaveTextContent('♟')
+      expect(resetBoard.querySelector('[data-square="e5"]')).toHaveTextContent('')
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Move 1 of 5')
+    })
+
+    it('after reset on a black-perspective lesson, opening auto-move re-fires', () => {
+      const blackLesson = { ...baseLesson, board_perspective: 'black' as const }
+      render(
+        <GuidedChessPlayer lesson={blackLesson} lessonNumber={1} totalLessons={5} />
+      )
+      // Let opening auto-play
+      act(() => {
+        vi.advanceTimersByTime(OPPONENT_DELAY_MS)
+      })
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Move 2 of 5')
+
+      // Reset
+      fireEvent.click(screen.getByTestId('guided-player-reset-btn'))
+      fireEvent.click(screen.getByTestId('guided-player-reset-confirm'))
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Move 1 of 5')
+
+      // Opening auto-move re-fires after reset
+      act(() => {
+        vi.advanceTimersByTime(OPPONENT_DELAY_MS)
+      })
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Move 2 of 5')
+    })
+
+    it('unmounting during the opponent delay does not throw or warn', () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const blackLesson = { ...baseLesson, board_perspective: 'black' as const }
+      const { unmount } = render(
+        <GuidedChessPlayer lesson={blackLesson} lessonNumber={1} totalLessons={5} />
+      )
+      // Don't fire the timer — unmount first
+      unmount()
+      act(() => {
+        vi.advanceTimersByTime(OPPONENT_DELAY_MS + 100)
+      })
+      expect(errorSpy).not.toHaveBeenCalled()
+      errorSpy.mockRestore()
+    })
+
+    it('fires onComplete when the final ply is auto-played by the opponent', () => {
+      const onComplete = vi.fn()
+      const shortLesson = {
+        ...baseLesson,
+        pgn_data: '1. e4 e5',
+      }
+      render(
+        <GuidedChessPlayer
+          lesson={shortLesson}
+          lessonNumber={1}
+          totalLessons={5}
+          onComplete={onComplete}
+        />
+      )
+      const board = screen.getByTestId('guided-player-board')
+      fireEvent.click(board.querySelector('[data-square="e2"]')!)
+      fireEvent.click(board.querySelector('[data-square="e4"]')!)
+      expect(onComplete).not.toHaveBeenCalled()
+
+      act(() => {
+        vi.advanceTimersByTime(OPPONENT_DELAY_MS)
+      })
+
+      expect(onComplete).toHaveBeenCalledTimes(1)
     })
   })
 })

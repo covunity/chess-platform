@@ -24,6 +24,7 @@ const PIECE_UNICODE: Record<string, string> = {
 }
 
 const STARTING_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+const OPPONENT_DELAY_MS = 600
 
 interface InteractiveBoardProps {
   fen: string
@@ -157,6 +158,10 @@ export default function GuidedChessPlayer({
   const [viewPerspective, setViewPerspective] = useState<'white' | 'black'>(lesson.board_perspective)
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
   const completedFiredRef = useRef(false)
+  const opponentTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const learnerColor = lesson.board_perspective
+  const upcomingSide: 'white' | 'black' = playedPlies % 2 === 0 ? 'white' : 'black'
+  const awaitingOpponent = playedPlies < totalPlies && upcomingSide !== learnerColor
 
   useEffect(() => {
     if (totalPlies > 0 && playedPlies >= totalPlies && !completedFiredRef.current) {
@@ -190,6 +195,20 @@ export default function GuidedChessPlayer({
     }
   }, [])
 
+  useEffect(() => {
+    if (!awaitingOpponent) return
+    opponentTimer.current = setTimeout(() => {
+      opponentTimer.current = null
+      setPlayedPlies((p) => p + 1)
+    }, OPPONENT_DELAY_MS)
+    return () => {
+      if (opponentTimer.current) {
+        clearTimeout(opponentTimer.current)
+        opponentTimer.current = null
+      }
+    }
+  }, [awaitingOpponent, playedPlies])
+
   const currentFen = playedPlies === 0
     ? STARTING_FEN
     : expectedMoves[playedPlies - 1].fen
@@ -201,6 +220,7 @@ export default function GuidedChessPlayer({
   function handleSquareClick(square: string) {
     if (hintActive) setHintActive(false)
     if (playedPlies >= totalPlies) return
+    if (awaitingOpponent) return
 
     const expected = expectedMoves[playedPlies]
 
@@ -227,7 +247,7 @@ export default function GuidedChessPlayer({
   }
 
   const sideToMove = playedPlies % 2 === 0 ? 'White' : 'Black'
-  const learnerColor = lesson.board_perspective === 'white' ? 'White' : 'Black'
+  const learnerColorLabel = learnerColor === 'white' ? 'White' : 'Black'
 
   // Build move-log entries grouped by full-move number from played plies
   interface FullMoveEntry {
@@ -277,7 +297,7 @@ export default function GuidedChessPlayer({
           {sideToMove}
         </span>
         <span data-testid="guided-player-perspective-label">
-          · you'll play as {learnerColor}
+          · you'll play as {learnerColorLabel}
         </span>
       </div>
       <div data-testid="guided-player-move-counter">
@@ -296,7 +316,12 @@ export default function GuidedChessPlayer({
         <button
           type="button"
           data-testid="guided-player-hint-btn"
+          disabled={awaitingOpponent || upcomingSide !== learnerColor}
           onClick={() => setHintActive((h) => !h)}
+          style={{
+            opacity: awaitingOpponent || upcomingSide !== learnerColor ? 0.5 : undefined,
+            cursor: awaitingOpponent || upcomingSide !== learnerColor ? 'not-allowed' : undefined,
+          }}
         >
           Hint
         </button>
@@ -330,6 +355,10 @@ export default function GuidedChessPlayer({
             type="button"
             data-testid="guided-player-reset-confirm"
             onClick={() => {
+              if (opponentTimer.current) {
+                clearTimeout(opponentTimer.current)
+                opponentTimer.current = null
+              }
               setPlayedPlies(0)
               setSelectedSquare(null)
               setWrongMoveSquare(null)
@@ -359,9 +388,21 @@ export default function GuidedChessPlayer({
             </div>
           )
         })}
-        {hasPendingMoves && (
+        {hasPendingMoves && !awaitingOpponent && upcomingSide === learnerColor && (
           <div data-testid="your-turn-prompt">
             <strong>Your turn.</strong> Play the expected move.
+          </div>
+        )}
+        {hasPendingMoves && (awaitingOpponent || upcomingSide !== learnerColor) && (
+          <div
+            data-testid="opponent-thinking-indicator"
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 12,
+              color: 'var(--ink-3)',
+            }}
+          >
+            Opponent thinking…
           </div>
         )}
       </div>
