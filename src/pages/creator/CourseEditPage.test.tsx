@@ -164,17 +164,24 @@ describe('CourseEditPage', () => {
     })
   })
 
-  it('calls createLesson when "+ Add lesson" is clicked in a chapter', async () => {
+  it('opens new lesson dialog and calls createLesson on confirm', async () => {
     renderPage()
     await waitFor(() => screen.getByText('Introduction'))
 
     await userEvent.click(screen.getByTestId('add-lesson-ch1'))
 
+    const dialog = await waitFor(() => screen.getByTestId('new-lesson-dialog'))
+    expect(dialog).toBeInTheDocument()
+
+    await userEvent.type(screen.getByTestId('new-lesson-title'), 'My Lesson')
+    await userEvent.click(screen.getByTestId('lesson-type-chess'))
+    await userEvent.click(screen.getByTestId('new-lesson-create-btn'))
+
     await waitFor(() => {
       expect(mockCreateLesson).toHaveBeenCalledWith(
         expect.anything(),
         'ch1',
-        expect.objectContaining({ title: expect.any(String), type: 'video' })
+        expect.objectContaining({ title: 'My Lesson', type: 'chess' })
       )
     })
   })

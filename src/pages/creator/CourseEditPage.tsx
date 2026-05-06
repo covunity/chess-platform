@@ -23,6 +23,91 @@ const LESSON_TYPE_ICON: Record<LessonType, string> = {
   puzzle: '📋',
 }
 
+interface NewLessonDialogProps {
+  onCancel: () => void
+  onCreate: (type: LessonType, title: string) => void
+  t: (k: string) => string
+}
+
+function NewLessonDialog({ onCancel, onCreate, t }: NewLessonDialogProps) {
+  const [selectedType, setSelectedType] = useState<LessonType>('video')
+  const [title, setTitle] = useState('')
+
+  const types: { type: LessonType; labelKey: string }[] = [
+    { type: 'video',  labelKey: 'creator.courseEdit.typeVideo' },
+    { type: 'chess',  labelKey: 'creator.courseEdit.typeChess' },
+    { type: 'puzzle', labelKey: 'creator.courseEdit.typePuzzle' },
+  ]
+
+  return (
+    <div
+      className="fixed inset-0 flex items-center justify-center"
+      style={{ background: 'rgba(20,22,26,0.4)', zIndex: 60 }}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div data-testid="new-lesson-dialog" className="card" style={{ width: 400, padding: 24 }}>
+        <p className="font-semibold text-[--ink-1] mb-4" style={{ fontSize: 15 }}>
+          {t('creator.courseEdit.newLesson.title')}
+        </p>
+
+        <p className="text-xs font-medium uppercase tracking-wider text-[--ink-3] mb-2">
+          {t('creator.courseEdit.newLesson.typeLabel')}
+        </p>
+        <div className="flex gap-2 mb-5">
+          {types.map(({ type, labelKey }) => (
+            <button
+              key={type}
+              type="button"
+              data-testid={`lesson-type-${type}`}
+              onClick={() => setSelectedType(type)}
+              className="flex-1 flex flex-col items-center gap-1 py-3 rounded-[--r-md] border transition-colors"
+              style={{
+                borderColor: selectedType === type ? 'var(--accent)' : 'var(--border-strong)',
+                background: selectedType === type ? 'var(--accent-soft)' : 'var(--surface)',
+                color: selectedType === type ? 'var(--accent-ink)' : 'var(--ink-2)',
+              }}
+            >
+              <span style={{ fontSize: 18 }}>{LESSON_TYPE_ICON[type]}</span>
+              <span style={{ fontSize: 12, fontWeight: 500 }}>{t(labelKey)}</span>
+            </button>
+          ))}
+        </div>
+
+        <label className="block text-xs font-medium text-[--ink-2] mb-1">
+          {t('creator.courseEdit.newLesson.titleLabel')}
+        </label>
+        <input
+          data-testid="new-lesson-title"
+          className="input w-full mb-5"
+          placeholder={t('creator.courseEdit.lessonPlaceholder')}
+          value={title}
+          onChange={e => setTitle(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter' && title.trim()) onCreate(selectedType, title.trim())
+          }}
+          autoFocus
+        />
+
+        <div className="flex justify-end gap-2">
+          <button type="button" className="btn btn-ghost btn-sm" onClick={onCancel}>
+            {t('creator.courseEdit.cancel')}
+          </button>
+          <button
+            type="button"
+            data-testid="new-lesson-create-btn"
+            className="btn btn-primary btn-sm"
+            disabled={!title.trim()}
+            onClick={() => { if (title.trim()) onCreate(selectedType, title.trim()) }}
+          >
+            {t('creator.courseEdit.newLesson.create')}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 interface ConfirmDialogProps {
   testid: string
   confirmTestid: string
@@ -138,14 +223,14 @@ function LessonRow({ lesson, onDelete, onToggleFreePreview, onOpenEditor, t }: L
 interface ChapterBlockProps {
   chapter: Chapter
   onDeleteChapter: (ch: Chapter) => void
-  onCreateLesson: (chapterId: string) => void
+  onOpenNewLessonDialog: (chapterId: string) => void
   onDeleteLesson: (l: Lesson) => void
   onToggleFreePreview: (l: Lesson) => void
   onOpenEditor: (l: Lesson) => void
   t: (k: string) => string
 }
 
-function ChapterBlock({ chapter, onDeleteChapter, onCreateLesson, onDeleteLesson, onToggleFreePreview, onOpenEditor, t }: ChapterBlockProps) {
+function ChapterBlock({ chapter, onDeleteChapter, onOpenNewLessonDialog, onDeleteLesson, onToggleFreePreview, onOpenEditor, t }: ChapterBlockProps) {
   const [title, setTitle] = useState(chapter.title)
   const [editing, setEditing] = useState(false)
 
@@ -210,7 +295,7 @@ function ChapterBlock({ chapter, onDeleteChapter, onCreateLesson, onDeleteLesson
         data-testid={`add-lesson-${chapter.id}`}
         className="btn btn-ghost btn-sm"
         style={{ marginLeft: 32, fontSize: 12, color: 'var(--accent-ink)', paddingLeft: 0 }}
-        onClick={() => onCreateLesson(chapter.id)}
+        onClick={() => onOpenNewLessonDialog(chapter.id)}
       >
         {t('creator.courseEdit.addLesson')}
       </button>
@@ -316,6 +401,7 @@ export default function CourseEditPage() {
   const [confirmDeleteChapter, setConfirmDeleteChapter] = useState<Chapter | null>(null)
   const [confirmDeleteLesson, setConfirmDeleteLesson] = useState<Lesson | null>(null)
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null)
+  const [newLessonChapterId, setNewLessonChapterId] = useState<string | null>(null)
 
   const refreshReadiness = useCallback(async () => {
     if (!courseId) return
@@ -388,13 +474,13 @@ export default function CourseEditPage() {
     await refreshReadiness()
   }
 
-  async function handleAddLesson(chapterId: string) {
+  async function handleAddLesson(chapterId: string, type: LessonType, title: string) {
     const chapter = chapters.find(ch => ch.id === chapterId)
     if (!chapter) return
     const position = (chapter.lessons ?? []).length
     const { lesson } = await createLesson(supabase, chapterId, {
-      title: `${t('creator.courseEdit.lessonPlaceholder')} ${position + 1}`,
-      type: 'video',
+      title,
+      type,
       position,
       free_preview: false,
     })
@@ -406,6 +492,7 @@ export default function CourseEditPage() {
       ))
       await refreshReadiness()
     }
+    setNewLessonChapterId(null)
   }
 
   async function handleDeleteLessonConfirm() {
@@ -479,7 +566,7 @@ export default function CourseEditPage() {
                 key={chapter.id}
                 chapter={chapter}
                 onDeleteChapter={ch => setConfirmDeleteChapter(ch)}
-                onCreateLesson={handleAddLesson}
+                onOpenNewLessonDialog={chapterId => setNewLessonChapterId(chapterId)}
                 onDeleteLesson={l => setConfirmDeleteLesson(l)}
                 onToggleFreePreview={handleToggleFreePreview}
                 onOpenEditor={l => setSelectedLesson(l)}
@@ -552,6 +639,15 @@ export default function CourseEditPage() {
         >
           {toast}
         </div>
+      )}
+
+      {/* New lesson dialog */}
+      {newLessonChapterId && (
+        <NewLessonDialog
+          onCancel={() => setNewLessonChapterId(null)}
+          onCreate={(type, title) => handleAddLesson(newLessonChapterId, type, title)}
+          t={t}
+        />
       )}
 
       {/* Confirm delete chapter dialog */}

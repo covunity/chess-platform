@@ -120,6 +120,7 @@
         "heading": "Tất cả khóa học",
         "filterAll": "Tất cả",
         "filterPublished": "Đã xuất bản",
+        "filterPendingReview": "Chờ duyệt",
         "filterDraft": "Nháp",
         "export": "Xuất",
         "colCourse": "Khóa học",
@@ -135,6 +136,7 @@
       },
       "status": {
         "published": "Đã xuất bản",
+        "pending_review": "Chờ duyệt",
         "draft": "Nháp"
       }
     },
@@ -174,6 +176,12 @@
       "typeVideo": "Video",
       "typeChess": "Cờ vua",
       "typePuzzle": "Bài tập",
+      "newLesson": {
+        "title": "Thêm bài học mới",
+        "typeLabel": "Loại bài học",
+        "titleLabel": "Tiêu đề",
+        "create": "Tạo bài học"
+      },
       "renameChapter": "Đổi tên chương",
       "deleteChapter": "Xóa chương",
       "deleteLesson": "Xóa bài học",

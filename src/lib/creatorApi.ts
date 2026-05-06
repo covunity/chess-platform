@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-export type CourseStatus = 'draft' | 'published'
+export type CourseStatus = 'draft' | 'pending_review' | 'published'
 export type CourseLevel  = 'beginner' | 'intermediate' | 'advanced'
 export type LessonType   = 'video' | 'chess' | 'puzzle'
 

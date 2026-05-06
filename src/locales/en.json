@@ -80,7 +80,7 @@
         "heading": "All courses",
         "filterAll": "All",
         "filterPublished": "Published",
-        "filterPending": "Pending",
+        "filterPendingReview": "Pending review",
         "filterDraft": "Draft",
         "export": "Export",
         "colCourse": "Course",
@@ -94,9 +94,11 @@
         "kebabDelete": "Delete",
         "kebabDuplicate": "Duplicate"
       },
-      "statusPublished": "Published",
-      "statusPending": "Pending",
-      "statusDraft": "Draft"
+      "status": {
+        "published": "Published",
+        "pending_review": "Pending review",
+        "draft": "Draft"
+      }
     },
     "newCourse": {
       "pageTitle": "New course",
@@ -138,7 +140,26 @@
       "deleteChapter": "Delete chapter",
       "deleteLesson": "Delete lesson",
       "save": "Save",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "newLesson": {
+        "title": "Add new lesson",
+        "typeLabel": "Lesson type",
+        "titleLabel": "Title",
+        "create": "Create lesson"
+      },
+      "publish": {
+        "publish": "Publish",
+        "unpublish": "Unpublish",
+        "tooltipTitle": "Complete the following before publishing:",
+        "reasonTitle": "Missing title",
+        "reasonDescription": "Missing course description",
+        "reasonThumbnail": "Missing thumbnail",
+        "reasonPrice": "Missing price",
+        "reasonChapters": "Need at least 1 chapter",
+        "reasonLessons": "Need at least 1 lesson with content",
+        "toastPublished": "Course published!",
+        "toastUnpublished": "Course unpublished."
+      }
     },
     "deleteConfirm": {
       "title": "Delete course?",
