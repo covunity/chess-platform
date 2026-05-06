@@ -36,6 +36,7 @@
   --board-light: #EFE3C7;
   --board-dark: #B58863;
   --board-border: #4A3722;
+  --board-move: rgba(255, 200, 100, 0.55);
 
   /* Typography */
   --font-sans: 'Inter', system-ui, sans-serif;

@@ -12,6 +12,7 @@ import {
   deleteLesson,
 } from '../../lib/creatorApi'
 import type { Chapter, Lesson, LessonType } from '../../lib/creatorApi'
+import LessonEditor from '../../components/LessonEditor/LessonEditor'
 
 const LESSON_TYPE_ICON: Record<LessonType, string> = {
   video: '▶',
@@ -58,10 +59,11 @@ interface LessonRowProps {
   lesson: Lesson
   onDelete: (l: Lesson) => void
   onToggleFreePreview: (l: Lesson) => void
+  onOpenEditor: (l: Lesson) => void
   t: (k: string) => string
 }
 
-function LessonRow({ lesson, onDelete, onToggleFreePreview, t }: LessonRowProps) {
+function LessonRow({ lesson, onDelete, onToggleFreePreview, onOpenEditor, t }: LessonRowProps) {
   const [title, setTitle] = useState(lesson.title)
   const [editing, setEditing] = useState(false)
 
@@ -93,7 +95,8 @@ function LessonRow({ lesson, onDelete, onToggleFreePreview, t }: LessonRowProps)
         <span
           className="flex-1 text-[--ink-2] cursor-pointer"
           style={{ fontSize: 12.5 }}
-          onClick={() => setEditing(true)}
+          onClick={() => lesson.type === 'chess' ? onOpenEditor(lesson) : setEditing(true)}
+          data-testid={lesson.type === 'chess' ? `open-chess-editor-${lesson.id}` : undefined}
         >
           {title}
         </span>
@@ -135,10 +138,11 @@ interface ChapterBlockProps {
   onCreateLesson: (chapterId: string) => void
   onDeleteLesson: (l: Lesson) => void
   onToggleFreePreview: (l: Lesson) => void
+  onOpenEditor: (l: Lesson) => void
   t: (k: string) => string
 }
 
-function ChapterBlock({ chapter, onDeleteChapter, onCreateLesson, onDeleteLesson, onToggleFreePreview, t }: ChapterBlockProps) {
+function ChapterBlock({ chapter, onDeleteChapter, onCreateLesson, onDeleteLesson, onToggleFreePreview, onOpenEditor, t }: ChapterBlockProps) {
   const [title, setTitle] = useState(chapter.title)
   const [editing, setEditing] = useState(false)
 
@@ -193,6 +197,7 @@ function ChapterBlock({ chapter, onDeleteChapter, onCreateLesson, onDeleteLesson
           lesson={lesson}
           onDelete={onDeleteLesson}
           onToggleFreePreview={onToggleFreePreview}
+          onOpenEditor={onOpenEditor}
           t={t}
         />
       ))}
@@ -218,6 +223,7 @@ export default function CourseEditPage() {
 
   const [confirmDeleteChapter, setConfirmDeleteChapter] = useState<Chapter | null>(null)
   const [confirmDeleteLesson, setConfirmDeleteLesson] = useState<Lesson | null>(null)
+  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null)
 
   useEffect(() => {
     if (!courseId) return
@@ -283,6 +289,24 @@ export default function CourseEditPage() {
     }
   }
 
+  async function handleSaveLesson(data: { pgn_data: string; board_perspective: 'white' | 'black'; is_free_preview: boolean; title: string }) {
+    if (!selectedLesson) return
+    await updateLesson(supabase, selectedLesson.id, {
+      pgn_data: data.pgn_data,
+      board_perspective: data.board_perspective,
+      free_preview: data.is_free_preview,
+      title: data.title,
+    })
+    setChapters(prev => prev.map(ch => ({
+      ...ch,
+      lessons: (ch.lessons ?? []).map(l =>
+        l.id === selectedLesson.id
+          ? { ...l, pgn_data: data.pgn_data, board_perspective: data.board_perspective, free_preview: data.is_free_preview, title: data.title }
+          : l
+      ),
+    })))
+  }
+
   return (
     <div className="flex min-h-screen">
       {/* Curriculum Sidebar */}
@@ -312,6 +336,7 @@ export default function CourseEditPage() {
                 onCreateLesson={handleAddLesson}
                 onDeleteLesson={l => setConfirmDeleteLesson(l)}
                 onToggleFreePreview={handleToggleFreePreview}
+                onOpenEditor={l => setSelectedLesson(l)}
                 t={t}
               />
             ))
@@ -331,11 +356,24 @@ export default function CourseEditPage() {
         </div>
       </aside>
 
-      {/* Main editor pane (placeholder for Slices 6/7) */}
-      <main className="flex-1 p-8">
-        <p className="text-[--ink-3] text-sm">
-          {t('admin.comingSoon')}
-        </p>
+      {/* Main editor pane */}
+      <main className="flex-1 p-8 overflow-y-auto">
+        {selectedLesson && selectedLesson.type === 'chess' ? (
+          <LessonEditor
+            lesson={{
+              id: selectedLesson.id,
+              title: selectedLesson.title,
+              pgn_data: selectedLesson.pgn_data ?? '',
+              board_perspective: selectedLesson.board_perspective ?? 'white',
+              is_free_preview: selectedLesson.free_preview,
+            }}
+            onSave={handleSaveLesson}
+          />
+        ) : (
+          <p className="text-[--ink-3] text-sm">
+            {t('admin.comingSoon')}
+          </p>
+        )}
       </main>
 
       {/* Confirm delete chapter dialog */}
