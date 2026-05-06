@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { PublicCourse } from '../lib/coursesApi'
 import ChessBoard from './ChessBoard/ChessBoard'
@@ -53,6 +54,10 @@ export default function CourseCard({ course }: { course: PublicCourse }) {
   const firstTag = course.tags[0]
 
   return (
+    <Link
+      to={`/courses/${course.id}`}
+      style={{ textDecoration: 'none', display: 'block' }}
+    >
     <article
       className="card"
       style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
@@ -137,5 +142,6 @@ export default function CourseCard({ course }: { course: PublicCourse }) {
         </div>
       </div>
     </article>
+    </Link>
   )
 }
