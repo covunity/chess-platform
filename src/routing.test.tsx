@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { vi } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import App from './App'
@@ -10,6 +10,13 @@ vi.mock('./lib/supabase', () => ({
       onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
     },
   },
+}))
+
+vi.mock('./lib/creatorApi', () => ({
+  listCourses: vi.fn().mockResolvedValue({ courses: [], total: 0, error: null }),
+  deleteCourse: vi.fn(),
+  countCourseChildren: vi.fn().mockResolvedValue({ chapters: 0, lessons: 0 }),
+  listChapters: vi.fn().mockResolvedValue({ chapters: [], error: null }),
 }))
 
 function renderAt(path: string) {
@@ -64,5 +71,13 @@ describe('routing', () => {
   it('renders /reset-password page', () => {
     renderAt('/reset-password')
     expect(screen.getByRole('heading', { name: /tạo mật khẩu mới/i })).toBeInTheDocument()
+  })
+
+  it('redirects /creator to /login when not authenticated', async () => {
+    renderAt('/creator')
+    // Not authenticated → ProtectedCreatorRoute redirects to /login
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /tiếp tục từ nơi bạn dừng lại/i })).toBeInTheDocument()
+    })
   })
 })

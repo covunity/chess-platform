@@ -7,6 +7,11 @@ import ProtectedAdminRoute from './components/admin/ProtectedAdminRoute'
 import AdminLayout from './components/admin/AdminLayout'
 import AdminUsersPage from './pages/admin/AdminUsersPage'
 import AdminComingSoonPage from './pages/admin/AdminComingSoonPage'
+import ProtectedCreatorRoute from './components/creator/ProtectedCreatorRoute'
+import CreatorLayout from './components/creator/CreatorLayout'
+import CreatorStudioPage from './pages/creator/CreatorStudioPage'
+import NewCoursePage from './pages/creator/NewCoursePage'
+import CourseEditPage from './pages/creator/CourseEditPage'
 import HomePage from './pages/HomePage'
 import TermsPage from './pages/TermsPage'
 import PrivacyPage from './pages/PrivacyPage'
@@ -39,6 +44,15 @@ export default function App() {
             <Route index element={<Navigate to="users" replace />} />
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="*" element={<AdminComingSoonPage />} />
+          </Route>
+        </Route>
+
+        {/* Creator section — own layout */}
+        <Route path="/creator" element={<ProtectedCreatorRoute />}>
+          <Route element={<CreatorLayout />}>
+            <Route index element={<CreatorStudioPage />} />
+            <Route path="courses/new" element={<NewCoursePage />} />
+            <Route path="courses/:courseId/edit" element={<CourseEditPage />} />
           </Route>
         </Route>
 
