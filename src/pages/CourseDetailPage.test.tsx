@@ -6,6 +6,7 @@ import { I18nextProvider } from 'react-i18next'
 import i18n from '../i18n'
 import CourseDetailPage from './CourseDetailPage'
 import * as coursesApi from '../lib/coursesApi'
+import * as enrollmentApi from '../lib/enrollmentApi'
 import type { CourseDetail } from '../lib/coursesApi'
 import { AuthContext } from '../context/AuthContext'
 import type { AuthContextValue } from '../context/AuthContext'
@@ -26,6 +27,8 @@ vi.mock('../lib/supabase', () => ({
 
 const mockGetCourseDetail = vi.spyOn(coursesApi, 'getCourseDetail')
 const mockCheckUserEnrollment = vi.spyOn(coursesApi, 'checkUserEnrollment')
+const mockEnrollForFree = vi.spyOn(enrollmentApi, 'enrollForFree')
+const mockGetFirstLesson = vi.spyOn(enrollmentApi, 'getFirstLesson')
 
 const sampleCourse: CourseDetail = {
   id: 'c1',
@@ -115,6 +118,8 @@ function renderPage(auth = noAuthContext) {
         <I18nextProvider i18n={i18n}>
           <Routes>
             <Route path="/courses/:courseId" element={<CourseDetailPage />} />
+            <Route path="/learn/:courseId/:lessonId" element={<div data-testid="lesson-player-page" />} />
+            <Route path="/signup" element={<div data-testid="signup-page" />} />
           </Routes>
         </I18nextProvider>
       </MemoryRouter>
@@ -126,6 +131,8 @@ describe('CourseDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockCheckUserEnrollment.mockResolvedValue(false)
+    mockEnrollForFree.mockResolvedValue({ enrollmentId: 'e1', orderId: 'o1', error: null })
+    mockGetFirstLesson.mockResolvedValue({ lessonId: 'l1', error: null })
   })
 
   describe('loading state', () => {
@@ -405,6 +412,49 @@ describe('CourseDetailPage', () => {
       await user.click(screen.getByTestId('close-lock-prompt'))
       await waitFor(() => {
         expect(screen.queryByTestId('lock-prompt')).not.toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('free course enrollment flow', () => {
+    it('clicking "Đăng ký miễn phí" while logged in calls enrollForFree and navigates to player', async () => {
+      const user = userEvent.setup()
+      mockGetCourseDetail.mockResolvedValue({ course: { ...sampleCourse, price: 0 }, error: null })
+      renderPage(loggedInContext)
+      await waitFor(() => screen.getByRole('button', { name: /đăng ký miễn phí/i }))
+      await user.click(screen.getByRole('button', { name: /đăng ký miễn phí/i }))
+      await waitFor(() => {
+        expect(mockEnrollForFree).toHaveBeenCalledWith(
+          expect.anything(),
+          'c1',
+          'u99'
+        )
+      })
+      await waitFor(() => {
+        expect(screen.getByTestId('lesson-player-page')).toBeInTheDocument()
+      })
+    })
+
+    it('clicking "Đăng ký miễn phí" when not logged in redirects to signup with redirect param', async () => {
+      const user = userEvent.setup()
+      mockGetCourseDetail.mockResolvedValue({ course: { ...sampleCourse, price: 0 }, error: null })
+      renderPage(noAuthContext)
+      await waitFor(() => screen.getByRole('button', { name: /đăng ký miễn phí/i }))
+      await user.click(screen.getByRole('button', { name: /đăng ký miễn phí/i }))
+      await waitFor(() => {
+        expect(screen.getByTestId('signup-page')).toBeInTheDocument()
+      })
+    })
+
+    it('shows loading state on CTA button while enrolling', async () => {
+      const user = userEvent.setup()
+      mockGetCourseDetail.mockResolvedValue({ course: { ...sampleCourse, price: 0 }, error: null })
+      mockEnrollForFree.mockImplementation(() => new Promise(() => {}))
+      renderPage(loggedInContext)
+      await waitFor(() => screen.getByRole('button', { name: /đăng ký miễn phí/i }))
+      await user.click(screen.getByRole('button', { name: /đăng ký miễn phí/i }))
+      await waitFor(() => {
+        expect(screen.getByTestId('cta-loading')).toBeInTheDocument()
       })
     })
   })

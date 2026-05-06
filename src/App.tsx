@@ -14,6 +14,7 @@ import NewCoursePage from './pages/creator/NewCoursePage'
 import CourseEditPage from './pages/creator/CourseEditPage'
 import HomePage from './pages/HomePage'
 import CourseDetailPage from './pages/CourseDetailPage'
+import LessonPlayerPage from './pages/LessonPlayerPage'
 import TermsPage from './pages/TermsPage'
 import PrivacyPage from './pages/PrivacyPage'
 import NotFoundPage from './pages/NotFoundPage'
@@ -56,6 +57,10 @@ export default function App() {
             <Route path="courses/:courseId/edit" element={<CourseEditPage />} />
           </Route>
         </Route>
+
+        {/* Lesson player — full screen, no TopNav/Footer */}
+        <Route path="/learn/:courseId/:lessonId" element={<LessonPlayerPage />} />
+        <Route path="/learn/:courseId" element={<LessonPlayerPage />} />
 
         {/* Public section — with TopNav + Footer */}
         <Route element={<PublicShell />}>

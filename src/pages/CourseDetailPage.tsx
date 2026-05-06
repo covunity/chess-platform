@@ -7,6 +7,7 @@ import {
   checkUserEnrollment,
 } from '../lib/coursesApi'
 import type { CourseDetail, CourseDetailLesson, CourseDetailChapter } from '../lib/coursesApi'
+import { enrollForFree, getFirstLesson } from '../lib/enrollmentApi'
 import { useAuth } from '../context/AuthContext'
 import ChessBoard from '../components/ChessBoard/ChessBoard'
 
@@ -532,6 +533,7 @@ export default function CourseDetailPage() {
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set())
   const [previewLesson, setPreviewLesson] = useState<CourseDetailLesson | null>(null)
   const [lockPromptOpen, setLockPromptOpen] = useState(false)
+  const [enrolling, setEnrolling] = useState(false)
 
   useEffect(() => {
     if (!courseId) return
@@ -561,10 +563,33 @@ export default function CourseDetailPage() {
     })
   }
 
-  function handleCTAClick() {
-    if (isEnrolled && course) {
+  async function handleCTAClick() {
+    if (!course) return
+
+    if (isEnrolled) {
       const firstLesson = course.chapters[0]?.lessons[0]
       if (firstLesson) navigate(`/learn/${courseId}/${firstLesson.id}`)
+      return
+    }
+
+    if (course.price === 0) {
+      if (!user) {
+        navigate(`/signup?redirect=/courses/${courseId}`)
+        return
+      }
+      setEnrolling(true)
+      const result = await enrollForFree(supabase, course.id, user.id)
+      if (result.error) {
+        setEnrolling(false)
+        return
+      }
+      const lessonResult = await getFirstLesson(supabase, course.id)
+      const targetId = lessonResult.lessonId ?? course.chapters[0]?.lessons[0]?.id
+      if (targetId) {
+        navigate(`/learn/${courseId}/${targetId}?enrolled=true`)
+      } else {
+        setEnrolling(false)
+      }
     }
   }
 
@@ -821,8 +846,13 @@ export default function CourseDetailPage() {
                 className="btn btn-accent btn-lg"
                 style={{ width: '100%' }}
                 onClick={handleCTAClick}
+                disabled={enrolling}
               >
-                {ctaLabel}
+                {enrolling
+                  ? <span data-testid="cta-loading" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                      <span style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite', display: 'inline-block' }} />
+                    </span>
+                  : ctaLabel}
               </button>
 
               {/* Wishlist */}

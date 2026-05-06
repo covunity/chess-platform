@@ -290,5 +290,14 @@
       "passwordsNoMatch": "Passwords do not match.",
       "tosRequired": "You must agree to the terms of service."
     }
+  },
+  "player": {
+    "courseLabel": "COURSE",
+    "courseProgress": "Course progress",
+    "chapterLabel": "Chapter {{n}} · {{title}}",
+    "bookmark": "Bookmark",
+    "loading": "Loading...",
+    "contentPlaceholder": "Lesson content will appear here",
+    "enrolledToast": "Enrolled · {{count}} lessons unlocked"
   }
 }

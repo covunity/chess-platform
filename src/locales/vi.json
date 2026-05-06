@@ -334,5 +334,14 @@
       "passwordsNoMatch": "Mật khẩu xác nhận không khớp.",
       "tosRequired": "Bạn phải đồng ý với điều khoản dịch vụ."
     }
+  },
+  "player": {
+    "courseLabel": "KHÓA HỌC",
+    "courseProgress": "Tiến độ khóa học",
+    "chapterLabel": "Chương {{n}} · {{title}}",
+    "bookmark": "Bookmark",
+    "loading": "Đang tải...",
+    "contentPlaceholder": "Nội dung bài học sẽ hiển thị ở đây",
+    "enrolledToast": "Đã đăng ký · {{count}} bài học đã mở khóa"
   }
 }
