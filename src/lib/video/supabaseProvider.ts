@@ -5,7 +5,7 @@ import type {
   UploadHandle,
   VideoProvider,
 } from './types'
-import { validateVideoFile } from './types'
+import { VIDEO_LIMITS, validateVideoFile } from './types'
 
 const BUCKET = 'lesson-videos'
 const SIGNED_URL_TTL_SEC = 4 * 60 * 60
@@ -18,6 +18,38 @@ function getSupabaseUrl(): string {
 
 function sanitizeFilename(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 120) || 'video.mp4'
+}
+
+// Map low-level TUS / Supabase Storage errors to user-friendly Vietnamese
+// messages. The raw text from tus-js-client looks like:
+//   "tus: unexpected response while creating upload, originated from request
+//    (method: POST, url: ..., response code: 403, response text: new row
+//    violates row-level security policy, request id: n/a)"
+// We never want that string to reach the UI.
+function friendlyUploadError(err: unknown): Error {
+  const raw = err instanceof Error ? err.message : String(err)
+
+  if (/row-level security/i.test(raw) || /response code:\s*40[13]/i.test(raw)) {
+    return new Error(
+      'Tài khoản chưa có quyền upload video. Liên hệ admin để được cấp quyền creator.',
+    )
+  }
+  if (/response code:\s*413/i.test(raw) || /payload too large/i.test(raw) || /exceeded the maximum/i.test(raw)) {
+    return new Error(`File vượt quá ${VIDEO_LIMITS.maxBytesLabel}.`)
+  }
+  if (/response code:\s*415/i.test(raw) || /mime type .* is not supported/i.test(raw)) {
+    return new Error(`Chỉ hỗ trợ định dạng ${VIDEO_LIMITS.allowedExtensionsLabel}.`)
+  }
+  if (/response code:\s*404/i.test(raw) || /bucket not found/i.test(raw)) {
+    return new Error('Không tìm thấy bucket lưu video. Liên hệ admin.')
+  }
+  if (/response code:\s*5\d\d/i.test(raw)) {
+    return new Error('Máy chủ lưu trữ đang lỗi. Vui lòng thử lại sau.')
+  }
+  if (/network|failed to fetch|load failed|networkerror/i.test(raw)) {
+    return new Error('Mất kết nối. Kiểm tra mạng và thử lại.')
+  }
+  return new Error('Upload video thất bại. Vui lòng thử lại.')
 }
 
 export const supabaseProvider: VideoProvider = {
@@ -69,7 +101,8 @@ export const supabaseProvider: VideoProvider = {
         cb.onSuccess({ providerId: objectName, needsProcessing: false })
       },
       onError: (err) => {
-        cb.onError(err instanceof Error ? err : new Error(String(err)))
+        if (import.meta.env.DEV) console.warn('[video upload]', err)
+        cb.onError(friendlyUploadError(err))
       },
     })
 

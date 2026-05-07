@@ -23,10 +23,15 @@ supabase db push
 This runs:
 
 - `011_lesson_video_storage.sql` — creates the `lesson-videos` bucket
-  (private, 50 MB cap, MP4-only) and the storage RLS policies.
+  (private, 50 MB cap, MP4-only) and the INSERT/UPDATE/DELETE storage RLS
+  policies on `storage.objects`.
 - `012_lesson_video_fields.sql` — adds `video_provider`, `video_provider_id`,
   `video_status`, `video_filename`, `video_size_bytes`, `video_mime`,
   `video_error` to `public.lessons`.
+- `015_lesson_video_select_and_multipart_policies.sql` — adds the SELECT
+  policy on `storage.objects` (required by upsert) plus the policies on
+  `storage.s3_multipart_uploads` and `storage.s3_multipart_uploads_parts`
+  that tus-js-client needs for resumable uploads.
 
 > The migration uses `INSERT … ON CONFLICT DO UPDATE` so it's safe to re-run.
 
@@ -35,8 +40,12 @@ This runs:
 - **Storage → Buckets** — `lesson-videos` exists, *Public* off, file size limit
   50 MB, allowed MIME types `video/mp4`.
 - **Database → Tables → lessons** — the new video columns exist.
-- **Authentication → Policies → storage.objects** — three policies named
-  *Creators upload/update/delete own lesson videos*.
+- **Authentication → Policies → storage.objects** — four policies named
+  *Creators read/upload/update/delete own lesson videos*.
+- **Authentication → Policies → storage.s3_multipart_uploads** — one policy
+  *Creators manage own multipart uploads*.
+- **Authentication → Policies → storage.s3_multipart_uploads_parts** — one
+  policy *Creators manage own multipart upload parts*.
 
 ### 3. Environment variables
 
