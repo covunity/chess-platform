@@ -418,6 +418,8 @@ export default function CourseEditPage() {
       setChapters(chaptersResult.chapters)
       if (courseResult.data) setCourseStatus(courseResult.data.status as CourseStatus)
       setLoading(false)
+      const firstLesson = chaptersResult.chapters.flatMap(ch => ch.lessons ?? [])[0]
+      if (firstLesson) setSelectedLesson(firstLesson)
     })
   }, [courseId])
 
