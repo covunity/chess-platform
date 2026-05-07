@@ -88,7 +88,7 @@ export async function getFirstLesson(
     .from('lessons')
     .select('id, position, chapters!inner(course_id, position)')
     .eq('chapters.course_id', courseId)
-    .order('chapters.position', { ascending: true })
+    .order('position', { referencedTable: 'chapters', ascending: true })
     .order('position', { ascending: true })
     .limit(1)
 
