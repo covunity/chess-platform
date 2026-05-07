@@ -21,6 +21,7 @@ export interface VideoViewProps {
   className?: string
   style?: React.CSSProperties
   onDurationLoaded?: (seconds: number) => void
+  onTimeUpdate?: (currentTime: number, duration: number) => void
 }
 
 export default function VideoView({
@@ -31,6 +32,7 @@ export default function VideoView({
   className,
   style,
   onDurationLoaded,
+  onTimeUpdate,
 }: VideoViewProps) {
   const ref = useRef<HTMLVideoElement>(null)
 
@@ -92,6 +94,12 @@ export default function VideoView({
         if (onDurationLoaded) {
           const d = (e.currentTarget as HTMLVideoElement).duration
           if (Number.isFinite(d) && d > 0) onDurationLoaded(d)
+        }
+      }}
+      onTimeUpdate={(e) => {
+        if (onTimeUpdate) {
+          const v = e.currentTarget as HTMLVideoElement
+          if (v.duration > 0) onTimeUpdate(v.currentTime, v.duration)
         }
       }}
     />

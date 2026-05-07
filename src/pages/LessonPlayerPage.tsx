@@ -5,8 +5,9 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { getCourseDetail, checkUserEnrollment } from '../lib/coursesApi'
 import { getFirstLesson, getLastViewedLesson } from '../lib/enrollmentApi'
-import { getLessonForPlayer, markLessonCompleted } from '../lib/lessonPlayerApi'
+import { getLessonForPlayer, getVideoPlaybackInfo, markLessonCompleted } from '../lib/lessonPlayerApi'
 import type { PlayerLesson } from '../lib/lessonPlayerApi'
+import VideoView from '../components/VideoView'
 import type { CourseDetail, CourseDetailChapter } from '../lib/coursesApi'
 import { addBookmark, deleteBookmark, getBookmarkForLesson } from '../lib/bookmarkApi'
 import type { BookmarkRow } from '../lib/bookmarkApi'
@@ -264,6 +265,10 @@ export default function LessonPlayerPage() {
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set())
   const [showToast, setShowToast] = useState(false)
   const [playerLesson, setPlayerLesson] = useState<PlayerLesson | null>(null)
+  const [videoUrl, setVideoUrl] = useState<string | null>(null)
+  const [videoFormat, setVideoFormat] = useState<'mp4' | 'hls'>('mp4')
+  const [videoError, setVideoError] = useState<string | null>(null)
+  const [videoCompleted, setVideoCompleted] = useState(false)
   const [currentBookmark, setCurrentBookmark] = useState<BookmarkRow | null>(null)
   const [bookmarkToast, setBookmarkToast] = useState<{ moveLabel: string } | null>(null)
   const bookmarkToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -361,7 +366,7 @@ export default function LessonPlayerPage() {
     })
   }, [loadState, user, currentLessonId])
 
-  // Load the current lesson's player data when it changes to a chess lesson
+  // Load the current lesson's player data when it changes
   useEffect(() => {
     if (loadState !== 'ready' || !course || !currentLessonId) return
 
@@ -369,12 +374,29 @@ export default function LessonPlayerPage() {
       .flatMap(ch => ch.lessons)
       .find(l => l.id === currentLessonId)
 
-    if (!lesson || lesson.type !== 'chess') return
+    if (!lesson) return
+
+    // Reset video state on lesson change
+    setPlayerLesson(null)
+    setVideoUrl(null)
+    setVideoError(null)
+    setVideoCompleted(false)
 
     let cancelled = false
     getLessonForPlayer(supabase, currentLessonId).then(({ lesson: pl }) => {
-      if (cancelled) return
+      if (cancelled || !pl) return
       setPlayerLesson(pl)
+      if (pl.type === 'video') {
+        getVideoPlaybackInfo(supabase, pl).then(({ url, format, error }) => {
+          if (cancelled) return
+          if (error) {
+            setVideoError(error.message)
+          } else {
+            setVideoUrl(url)
+            setVideoFormat(format)
+          }
+        })
+      }
     })
     return () => { cancelled = true }
   }, [loadState, course, currentLessonId])
@@ -413,6 +435,14 @@ export default function LessonPlayerPage() {
       lessonId: currentLessonId,
       userId: user.id,
     })
+  }
+
+  function handleVideoTimeUpdate(currentTime: number, duration: number) {
+    if (videoCompleted) return
+    if (duration > 0 && currentTime / duration >= 0.8) {
+      setVideoCompleted(true)
+      handleLessonComplete()
+    }
   }
 
   if (loadState === 'loading') {
@@ -587,6 +617,46 @@ export default function LessonPlayerPage() {
               onComplete={handleLessonComplete}
               onBookmark={handleBookmark}
             />
+          ) : currentLesson?.type === 'video' ? (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '28px 32px', gap: 16, overflowY: 'auto' }}>
+              {videoError ? (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 32, marginBottom: 12 }}>⚠️</div>
+                    <div style={{ fontSize: 14, color: 'var(--danger)' }}>{videoError}</div>
+                  </div>
+                </div>
+              ) : videoUrl ? (
+                <>
+                  <div style={{ position: 'relative', borderRadius: 'var(--r-lg)', overflow: 'hidden', background: '#0F1114', aspectRatio: '16/9', boxShadow: 'var(--sh-2)' }}>
+                    <VideoView
+                      url={videoUrl}
+                      format={videoFormat}
+                      controls
+                      style={{ width: '100%', height: '100%', display: 'block' }}
+                      onTimeUpdate={handleVideoTimeUpdate}
+                    />
+                    {videoCompleted && (
+                      <div style={{ position: 'absolute', top: 12, right: 12, background: 'var(--success)', color: '#fff', fontSize: 11.5, fontWeight: 500, padding: '4px 10px', borderRadius: 99, display: 'flex', alignItems: 'center', gap: 5 }}>
+                        <span>✓</span> {t('player.markedComplete', 'Đã hoàn thành')}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+                      {t('player.lessonCounter', 'BÀI {{n}} / {{total}}', { n: lessonIndex + 1, total: allLessons.length })}
+                    </div>
+                    <h2 style={{ fontSize: 20, fontWeight: 600, color: 'var(--ink-1)', letterSpacing: '-0.015em' }}>
+                      {currentLesson.title}
+                    </h2>
+                  </div>
+                </>
+              ) : (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ color: 'var(--ink-3)', fontSize: 13 }}>{t('player.loading', 'Đang tải...')}</span>
+                </div>
+              )}
+            </div>
           ) : (
             <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center' }}>
               <div style={{ textAlign: 'center', color: 'var(--ink-3)' }}>
