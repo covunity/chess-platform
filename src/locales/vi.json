@@ -202,6 +202,8 @@
       "deleteLesson": "Xóa bài học",
       "save": "Lưu",
       "cancel": "Hủy",
+      "saveLesson": "Lưu bài học",
+      "saveLessonToast": "Đã lưu bài học!",
       "courseInfo": {
         "heading": "Thông tin khóa học",
         "link": "Thông tin khóa học",

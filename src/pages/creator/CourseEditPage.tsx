@@ -573,6 +573,7 @@ export default function CourseEditPage() {
       free_preview: data.is_free_preview,
       title: data.title,
     })
+    showToast(t('creator.courseEdit.saveLessonToast'))
     setChapters(prev => prev.map(ch => ({
       ...ch,
       lessons: (ch.lessons ?? []).map(l =>
@@ -694,6 +695,7 @@ export default function CourseEditPage() {
             }}
             onSave={handleSaveLesson}
             showSidebar={false}
+            saveLabel={t('creator.courseEdit.saveLesson')}
           />
         ) : (
           <div className="card" style={{ maxWidth: 680, padding: '32px 36px', display: 'flex', flexDirection: 'column', gap: 20 }}>

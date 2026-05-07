@@ -30,6 +30,7 @@ export interface LessonEditorProps {
   onSelectLesson?: (id: string) => void;
   onSubmitForReview?: () => void;
   showSidebar?: boolean;
+  saveLabel?: string;
 }
 
 const LESSON_TYPE_ICON: Record<LessonType, string> = {
@@ -59,7 +60,7 @@ function formatNumber(n: number): string {
   return n.toLocaleString("en-US");
 }
 
-export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectLesson, onSubmitForReview, showSidebar = true }: LessonEditorProps) {
+export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectLesson, onSubmitForReview, showSidebar = true, saveLabel = "Save draft" }: LessonEditorProps) {
   const [title, setTitle] = useState(lesson.title);
   const [pgn, setPgn] = useState(lesson.pgn_data);
   const [perspective, setPerspective] = useState<"white" | "black">(lesson.board_perspective);
@@ -452,7 +453,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
             className="btn btn-secondary btn-sm"
             onClick={handleSave}
           >
-            Save draft
+            {saveLabel}
           </button>
           {onSubmitForReview && (
             <button

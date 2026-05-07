@@ -143,6 +143,8 @@
       "deleteLesson": "Delete lesson",
       "save": "Save",
       "cancel": "Cancel",
+      "saveLesson": "Save lesson",
+      "saveLessonToast": "Lesson saved!",
       "courseInfo": {
         "heading": "Course info",
         "link": "Course info",
