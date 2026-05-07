@@ -284,6 +284,7 @@ function CourseBuilderInline({ courseId, courseTitle, initialStatus }: CourseBui
           </div>
         ) : selectedLesson ? (
           <LessonEditor
+            key={selectedLesson.id}
             lesson={{
               id: selectedLesson.id,
               title: selectedLesson.title,

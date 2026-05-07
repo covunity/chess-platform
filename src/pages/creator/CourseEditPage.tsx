@@ -606,6 +606,7 @@ export default function CourseEditPage() {
       <main className="flex-1 p-8 overflow-y-auto">
         {selectedLesson ? (
           <LessonEditor
+            key={selectedLesson.id}
             lesson={{
               id: selectedLesson.id,
               title: selectedLesson.title,
