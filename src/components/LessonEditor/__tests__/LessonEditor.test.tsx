@@ -48,9 +48,14 @@ describe("LessonEditor", () => {
       expect(screen.getByRole("button", { name: /save draft/i })).toBeInTheDocument();
     });
 
-    it("renders Submit for review button", () => {
-      render(<LessonEditor lesson={DEFAULT_LESSON} onSave={vi.fn()} />);
+    it("renders Submit for review button when onSubmitForReview is provided", () => {
+      render(<LessonEditor lesson={DEFAULT_LESSON} onSave={vi.fn()} onSubmitForReview={vi.fn()} />);
       expect(screen.getByRole("button", { name: /submit for review/i })).toBeInTheDocument();
+    });
+
+    it("hides Submit for review button when onSubmitForReview is not provided", () => {
+      render(<LessonEditor lesson={DEFAULT_LESSON} onSave={vi.fn()} />);
+      expect(screen.queryByRole("button", { name: /submit for review/i })).not.toBeInTheDocument();
     });
 
     it("renders Live preview label", () => {

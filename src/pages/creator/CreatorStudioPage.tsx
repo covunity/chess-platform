@@ -11,7 +11,7 @@ import {
   fetchCoursesWithStats,
   listChapters,
   updateLesson,
-  submitCourseForReview,
+  publishCourse,
 } from '../../lib/creatorApi'
 import type { Course, CourseStatus, Chapter, Lesson, CreatorKpis, CourseStats } from '../../lib/creatorApi'
 import { useAuth } from '../../context/AuthContext'
@@ -248,9 +248,9 @@ function CourseBuilderInline({ courseId, courseTitle, initialStatus }: CourseBui
     })))
   }
 
-  async function handleSubmitForReview() {
-    await submitCourseForReview(supabase, courseId)
-    setCourseStatus('pending_review')
+  async function handlePublish() {
+    await publishCourse(supabase, courseId)
+    setCourseStatus('published')
   }
 
   return (
@@ -298,6 +298,7 @@ function CourseBuilderInline({ courseId, courseTitle, initialStatus }: CourseBui
               if (lesson) setSelectedLesson(lesson)
             }}
             onSave={handleSaveLesson}
+            onSubmitForReview={courseStatus === 'draft' ? handlePublish : undefined}
           />
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr 380px', height: '100%' }}>
@@ -338,7 +339,7 @@ function CourseBuilderInline({ courseId, courseTitle, initialStatus }: CourseBui
                   className="btn btn-accent btn-sm"
                   style={{ flex: 1 }}
                   disabled={courseStatus !== 'draft'}
-                  onClick={handleSubmitForReview}
+                  onClick={handlePublish}
                 >
                   {t('creator.studio.builderSubmitReview')}
                 </button>

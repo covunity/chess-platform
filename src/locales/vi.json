@@ -148,7 +148,7 @@
       "builderLesson": "Bài {{n}}",
       "builderNoLessons": "Thêm bài học để bắt đầu chỉnh sửa.",
       "builderSaveDraft": "Lưu nháp",
-      "builderSubmitReview": "Gửi duyệt",
+      "builderSubmitReview": "Xuất bản",
       "emptyHeading": "Tạo khóa học đầu tiên của bạn.",
       "emptyBody": "Đưa học viên qua các khai cuộc, chiến thuật và tàn cuộc với PGN chú thích và video. Gửi để duyệt khi bạn sẵn sàng xuất bản.",
       "emptyCtaLabel": "+ Tạo khóa học mới",
@@ -204,14 +204,17 @@
       "cancel": "Hủy",
       "publish": {
         "publish": "Xuất bản",
+        "submitForReview": "Gửi duyệt",
+        "pendingReview": "Chờ duyệt",
         "unpublish": "Gỡ xuất bản",
-        "tooltipTitle": "Cần hoàn thiện trước khi xuất bản:",
+        "tooltipTitle": "Cần hoàn thiện trước khi gửi duyệt:",
         "reasonTitle": "Thiếu tiêu đề",
         "reasonDescription": "Thiếu mô tả khóa học",
         "reasonThumbnail": "Thiếu ảnh bìa",
         "reasonPrice": "Thiếu giá",
         "reasonChapters": "Cần ít nhất 1 chương",
         "reasonLessons": "Cần ít nhất 1 bài học có nội dung",
+        "toastSubmitted": "Khóa học đã được gửi để duyệt!",
         "toastPublished": "Khóa học đã được xuất bản!",
         "toastUnpublished": "Đã gỡ xuất bản khóa học."
       }

@@ -19,6 +19,7 @@ export interface LessonEditorProps {
   onSave: (data: Pick<Lesson, "pgn_data" | "board_perspective" | "is_free_preview" | "title">) => void;
   chapterLessons?: Array<{ id: string; title: string; type: LessonType }>;
   onSelectLesson?: (id: string) => void;
+  onSubmitForReview?: () => void;
 }
 
 const LESSON_TYPE_ICON: Record<LessonType, string> = {
@@ -48,7 +49,7 @@ function formatNumber(n: number): string {
   return n.toLocaleString("en-US");
 }
 
-export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectLesson }: LessonEditorProps) {
+export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectLesson, onSubmitForReview }: LessonEditorProps) {
   const [title, setTitle] = useState(lesson.title);
   const [pgn, setPgn] = useState(lesson.pgn_data);
   const [perspective, setPerspective] = useState<"white" | "black">(lesson.board_perspective);
@@ -401,17 +402,21 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
         <div style={{ marginTop: "auto", display: "flex", gap: 8 }}>
           <button
             type="button"
-            className="btn-secondary btn-sm"
+            className="btn btn-secondary btn-sm"
             onClick={handleSave}
           >
             Save draft
           </button>
-          <button
-            type="button"
-            className="btn-primary btn-sm"
-          >
-            Submit for review
-          </button>
+          {onSubmitForReview && (
+            <button
+              type="button"
+              data-testid="lesson-editor-submit-review-btn"
+              className="btn btn-accent btn-sm"
+              onClick={onSubmitForReview}
+            >
+              Submit for review
+            </button>
+          )}
         </div>
       </div>
     </div>
