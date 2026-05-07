@@ -622,6 +622,7 @@ export default function CourseEditPage() {
               if (lesson) setSelectedLesson(lesson)
             }}
             onSave={handleSaveLesson}
+            showSidebar={false}
           />
         ) : (
           <p className="text-(--ink-3) text-sm">
