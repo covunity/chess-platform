@@ -547,7 +547,7 @@ export default function LessonPlayerPage() {
               left: '50%',
               transform: 'translateX(-50%)',
               background: 'var(--ink-1)',
-              color: '#fff',
+              color: 'var(--ink-on-accent)',
               borderRadius: 'var(--r-md)',
               padding: '12px 16px',
               display: 'flex',
@@ -637,7 +637,7 @@ export default function LessonPlayerPage() {
                       onTimeUpdate={handleVideoTimeUpdate}
                     />
                     {videoCompleted && (
-                      <div style={{ position: 'absolute', top: 12, right: 12, background: 'var(--success)', color: '#fff', fontSize: 11.5, fontWeight: 500, padding: '4px 10px', borderRadius: 99, display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <div style={{ position: 'absolute', top: 12, right: 12, background: 'var(--success)', color: 'var(--ink-on-accent)', fontSize: 11.5, fontWeight: 500, padding: '4px 10px', borderRadius: 99, display: 'flex', alignItems: 'center', gap: 5 }}>
                         <span>✓</span> {t('player.markedComplete', 'Đã hoàn thành')}
                       </div>
                     )}

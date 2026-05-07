@@ -23,6 +23,10 @@
   --accent: oklch(0.62 0.12 200);
   --accent-soft: oklch(0.95 0.03 200);
   --accent-ink: oklch(0.32 0.08 200);
+  --accent-border: oklch(0.85 0.06 200);
+
+  /* On-accent / on-dark text */
+  --ink-on-accent: #FFFFFF;
 
   /* Semantic */
   --success: oklch(0.62 0.12 150);
@@ -88,8 +92,8 @@ body {
 .btn-sm { height: 32px; padding: 0 14px; font-size: 13px; }
 .btn-lg { height: 52px; padding: 0 28px; font-size: 15px; }
 
-.btn-primary  { background: var(--ink-1); color: #fff; }
-.btn-accent   { background: var(--accent); color: #fff; }
+.btn-primary  { background: var(--ink-1); color: var(--ink-on-accent); }
+.btn-accent   { background: var(--accent); color: var(--ink-on-accent); }
 .btn-secondary{ background: transparent; color: var(--ink-1); border-color: var(--border-strong); }
 .btn-ghost    { background: transparent; color: var(--ink-2); }
 
@@ -500,4 +504,13 @@ body {
 
 .check-email-page__actions {
   margin-top: 8px;
+}
+
+/* ── Animations ── */
+
+@keyframes fadeInOut {
+  0%   { opacity: 0; transform: translate(-50%, 8px); }
+  10%  { opacity: 1; transform: translate(-50%, 0); }
+  90%  { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, 8px); }
 }

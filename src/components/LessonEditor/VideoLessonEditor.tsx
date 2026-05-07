@@ -210,7 +210,7 @@ export default function VideoLessonEditor({
               border: '1px solid var(--border)',
               borderRadius: 'var(--r-sm)',
               background: isFreePreview ? 'var(--accent)' : 'var(--surface)',
-              color: isFreePreview ? '#fff' : 'var(--ink-1)',
+              color: isFreePreview ? 'var(--ink-on-accent)' : 'var(--ink-1)',
               fontWeight: 500,
               fontSize: 13,
               cursor: 'pointer',

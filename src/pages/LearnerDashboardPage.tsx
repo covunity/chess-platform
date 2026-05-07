@@ -241,7 +241,7 @@ export default function LearnerDashboardPage() {
               padding: '0 18px',
               borderRadius: 'var(--r-md)',
               background: 'var(--ink-1)',
-              color: '#fff',
+              color: 'var(--ink-on-accent)',
               textDecoration: 'none',
               fontSize: 13,
               fontWeight: 500,
@@ -414,7 +414,7 @@ export default function LearnerDashboardPage() {
                         padding: '0 18px',
                         borderRadius: 'var(--r-md)',
                         background: 'var(--ink-1)',
-                        color: '#fff',
+                        color: 'var(--ink-on-accent)',
                         textDecoration: 'none',
                         fontSize: 13,
                         fontWeight: 500,
@@ -467,7 +467,7 @@ export default function LearnerDashboardPage() {
                 display: 'inline-flex', alignItems: 'center',
                 height: 44, padding: '0 20px',
                 borderRadius: 'var(--r-md)', background: 'var(--accent)',
-                color: '#fff', textDecoration: 'none', fontSize: 14, fontWeight: 500,
+                color: 'var(--ink-on-accent)', textDecoration: 'none', fontSize: 14, fontWeight: 500,
                 flexShrink: 0,
               }}
             >
@@ -481,19 +481,19 @@ export default function LearnerDashboardPage() {
                   key={idx}
                   style={{
                     aspectRatio: '1 / 1',
-                    width: 96,
+                    width: 120,
                     borderRadius: 'var(--r-md)',
                     border: '1px solid var(--border)',
                     overflow: 'hidden',
                     flexShrink: 0,
                   }}
                 >
-                  <MiniBoard size={94} />
+                  <MiniBoard size={118} />
                 </div>
               ))}
               {stats.bookmarksCount > 4 && (
                 <div style={{
-                  width: 96, height: 96,
+                  width: 120, height: 120,
                   borderRadius: 'var(--r-md)',
                   border: '1px dashed var(--border-strong)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -523,7 +523,7 @@ export default function LearnerDashboardPage() {
           <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-1)', margin: 0 }}>
             {t('dashboard.recommendedHeading', 'Gợi ý cho bạn')}
           </h3>
-          <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 4, marginBottom: 16 }}>
+          <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 0, marginBottom: 16 }}>
             {t('dashboard.recommendedSub', 'Dựa trên hành trình học của bạn')}
           </div>
 

@@ -58,9 +58,9 @@ describe("LessonEditor", () => {
       expect(screen.queryByRole("button", { name: /submit for review/i })).not.toBeInTheDocument();
     });
 
-    it("renders Live preview label", () => {
+    it("renders Preview label", () => {
       render(<LessonEditor lesson={DEFAULT_LESSON} onSave={vi.fn()} />);
-      expect(screen.getByText(/live preview/i)).toBeInTheDocument();
+      expect(screen.getByText(/^preview$/i)).toBeInTheDocument();
     });
   });
 

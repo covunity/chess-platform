@@ -60,6 +60,13 @@ function formatNumber(n: number): string {
   return n.toLocaleString("en-US");
 }
 
+function formatDuration(seconds: number | undefined | null): string {
+  if (!seconds || seconds <= 0) return "—:—";
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
 export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectLesson, onSubmitForReview, showSidebar = true, saveLabel = "Save draft" }: LessonEditorProps) {
   const [title, setTitle] = useState(lesson.title);
   const [pgn, setPgn] = useState(lesson.pgn_data);
@@ -135,7 +142,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
         border: `1px solid var(--border)`,
         borderRadius: "var(--r-sm)",
         background: perspective === val ? "var(--ink-1)" : "var(--surface)",
-        color: perspective === val ? "#fff" : "var(--ink-1)",
+        color: perspective === val ? "var(--ink-on-accent)" : "var(--ink-1)",
         fontWeight: 500,
         fontSize: 13,
         cursor: "pointer",
@@ -233,7 +240,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
                 borderRadius: 999,
                 border: "1px solid var(--border)",
                 background: activeTab === tab.value ? "var(--ink-1)" : "var(--surface)",
-                color: activeTab === tab.value ? "#fff" : "var(--ink-2)",
+                color: activeTab === tab.value ? "var(--ink-on-accent)" : "var(--ink-2)",
                 fontSize: 12.5,
                 fontWeight: 500,
                 cursor: "pointer",
@@ -284,7 +291,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
                     border: "1px solid var(--border)",
                     borderRadius: "var(--r-sm)",
                     background: isFreePreview ? "var(--accent)" : "var(--surface)",
-                    color: isFreePreview ? "#fff" : "var(--ink-1)",
+                    color: isFreePreview ? "var(--ink-on-accent)" : "var(--ink-1)",
                     fontWeight: 500,
                     fontSize: 13,
                     cursor: "pointer",
@@ -382,6 +389,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
 
       {/* Right: Live preview pane */}
       <div
+        data-testid="lesson-preview-pane"
         style={{
           background: "var(--surface-2)",
           padding: 24,
@@ -393,8 +401,22 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
       >
         {/* Header row */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-1)" }}>Live preview</span>
-          {parseResult?.valid && moveCount > 0 && (
+          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-1)" }}>Preview</span>
+          {activeTab === "video" ? (
+            <span
+              style={{
+                fontSize: 12,
+                color: "var(--ink-3)",
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+                borderRadius: 99,
+                padding: "2px 10px",
+                fontFamily: "var(--font-mono)",
+              }}
+            >
+              {formatDuration(videoLesson.duration_seconds)} runtime
+            </span>
+          ) : parseResult?.valid && moveCount > 0 ? (
             <span
               style={{
                 fontSize: 12,
@@ -407,43 +429,104 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
             >
               Move {totalMoveNumber} of {moveCount}
             </span>
-          )}
+          ) : null}
         </div>
 
-        {/* Chess board */}
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <ChessBoard
-            fen={currentFen}
-            perspective={perspective}
-            lastMove={lastMove}
-            size={300}
-          />
-        </div>
-
-        {/* Annotation card */}
-        {currentAnnotation && lastMoveInfo && (
+        {activeTab === "video" ? (
+          /* Video mock player frame */
           <div
+            data-testid="video-preview-frame"
             style={{
-              background: "var(--surface)",
-              border: "1px solid var(--border)",
+              position: "relative",
+              width: "100%",
+              aspectRatio: "16 / 9",
               borderRadius: "var(--r-md)",
-              padding: 12,
+              overflow: "hidden",
+              background: videoLesson.video_status === "ready" ? "#0F1114" : "var(--surface-3)",
+              border: "1px solid var(--border)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             <div
               style={{
-                fontFamily: "monospace",
-                fontSize: 11.5,
-                color: "var(--ink-3)",
-                marginBottom: 4,
+                width: 56,
+                height: 56,
+                borderRadius: "50%",
+                background:
+                  videoLesson.video_status === "ready"
+                    ? "rgba(255,255,255,0.95)"
+                    : "var(--surface-2)",
+                color: "var(--ink-1)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 20,
+                opacity: videoLesson.video_status === "ready" ? 1 : 0.6,
               }}
+              aria-hidden
             >
-              {lastMoveInfo.moveNumber}. {lastMoveInfo.san}
+              ▶
             </div>
-            <div style={{ fontSize: 12, color: "var(--ink-2)", lineHeight: 1.5 }}>
-              {currentAnnotation.text}
-            </div>
+            {videoLesson.video_status !== "ready" && (
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: 12,
+                  left: 12,
+                  right: 12,
+                  fontSize: 12,
+                  color: "var(--ink-3)",
+                  textAlign: "center",
+                }}
+              >
+                {videoLesson.video_status === "uploading"
+                  ? "Đang tải video lên…"
+                  : videoLesson.video_status === "processing"
+                    ? "Đang xử lý video…"
+                    : "Chưa có video"}
+              </div>
+            )}
           </div>
+        ) : (
+          <>
+            {/* Chess board */}
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <ChessBoard
+                fen={currentFen}
+                perspective={perspective}
+                lastMove={lastMove}
+                size={300}
+              />
+            </div>
+
+            {/* Annotation card */}
+            {currentAnnotation && lastMoveInfo && (
+              <div
+                style={{
+                  background: "var(--surface)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--r-md)",
+                  padding: 12,
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: "monospace",
+                    fontSize: 11.5,
+                    color: "var(--ink-3)",
+                    marginBottom: 4,
+                  }}
+                >
+                  {lastMoveInfo.moveNumber}. {lastMoveInfo.san}
+                </div>
+                <div style={{ fontSize: 12, color: "var(--ink-2)", lineHeight: 1.5 }}>
+                  {currentAnnotation.text}
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {/* Action buttons */}
