@@ -29,6 +29,7 @@ export interface LessonEditorProps {
   chapterLessons?: Array<{ id: string; title: string; type: LessonType }>;
   onSelectLesson?: (id: string) => void;
   onSubmitForReview?: () => void;
+  showSidebar?: boolean;
 }
 
 const LESSON_TYPE_ICON: Record<LessonType, string> = {
@@ -58,7 +59,7 @@ function formatNumber(n: number): string {
   return n.toLocaleString("en-US");
 }
 
-export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectLesson, onSubmitForReview }: LessonEditorProps) {
+export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectLesson, onSubmitForReview, showSidebar = true }: LessonEditorProps) {
   const [title, setTitle] = useState(lesson.title);
   const [pgn, setPgn] = useState(lesson.pgn_data);
   const [perspective, setPerspective] = useState<"white" | "black">(lesson.board_perspective);
@@ -147,7 +148,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "260px 1fr 380px",
+        gridTemplateColumns: showSidebar ? "260px 1fr 380px" : "1fr 380px",
         gap: 0,
         background: "var(--surface)",
         border: "1px solid var(--border)",
@@ -157,61 +158,63 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
       }}
     >
       {/* Sidebar: lesson list for current chapter */}
-      <div
-        data-testid="lesson-editor-sidebar"
-        style={{
-          background: "var(--surface-2)",
-          borderRight: "1px solid var(--border)",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-        }}
-      >
-        <div style={{ padding: "16px 16px 8px", borderBottom: "1px solid var(--border)" }}>
-          <span
-            style={{
-              fontSize: 10,
-              fontWeight: 600,
-              color: "var(--ink-3)",
-              textTransform: "uppercase" as const,
-              letterSpacing: "0.1em",
-            }}
-          >
-            Lessons
-          </span>
-        </div>
-        <div style={{ flex: 1, overflowY: "auto" }}>
-          {(chapterLessons ?? []).map((l) => (
-            <button
-              key={l.id}
-              type="button"
-              data-testid={`sidebar-lesson-${l.id}`}
-              onClick={() => onSelectLesson?.(l.id)}
+      {showSidebar && (
+        <div
+          data-testid="lesson-editor-sidebar"
+          style={{
+            background: "var(--surface-2)",
+            borderRight: "1px solid var(--border)",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+          }}
+        >
+          <div style={{ padding: "16px 16px 8px", borderBottom: "1px solid var(--border)" }}>
+            <span
               style={{
-                width: "100%",
-                textAlign: "left",
-                padding: "8px 16px",
-                background: l.id === lesson.id ? "var(--surface-3)" : "transparent",
-                border: "none",
-                borderBottom: "1px solid var(--border)",
-                cursor: "pointer",
-                display: "flex",
-                gap: 8,
-                alignItems: "center",
-                fontSize: 12.5,
-                color: l.id === lesson.id ? "var(--ink-1)" : "var(--ink-2)",
+                fontSize: 10,
+                fontWeight: 600,
+                color: "var(--ink-3)",
+                textTransform: "uppercase" as const,
+                letterSpacing: "0.1em",
               }}
             >
-              <span style={{ width: 16, textAlign: "center", color: "var(--ink-3)", flexShrink: 0 }}>
-                {LESSON_TYPE_ICON[l.type]}
-              </span>
-              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {l.title}
-              </span>
-            </button>
-          ))}
+              Lessons
+            </span>
+          </div>
+          <div style={{ flex: 1, overflowY: "auto" }}>
+            {(chapterLessons ?? []).map((l) => (
+              <button
+                key={l.id}
+                type="button"
+                data-testid={`sidebar-lesson-${l.id}`}
+                onClick={() => onSelectLesson?.(l.id)}
+                style={{
+                  width: "100%",
+                  textAlign: "left",
+                  padding: "8px 16px",
+                  background: l.id === lesson.id ? "var(--surface-3)" : "transparent",
+                  border: "none",
+                  borderBottom: "1px solid var(--border)",
+                  cursor: "pointer",
+                  display: "flex",
+                  gap: 8,
+                  alignItems: "center",
+                  fontSize: 12.5,
+                  color: l.id === lesson.id ? "var(--ink-1)" : "var(--ink-2)",
+                }}
+              >
+                <span style={{ width: 16, textAlign: "center", color: "var(--ink-3)", flexShrink: 0 }}>
+                  {LESSON_TYPE_ICON[l.type]}
+                </span>
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {l.title}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Center: Editor form */}
       <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
