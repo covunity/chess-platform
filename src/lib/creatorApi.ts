@@ -1,8 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-export type CourseStatus = 'draft' | 'pending_review' | 'published'
-export type CourseLevel  = 'beginner' | 'intermediate' | 'advanced'
-export type LessonType   = 'video' | 'chess' | 'puzzle'
+export type CourseStatus  = 'draft' | 'pending_review' | 'published'
+export type CourseLevel   = 'beginner' | 'intermediate' | 'advanced'
+export type LessonType    = 'video' | 'chess' | 'puzzle'
+export type VideoProvider = 'supabase' | 'cloudflare'
+export type VideoStatus   = 'idle' | 'uploading' | 'processing' | 'ready' | 'error'
 
 export interface Course {
   id: string
@@ -38,6 +40,24 @@ export interface Lesson {
   pgn_data: string
   board_perspective: 'white' | 'black'
   created_at: string
+  duration_seconds?: number
+  video_provider?: VideoProvider | null
+  video_provider_id?: string | null
+  video_status?: VideoStatus
+  video_filename?: string | null
+  video_size_bytes?: number | null
+  video_mime?: string | null
+  video_error?: string | null
+}
+
+export interface LessonVideoUpdate {
+  video_provider: VideoProvider
+  video_provider_id: string
+  video_status: VideoStatus
+  video_filename: string
+  video_size_bytes: number
+  video_mime: string
+  duration_seconds?: number
 }
 
 export interface CreateCourseInput {
@@ -307,6 +327,56 @@ export async function reorderLessons(
     .from('lessons')
     .upsert(updates, { onConflict: 'id' })
 
+  return { error: error as Error | null }
+}
+
+// ── Lesson video ──────────────────────────────────────────────────────────
+
+export async function setLessonVideo(
+  client: SupabaseClient,
+  lessonId: string,
+  patch: LessonVideoUpdate
+): Promise<{ lesson: Lesson | null; error: Error | null }> {
+  const { data, error } = await client
+    .from('lessons')
+    .update(patch)
+    .eq('id', lessonId)
+    .select()
+    .single()
+
+  return { lesson: (data as Lesson) ?? null, error: error as Error | null }
+}
+
+export async function setLessonVideoStatus(
+  client: SupabaseClient,
+  lessonId: string,
+  status: VideoStatus,
+  errorMessage?: string,
+): Promise<{ error: Error | null }> {
+  const { error } = await client
+    .from('lessons')
+    .update({ video_status: status, video_error: errorMessage ?? null })
+    .eq('id', lessonId)
+  return { error: error as Error | null }
+}
+
+export async function clearLessonVideo(
+  client: SupabaseClient,
+  lessonId: string
+): Promise<{ error: Error | null }> {
+  const { error } = await client
+    .from('lessons')
+    .update({
+      video_provider: null,
+      video_provider_id: null,
+      video_status: 'idle',
+      video_filename: null,
+      video_size_bytes: null,
+      video_mime: null,
+      video_error: null,
+      duration_seconds: 0,
+    })
+    .eq('id', lessonId)
   return { error: error as Error | null }
 }
 

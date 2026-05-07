@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback } from "react";
 import ChessBoard from "../ChessBoard/ChessBoard";
 import { parsePgn } from "../../utils/parsePgn";
 import type { PgnParseResult } from "../../utils/parsePgn";
+import VideoLessonEditor from "./VideoLessonEditor";
+import type { VideoStatus } from "../../lib/creatorApi";
+import type { VideoProviderName } from "../../lib/video/types";
 
 export type LessonType = 'video' | 'chess' | 'puzzle';
 
@@ -12,6 +15,12 @@ export interface Lesson {
   board_perspective: "white" | "black";
   is_free_preview: boolean;
   type?: LessonType;
+  duration_seconds?: number;
+  video_provider?: VideoProviderName | null;
+  video_provider_id?: string | null;
+  video_status?: VideoStatus;
+  video_filename?: string | null;
+  video_size_bytes?: number | null;
 }
 
 export interface LessonEditorProps {
@@ -56,6 +65,16 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   const [isFreePreview, setIsFreePreview] = useState(lesson.is_free_preview);
   const [parseResult, setParseResult] = useState<PgnParseResult | null>(null);
   const [activeTab, setActiveTab] = useState<LessonType>(lesson.type ?? 'chess');
+  const [videoLesson, setVideoLesson] = useState(() => ({
+    id: lesson.id,
+    is_free_preview: lesson.is_free_preview,
+    duration_seconds: lesson.duration_seconds,
+    video_provider: lesson.video_provider ?? null,
+    video_provider_id: lesson.video_provider_id ?? null,
+    video_status: lesson.video_status ?? 'idle' as VideoStatus,
+    video_filename: lesson.video_filename ?? null,
+    video_size_bytes: lesson.video_size_bytes ?? null,
+  }));
 
   const parsePgnValue = useCallback((value: string) => {
     if (!value.trim()) {
@@ -312,6 +331,31 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
               </div>
             </div>
           </>
+        ) : activeTab === "video" ? (
+          <>
+            {/* Lesson title */}
+            <div>
+              <label className="label" htmlFor="lesson-title">
+                Lesson title
+              </label>
+              <input
+                id="lesson-title"
+                className="input"
+                type="text"
+                aria-label="Lesson title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </div>
+
+            <VideoLessonEditor
+              key={lesson.id}
+              lesson={videoLesson}
+              isFreePreview={isFreePreview}
+              onFreePreviewChange={setIsFreePreview}
+              onLessonChange={(patch) => setVideoLesson((prev) => ({ ...prev, ...patch }))}
+            />
+          </>
         ) : (
           <div
             data-testid={`lesson-type-placeholder-${activeTab}`}
@@ -327,7 +371,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
               padding: 32,
             }}
           >
-            {activeTab === "video" ? "Video editor coming soon" : "Puzzle editor coming soon"}
+            Puzzle editor coming soon
           </div>
         )}
       </div>

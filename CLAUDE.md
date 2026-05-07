@@ -44,7 +44,7 @@ UI language: **Vietnamese** (i18n-ready via react-i18next; all strings in `vi.js
 | i18n | react-i18next (`vi.json` primary; `en.json` later) |
 | Chess | chess.js + chessboard.js (CDN) |
 | Backend / DB | Supabase (PostgreSQL + Auth + Storage) |
-| Video | Cloudflare Stream (HLS, signed URLs) |
+| Video | Supabase Storage (MP4 progressive, signed URLs, 50 MB max). Provider-pluggable via `src/lib/video/`; Phase 2 will switch to Cloudflare Stream for HLS adaptive — see `docs/adr/0001-video-storage-supabase.md`. |
 | QR Payment | VietQR API (`img.vietqr.io`) |
 | Email | Resend (low priority — build after core loop) |
 | Deployment | Vercel (frontend) + Supabase (backend) |
@@ -447,7 +447,7 @@ published → draft  (Creator withdraws)
 
 | Type | Description |
 |------|-------------|
-| `video` | MP4/MOV/AVI upload via Cloudflare Stream. Max 2 GB. |
+| `video` | MP4 (H.264 + AAC) upload via Supabase Storage in Phase 1. Max 50 MB. Phase 2 will switch to Cloudflare Stream for HLS adaptive — see `docs/adr/0001-video-storage-supabase.md`. |
 | `chess` | Linear PGN guided mode with inline `{ }` annotations. |
 | `puzzle` | Bookmark-based review — replays a chess lesson from beginning. |
 
@@ -526,13 +526,31 @@ The following are explicitly **deferred to Phase 2**:
 
 ## 9. Video Upload — Critical Implementation Notes
 
-- Frontend requests a direct upload URL from backend.
-- Backend calls Cloudflare Stream API and returns a direct creator upload URL.
-- Frontend uploads **directly to Cloudflare** (never passes through app server).
-- Backend stores `cloudflare_video_id`.
-- Signed playback URL (4h expiry) generated on-demand per Learner session.
-- Use **TUS resumable upload** protocol for large files. Implement progress bar + retry.
-- Show "Video processing" spinner if Cloudflare is unavailable.
+> Phase 1 ships **Supabase Storage** behind a `VideoProvider` adapter so we can swap in
+> Cloudflare Stream in Phase 2 without touching UI code. See ADR-0001.
+
+- Provider lookup: `getDefaultProvider()` (env-selected) for new uploads;
+  `getProvider(lesson.video_provider)` for playback so old rows keep working.
+- Upload: `tus-js-client` directly to Supabase Storage `/storage/v1/upload/resumable`,
+  authenticated with the user's Supabase JWT. Bucket `lesson-videos` is private.
+- Object path convention: `<auth.uid()>/<lesson_id>/<filename>`. RLS on
+  `storage.objects` requires the first segment to match `auth.uid()` and the user's
+  role to be `creator` or `admin`.
+- Constraints (Phase 1): MP4 only, max **50 MB** per file (matches Supabase free tier).
+  Both client (`validateVideoFile`) and bucket (`allowed_mime_types`, `file_size_limit`)
+  enforce this.
+- Playback: server-side `supabase.storage.from('lesson-videos').createSignedUrl(path, 4h)`.
+  Only generate signed URLs for enrolled learners or for `free_preview` lessons.
+- DB columns are provider-neutral: `video_provider`, `video_provider_id`, `video_status`
+  (`idle | uploading | processing | ready | error`), `video_filename`, `video_size_bytes`,
+  `video_mime`, `video_error`, `duration_seconds`. The `processing` state is reserved
+  for the Phase 2 Cloudflare encoding step.
+- Resumable upload: tus-js-client retry delays `[0, 3000, 5000, 10000, 20000]` and 6 MB
+  chunks. Progress bar + Cancel + Replace + Delete in the editor UI.
+- Player: `<VideoView url format>` switches between MP4 (`<video>` native) and HLS
+  (lazy-imports `hls.js` only on browsers that don't natively support HLS — Safari does).
+- ⚠️ Phase 1 has **no transcoding and no adaptive bitrate**. Creators must compress to
+  ~720p, H.264, ≲1500 kbps before uploading.
 
 ---
 
@@ -561,7 +579,7 @@ The following are explicitly **deferred to Phase 2**:
 
 - HTTPS enforced on all routes
 - Supabase Row Level Security (RLS) on all tables
-- Cloudflare signed URLs for video playback (4h expiry)
+- Supabase Storage signed URLs for video playback (4h expiry); switches to Cloudflare Stream signed URLs in Phase 2
 - CSRF protection
 - Signed playback URLs only served to enrolled Learners
 
@@ -576,7 +594,7 @@ The following are explicitly **deferred to Phase 2**:
 | Uptime | ≥99% monthly |
 | Responsive | Fully usable on mobile; chess board supports touch drag-and-drop |
 | Browsers | Chrome, Safari, Firefox — latest 2 major versions |
-| Scalability | Supabase free tier: 500 MB DB, 1 GB storage. Upgrade at 70% quota. |
+| Scalability | Supabase free tier: 500 MB DB, 1 GB storage, 5 GB egress/month, 50 MB per-file. Auto-pauses after ~1 week idle. Upgrade to Pro before public launch (or front Storage with a CDN once egress > 50% of quota). |
 
 ---
 
