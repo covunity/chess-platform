@@ -143,6 +143,19 @@
       "deleteLesson": "Delete lesson",
       "save": "Save",
       "cancel": "Cancel",
+      "courseInfo": {
+        "heading": "Course info",
+        "link": "Course info",
+        "labelTitle": "Title",
+        "labelDescription": "Description",
+        "labelThumbnail": "Cover image",
+        "thumbnailHint": "Click to upload. JPG/PNG, max 5 MB.",
+        "thumbnailChange": "Change image",
+        "labelPrice": "Price (₫)",
+        "labelLevel": "Level",
+        "save": "Save info",
+        "saved": "Course info saved!"
+      },
       "newLesson": {
         "title": "Add new lesson",
         "typeLabel": "Lesson type",

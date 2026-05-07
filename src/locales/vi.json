@@ -202,6 +202,19 @@
       "deleteLesson": "Xóa bài học",
       "save": "Lưu",
       "cancel": "Hủy",
+      "courseInfo": {
+        "heading": "Thông tin khóa học",
+        "link": "Thông tin khóa học",
+        "labelTitle": "Tiêu đề",
+        "labelDescription": "Mô tả",
+        "labelThumbnail": "Ảnh bìa",
+        "thumbnailHint": "Nhấn để tải lên. JPG/PNG, tối đa 5 MB.",
+        "thumbnailChange": "Đổi ảnh",
+        "labelPrice": "Giá (₫)",
+        "labelLevel": "Cấp độ",
+        "save": "Lưu thông tin",
+        "saved": "Đã lưu thông tin khóa học!"
+      },
       "publish": {
         "publish": "Xuất bản",
         "submitForReview": "Gửi duyệt",

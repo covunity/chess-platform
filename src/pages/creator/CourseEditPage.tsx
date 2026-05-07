@@ -10,11 +10,12 @@ import {
   createLesson,
   updateLesson,
   deleteLesson,
+  updateCourse,
   canPublishCourse,
   publishCourse,
   unpublishCourse,
 } from '../../lib/creatorApi'
-import type { Chapter, CourseStatus, Lesson, LessonType, PublishReadiness } from '../../lib/creatorApi'
+import type { Chapter, CourseLevel, CourseStatus, Lesson, LessonType, PublishReadiness } from '../../lib/creatorApi'
 import LessonEditor from '../../components/LessonEditor/LessonEditor'
 
 const LESSON_TYPE_ICON: Record<LessonType, string> = {
@@ -403,6 +404,16 @@ export default function CourseEditPage() {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null)
   const [newLessonChapterId, setNewLessonChapterId] = useState<string | null>(null)
 
+  const [courseTitle, setCourseTitle] = useState('')
+  const [courseDescription, setCourseDescription] = useState('')
+  const [courseThumbnailUrl, setCourseThumbnailUrl] = useState<string | null>(null)
+  const [coursePrice, setCoursePrice] = useState(0)
+  const [courseLevel, setCourseLevel] = useState<CourseLevel>('beginner')
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null)
+  const [savingCourseInfo, setSavingCourseInfo] = useState(false)
+  const [showCourseInfo, setShowCourseInfo] = useState(false)
+
   const refreshReadiness = useCallback(async () => {
     if (!courseId) return
     const result = await canPublishCourse(supabase, courseId)
@@ -413,10 +424,19 @@ export default function CourseEditPage() {
     if (!courseId) return
     Promise.all([
       listChapters(supabase, courseId),
-      supabase.from('courses').select('status').eq('id', courseId).single(),
+      supabase.from('courses').select('title, description, thumbnail_url, price, level, status').eq('id', courseId).single(),
     ]).then(([chaptersResult, courseResult]) => {
       setChapters(chaptersResult.chapters)
-      if (courseResult.data) setCourseStatus(courseResult.data.status as CourseStatus)
+      if (courseResult.data) {
+        const c = courseResult.data
+        setCourseStatus(c.status as CourseStatus)
+        setCourseTitle(c.title ?? '')
+        setCourseDescription(c.description ?? '')
+        setCourseThumbnailUrl(c.thumbnail_url ?? null)
+        setThumbnailPreview(c.thumbnail_url ?? null)
+        setCoursePrice(c.price ?? 0)
+        setCourseLevel((c.level ?? 'beginner') as CourseLevel)
+      }
       setLoading(false)
       const firstLesson = chaptersResult.chapters.flatMap(ch => ch.lessons ?? [])[0]
       if (firstLesson) setSelectedLesson(firstLesson)
@@ -453,6 +473,33 @@ export default function CourseEditPage() {
       showToast(t('creator.courseEdit.publish.toastUnpublished'))
     }
     setPublishing(false)
+  }
+
+  async function handleSaveCourseInfo() {
+    if (!courseId) return
+    setSavingCourseInfo(true)
+    let thumbnail_url = courseThumbnailUrl
+    if (thumbnailFile) {
+      const ext = thumbnailFile.name.split('.').pop()
+      const path = `${courseId}/cover.${ext}`
+      const { data } = await supabase.storage.from('thumbnails').upload(path, thumbnailFile, { upsert: true })
+      if (data) {
+        const { data: urlData } = supabase.storage.from('thumbnails').getPublicUrl(path)
+        thumbnail_url = urlData.publicUrl
+        setCourseThumbnailUrl(thumbnail_url)
+        setThumbnailFile(null)
+      }
+    }
+    await updateCourse(supabase, courseId, {
+      title: courseTitle,
+      description: courseDescription || undefined,
+      thumbnail_url: thumbnail_url ?? undefined,
+      price: coursePrice,
+      level: courseLevel,
+    })
+    setSavingCourseInfo(false)
+    showToast(t('creator.courseEdit.courseInfo.saved'))
+    refreshReadiness()
   }
 
   async function handleAddChapter() {
@@ -550,7 +597,28 @@ export default function CourseEditPage() {
         style={{ width: 260, background: 'var(--surface-2)', borderRight: '1px solid var(--border)', flexShrink: 0 }}
         className="flex flex-col"
       >
-        <div style={{ padding: '20px 16px 12px' }}>
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
+          <button
+            type="button"
+            onClick={() => { setSelectedLesson(null); setShowCourseInfo(true) }}
+            style={{
+              width: '100%',
+              textAlign: 'left',
+              padding: '7px 10px',
+              borderRadius: 'var(--r-sm)',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 12.5,
+              fontWeight: 500,
+              background: showCourseInfo && !selectedLesson ? 'var(--accent-soft)' : 'transparent',
+              color: showCourseInfo && !selectedLesson ? 'var(--accent-ink)' : 'var(--ink-2)',
+            }}
+          >
+            {t('creator.courseEdit.courseInfo.link')}
+          </button>
+        </div>
+
+        <div style={{ padding: '12px 16px 8px' }}>
           <p
             className="uppercase font-medium tracking-widest text-(--ink-3)"
             style={{ fontSize: 10, letterSpacing: '0.1em' }}
@@ -571,7 +639,7 @@ export default function CourseEditPage() {
                 onOpenNewLessonDialog={chapterId => setNewLessonChapterId(chapterId)}
                 onDeleteLesson={l => setConfirmDeleteLesson(l)}
                 onToggleFreePreview={handleToggleFreePreview}
-                onOpenEditor={l => setSelectedLesson(l)}
+                onOpenEditor={l => { setSelectedLesson(l); setShowCourseInfo(false) }}
                 t={t}
               />
             ))
@@ -622,15 +690,117 @@ export default function CourseEditPage() {
               const lesson = chapters
                 .flatMap(ch => ch.lessons ?? [])
                 .find(l => l.id === id)
-              if (lesson) setSelectedLesson(lesson)
+              if (lesson) { setSelectedLesson(lesson); setShowCourseInfo(false) }
             }}
             onSave={handleSaveLesson}
             showSidebar={false}
           />
         ) : (
-          <p className="text-(--ink-3) text-sm">
-            {t('admin.comingSoon')}
-          </p>
+          <div className="card" style={{ maxWidth: 680, padding: '32px 36px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--ink-1)', marginBottom: 4 }}>
+              {t('creator.courseEdit.courseInfo.heading')}
+            </h2>
+
+            {/* Title */}
+            <div>
+              <label className="label" htmlFor="ci-title">{t('creator.courseEdit.courseInfo.labelTitle')}</label>
+              <input id="ci-title" className="input" value={courseTitle} onChange={e => setCourseTitle(e.target.value)} />
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="label" htmlFor="ci-desc">{t('creator.courseEdit.courseInfo.labelDescription')}</label>
+              <textarea
+                id="ci-desc"
+                className="input"
+                value={courseDescription}
+                onChange={e => setCourseDescription(e.target.value)}
+                style={{ height: 100, display: 'block' }}
+              />
+            </div>
+
+            {/* Thumbnail */}
+            <div>
+              <label className="label">{t('creator.courseEdit.courseInfo.labelThumbnail')}</label>
+              <div
+                style={{
+                  width: '100%',
+                  aspectRatio: '16/10',
+                  maxHeight: 200,
+                  border: '1px dashed var(--border-strong)',
+                  borderRadius: 'var(--r-md)',
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  background: thumbnailPreview ? undefined : 'var(--surface-2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                onClick={() => document.getElementById('ci-thumb-input')?.click()}
+              >
+                {thumbnailPreview
+                  ? <img src={thumbnailPreview} alt="thumbnail" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : <span style={{ fontSize: 13, color: 'var(--ink-3)' }}>{t('creator.courseEdit.courseInfo.thumbnailHint')}</span>
+                }
+                {thumbnailPreview && (
+                  <div style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(20,22,26,0.7)', color: '#fff', fontSize: 11.5, padding: '3px 10px', borderRadius: 99 }}>
+                    {t('creator.courseEdit.courseInfo.thumbnailChange')}
+                  </div>
+                )}
+              </div>
+              <input
+                id="ci-thumb-input"
+                type="file"
+                accept="image/jpeg,image/png"
+                style={{ display: 'none' }}
+                onChange={e => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  setThumbnailFile(file)
+                  setThumbnailPreview(URL.createObjectURL(file))
+                }}
+              />
+            </div>
+
+            {/* Price + Level row */}
+            <div style={{ display: 'flex', gap: 16 }}>
+              <div style={{ flex: 1 }}>
+                <label className="label" htmlFor="ci-price">{t('creator.courseEdit.courseInfo.labelPrice')}</label>
+                <input
+                  id="ci-price"
+                  className="input"
+                  type="number"
+                  min={0}
+                  value={coursePrice}
+                  onChange={e => setCoursePrice(Number(e.target.value))}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label className="label" htmlFor="ci-level">{t('creator.courseEdit.courseInfo.labelLevel')}</label>
+                <select
+                  id="ci-level"
+                  className="input"
+                  value={courseLevel}
+                  onChange={e => setCourseLevel(e.target.value as CourseLevel)}
+                >
+                  <option value="beginner">{t('creator.newCourse.levelBeginner')}</option>
+                  <option value="intermediate">{t('creator.newCourse.levelIntermediate')}</option>
+                  <option value="advanced">{t('creator.newCourse.levelAdvanced')}</option>
+                </select>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="btn btn-accent"
+              style={{ alignSelf: 'flex-start' }}
+              disabled={savingCourseInfo}
+              onClick={handleSaveCourseInfo}
+            >
+              {savingCourseInfo ? '…' : t('creator.courseEdit.courseInfo.save')}
+            </button>
+          </div>
         )}
       </main>
 
