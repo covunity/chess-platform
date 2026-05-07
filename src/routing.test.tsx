@@ -84,4 +84,11 @@ describe('routing', () => {
       expect(screen.getByRole('heading', { name: /tiếp tục từ nơi bạn dừng lại/i })).toBeInTheDocument()
     })
   })
+
+  it('redirects /dashboard to /login when not authenticated', async () => {
+    renderAt('/dashboard')
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /tiếp tục từ nơi bạn dừng lại/i })).toBeInTheDocument()
+    })
+  })
 })
