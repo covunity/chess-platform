@@ -356,6 +356,27 @@
     "bookmark": "Bookmark",
     "loading": "Loading...",
     "contentPlaceholder": "Lesson content will appear here",
-    "enrolledToast": "Enrolled · {{count}} lessons unlocked"
+    "enrolledToast": "Enrolled · {{count}} lessons unlocked",
+    "bookmarkedToast": "Bookmarked · {{moveLabel}}",
+    "bookmarkUndo": "Undo",
+    "bookmarkMoveLabel": "Move {{played}} of {{total}}"
+  },
+  "practice": {
+    "eyebrow": "PRACTICE",
+    "heading": "Your review queue.",
+    "loading": "Loading...",
+    "sortNewest": "Sort: Newest",
+    "sortOldest": "Sort: Oldest",
+    "heroEyebrow": "PRACTICE",
+    "heroCount": "{{count}} bookmarked positions",
+    "heroSub": "Review difficult positions on your own schedule.",
+    "startPractice": "Start practice",
+    "more": "more",
+    "emptyHeading": "No bookmarks yet",
+    "emptyBody": "No bookmarks yet — save a position from any chess lesson to start your review queue.",
+    "deleteConfirmTitle": "Remove this bookmark?",
+    "cancel": "Cancel",
+    "deleteConfirm": "Remove",
+    "deleteAriaLabel": "Delete bookmark"
   }
 }

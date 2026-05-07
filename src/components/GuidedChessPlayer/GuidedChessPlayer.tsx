@@ -15,7 +15,7 @@ export interface GuidedChessPlayerProps {
   lessonNumber: number
   totalLessons: number
   onComplete?: () => void
-  onBookmark?: () => void
+  onBookmark?: (playedPlies: number, currentFen: string, totalPlies: number) => void
 }
 
 const PIECE_UNICODE: Record<string, string> = {
@@ -163,6 +163,11 @@ export default function GuidedChessPlayer({
   const upcomingSide: 'white' | 'black' = playedPlies % 2 === 0 ? 'white' : 'black'
   const awaitingOpponent = playedPlies < totalPlies && upcomingSide !== learnerColor
 
+  // Compute currentFen early so it can be used in the keyboard shortcut effect below
+  const currentFen = playedPlies === 0
+    ? STARTING_FEN
+    : expectedMoves[playedPlies - 1].fen
+
   useEffect(() => {
     if (totalPlies > 0 && playedPlies >= totalPlies && !completedFiredRef.current) {
       completedFiredRef.current = true
@@ -182,11 +187,11 @@ export default function GuidedChessPlayer({
         const tag = target.tagName
         if (tag === 'INPUT' || tag === 'TEXTAREA' || target.isContentEditable) return
       }
-      onBookmark!()
+      onBookmark!(playedPlies, currentFen, totalPlies)
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [onBookmark])
+  }, [onBookmark, playedPlies, currentFen, totalPlies])
   const wrongMoveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -208,10 +213,6 @@ export default function GuidedChessPlayer({
       }
     }
   }, [awaitingOpponent, playedPlies])
-
-  const currentFen = playedPlies === 0
-    ? STARTING_FEN
-    : expectedMoves[playedPlies - 1].fen
 
   const lastMove = playedPlies === 0
     ? undefined

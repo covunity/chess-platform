@@ -409,6 +409,27 @@
     "bookmark": "Bookmark",
     "loading": "Đang tải...",
     "contentPlaceholder": "Nội dung bài học sẽ hiển thị ở đây",
-    "enrolledToast": "Đã đăng ký · {{count}} bài học đã mở khóa"
+    "enrolledToast": "Đã đăng ký · {{count}} bài học đã mở khóa",
+    "bookmarkedToast": "Đã bookmark · {{moveLabel}}",
+    "bookmarkUndo": "Hoàn tác",
+    "bookmarkMoveLabel": "Nước {{played}} / {{total}}"
+  },
+  "practice": {
+    "eyebrow": "LUYỆN TẬP",
+    "heading": "Hàng đợi ôn tập của bạn.",
+    "loading": "Đang tải...",
+    "sortNewest": "Sắp xếp: Mới nhất",
+    "sortOldest": "Sắp xếp: Cũ nhất",
+    "heroEyebrow": "LUYỆN TẬP",
+    "heroCount": "{{count}} vị trí đã bookmark",
+    "heroSub": "Ôn lại các vị trí khó theo lịch của riêng bạn.",
+    "startPractice": "Bắt đầu luyện tập",
+    "more": "nữa",
+    "emptyHeading": "Chưa có bookmark nào",
+    "emptyBody": "Chưa có bookmark nào — lưu một vị trí từ bất kỳ bài cờ vua nào để bắt đầu hàng đợi ôn tập của bạn.",
+    "deleteConfirmTitle": "Xóa bookmark này?",
+    "cancel": "Hủy",
+    "deleteConfirm": "Xóa",
+    "deleteAriaLabel": "Xóa bookmark"
   }
 }

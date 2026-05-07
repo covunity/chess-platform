@@ -16,6 +16,7 @@ import CourseEditPage from './pages/creator/CourseEditPage'
 import HomePage from './pages/HomePage'
 import CourseDetailPage from './pages/CourseDetailPage'
 import LessonPlayerPage from './pages/LessonPlayerPage'
+import PracticePage from './pages/PracticePage'
 import TermsPage from './pages/TermsPage'
 import PrivacyPage from './pages/PrivacyPage'
 import NotFoundPage from './pages/NotFoundPage'
@@ -67,6 +68,7 @@ export default function App() {
         {/* Public section — with TopNav + Footer */}
         <Route element={<PublicShell />}>
           <Route path="/" element={<HomePage />} />
+          <Route path="/practice" element={<PracticePage />} />
           <Route path="/courses/:courseId" element={<CourseDetailPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />

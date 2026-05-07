@@ -2,6 +2,8 @@ import { useRef, useState, useEffect } from 'react'
 import { Link, NavLink, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
+import { supabase } from '../lib/supabase'
+import { getBookmarks } from '../lib/bookmarkApi'
 
 export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } = {}) {
   const { t } = useTranslation()
@@ -11,6 +13,7 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
   const menuRef = useRef<HTMLDivElement>(null)
   const [searchParams, setSearchParams] = useSearchParams()
   const searchRef = useRef<HTMLInputElement>(null)
+  const [bookmarkCount, setBookmarkCount] = useState(0)
 
   function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
     setSearchParams(prev => {
@@ -41,6 +44,13 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  useEffect(() => {
+    if (!user) { setBookmarkCount(0); return }
+    getBookmarks(supabase, user.id).then(({ bookmarks }) => {
+      setBookmarkCount(bookmarks?.length ?? 0)
+    })
+  }, [user])
 
   async function handleLogout() {
     await signOut()
@@ -87,9 +97,28 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
               background: isActive ? 'var(--surface-2)' : 'transparent',
               textDecoration: 'none',
               fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
             })}
           >
             {t(link.labelKey)}
+            {link.labelKey === 'nav.library' && bookmarkCount > 0 && (
+              <span
+                data-testid="nav-bookmark-badge"
+                style={{
+                  background: 'var(--ink-1)',
+                  color: '#fff',
+                  borderRadius: 999,
+                  fontSize: 10.5,
+                  fontWeight: 600,
+                  padding: '1px 6px',
+                  lineHeight: 1.4,
+                }}
+              >
+                {bookmarkCount}
+              </span>
+            )}
           </NavLink>
         ))}
       </nav>

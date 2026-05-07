@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
@@ -8,6 +8,8 @@ import { getFirstLesson, getLastViewedLesson } from '../lib/enrollmentApi'
 import { getLessonForPlayer, markLessonCompleted } from '../lib/lessonPlayerApi'
 import type { PlayerLesson } from '../lib/lessonPlayerApi'
 import type { CourseDetail, CourseDetailChapter } from '../lib/coursesApi'
+import { addBookmark, deleteBookmark, getBookmarkForLesson } from '../lib/bookmarkApi'
+import type { BookmarkRow } from '../lib/bookmarkApi'
 import GuidedChessPlayer from '../components/GuidedChessPlayer/GuidedChessPlayer'
 
 type LoadState = 'loading' | 'redirect-course' | 'redirect-lesson' | 'ready'
@@ -42,7 +44,14 @@ function ChevronLeft() {
   )
 }
 
-function BookmarkIcon() {
+function BookmarkIcon({ filled = false }: { filled?: boolean }) {
+  if (filled) {
+    return (
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" stroke="none">
+        <path d="M4 2h8a1 1 0 0 1 1 1v11l-5-3-5 3V3a1 1 0 0 1 1-1z" />
+      </svg>
+    )
+  }
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <path d="M4 2h8a1 1 0 0 1 1 1v11l-5-3-5 3V3a1 1 0 0 1 1-1z" />
@@ -255,6 +264,9 @@ export default function LessonPlayerPage() {
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set())
   const [showToast, setShowToast] = useState(false)
   const [playerLesson, setPlayerLesson] = useState<PlayerLesson | null>(null)
+  const [currentBookmark, setCurrentBookmark] = useState<BookmarkRow | null>(null)
+  const [bookmarkToast, setBookmarkToast] = useState<{ moveLabel: string } | null>(null)
+  const bookmarkToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const enrolled = searchParams.get('enrolled') === 'true'
 
@@ -340,6 +352,15 @@ export default function LessonPlayerPage() {
     navigate(`/learn/${courseId}/${newLessonId}`, { replace: true })
   }
 
+  // Load bookmark state when lesson changes
+  useEffect(() => {
+    if (loadState !== 'ready' || !user || !currentLessonId) return
+    setCurrentBookmark(null)
+    getBookmarkForLesson(supabase, { userId: user.id, lessonId: currentLessonId }).then(({ bookmark }) => {
+      setCurrentBookmark(bookmark)
+    })
+  }, [loadState, user, currentLessonId])
+
   // Load the current lesson's player data when it changes to a chess lesson
   useEffect(() => {
     if (loadState !== 'ready' || !course || !currentLessonId) return
@@ -357,6 +378,33 @@ export default function LessonPlayerPage() {
     })
     return () => { cancelled = true }
   }, [loadState, course, currentLessonId])
+
+  async function handleBookmark(playedPlies: number, currentFen: string, totalPlies: number) {
+    if (!user || !currentLessonId) return
+
+    if (currentBookmark) {
+      // Toggle off — remove existing bookmark
+      await deleteBookmark(supabase, currentBookmark.id)
+      setCurrentBookmark(null)
+      return
+    }
+
+    const moveLabel = t('player.bookmarkMoveLabel', 'Move {{played}} of {{total}}', { played: playedPlies, total: totalPlies })
+    const { bookmark } = await addBookmark(supabase, {
+      userId: user.id,
+      lessonId: currentLessonId,
+      pgnSnapshot: currentFen,
+    })
+    if (bookmark) {
+      setCurrentBookmark(bookmark)
+      if (bookmarkToastTimer.current) clearTimeout(bookmarkToastTimer.current)
+      setBookmarkToast({ moveLabel })
+      bookmarkToastTimer.current = setTimeout(() => {
+        setBookmarkToast(null)
+        bookmarkToastTimer.current = null
+      }, 2000)
+    }
+  }
 
   async function handleLessonComplete() {
     if (!user || !courseId || !currentLessonId) return
@@ -437,25 +485,67 @@ export default function LessonPlayerPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
             <button
               data-testid="header-bookmark-btn"
+              data-bookmarked={currentBookmark ? 'true' : 'false'}
+              onClick={() => handleBookmark(0, playerLesson?.pgn_data ?? '', 0)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 6,
                 height: 32,
                 padding: '0 12px',
-                background: 'var(--surface)',
-                border: '1px solid var(--border-strong)',
+                background: currentBookmark ? 'var(--accent-soft)' : 'var(--surface)',
+                border: currentBookmark ? '1px solid var(--accent-border)' : '1px solid var(--border-strong)',
                 borderRadius: 'var(--r-md)',
                 cursor: 'pointer',
                 fontSize: 13,
-                color: 'var(--ink-2)',
+                color: currentBookmark ? 'var(--accent-ink)' : 'var(--ink-2)',
               }}
             >
-              <BookmarkIcon />
+              <BookmarkIcon filled={!!currentBookmark} />
               {t('player.bookmark', 'Bookmark')}
             </button>
           </div>
         </header>
+
+        {/* Bookmark toast */}
+        {bookmarkToast && (
+          <div
+            data-testid="bookmark-toast"
+            style={{
+              position: 'fixed',
+              bottom: 28,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: 'var(--ink-1)',
+              color: '#fff',
+              borderRadius: 'var(--r-md)',
+              padding: '12px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              boxShadow: 'var(--sh-2)',
+              zIndex: 300,
+              fontSize: 14,
+              animation: 'fadeInOut 2s ease forwards',
+            }}
+          >
+            <BookmarkIcon filled />
+            {t('player.bookmarkedToast', 'Đã bookmark · {{moveLabel}}', { moveLabel: bookmarkToast.moveLabel })}
+            <button
+              type="button"
+              onClick={async () => {
+                if (currentBookmark) {
+                  await deleteBookmark(supabase, currentBookmark.id)
+                  setCurrentBookmark(null)
+                }
+                setBookmarkToast(null)
+              }}
+              style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontSize: 13, marginLeft: 4 }}
+            >
+              {t('player.bookmarkUndo', 'Hoàn tác')}
+            </button>
+          </div>
+        )}
 
         {/* Enrollment toast */}
         {showToast && (
@@ -495,6 +585,7 @@ export default function LessonPlayerPage() {
               lessonNumber={lessonIndex + 1}
               totalLessons={allLessons.length}
               onComplete={handleLessonComplete}
+              onBookmark={handleBookmark}
             />
           ) : (
             <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center' }}>

@@ -8,6 +8,7 @@ import LessonPlayerPage from './LessonPlayerPage'
 import * as enrollmentApi from '../lib/enrollmentApi'
 import * as coursesApi from '../lib/coursesApi'
 import * as lessonPlayerApi from '../lib/lessonPlayerApi'
+import * as bookmarkApi from '../lib/bookmarkApi'
 import { AuthContext } from '../context/AuthContext'
 import type { AuthContextValue } from '../context/AuthContext'
 import type { CourseDetail } from '../lib/coursesApi'
@@ -23,7 +24,9 @@ vi.mock('../lib/supabase', () => ({
     from: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({ data: null, error: null }),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
     }),
   },
 }))
@@ -34,6 +37,7 @@ const mockGetLastViewedLesson = vi.spyOn(enrollmentApi, 'getLastViewedLesson')
 const mockGetFirstLesson = vi.spyOn(enrollmentApi, 'getFirstLesson')
 const mockGetLessonForPlayer = vi.spyOn(lessonPlayerApi, 'getLessonForPlayer')
 const mockMarkLessonCompleted = vi.spyOn(lessonPlayerApi, 'markLessonCompleted')
+const mockGetBookmarkForLesson = vi.spyOn(bookmarkApi, 'getBookmarkForLesson')
 
 const sampleCourse: CourseDetail = {
   id: 'c1',
@@ -146,6 +150,7 @@ describe('LessonPlayerPage', () => {
       error: null,
     })
     mockMarkLessonCompleted.mockResolvedValue({ error: null })
+    mockGetBookmarkForLesson.mockResolvedValue({ bookmark: null, error: null })
   })
 
   describe('access control', () => {
