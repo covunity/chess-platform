@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import type { UserRole } from '../lib/adminApi'
+import type { AccountTierCode } from '../lib/accountTiers'
 
 export interface UserProfile {
   id: string
@@ -10,6 +11,7 @@ export interface UserProfile {
   name: string | null
   avatar_url: string | null
   role: UserRole
+  account_tier_id: AccountTierCode
   created_at: string
 }
 
@@ -56,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfileLoading(true)
     supabase
       .from('users')
-      .select('id, email, name, avatar_url, role, created_at')
+      .select('id, email, name, avatar_url, role, account_tier_id, created_at')
       .eq('id', user.id)
       .single()
       .then(({ data }) => {

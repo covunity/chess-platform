@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { AccountTierCode } from './accountTiers'
 
 export type UserRole = 'learner' | 'creator' | 'admin'
 
@@ -8,6 +9,7 @@ export interface AdminUser {
   name: string | null
   avatar_url: string | null
   role: UserRole
+  account_tier_id: AccountTierCode
   created_at: string
 }
 
@@ -27,7 +29,7 @@ export async function listUsers(
 
   let query = client
     .from('users')
-    .select('id, email, name, avatar_url, role, created_at', { count: 'exact' })
+    .select('id, email, name, avatar_url, role, account_tier_id, created_at', { count: 'exact' })
     .range(from, to)
     .order('created_at', { ascending: false })
 
@@ -48,7 +50,7 @@ export async function changeUserRole(
     .from('users')
     .update({ role: newRole })
     .eq('id', userId)
-    .select('id, email, name, avatar_url, role, created_at')
+    .select('id, email, name, avatar_url, role, account_tier_id, created_at')
     .single()
 
   return { user: (data as AdminUser) ?? null, error: error as Error | null }

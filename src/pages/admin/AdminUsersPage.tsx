@@ -4,6 +4,8 @@ import { supabase } from '../../lib/supabase'
 import { listUsers, changeUserRole } from '../../lib/adminApi'
 import type { AdminUser, UserRole } from '../../lib/adminApi'
 import { useDebounce } from '../../hooks/useDebounce'
+import { useAccountTiers } from '../../lib/accountTiers'
+import type { AccountTierCode } from '../../lib/accountTiers'
 
 const PAGE_SIZE = 20
 
@@ -20,6 +22,28 @@ function RolePill({ role, t }: { role: UserRole; t: (k: string) => string }) {
       style={role === 'admin' ? { background: 'var(--ink-1)', color: '#fff' } : undefined}
     >
       {t(`admin.users.role${role}`)}
+    </span>
+  )
+}
+
+const TIER_I18N_KEY: Record<AccountTierCode, string> = {
+  individual: 'accountTier.individual',
+  business: 'accountTier.business',
+  athlete: 'accountTier.athlete',
+  training_center: 'accountTier.trainingCenter',
+}
+
+function TierBadge({ tierCode, isEnterprise, t }: { tierCode: AccountTierCode; isEnterprise: boolean; t: (k: string) => string }) {
+  return (
+    <span
+      className="pill"
+      style={
+        isEnterprise
+          ? { background: 'var(--accent-soft)', color: 'var(--accent-ink)', border: '1px solid var(--accent-border)' }
+          : undefined
+      }
+    >
+      {t(TIER_I18N_KEY[tierCode] ?? tierCode)}
     </span>
   )
 }
@@ -102,6 +126,7 @@ function nextRole(current: UserRole): UserRole {
 
 export default function AdminUsersPage() {
   const { t } = useTranslation()
+  const { getTier } = useAccountTiers()
   const [users, setUsers] = useState<AdminUser[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -182,6 +207,7 @@ export default function AdminUsersPage() {
                   t('admin.users.colName'),
                   t('admin.users.colEmail'),
                   t('admin.users.colRole'),
+                  t('admin.users.colTier'),
                   t('admin.users.colCreatedAt'),
                   t('admin.users.colCoursesPurchased'),
                   t('admin.users.colCoursesCreated'),
@@ -200,12 +226,14 @@ export default function AdminUsersPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="text-center text-(--ink-3) py-10">
+                  <td colSpan={8} className="text-center text-(--ink-3) py-10">
                     …
                   </td>
                 </tr>
               ) : (
-                users.map(user => (
+                users.map(user => {
+                  const tier = getTier(user.account_tier_id)
+                  return (
                   <tr key={user.id} className="border-b border-(--border) last:border-0">
                     <td style={{ padding: '14px 16px' }}>
                       <div className="flex items-center gap-2">
@@ -218,6 +246,13 @@ export default function AdminUsersPage() {
                     </td>
                     <td style={{ padding: '14px 16px' }}>
                       <RolePill role={user.role} t={t} />
+                    </td>
+                    <td style={{ padding: '14px 16px' }}>
+                      <TierBadge
+                        tierCode={user.account_tier_id}
+                        isEnterprise={tier?.is_enterprise ?? false}
+                        t={t}
+                      />
                     </td>
                     <td style={{ padding: '14px 16px' }} className="text-(--ink-2)">
                       {formatDate(user.created_at)}
@@ -241,7 +276,8 @@ export default function AdminUsersPage() {
                       )}
                     </td>
                   </tr>
-                ))
+                  )
+                })
               )}
             </tbody>
           </table>

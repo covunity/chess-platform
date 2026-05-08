@@ -102,6 +102,7 @@
       "colEmail": "Email",
       "colRole": "Role",
       "colCreatedAt": "Registration date",
+      "colTier": "Tier",
       "colCoursesPurchased": "Courses purchased",
       "colCoursesCreated": "Courses created",
       "rolelearner": "Learner",
@@ -187,10 +188,20 @@
       "cancel": "Cancel",
       "submit": "Create course",
       "validationTitle": "Title is required.",
-      "validationTitleMax": "Title must not exceed 200 characters."
+      "validationTitleMax": "Title must not exceed 200 characters.",
+      "feePreview": {
+        "label": "Platform fee:",
+        "pct": "{{pct}}%",
+        "feeAmount": "({{amount}}₫)",
+        "youReceive": "You receive:",
+        "payoutAmount": "{{amount}}₫",
+        "free": "Free — no platform fee"
+      }
     },
     "courseEdit": {
       "curriculum": "CURRICULUM",
+      "chapterCounter": "{{current}}/{{max}} chapters used",
+      "chapterLimitReachedTooltip": "You have reached the chapter limit ({{max}}) for your current account tier.",
       "addChapter": "+ Add chapter",
       "addLesson": "+ Add lesson",
       "chapterPlaceholder": "Chapter title",
@@ -522,5 +533,14 @@
     "cancel": "Cancel",
     "deleteConfirm": "Remove",
     "deleteAriaLabel": "Delete bookmark"
+  },
+  "accountTier": {
+    "individual": "Individual",
+    "business": "Business",
+    "athlete": "Athlete",
+    "trainingCenter": "Training Center"
+  },
+  "errors": {
+    "chapterLimitReached": "You have reached the chapter limit for your current account tier."
   }
 }

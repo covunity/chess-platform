@@ -17,6 +17,8 @@ import {
 } from '../../lib/creatorApi'
 import type { Chapter, CourseLevel, CourseStatus, Lesson, LessonType, PublishReadiness } from '../../lib/creatorApi'
 import LessonEditor from '../../components/LessonEditor/LessonEditor'
+import { useAuth } from '../../context/AuthContext'
+import { useAccountTiers } from '../../lib/accountTiers'
 
 const LESSON_TYPE_ICON: Record<LessonType, string> = {
   video: '▶',
@@ -391,6 +393,8 @@ function PublishBar({ status, readiness, publishing, onPublish, onUnpublish, t }
 
 export default function CourseEditPage() {
   const { t } = useTranslation()
+  const { profile } = useAuth()
+  const { getTier } = useAccountTiers()
   const { courseId } = useParams<{ courseId: string }>()
   const [chapters, setChapters] = useState<Chapter[]>([])
   const [loading, setLoading] = useState(true)
@@ -648,15 +652,52 @@ export default function CourseEditPage() {
         </div>
 
         <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)' }}>
-          <button
-            type="button"
-            data-testid="add-chapter-btn"
-            className="btn btn-ghost btn-sm"
-            style={{ color: 'var(--accent-ink)', paddingLeft: 0 }}
-            onClick={handleAddChapter}
-          >
-            {t('creator.courseEdit.addChapter')}
-          </button>
+          {(() => {
+            const maxChapters = profile?.account_tier_id
+              ? (getTier(profile.account_tier_id)?.max_chapters_per_course ?? null)
+              : null
+            const atLimit = maxChapters != null && chapters.length >= maxChapters
+            return (
+              <>
+                {maxChapters != null && (
+                  <p
+                    data-testid="chapter-counter"
+                    className="text-xs text-(--ink-3) mb-1"
+                    style={{ fontSize: 11 }}
+                  >
+                    {t('creator.courseEdit.chapterCounter', { current: chapters.length, max: maxChapters })}
+                  </p>
+                )}
+                <div className="relative group inline-block">
+                  <button
+                    type="button"
+                    data-testid="add-chapter-btn"
+                    className="btn btn-ghost btn-sm"
+                    style={{
+                      color: atLimit ? 'var(--ink-4)' : 'var(--accent-ink)',
+                      paddingLeft: 0,
+                      cursor: atLimit ? 'not-allowed' : undefined,
+                      opacity: atLimit ? 0.5 : undefined,
+                    }}
+                    disabled={atLimit}
+                    onClick={handleAddChapter}
+                  >
+                    {t('creator.courseEdit.addChapter')}
+                  </button>
+                  {atLimit && maxChapters != null && (
+                    <div
+                      className="card absolute bottom-full mb-2 left-0 hidden group-hover:block"
+                      style={{ width: 220, padding: '8px 12px', zIndex: 20, pointerEvents: 'none' }}
+                    >
+                      <p className="text-xs text-(--ink-2)">
+                        {t('creator.courseEdit.chapterLimitReachedTooltip', { max: maxChapters })}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </>
+            )
+          })()}
         </div>
 
         {/* Publish bar */}

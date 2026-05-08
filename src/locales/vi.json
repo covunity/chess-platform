@@ -149,6 +149,7 @@
       "colCreatedAt": "Ngày đăng ký",
       "colCoursesPurchased": "Khóa học đã mua",
       "colCoursesCreated": "Khóa học đã tạo",
+      "colTier": "Tier",
       "rolelearner": "Học viên",
       "rolecreator": "Người tạo",
       "roleadmin": "Quản trị viên",
@@ -241,10 +242,20 @@
       "cancel": "Hủy",
       "submit": "Tạo khóa học",
       "validationTitle": "Tiêu đề là bắt buộc.",
-      "validationTitleMax": "Tiêu đề không được vượt quá 200 ký tự."
+      "validationTitleMax": "Tiêu đề không được vượt quá 200 ký tự.",
+      "feePreview": {
+        "label": "Phí nền tảng:",
+        "pct": "{{pct}}%",
+        "feeAmount": "({{amount}}₫)",
+        "youReceive": "Bạn nhận:",
+        "payoutAmount": "{{amount}}₫",
+        "free": "Miễn phí — không tính phí"
+      }
     },
     "courseEdit": {
       "curriculum": "CHƯƠNG TRÌNH HỌC",
+      "chapterCounter": "{{current}}/{{max}} chương đã dùng",
+      "chapterLimitReachedTooltip": "Bạn đã đạt giới hạn số chương ({{max}}) cho gói tài khoản hiện tại.",
       "addChapter": "+ Thêm chương",
       "addLesson": "+ Thêm bài học",
       "chapterPlaceholder": "Tiêu đề chương",
@@ -579,5 +590,14 @@
     "cancel": "Hủy",
     "deleteConfirm": "Xóa",
     "deleteAriaLabel": "Xóa bookmark"
+  },
+  "accountTier": {
+    "individual": "Cá nhân",
+    "business": "Doanh nghiệp",
+    "athlete": "Vận động viên",
+    "trainingCenter": "Trung tâm đào tạo"
+  },
+  "errors": {
+    "chapterLimitReached": "Bạn đã đạt giới hạn số chương cho gói tài khoản hiện tại."
   }
 }

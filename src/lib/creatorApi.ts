@@ -237,6 +237,28 @@ export async function createChapter(
   courseId: string,
   input: CreateChapterInput
 ): Promise<{ chapter: Chapter | null; error: Error | null }> {
+  // Pre-check: count chapters vs creator's tier limit before attempting insert.
+  // The DB trigger is the authoritative backstop; this gives a friendly error earlier.
+  const [{ count: chapterCount }, { data: courseRow }] = await Promise.all([
+    client.from('chapters').select('*', { count: 'exact', head: true }).eq('course_id', courseId),
+    client.from('courses').select('creator_id').eq('id', courseId).single(),
+  ])
+
+  if (courseRow?.creator_id) {
+    const { data: userRow } = await client
+      .from('users')
+      .select('account_tier_id, account_tiers!account_tier_id(max_chapters_per_course)')
+      .eq('id', courseRow.creator_id)
+      .single()
+
+    const maxChapters = (userRow as { account_tiers?: { max_chapters_per_course?: number } } | null)
+      ?.account_tiers?.max_chapters_per_course
+
+    if (maxChapters != null && (chapterCount ?? 0) >= maxChapters) {
+      return { chapter: null, error: new Error('errors.chapterLimitReached') }
+    }
+  }
+
   const { data, error } = await client
     .from('chapters')
     .insert({ ...input, course_id: courseId })

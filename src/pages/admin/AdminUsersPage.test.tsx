@@ -20,6 +20,23 @@ vi.mock('../../lib/supabase', () => ({
   supabase: {},
 }))
 
+vi.mock('../../lib/accountTiers', () => ({
+  useAccountTiers: vi.fn(() => ({
+    tiers: [
+      { code: 'individual', name_vi: 'Cá nhân', platform_fee_pct: 20, max_chapters_per_course: 10, is_enterprise: false, requires_approval: true, display_order: 1 },
+      { code: 'business', name_vi: 'Doanh nghiệp', platform_fee_pct: 15, max_chapters_per_course: 30, is_enterprise: true, requires_approval: true, display_order: 2 },
+    ],
+    loading: false,
+    getTier: (code: string) => {
+      const tiers: Record<string, { code: string; name_vi: string; is_enterprise: boolean }> = {
+        individual: { code: 'individual', name_vi: 'Cá nhân', is_enterprise: false },
+        business: { code: 'business', name_vi: 'Doanh nghiệp', is_enterprise: true },
+      }
+      return tiers[code]
+    },
+  })),
+}))
+
 const mockUsers = [
   {
     id: 'u1',
@@ -27,6 +44,7 @@ const mockUsers = [
     name: 'Alice',
     avatar_url: null,
     role: 'learner' as const,
+    account_tier_id: 'individual' as const,
     created_at: '2026-01-15T10:00:00Z',
   },
   {
@@ -35,6 +53,7 @@ const mockUsers = [
     name: 'Bob',
     avatar_url: null,
     role: 'creator' as const,
+    account_tier_id: 'business' as const,
     created_at: '2026-02-20T12:00:00Z',
   },
 ]
@@ -64,14 +83,23 @@ describe('AdminUsersPage', () => {
     expect(screen.getByRole('searchbox')).toBeInTheDocument()
   })
 
-  it('renders table column headers', () => {
+  it('renders table column headers including Tier', () => {
     renderPage()
     expect(screen.getByText(/tên/i)).toBeInTheDocument()
     expect(screen.getByText(/email/i)).toBeInTheDocument()
     expect(screen.getByText(/vai trò/i)).toBeInTheDocument()
+    expect(screen.getByText(/tier/i)).toBeInTheDocument()
     expect(screen.getByText(/ngày đăng ký/i)).toBeInTheDocument()
     expect(screen.getByText(/khóa học đã mua/i)).toBeInTheDocument()
     expect(screen.getByText(/khóa học đã tạo/i)).toBeInTheDocument()
+  })
+
+  it('renders tier badges for each user', async () => {
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByText('Cá nhân')).toBeInTheDocument()
+      expect(screen.getByText('Doanh nghiệp')).toBeInTheDocument()
+    })
   })
 
   it('renders user rows after loading', async () => {
@@ -147,7 +175,7 @@ describe('AdminUsersPage', () => {
   })
 
   it('calls changeUserRole and updates pill on Confirm', async () => {
-    const updatedAlice = { ...mockUsers[0], role: 'creator' as const }
+    const updatedAlice = { ...mockUsers[0], role: 'creator' as const, account_tier_id: 'individual' as const }
     mockChangeUserRole.mockResolvedValue({ user: updatedAlice, error: null })
 
     renderPage()

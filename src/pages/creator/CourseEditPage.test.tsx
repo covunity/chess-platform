@@ -64,6 +64,27 @@ vi.mock('../../lib/supabase', () => ({
   },
 }))
 
+vi.mock('../../context/AuthContext', () => ({
+  useAuth: vi.fn(() => ({
+    profile: { id: 'u1', email: 'creator@test.com', name: 'Creator', role: 'creator', account_tier_id: 'individual', created_at: '' },
+    user: null,
+    loading: false,
+    profileLoading: false,
+  })),
+}))
+
+vi.mock('../../lib/accountTiers', () => ({
+  useAccountTiers: vi.fn(() => ({
+    tiers: [
+      { code: 'individual', name_vi: 'Cá nhân', platform_fee_pct: 20, max_chapters_per_course: 10, is_enterprise: false, requires_approval: true, display_order: 1 },
+    ],
+    loading: false,
+    getTier: (code: string) => code === 'individual'
+      ? { code: 'individual', name_vi: 'Cá nhân', platform_fee_pct: 20, max_chapters_per_course: 10, is_enterprise: false, requires_approval: true, display_order: 1 }
+      : undefined,
+  })),
+}))
+
 const mockChapters = [
   {
     id: 'ch1',
@@ -203,5 +224,36 @@ describe('CourseEditPage', () => {
     renderPage()
     await waitFor(() => screen.getByTestId('free-preview-l1'))
     expect(screen.getByTestId('free-preview-l1')).toBeInTheDocument()
+  })
+
+  it('shows chapter counter with current/max', async () => {
+    renderPage()
+    await waitFor(() => screen.getByText('Introduction'))
+    const counter = screen.getByTestId('chapter-counter')
+    // 2 mock chapters, max 10 from mocked individual tier
+    expect(counter).toHaveTextContent('2/10')
+  })
+
+  it('add-chapter button is enabled when below tier limit', async () => {
+    renderPage()
+    await waitFor(() => screen.getByTestId('add-chapter-btn'))
+    expect(screen.getByTestId('add-chapter-btn')).not.toBeDisabled()
+  })
+
+  it('add-chapter button is disabled at tier limit', async () => {
+    // Override mockChapters to have 10 chapters (individual tier max)
+    const tenChapters = Array.from({ length: 10 }, (_, i) => ({
+      id: `ch${i + 1}`,
+      course_id: 'c1',
+      title: `Chapter ${i + 1}`,
+      position: i,
+      created_at: '',
+      lessons: [],
+    }))
+    mockListChapters.mockResolvedValueOnce({ chapters: tenChapters, error: null })
+
+    renderPage()
+    await waitFor(() => screen.getByTestId('add-chapter-btn'))
+    expect(screen.getByTestId('add-chapter-btn')).toBeDisabled()
   })
 })

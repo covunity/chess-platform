@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase'
 import { createCourse } from '../../lib/creatorApi'
 import type { CourseLevel } from '../../lib/creatorApi'
 import { useAuth } from '../../context/AuthContext'
+import { useAccountTiers, computeFeeFloor } from '../../lib/accountTiers'
 
 const MAX_TITLE = 200
 const MAX_TAGS = 10
@@ -14,6 +15,7 @@ export default function NewCoursePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { profile } = useAuth()
+  const { getTier } = useAccountTiers()
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -196,6 +198,35 @@ export default function NewCoursePage() {
                 />
               </div>
               <p className="text-xs mt-1 text-(--ink-3)">{t('creator.newCourse.priceHelper')}</p>
+              {/* Real-time fee preview based on creator's current tier */}
+              {profile?.account_tier_id && (() => {
+                const tier = getTier(profile.account_tier_id)
+                if (!tier) return null
+                const feePct = tier.platform_fee_pct
+                if (price === 0) {
+                  return (
+                    <p data-testid="fee-preview" className="text-xs mt-1" style={{ color: 'var(--success)' }}>
+                      {t('creator.newCourse.feePreview.free')}
+                    </p>
+                  )
+                }
+                const feeAmount = computeFeeFloor(price, feePct)
+                const payoutAmount = price - feeAmount
+                return (
+                  <p data-testid="fee-preview" className="text-xs mt-1 text-(--ink-2)">
+                    {t('creator.newCourse.feePreview.label')}{' '}
+                    <span className="font-medium">
+                      {t('creator.newCourse.feePreview.pct', { pct: feePct })}{' '}
+                      {t('creator.newCourse.feePreview.feeAmount', { amount: feeAmount.toLocaleString('vi-VN') })}
+                    </span>
+                    {' · '}
+                    {t('creator.newCourse.feePreview.youReceive')}{' '}
+                    <span className="font-semibold" style={{ color: 'var(--success)' }}>
+                      {t('creator.newCourse.feePreview.payoutAmount', { amount: payoutAmount.toLocaleString('vi-VN') })}
+                    </span>
+                  </p>
+                )
+              })()}
             </div>
 
             {/* Level + Language row */}
