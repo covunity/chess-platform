@@ -219,14 +219,6 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
                 >
                   {t('nav.profile', 'Hồ sơ')}
                 </Link>
-                <Link
-                  role="menuitem"
-                  className="nav-dropdown__item"
-                  to="/dashboard"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {t('nav.dashboard', 'Bảng điều khiển')}
-                </Link>
                 {(profile?.role === 'creator' || profile?.role === 'admin') && (
                   <Link
                     role="menuitem"
