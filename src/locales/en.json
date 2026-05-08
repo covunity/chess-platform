@@ -39,6 +39,8 @@
     "submit": "Submit application",
     "resubmit": "Resubmit application",
     "submitting": "Submitting...",
+    "signInToApply": "Sign in to apply",
+    "createAccount": "Create account",
     "errors": {
       "motivation": "Please describe your motivation (at least 20 characters).",
       "experience": "Please describe your experience (at least 20 characters).",
@@ -473,6 +475,35 @@
     "recommendedSub": "Based on your study history",
     "recommendedEmpty": "No recommendations yet.",
     "priceFree": "Free"
+  },
+  "profile": {
+    "eyebrow": "PERSONAL PROFILE",
+    "heading": "Account information.",
+    "avatarSection": "Profile photo",
+    "avatarUpload": "Upload photo",
+    "avatarRemove": "Remove photo",
+    "avatarHint": "JPG, PNG, or WebP. Up to 2 MB.",
+    "infoSection": "Basic information",
+    "labelName": "Display name",
+    "labelEmail": "Email",
+    "emailHint": "Email cannot be changed.",
+    "saveInfo": "Save changes",
+    "savedInfo": "Saved!",
+    "passwordSection": "Change password",
+    "labelNewPassword": "New password",
+    "labelConfirmPassword": "Confirm new password",
+    "passwordHint": "At least 8 characters with one uppercase letter and one digit.",
+    "savePassword": "Update password",
+    "savedPassword": "Password has been updated!",
+    "errors": {
+      "nameRequired": "Name cannot be empty.",
+      "avatarType": "Only JPG, PNG, or WebP files are accepted.",
+      "avatarSize": "Image must be smaller than 2 MB.",
+      "avatarUpload": "Could not upload the image. Please try again.",
+      "avatarRemove": "Could not remove the image. Please try again.",
+      "saveProfile": "Could not save your information. Please try again.",
+      "savePassword": "Could not update your password. Please try again."
+    }
   },
   "practice": {
     "eyebrow": "PRACTICE",

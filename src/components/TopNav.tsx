@@ -89,6 +89,7 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
             key={link.to}
             to={link.to}
             end={link.end}
+            data-testid={link.labelKey === 'nav.library' ? 'nav-library-link' : undefined}
             style={({ isActive }) => ({
               padding: '8px 12px',
               borderRadius: 'var(--r-md)',

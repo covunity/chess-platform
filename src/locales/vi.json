@@ -44,6 +44,8 @@
     "submit": "Gửi đơn",
     "resubmit": "Gửi lại đơn",
     "submitting": "Đang gửi...",
+    "signInToApply": "Đăng nhập để gửi đơn",
+    "createAccount": "Tạo tài khoản",
     "errors": {
       "motivation": "Vui lòng mô tả động lực ít nhất 20 ký tự.",
       "experience": "Vui lòng mô tả kinh nghiệm ít nhất 20 ký tự.",

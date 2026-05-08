@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -52,7 +52,31 @@ export default function BecomeCreatorPage() {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace state={{ next: '/become-creator' }} />
+    return (
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '48px 32px' }}>
+        <Eyebrow>{t('becomeCreator.eyebrow', 'TRỞ THÀNH CREATOR')}</Eyebrow>
+        <Heading>
+          {t('becomeCreator.heading', 'Chia sẻ kiến thức cờ vua của bạn.')}
+        </Heading>
+        <p style={{ fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.6, marginTop: 12, maxWidth: 560 }}>
+          {t(
+            'becomeCreator.intro',
+            'Gambitly tuyển chọn các creator có chuyên môn cờ vua rõ ràng. Sau khi gửi đơn, đội ngũ admin sẽ xem xét và phản hồi qua email trong vòng vài ngày.'
+          )}
+        </p>
+        <div
+          data-testid="anon-login-cta"
+          style={{ marginTop: 32, display: 'flex', gap: 10, flexWrap: 'wrap' }}
+        >
+          <Link to="/login" className="btn btn-accent">
+            {t('becomeCreator.signInToApply', 'Đăng nhập để gửi đơn')}
+          </Link>
+          <Link to="/signup" className="btn btn-secondary">
+            {t('becomeCreator.createAccount', 'Tạo tài khoản')}
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   if (profile?.role === 'creator' || profile?.role === 'admin') {

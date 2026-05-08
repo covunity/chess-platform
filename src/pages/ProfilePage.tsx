@@ -55,6 +55,7 @@ export default function ProfilePage() {
   }
 
   async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!user) return
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -91,6 +92,7 @@ export default function ProfilePage() {
   }
 
   async function handleRemoveAvatar() {
+    if (!user) return
     if (!profile?.avatar_url) return
     setAvatarLoading(true)
     setAvatarError(null)
@@ -109,6 +111,7 @@ export default function ProfilePage() {
 
   async function handleSaveInfo(e: React.FormEvent) {
     e.preventDefault()
+    if (!user) return
     const err = validateName(name)
     if (err) { setNameError(err); return }
     setNameError(null)

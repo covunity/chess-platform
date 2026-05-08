@@ -19,12 +19,25 @@ function makeAuthContext(overrides = {}) {
   return {
     user: null,
     loading: false,
+    profile: null,
+    profileLoading: false,
     signUp: vi.fn(),
     signIn: vi.fn(),
     signOut: mockSignOut,
     resetPassword: vi.fn(),
     updatePassword: vi.fn(),
     ...overrides,
+  }
+}
+
+function profileFor(role: 'learner' | 'creator' | 'admin') {
+  return {
+    id: '123',
+    email: 'user@example.com',
+    name: 'John Doe',
+    avatar_url: null,
+    role,
+    created_at: '2026-01-01T00:00:00Z',
   }
 }
 
@@ -110,6 +123,50 @@ describe('TopNav', () => {
         expect(mockSignOut).toHaveBeenCalled()
         expect(mockNavigate).toHaveBeenCalledWith('/')
       })
+    })
+  })
+
+  describe('role-based dropdown', () => {
+    const loggedInUser = { email: 'user@example.com', id: '123', user_metadata: { name: 'John Doe' } }
+
+    async function openDropdown() {
+      await userEvent.click(screen.getByRole('button', { name: /hồ sơ/i }))
+      await waitFor(() => screen.getByRole('menuitem', { name: /đăng xuất/i }))
+    }
+
+    it('hides Creator Studio + Admin links for learner role', async () => {
+      renderNav({ user: loggedInUser, profile: profileFor('learner') })
+      await openDropdown()
+      expect(screen.queryByTestId('nav-creator-link')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('nav-admin-link')).not.toBeInTheDocument()
+    })
+
+    it('shows Creator Studio link for creator role, hides Admin link', async () => {
+      renderNav({ user: loggedInUser, profile: profileFor('creator') })
+      await openDropdown()
+      expect(screen.getByTestId('nav-creator-link')).toHaveAttribute('href', '/creator')
+      expect(screen.queryByTestId('nav-admin-link')).not.toBeInTheDocument()
+    })
+
+    it('shows both Creator Studio and Admin links for admin role', async () => {
+      renderNav({ user: loggedInUser, profile: profileFor('admin') })
+      await openDropdown()
+      expect(screen.getByTestId('nav-creator-link')).toHaveAttribute('href', '/creator')
+      expect(screen.getByTestId('nav-admin-link')).toHaveAttribute('href', '/admin')
+    })
+
+    it('hides role-specific links when profile is null (still loading)', async () => {
+      renderNav({ user: loggedInUser, profile: null })
+      await openDropdown()
+      expect(screen.queryByTestId('nav-creator-link')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('nav-admin-link')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('library link', () => {
+    it('points to /dashboard (not the dead /library route)', () => {
+      renderNav()
+      expect(screen.getByTestId('nav-library-link')).toHaveAttribute('href', '/dashboard')
     })
   })
 
