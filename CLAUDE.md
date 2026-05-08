@@ -73,6 +73,22 @@ Key rules (always apply, no need to open the file):
 | `creator` | Admin manually assigns | Create/publish courses, upload videos, view personal revenue |
 | `learner` | Default on registration | Browse, purchase, study, bookmark, rate, comment |
 
+### Account tiers (orthogonal to role)
+
+`role` controls **what** a user can do. `account_tier_id` controls **platform fee and chapter limit** for creators. Every user has an `account_tier_id`; only the creator role makes it meaningful.
+
+| Tier code | `name_vi` | Fee % | Max chapters/course |
+|-----------|-----------|-------|---------------------|
+| `individual` | Cá nhân | 20 % | 10 |
+| `business` | Doanh nghiệp | 15 % | 30 |
+| `athlete` | Vận động viên | 10 % | 15 |
+| `training_center` | Trung tâm đào tạo | 10 % | 50 |
+
+- Default tier for all users: `individual`.
+- Admin accounts are **always locked** to `individual` (DB trigger `enforce_admin_individual_tier`).
+- Tier is changed via `/become-creator` (upgrade) or Admin panel (direct change).
+- See `docs/adr/0002-enterprise-account-tiers.md` for full rationale.
+
 ---
 
 ## 5. Domain Concepts
@@ -105,11 +121,19 @@ pending → active      (Admin confirms payment)
 
 Free courses (price = 0) skip payment: instantly create `order` (status = `active`) + `enrollment`.
 
+### Account tier
+
+`account_tier_id` on `users` (FK → `account_tiers.code`) is **orthogonal** to `role`. It determines:
+- `platform_fee_pct` charged on orders for this creator's courses.
+- `max_chapters_per_course` enforced by DB trigger + UI counter.
+
+Tiers are rows in `account_tiers` table (text PK) — adding a new tier needs only a SQL INSERT, no code deploy.
+
 ### Key tables
 
-`users`, `courses`, `chapters`, `lessons`, `enrollments`, `lesson_progress`, `bookmarks`, `orders`, `reviews`, `comments`, `reports`, `config`
+`users`, `courses`, `chapters`, `lessons`, `enrollments`, `lesson_progress`, `bookmarks`, `orders`, `reviews`, `comments`, `reports`, `config`, `account_tiers`, `account_applications`
 
-Platform fee stored in `config` table as `platform_fee_pct = 20` (Creator receives 80%).
+Platform fee stored per tier in `account_tiers.platform_fee_pct`. The global `config.platform_fee_pct = 20` remains as a legacy fallback for the individual tier until the migration runs. After migration, fee is always read from the creator's tier row.
 
 ---
 
@@ -138,6 +162,31 @@ Platform fee stored in `config` table as `platform_fee_pct = 20` (Creator receiv
 | D-19 | Search uses PostgreSQL `ILIKE`. No Elasticsearch. |
 | D-20 | ToS and Privacy Policy are static pages. |
 
+#### Enterprise account tier decisions (ADR-0002, PRD-0001)
+
+| # | Decision |
+|---|----------|
+| E-01 | `account_tiers` is a DB lookup table (text PK), not a Postgres enum — new tiers need only a row INSERT. |
+| E-02 | Tier codes are short lowercase strings (`individual`, `business`, `athlete`, `training_center`) — human-readable stable FK values. |
+| E-03 | Four seed tiers ship with migration 018; fee/limit values are BizDev placeholders marked `-- TODO`. |
+| E-04 | `users.account_tier_id` defaults to `'individual'` — all existing users are migrated automatically. |
+| E-05 | DB trigger `enforce_admin_individual_tier` on `users` BEFORE INSERT OR UPDATE: admin always = individual tier. |
+| E-06 | Chapter limit is per-tier row (`max_chapters_per_course`), not a global config entry. |
+| E-07 | Platform fee + creator payout are snapshotted onto `orders` at creation — tier changes don't retroactively alter past orders. |
+| E-08 | Fee formula: `floor(price * pct / 100)` — integer arithmetic, no floating-point rounding. |
+| E-09 | RPC `create_order_with_fee_snapshot` handles all order creation; client never INSERTs `orders` directly. Free courses auto-activate enrollment in the same transaction. |
+| E-10 | AdminUsersPage hides the "Change tier" action for rows where `role = 'admin'`. |
+| E-11 | Tier downgrade is blocked if any existing course exceeds the new tier's chapter limit. RPC raises `tier_downgrade_violates_chapter_limit`. |
+| E-12 | `creator_applications` is renamed to `account_applications`; `requested_tier_code` column added (FK → `account_tiers`). |
+| E-13 | RLS on `account_tiers`: public SELECT (anon) allowed — tier list is marketing info needed before sign-up. |
+| E-14 | New application status `superseded`: submitting while one is pending auto-closes the old one. |
+| E-15 | Business tier signup: `users.name` is set to `metadata.business_name` at application-submit time. |
+| E-16 | localStorage key for pending applications: `pendingAccountApplication` (replaces `pendingCreatorApplication`). |
+| E-17 | `/become-creator` is the single entry point for all creator signup and tier-upgrade flows. No separate settings page in Phase 1. |
+| E-18 | Tier-specific required fields stored in `account_applications.metadata jsonb` — no separate per-tier tables. |
+| E-19 | Required fields validated at both client layer and RPC layer (`submit_account_application`). |
+| E-20 | Tier upgrade for existing creators: only `account_tier_id` changes; `role` stays `creator`. |
+
 ---
 
 ## 7. Phase 1 Constraints — Do NOT scope-creep these
@@ -151,7 +200,6 @@ The following are explicitly **deferred to Phase 2**:
 - Stockfish engine integration
 - Creator public profile page
 - Refund handling
-- Sub-tier business accounts
 - Mobile app
 
 > **D-07 is locked.** Any request to add variation tree to Phase 1 requires a formal scope change.
