@@ -196,12 +196,29 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
               aria-haspopup="true"
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen(o => !o)}
+              style={{ padding: 0, overflow: 'hidden' }}
             >
-              {initials}
+              {profile?.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt={profile.name ?? user.email ?? ''}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                />
+              ) : (
+                initials
+              )}
             </button>
             {menuOpen && (
               <div className="nav-dropdown" role="menu">
                 <p className="nav-dropdown__email">{user.email}</p>
+                <Link
+                  role="menuitem"
+                  className="nav-dropdown__item"
+                  to="/profile"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t('nav.profile', 'Hồ sơ')}
+                </Link>
                 <Link
                   role="menuitem"
                   className="nav-dropdown__item"

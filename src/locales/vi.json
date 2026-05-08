@@ -10,6 +10,7 @@
     "createAccount": "Tạo tài khoản",
     "logout": "Đăng xuất",
     "myProfile": "Hồ sơ của tôi",
+    "profile": "Hồ sơ",
     "dashboard": "Bảng điều khiển",
     "creatorStudio": "Creator Studio",
     "admin": "Quản trị"
@@ -529,6 +530,35 @@
     "recommendedSub": "Dựa trên hành trình học của bạn",
     "recommendedEmpty": "Chưa có gợi ý nào.",
     "priceFree": "Miễn phí"
+  },
+  "profile": {
+    "eyebrow": "HỒ SƠ CÁ NHÂN",
+    "heading": "Thông tin tài khoản.",
+    "avatarSection": "Ảnh đại diện",
+    "avatarUpload": "Tải ảnh lên",
+    "avatarRemove": "Xóa ảnh",
+    "avatarHint": "JPG, PNG hoặc WebP. Tối đa 2 MB.",
+    "infoSection": "Thông tin cơ bản",
+    "labelName": "Tên hiển thị",
+    "labelEmail": "Email",
+    "emailHint": "Email không thể thay đổi.",
+    "saveInfo": "Lưu thay đổi",
+    "savedInfo": "Đã lưu!",
+    "passwordSection": "Đổi mật khẩu",
+    "labelNewPassword": "Mật khẩu mới",
+    "labelConfirmPassword": "Xác nhận mật khẩu mới",
+    "passwordHint": "Ít nhất 8 ký tự với một chữ hoa và một chữ số.",
+    "savePassword": "Cập nhật mật khẩu",
+    "savedPassword": "Mật khẩu đã được cập nhật!",
+    "errors": {
+      "nameRequired": "Tên không được để trống.",
+      "avatarType": "Chỉ chấp nhận JPG, PNG hoặc WebP.",
+      "avatarSize": "Ảnh phải nhỏ hơn 2 MB.",
+      "avatarUpload": "Không thể tải ảnh lên. Vui lòng thử lại.",
+      "avatarRemove": "Không thể xóa ảnh. Vui lòng thử lại.",
+      "saveProfile": "Không thể lưu thông tin. Vui lòng thử lại.",
+      "savePassword": "Không thể cập nhật mật khẩu. Vui lòng thử lại."
+    }
   },
   "practice": {
     "eyebrow": "LUYỆN TẬP",

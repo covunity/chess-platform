@@ -23,6 +23,7 @@ export interface AuthContextValue {
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<{ error: Error | null }>
   updatePassword: (password: string) => Promise<{ error: Error | null }>
+  updateProfile: (updates: Partial<Pick<UserProfile, 'name' | 'avatar_url'>>) => void
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)
@@ -92,8 +93,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error }
   }
 
+  function updateProfile(updates: Partial<Pick<UserProfile, 'name' | 'avatar_url'>>) {
+    setProfile(prev => prev ? { ...prev, ...updates } : prev)
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, profile, profileLoading, signUp, signIn, signOut, resetPassword, updatePassword }}>
+    <AuthContext.Provider value={{ user, loading, profile, profileLoading, signUp, signIn, signOut, resetPassword, updatePassword, updateProfile }}>
       {children}
     </AuthContext.Provider>
   )
