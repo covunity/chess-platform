@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { key: 'courseReview', to: '/admin/course-review' },
   { key: 'orders', to: '/admin/orders' },
   { key: 'users', to: '/admin/users' },
+  { key: 'creatorApplications', to: '/admin/creator-applications' },
   { key: 'reports', to: '/admin/reports' },
   { key: 'settings', to: '/admin/settings' },
 ] as const

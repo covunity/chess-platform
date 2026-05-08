@@ -7,6 +7,7 @@ import ProtectedAdminRoute from './components/admin/ProtectedAdminRoute'
 import AdminLayout from './components/admin/AdminLayout'
 import AdminUsersPage from './pages/admin/AdminUsersPage'
 import AdminReportsPage from './pages/admin/AdminReportsPage'
+import AdminCreatorApplicationsPage from './pages/admin/AdminCreatorApplicationsPage'
 import AdminComingSoonPage from './pages/admin/AdminComingSoonPage'
 import ProtectedCreatorRoute from './components/creator/ProtectedCreatorRoute'
 import CreatorLayout from './components/creator/CreatorLayout'
@@ -18,6 +19,7 @@ import CourseDetailPage from './pages/CourseDetailPage'
 import LessonPlayerPage from './pages/LessonPlayerPage'
 import PracticePage from './pages/PracticePage'
 import LearnerDashboardPage from './pages/LearnerDashboardPage'
+import BecomeCreatorPage from './pages/BecomeCreatorPage'
 import TermsPage from './pages/TermsPage'
 import PrivacyPage from './pages/PrivacyPage'
 import NotFoundPage from './pages/NotFoundPage'
@@ -48,6 +50,7 @@ export default function App() {
           <Route element={<AdminLayout />}>
             <Route index element={<Navigate to="users" replace />} />
             <Route path="users" element={<AdminUsersPage />} />
+            <Route path="creator-applications" element={<AdminCreatorApplicationsPage />} />
             <Route path="reports" element={<AdminReportsPage />} />
             <Route path="*" element={<AdminComingSoonPage />} />
           </Route>
@@ -71,6 +74,7 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/practice" element={<PracticePage />} />
           <Route path="/dashboard" element={<LearnerDashboardPage />} />
+          <Route path="/become-creator" element={<BecomeCreatorPage />} />
           <Route path="/courses/:courseId" element={<CourseDetailPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />

@@ -8,7 +8,7 @@ import { getBookmarks } from '../lib/bookmarkApi'
 export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } = {}) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { user, signOut } = useAuth()
+  const { user, profile, signOut } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const [searchParams, setSearchParams] = useSearchParams()
@@ -83,7 +83,7 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
         {[
           { to: '/', labelKey: 'nav.browse', end: true },
           { to: '/practice', labelKey: 'nav.practice', end: false },
-          { to: '/library', labelKey: 'nav.library', end: false },
+          { to: '/dashboard', labelKey: 'nav.library', end: false },
         ].map(link => (
           <NavLink
             key={link.to}
@@ -108,7 +108,7 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
                 data-testid="nav-bookmark-badge"
                 style={{
                   background: 'var(--ink-1)',
-                  color: '#fff',
+                  color: 'var(--ink-on-accent)',
                   borderRadius: 999,
                   fontSize: 10.5,
                   fontWeight: 600,
@@ -202,6 +202,36 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
             {menuOpen && (
               <div className="nav-dropdown" role="menu">
                 <p className="nav-dropdown__email">{user.email}</p>
+                <Link
+                  role="menuitem"
+                  className="nav-dropdown__item"
+                  to="/dashboard"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t('nav.dashboard', 'Bảng điều khiển')}
+                </Link>
+                {(profile?.role === 'creator' || profile?.role === 'admin') && (
+                  <Link
+                    role="menuitem"
+                    className="nav-dropdown__item"
+                    data-testid="nav-creator-link"
+                    to="/creator"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    {t('nav.creatorStudio', 'Creator Studio')}
+                  </Link>
+                )}
+                {profile?.role === 'admin' && (
+                  <Link
+                    role="menuitem"
+                    className="nav-dropdown__item"
+                    data-testid="nav-admin-link"
+                    to="/admin"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    {t('nav.admin', 'Quản trị')}
+                  </Link>
+                )}
                 <button
                   type="button"
                   role="menuitem"

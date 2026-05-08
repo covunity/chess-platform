@@ -18,16 +18,19 @@ describe('Footer', () => {
 
   it('links to Terms page', () => {
     renderFooter()
-    expect(screen.getByRole('link', { name: 'Terms' })).toHaveAttribute('href', '/terms')
+    expect(screen.getByRole('link', { name: 'Điều khoản' })).toHaveAttribute('href', '/terms')
   })
 
   it('links to Privacy page', () => {
     renderFooter()
-    expect(screen.getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '/privacy')
+    expect(screen.getByRole('link', { name: 'Bảo mật' })).toHaveAttribute('href', '/privacy')
   })
 
-  it('shows language switcher', () => {
+  it('points "Become a creator" to /become-creator', () => {
     renderFooter()
-    expect(screen.getByText('EN / VI')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Trở thành creator' })).toHaveAttribute(
+      'href',
+      '/become-creator'
+    )
   })
 })

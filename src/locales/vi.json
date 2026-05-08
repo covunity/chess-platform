@@ -9,7 +9,45 @@
     "signIn": "Đăng nhập",
     "createAccount": "Tạo tài khoản",
     "logout": "Đăng xuất",
-    "myProfile": "Hồ sơ của tôi"
+    "myProfile": "Hồ sơ của tôi",
+    "dashboard": "Bảng điều khiển",
+    "creatorStudio": "Creator Studio",
+    "admin": "Quản trị"
+  },
+  "footer": {
+    "becomeCreator": "Trở thành creator",
+    "help": "Trợ giúp",
+    "terms": "Điều khoản",
+    "privacy": "Bảo mật"
+  },
+  "becomeCreator": {
+    "eyebrow": "TRỞ THÀNH CREATOR",
+    "heading": "Chia sẻ kiến thức cờ vua của bạn.",
+    "intro": "Gambitly tuyển chọn các creator có chuyên môn cờ vua rõ ràng. Sau khi gửi đơn, đội ngũ admin sẽ xem xét và phản hồi qua email trong vòng vài ngày.",
+    "alreadyCreatorHeading": "Bạn đã là creator.",
+    "alreadyCreatorBody": "Bạn đã có quyền tạo và xuất bản khóa học. Truy cập Creator Studio để bắt đầu.",
+    "openStudio": "Mở Creator Studio",
+    "statusLoading": "Đang tải...",
+    "pendingHeading": "Đơn của bạn đang được xem xét.",
+    "pendingBody": "Chúng tôi sẽ phản hồi qua email khi có kết quả.",
+    "approvedHeading": "Đơn của bạn đã được duyệt!",
+    "approvedBody": "Tài khoản của bạn đã được nâng cấp lên creator. Hãy mở lại trang để truy cập Creator Studio.",
+    "rejectedHeading": "Đơn của bạn chưa được duyệt.",
+    "rejectedBodyFallback": "Bạn có thể chỉnh sửa và gửi lại đơn dưới đây.",
+    "fieldMotivationLabel": "Vì sao bạn muốn trở thành creator?",
+    "fieldMotivationHint": "Chia sẻ ngắn gọn (tối thiểu 20 ký tự, tối đa 600 ký tự).",
+    "fieldExperienceLabel": "Kinh nghiệm cờ vua / giảng dạy của bạn",
+    "fieldExperienceHint": "Giải đấu, ELO, kênh dạy, học sinh… (tối thiểu 20 ký tự).",
+    "fieldSampleLabel": "Link mẫu (tùy chọn)",
+    "fieldSampleHint": "YouTube, Lichess study, hoặc bất kỳ tài liệu nào thể hiện chuyên môn của bạn.",
+    "submit": "Gửi đơn",
+    "resubmit": "Gửi lại đơn",
+    "submitting": "Đang gửi...",
+    "errors": {
+      "motivation": "Vui lòng mô tả động lực ít nhất 20 ký tự.",
+      "experience": "Vui lòng mô tả kinh nghiệm ít nhất 20 ký tự.",
+      "generic": "Không thể gửi đơn. Vui lòng thử lại."
+    }
   },
   "home": {
     "headline": "Học cờ vua cùng các đại kiện tướng",
@@ -73,8 +111,31 @@
       "courseReview": "Duyệt khóa học",
       "orders": "Đơn hàng",
       "users": "Người dùng",
+      "creatorApplications": "Đơn đăng ký creator",
       "reports": "Báo cáo",
       "settings": "Cài đặt"
+    },
+    "creatorApplications": {
+      "pageTitle": "Đơn đăng ký creator",
+      "tab": {
+        "pending": "Đang chờ",
+        "approved": "Đã duyệt",
+        "rejected": "Đã từ chối"
+      },
+      "empty": "Không có đơn nào ở trạng thái này.",
+      "selectHint": "Chọn một đơn để xem chi tiết.",
+      "fieldMotivation": "Động lực",
+      "fieldExperience": "Kinh nghiệm",
+      "fieldSample": "Link mẫu",
+      "fieldRejectionReason": "Lý do từ chối",
+      "approve": "Duyệt & nâng vai trò",
+      "reject": "Từ chối",
+      "rejectReasonLabel": "Lý do từ chối",
+      "rejectReasonError": "Vui lòng nhập lý do từ chối (tối thiểu 5 ký tự).",
+      "confirmReject": "Từ chối đơn",
+      "cancel": "Hủy",
+      "approveError": "Không thể duyệt đơn. Vui lòng thử lại.",
+      "rejectError": "Không thể từ chối đơn. Vui lòng thử lại."
     },
     "users": {
       "pageTitle": "Người dùng",

@@ -5,7 +5,45 @@
     "signIn": "Sign in",
     "createAccount": "Create account",
     "logout": "Log out",
-    "myProfile": "My profile"
+    "myProfile": "My profile",
+    "dashboard": "Dashboard",
+    "creatorStudio": "Creator Studio",
+    "admin": "Admin"
+  },
+  "footer": {
+    "becomeCreator": "Become a creator",
+    "help": "Help",
+    "terms": "Terms",
+    "privacy": "Privacy"
+  },
+  "becomeCreator": {
+    "eyebrow": "BECOME A CREATOR",
+    "heading": "Share your chess expertise.",
+    "intro": "Gambitly curates creators with clear chess expertise. After you submit, our admin team will review and reply by email within a few days.",
+    "alreadyCreatorHeading": "You're already a creator.",
+    "alreadyCreatorBody": "You can create and publish courses. Open the Creator Studio to get started.",
+    "openStudio": "Open Creator Studio",
+    "statusLoading": "Loading...",
+    "pendingHeading": "Your application is under review.",
+    "pendingBody": "We'll email you as soon as we have an answer.",
+    "approvedHeading": "Your application has been approved!",
+    "approvedBody": "Your account has been upgraded to creator. Reload the page to access the Creator Studio.",
+    "rejectedHeading": "Your application wasn't approved.",
+    "rejectedBodyFallback": "You can edit and resubmit your application below.",
+    "fieldMotivationLabel": "Why do you want to be a creator?",
+    "fieldMotivationHint": "Share briefly (at least 20 characters, max 600).",
+    "fieldExperienceLabel": "Your chess / teaching experience",
+    "fieldExperienceHint": "Tournaments, ELO, channels, students… (at least 20 characters).",
+    "fieldSampleLabel": "Sample link (optional)",
+    "fieldSampleHint": "YouTube, Lichess study, or any material that demonstrates your expertise.",
+    "submit": "Submit application",
+    "resubmit": "Resubmit application",
+    "submitting": "Submitting...",
+    "errors": {
+      "motivation": "Please describe your motivation (at least 20 characters).",
+      "experience": "Please describe your experience (at least 20 characters).",
+      "generic": "Could not submit the application. Please try again."
+    }
   },
   "home": {
     "headline": "Learn chess with grandmasters",
@@ -29,8 +67,31 @@
       "courseReview": "Course review",
       "orders": "Orders",
       "users": "Users",
+      "creatorApplications": "Creator applications",
       "reports": "Reports",
       "settings": "Settings"
+    },
+    "creatorApplications": {
+      "pageTitle": "Creator applications",
+      "tab": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "empty": "No applications in this state.",
+      "selectHint": "Select an application to see the details.",
+      "fieldMotivation": "Motivation",
+      "fieldExperience": "Experience",
+      "fieldSample": "Sample link",
+      "fieldRejectionReason": "Rejection reason",
+      "approve": "Approve & promote",
+      "reject": "Reject",
+      "rejectReasonLabel": "Rejection reason",
+      "rejectReasonError": "Please enter a rejection reason (at least 5 characters).",
+      "confirmReject": "Reject application",
+      "cancel": "Cancel",
+      "approveError": "Could not approve. Please try again.",
+      "rejectError": "Could not reject. Please try again."
     },
     "users": {
       "pageTitle": "Users",
