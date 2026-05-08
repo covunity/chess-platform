@@ -85,9 +85,17 @@ export default function CourseCard({ course }: { course: PublicCourse }) {
           </span>
         )}
 
-        <div style={{ transform: 'scale(1.05)', pointerEvents: 'none' }}>
-          <ChessBoard fen={INITIAL_FEN} size={120} showCoords={false} />
-        </div>
+        {course.thumbnail_url ? (
+          <img
+            src={course.thumbnail_url}
+            alt={course.title}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', position: 'absolute', inset: 0 }}
+          />
+        ) : (
+          <div style={{ transform: 'scale(1.05)', pointerEvents: 'none' }}>
+            <ChessBoard fen={INITIAL_FEN} size={120} showCoords={false} />
+          </div>
+        )}
       </div>
 
       {/* Body */}
