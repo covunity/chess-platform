@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
-import { listUsers, changeUserRole } from '../../lib/adminApi'
+import { listUsers, changeUserRole, changeUserAccountTier } from '../../lib/adminApi'
 import type { AdminUser, UserRole } from '../../lib/adminApi'
 import { useDebounce } from '../../hooks/useDebounce'
 import { useAccountTiers } from '../../lib/accountTiers'
-import type { AccountTierCode } from '../../lib/accountTiers'
+import type { AccountTierCode, AccountTier } from '../../lib/accountTiers'
 
 const PAGE_SIZE = 20
 
@@ -48,7 +48,7 @@ function TierBadge({ tierCode, isEnterprise, t }: { tierCode: AccountTierCode; i
   )
 }
 
-interface DialogProps {
+interface RoleDialogProps {
   user: AdminUser
   targetRole: UserRole
   saving: boolean
@@ -57,7 +57,7 @@ interface DialogProps {
   t: (k: string, opts?: Record<string, string>) => string
 }
 
-function RoleChangeDialog({ user, targetRole, saving, onCancel, onConfirm, t }: DialogProps) {
+function RoleChangeDialog({ user, targetRole, saving, onCancel, onConfirm, t }: RoleDialogProps) {
   const fromLabel = t(`admin.users.role${user.role}`)
   const toLabel = t(`admin.users.role${targetRole}`)
   const displayName = user.name ?? user.email
@@ -83,21 +83,115 @@ function RoleChangeDialog({ user, targetRole, saving, onCancel, onConfirm, t }: 
         </p>
         <p className="text-xs text-(--ink-3) mb-6">{t('admin.users.changeRoleWarning')}</p>
         <div className="flex justify-end gap-3">
-          <button
-            type="button"
-            className="btn btn-ghost"
-            onClick={onCancel}
-            disabled={saving}
-            aria-label={t('admin.users.cancel')}
+          <button type="button" className="btn btn-ghost" onClick={onCancel} disabled={saving} aria-label={t('admin.users.cancel')}>
+            {t('admin.users.cancel')}
+          </button>
+          <button type="button" className="btn btn-primary" onClick={onConfirm} disabled={saving} aria-label={t('admin.users.confirm')}>
+            {t('admin.users.confirm')}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+interface TierDialogProps {
+  user: AdminUser
+  tiers: AccountTier[]
+  saving: boolean
+  errorMsg: string | null
+  onCancel: () => void
+  onConfirm: (tierCode: AccountTierCode) => void
+  t: (k: string, opts?: Record<string, string | number>) => string
+}
+
+function TierChangeDialog({ user, tiers, saving, errorMsg, onCancel, onConfirm, t }: TierDialogProps) {
+  const [selectedTier, setSelectedTier] = useState<AccountTierCode>(user.account_tier_id)
+  const tier = tiers.find(ti => ti.code === selectedTier)
+  const displayName = user.name ?? user.email
+
+  return (
+    <div
+      className="fixed inset-0 flex items-center justify-center"
+      style={{ background: 'rgba(20,22,26,0.4)', zIndex: 50 }}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="tier-dialog-title"
+    >
+      <div
+        data-testid="tier-change-dialog"
+        className="card"
+        style={{ width: 480, borderRadius: 'var(--r-lg)', padding: 28 }}
+      >
+        <h2 id="tier-dialog-title" className="text-lg font-semibold text-(--ink-1) mb-3">
+          {t('admin.users.changeTierTitle')}
+        </h2>
+        <p className="text-sm text-(--ink-2) mb-4">
+          {t('admin.users.changeTierBody', { name: displayName })}
+        </p>
+
+        <div className="mb-4">
+          <label className="label mb-2" htmlFor="tier-select">
+            {t('admin.users.changeTierSelectLabel')}
+          </label>
+          <select
+            id="tier-select"
+            data-testid="tier-select"
+            className="input w-full"
+            value={selectedTier}
+            onChange={e => setSelectedTier(e.target.value as AccountTierCode)}
+            style={{ height: 38 }}
           >
+            {tiers.map(ti => (
+              <option key={ti.code} value={ti.code}>
+                {ti.name_vi}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {tier && (
+          <div
+            className="mb-4"
+            style={{
+              background: 'var(--surface-2)',
+              borderRadius: 'var(--r-md)',
+              padding: '10px 14px',
+              fontSize: 13,
+              color: 'var(--ink-2)',
+            }}
+          >
+            <div>{t('admin.users.changeTierFeeNote', { pct: String(tier.platform_fee_pct), max: String(tier.max_chapters_per_course) })}</div>
+          </div>
+        )}
+
+        {errorMsg && (
+          <div
+            role="alert"
+            data-testid="tier-change-error"
+            style={{
+              background: 'var(--danger-soft)',
+              color: 'var(--danger)',
+              borderRadius: 'var(--r-md)',
+              padding: '10px 14px',
+              fontSize: 13,
+              marginBottom: 16,
+            }}
+          >
+            {errorMsg}
+          </div>
+        )}
+
+        <div className="flex justify-end gap-3">
+          <button type="button" className="btn btn-ghost" onClick={onCancel} disabled={saving}>
             {t('admin.users.cancel')}
           </button>
           <button
             type="button"
             className="btn btn-primary"
-            onClick={onConfirm}
-            disabled={saving}
-            aria-label={t('admin.users.confirm')}
+            data-testid="tier-change-confirm"
+            onClick={() => onConfirm(selectedTier)}
+            disabled={saving || selectedTier === user.account_tier_id}
           >
             {t('admin.users.confirm')}
           </button>
@@ -126,7 +220,7 @@ function nextRole(current: UserRole): UserRole {
 
 export default function AdminUsersPage() {
   const { t } = useTranslation()
-  const { getTier } = useAccountTiers()
+  const { tiers, getTier } = useAccountTiers()
   const [users, setUsers] = useState<AdminUser[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -134,9 +228,15 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebounce(search, 300)
 
+  // Role change
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null)
   const [targetRole, setTargetRole] = useState<UserRole | null>(null)
   const [saving, setSaving] = useState(false)
+
+  // Tier change
+  const [tierUser, setTierUser] = useState<AdminUser | null>(null)
+  const [tierSaving, setTierSaving] = useState(false)
+  const [tierErrorMsg, setTierErrorMsg] = useState<string | null>(null)
 
   const totalPages = Math.ceil(total / PAGE_SIZE)
 
@@ -151,18 +251,18 @@ export default function AdminUsersPage() {
     )
   }, [page, debouncedSearch])
 
-  function openDialog(user: AdminUser) {
+  function openRoleDialog(user: AdminUser) {
     if (user.role === 'admin') return
     setSelectedUser(user)
     setTargetRole(nextRole(user.role))
   }
 
-  function closeDialog() {
+  function closeRoleDialog() {
     setSelectedUser(null)
     setTargetRole(null)
   }
 
-  async function handleConfirm() {
+  async function handleRoleConfirm() {
     if (!selectedUser || !targetRole) return
     setSaving(true)
     const { user: updated } = await changeUserRole(supabase, selectedUser.id, targetRole)
@@ -170,7 +270,38 @@ export default function AdminUsersPage() {
       setUsers(prev => prev.map(u => (u.id === updated.id ? updated : u)))
     }
     setSaving(false)
-    closeDialog()
+    closeRoleDialog()
+  }
+
+  function openTierDialog(user: AdminUser) {
+    setTierUser(user)
+    setTierErrorMsg(null)
+  }
+
+  function closeTierDialog() {
+    setTierUser(null)
+    setTierErrorMsg(null)
+  }
+
+  async function handleTierConfirm(newTier: AccountTierCode) {
+    if (!tierUser) return
+    setTierSaving(true)
+    setTierErrorMsg(null)
+    const { user: updated, error } = await changeUserAccountTier(supabase, tierUser.id, newTier)
+    setTierSaving(false)
+    if (error) {
+      const msg = (error as { message?: string }).message ?? ''
+      if (msg.includes('tier_downgrade_violates_chapter_limit')) {
+        setTierErrorMsg(t('errors.tierDowngradeBlocked'))
+      } else {
+        setTierErrorMsg(t('admin.users.changeTierError'))
+      }
+      return
+    }
+    if (updated) {
+      setUsers(prev => prev.map(u => (u.id === updated.id ? updated : u)))
+    }
+    closeTierDialog()
   }
 
   return (
@@ -234,48 +365,59 @@ export default function AdminUsersPage() {
                 users.map(user => {
                   const tier = getTier(user.account_tier_id)
                   return (
-                  <tr key={user.id} className="border-b border-(--border) last:border-0">
-                    <td style={{ padding: '14px 16px' }}>
-                      <div className="flex items-center gap-2">
-                        <UserAvatar name={user.name} email={user.email} />
-                        <span className="font-medium text-(--ink-1)">{user.name ?? '—'}</span>
-                      </div>
-                    </td>
-                    <td style={{ padding: '14px 16px' }} className="text-(--ink-2)">
-                      {user.email}
-                    </td>
-                    <td style={{ padding: '14px 16px' }}>
-                      <RolePill role={user.role} t={t} />
-                    </td>
-                    <td style={{ padding: '14px 16px' }}>
-                      <TierBadge
-                        tierCode={user.account_tier_id}
-                        isEnterprise={tier?.is_enterprise ?? false}
-                        t={t}
-                      />
-                    </td>
-                    <td style={{ padding: '14px 16px' }} className="text-(--ink-2)">
-                      {formatDate(user.created_at)}
-                    </td>
-                    <td style={{ padding: '14px 16px' }} className="text-(--ink-2)">
-                      0
-                    </td>
-                    <td style={{ padding: '14px 16px' }} className="text-(--ink-2)">
-                      0
-                    </td>
-                    <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                      {user.role !== 'admin' && (
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-sm"
-                          onClick={() => openDialog(user)}
-                          aria-label={t('admin.users.changeRole')}
-                        >
-                          {t('admin.users.changeRole')}
-                        </button>
-                      )}
-                    </td>
-                  </tr>
+                    <tr key={user.id} className="border-b border-(--border) last:border-0">
+                      <td style={{ padding: '14px 16px' }}>
+                        <div className="flex items-center gap-2">
+                          <UserAvatar name={user.name} email={user.email} />
+                          <span className="font-medium text-(--ink-1)">{user.name ?? '—'}</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: '14px 16px' }} className="text-(--ink-2)">
+                        {user.email}
+                      </td>
+                      <td style={{ padding: '14px 16px' }}>
+                        <RolePill role={user.role} t={t} />
+                      </td>
+                      <td style={{ padding: '14px 16px' }}>
+                        <TierBadge
+                          tierCode={user.account_tier_id}
+                          isEnterprise={tier?.is_enterprise ?? false}
+                          t={t}
+                        />
+                      </td>
+                      <td style={{ padding: '14px 16px' }} className="text-(--ink-2)">
+                        {formatDate(user.created_at)}
+                      </td>
+                      <td style={{ padding: '14px 16px' }} className="text-(--ink-2)">
+                        0
+                      </td>
+                      <td style={{ padding: '14px 16px' }} className="text-(--ink-2)">
+                        0
+                      </td>
+                      <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                        {user.role !== 'admin' && (
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-sm"
+                              onClick={() => openRoleDialog(user)}
+                              aria-label={t('admin.users.changeRole')}
+                            >
+                              {t('admin.users.changeRole')}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-sm"
+                              data-testid={`change-tier-btn-${user.id}`}
+                              onClick={() => openTierDialog(user)}
+                              aria-label={t('admin.users.changeTier')}
+                            >
+                              {t('admin.users.changeTier')}
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
                   )
                 })
               )}
@@ -318,8 +460,21 @@ export default function AdminUsersPage() {
           user={selectedUser}
           targetRole={targetRole}
           saving={saving}
-          onCancel={closeDialog}
-          onConfirm={handleConfirm}
+          onCancel={closeRoleDialog}
+          onConfirm={handleRoleConfirm}
+          t={t}
+        />
+      )}
+
+      {/* Tier change dialog */}
+      {tierUser && (
+        <TierChangeDialog
+          user={tierUser}
+          tiers={tiers}
+          saving={tierSaving}
+          errorMsg={tierErrorMsg}
+          onCancel={closeTierDialog}
+          onConfirm={handleTierConfirm}
           t={t}
         />
       )}

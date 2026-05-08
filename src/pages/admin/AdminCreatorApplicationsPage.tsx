@@ -2,23 +2,97 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
 import {
-  approveCreatorApplication,
-  listCreatorApplications,
-  rejectCreatorApplication,
-} from '../../lib/creatorApplicationApi'
+  approveAccountApplication,
+  listAccountApplications,
+  rejectAccountApplication,
+} from '../../lib/accountApplicationApi'
 import type {
-  CreatorApplicationStatus,
-  CreatorApplicationWithApplicant,
-} from '../../lib/creatorApplicationApi'
+  AccountApplicationStatus,
+  AccountApplicationWithApplicant,
+} from '../../lib/accountApplicationApi'
+import { useAccountTiers } from '../../lib/accountTiers'
+import type { AccountTierCode } from '../../lib/accountTiers'
 
-const STATUS_TABS: CreatorApplicationStatus[] = ['pending', 'approved', 'rejected']
+const STATUS_TABS: AccountApplicationStatus[] = ['pending', 'approved', 'rejected']
+
+const TIER_I18N: Record<AccountTierCode, string> = {
+  individual: 'accountTier.individual',
+  business: 'accountTier.business',
+  athlete: 'accountTier.athlete',
+  training_center: 'accountTier.trainingCenter',
+}
+
+function TierBadge({
+  tierCode,
+  isEnterprise,
+  t,
+}: {
+  tierCode: AccountTierCode
+  isEnterprise: boolean
+  t: (k: string) => string
+}) {
+  return (
+    <span
+      className="pill"
+      style={
+        isEnterprise
+          ? { background: 'var(--accent-soft)', color: 'var(--accent-ink)', border: '1px solid var(--accent-border)' }
+          : undefined
+      }
+    >
+      {t(TIER_I18N[tierCode] ?? tierCode)}
+    </span>
+  )
+}
+
+function MetadataSection({
+  tierCode,
+  metadata,
+  t,
+}: {
+  tierCode: AccountTierCode
+  metadata: Record<string, unknown>
+  t: (k: string) => string
+}) {
+  if (tierCode === 'individual') return null
+
+  const fields: { key: string; label: string }[] = []
+
+  if (tierCode === 'business') {
+    fields.push(
+      { key: 'business_name', label: t('admin.applications.metadata.businessName') },
+      { key: 'business_registration_no', label: t('admin.applications.metadata.businessRegistrationNo') }
+    )
+  } else if (tierCode === 'athlete') {
+    fields.push({ key: 'federation_or_team', label: t('admin.applications.metadata.federationOrTeam') })
+  } else if (tierCode === 'training_center') {
+    fields.push(
+      { key: 'center_address', label: t('admin.applications.metadata.centerAddress') },
+      { key: 'center_size', label: t('admin.applications.metadata.centerSize') }
+    )
+  }
+
+  return (
+    <>
+      {fields.map(f => {
+        const val = metadata[f.key]
+        if (val == null) return null
+        return (
+          <DetailField key={f.key} label={f.label} value={String(val)} />
+        )
+      })}
+    </>
+  )
+}
 
 export default function AdminCreatorApplicationsPage() {
   const { t } = useTranslation()
-  const [tab, setTab] = useState<CreatorApplicationStatus>('pending')
-  const [applications, setApplications] = useState<CreatorApplicationWithApplicant[]>([])
+  const { tiers, getTier } = useAccountTiers()
+  const [tab, setTab] = useState<AccountApplicationStatus>('pending')
+  const [tierFilter, setTierFilter] = useState<AccountTierCode | ''>('')
+  const [applications, setApplications] = useState<AccountApplicationWithApplicant[]>([])
   const [loading, setLoading] = useState(true)
-  const [selected, setSelected] = useState<CreatorApplicationWithApplicant | null>(null)
+  const [selected, setSelected] = useState<AccountApplicationWithApplicant | null>(null)
   const [rejectingId, setRejectingId] = useState<string | null>(null)
   const [rejectReason, setRejectReason] = useState('')
   const [saving, setSaving] = useState(false)
@@ -27,7 +101,10 @@ export default function AdminCreatorApplicationsPage() {
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    listCreatorApplications(supabase, { status: tab }).then(({ applications }) => {
+    listAccountApplications(supabase, {
+      status: tab,
+      tier: tierFilter || undefined,
+    }).then(({ applications }) => {
       if (cancelled) return
       setApplications(applications)
       setLoading(false)
@@ -35,15 +112,15 @@ export default function AdminCreatorApplicationsPage() {
     return () => {
       cancelled = true
     }
-  }, [tab])
+  }, [tab, tierFilter])
 
-  async function handleApprove(app: CreatorApplicationWithApplicant) {
+  async function handleApprove(app: AccountApplicationWithApplicant) {
     setSaving(true)
     setErrorMsg(null)
-    const { error } = await approveCreatorApplication(supabase, app.id)
+    const { error } = await approveAccountApplication(supabase, app.id)
     setSaving(false)
     if (error) {
-      setErrorMsg(t('admin.creatorApplications.approveError', 'Không thể duyệt đơn. Vui lòng thử lại.'))
+      setErrorMsg(t('admin.applications.approveError', 'Không thể duyệt đơn. Vui lòng thử lại.'))
       return
     }
     setApplications(prev => prev.filter(a => a.id !== app.id))
@@ -53,16 +130,16 @@ export default function AdminCreatorApplicationsPage() {
   async function handleReject() {
     if (!rejectingId || rejectReason.trim().length < 5) {
       setErrorMsg(
-        t('admin.creatorApplications.rejectReasonError', 'Vui lòng nhập lý do từ chối (tối thiểu 5 ký tự).')
+        t('admin.applications.rejectReasonError', 'Vui lòng nhập lý do từ chối (tối thiểu 5 ký tự).')
       )
       return
     }
     setSaving(true)
     setErrorMsg(null)
-    const { error } = await rejectCreatorApplication(supabase, rejectingId, rejectReason.trim())
+    const { error } = await rejectAccountApplication(supabase, rejectingId, rejectReason.trim())
     setSaving(false)
     if (error) {
-      setErrorMsg(t('admin.creatorApplications.rejectError', 'Không thể từ chối đơn. Vui lòng thử lại.'))
+      setErrorMsg(t('admin.applications.rejectError', 'Không thể từ chối đơn. Vui lòng thử lại.'))
       return
     }
     setApplications(prev => prev.filter(a => a.id !== rejectingId))
@@ -78,27 +155,50 @@ export default function AdminCreatorApplicationsPage() {
         style={{ height: 60 }}
       >
         <h1 className="text-lg font-semibold text-(--ink-1)" style={{ letterSpacing: '-0.01em' }}>
-          {t('admin.creatorApplications.pageTitle', 'Đơn đăng ký creator')}
+          {t('admin.applications.pageTitle', 'Đơn đăng ký tài khoản')}
         </h1>
-        <div role="tablist" className="flex items-center gap-1">
-          {STATUS_TABS.map(s => (
-            <button
-              key={s}
-              role="tab"
-              type="button"
-              data-testid={`status-tab-${s}`}
-              aria-selected={tab === s}
-              onClick={() => setTab(s)}
-              className="btn btn-sm"
-              style={{
-                background: tab === s ? 'var(--ink-1)' : 'transparent',
-                color: tab === s ? 'var(--ink-on-accent)' : 'var(--ink-2)',
-                border: '1px solid var(--border)',
-              }}
-            >
-              {t(`admin.creatorApplications.tab.${s}`, s)}
-            </button>
-          ))}
+        <div className="flex items-center gap-3">
+          {/* Tier filter */}
+          <select
+            data-testid="tier-filter"
+            value={tierFilter}
+            onChange={e => {
+              setTierFilter(e.target.value as AccountTierCode | '')
+              setSelected(null)
+            }}
+            className="input"
+            style={{ height: 34, fontSize: 13, padding: '0 10px' }}
+            aria-label={t('admin.applications.filterAllTiers', 'Tất cả tier')}
+          >
+            <option value="">{t('admin.applications.filterAllTiers', 'Tất cả tier')}</option>
+            {tiers.map(tier => (
+              <option key={tier.code} value={tier.code}>
+                {tier.name_vi}
+              </option>
+            ))}
+          </select>
+
+          {/* Status tabs */}
+          <div role="tablist" className="flex items-center gap-1">
+            {STATUS_TABS.map(s => (
+              <button
+                key={s}
+                role="tab"
+                type="button"
+                data-testid={`status-tab-${s}`}
+                aria-selected={tab === s}
+                onClick={() => setTab(s)}
+                className="btn btn-sm"
+                style={{
+                  background: tab === s ? 'var(--ink-1)' : 'transparent',
+                  color: tab === s ? 'var(--ink-on-accent)' : 'var(--ink-2)',
+                  border: '1px solid var(--border)',
+                }}
+              >
+                {t(`admin.applications.tab.${s}`, s)}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -113,12 +213,13 @@ export default function AdminCreatorApplicationsPage() {
               className="text-(--ink-3) text-sm"
               style={{ padding: '32px 0', textAlign: 'center' }}
             >
-              {t('admin.creatorApplications.empty', 'Không có đơn nào ở trạng thái này.')}
+              {t('admin.applications.empty', 'Không có đơn nào ở trạng thái này.')}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {applications.map(app => {
                 const isSelected = selected?.id === app.id
+                const appTier = getTier(app.requested_tier_code)
                 return (
                   <button
                     key={app.id}
@@ -147,16 +248,16 @@ export default function AdminCreatorApplicationsPage() {
                           {app.applicant?.email}
                         </div>
                       </div>
-                      <span
-                        style={{
-                          fontFamily: 'var(--font-mono)',
-                          fontSize: 11,
-                          color: 'var(--ink-3)',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {new Date(app.created_at).toLocaleDateString('vi-VN')}
-                      </span>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                        <TierBadge
+                          tierCode={app.requested_tier_code}
+                          isEnterprise={appTier?.is_enterprise ?? false}
+                          t={t}
+                        />
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-3)' }}>
+                          {new Date(app.created_at).toLocaleDateString('vi-VN')}
+                        </span>
+                      </div>
                     </div>
                     <p
                       style={{
@@ -185,7 +286,7 @@ export default function AdminCreatorApplicationsPage() {
             <div data-testid="application-detail">
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: '0.08em', color: 'var(--ink-3)', textTransform: 'uppercase' }}>
-                  {t(`admin.creatorApplications.tab.${selected.status}`, selected.status)}
+                  {t(`admin.applications.tab.${selected.status}`, selected.status)}
                 </div>
                 <h2 style={{ fontSize: 20, fontWeight: 600, color: 'var(--ink-1)', margin: '6px 0 4px' }}>
                   {selected.applicant?.name ?? '—'}
@@ -193,18 +294,34 @@ export default function AdminCreatorApplicationsPage() {
                 <div style={{ fontSize: 13, color: 'var(--ink-3)' }}>{selected.applicant?.email}</div>
               </div>
 
+              {/* Tier badge */}
+              <div style={{ marginBottom: 16 }}>
+                <span className="label" style={{ marginBottom: 4 }}>
+                  {t('admin.applications.fieldTier', 'Tier yêu cầu')}
+                </span>
+                <div style={{ marginTop: 6 }}>
+                  <TierBadge
+                    tierCode={selected.requested_tier_code}
+                    isEnterprise={getTier(selected.requested_tier_code)?.is_enterprise ?? false}
+                    t={t}
+                  />
+                </div>
+              </div>
+
               <DetailField
-                label={t('admin.creatorApplications.fieldMotivation', 'Động lực')}
+                label={t('admin.applications.fieldMotivation', 'Động lực')}
                 value={selected.motivation}
               />
-              <DetailField
-                label={t('admin.creatorApplications.fieldExperience', 'Kinh nghiệm')}
-                value={selected.experience}
-              />
+              {selected.experience && (
+                <DetailField
+                  label={t('admin.applications.fieldExperience', 'Kinh nghiệm')}
+                  value={selected.experience}
+                />
+              )}
               {selected.sample_url && (
                 <div style={{ marginBottom: 16 }}>
                   <span className="label" style={{ marginBottom: 4 }}>
-                    {t('admin.creatorApplications.fieldSample', 'Link mẫu')}
+                    {t('admin.applications.fieldSample', 'Link mẫu')}
                   </span>
                   <a
                     href={selected.sample_url}
@@ -216,9 +333,17 @@ export default function AdminCreatorApplicationsPage() {
                   </a>
                 </div>
               )}
+
+              {/* Tier-specific metadata */}
+              <MetadataSection
+                tierCode={selected.requested_tier_code}
+                metadata={selected.metadata}
+                t={t}
+              />
+
               {selected.status === 'rejected' && selected.rejection_reason && (
                 <DetailField
-                  label={t('admin.creatorApplications.fieldRejectionReason', 'Lý do từ chối')}
+                  label={t('admin.applications.fieldRejectionReason', 'Lý do từ chối')}
                   value={selected.rejection_reason}
                 />
               )}
@@ -245,7 +370,7 @@ export default function AdminCreatorApplicationsPage() {
                   {rejectingId === selected.id ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16 }}>
                       <span className="label" style={{ marginBottom: 0 }}>
-                        {t('admin.creatorApplications.rejectReasonLabel', 'Lý do từ chối')}
+                        {t('admin.applications.rejectReasonLabel', 'Lý do từ chối')}
                       </span>
                       <textarea
                         data-testid="reject-reason"
@@ -265,7 +390,7 @@ export default function AdminCreatorApplicationsPage() {
                           }}
                           disabled={saving}
                         >
-                          {t('admin.creatorApplications.cancel', 'Hủy')}
+                          {t('admin.applications.cancel', 'Hủy')}
                         </button>
                         <button
                           type="button"
@@ -273,12 +398,9 @@ export default function AdminCreatorApplicationsPage() {
                           data-testid="confirm-reject"
                           onClick={handleReject}
                           disabled={saving}
-                          style={{
-                            background: 'var(--danger)',
-                            color: 'var(--ink-on-accent)',
-                          }}
+                          style={{ background: 'var(--danger)', color: 'var(--ink-on-accent)' }}
                         >
-                          {t('admin.creatorApplications.confirmReject', 'Từ chối đơn')}
+                          {t('admin.applications.confirmReject', 'Từ chối đơn')}
                         </button>
                       </div>
                     </div>
@@ -291,7 +413,7 @@ export default function AdminCreatorApplicationsPage() {
                         onClick={() => setRejectingId(selected.id)}
                         disabled={saving}
                       >
-                        {t('admin.creatorApplications.reject', 'Từ chối')}
+                        {t('admin.applications.reject', 'Từ chối')}
                       </button>
                       <button
                         type="button"
@@ -300,7 +422,7 @@ export default function AdminCreatorApplicationsPage() {
                         onClick={() => handleApprove(selected)}
                         disabled={saving}
                       >
-                        {t('admin.creatorApplications.approve', 'Duyệt & nâng vai trò')}
+                        {t('admin.applications.approve', 'Duyệt & nâng vai trò')}
                       </button>
                     </div>
                   )}
@@ -309,7 +431,7 @@ export default function AdminCreatorApplicationsPage() {
             </div>
           ) : (
             <div className="text-(--ink-3) text-sm" style={{ padding: '32px 0', textAlign: 'center' }}>
-              {t('admin.creatorApplications.selectHint', 'Chọn một đơn để xem chi tiết.')}
+              {t('admin.applications.selectHint', 'Chọn một đơn để xem chi tiết.')}
             </div>
           )}
         </div>

@@ -36,7 +36,7 @@ describe('submitCreatorApplication', () => {
 
     expect(error).toBeNull()
     expect(application?.id).toBe('app-1')
-    expect(client.from).toHaveBeenCalledWith('creator_applications')
+    expect(client.from).toHaveBeenCalledWith('account_applications')
     expect(insert).toHaveBeenCalledWith({
       user_id: 'u-1',
       motivation: 'Tôi yêu cờ',
@@ -140,7 +140,7 @@ describe('approveCreatorApplication', () => {
 
     expect(error).toBeNull()
     expect(application?.status).toBe('approved')
-    expect(rpc).toHaveBeenCalledWith('approve_creator_application', { application_id: 'app-1' })
+    expect(rpc).toHaveBeenCalledWith('approve_account_application', { app_id: 'app-1' })
   })
 })
 
@@ -157,8 +157,8 @@ describe('rejectCreatorApplication', () => {
     expect(error).toBeNull()
     expect(application?.status).toBe('rejected')
     expect(application?.rejection_reason).toBe('Chưa đủ kinh nghiệm')
-    expect(rpc).toHaveBeenCalledWith('reject_creator_application', {
-      application_id: 'app-1',
+    expect(rpc).toHaveBeenCalledWith('reject_account_application', {
+      app_id: 'app-1',
       reason: 'Chưa đủ kinh nghiệm',
     })
   })

@@ -6,14 +6,16 @@ import { I18nextProvider } from 'react-i18next'
 import i18n from '../../i18n'
 import AdminUsersPage from './AdminUsersPage'
 
-const { mockListUsers, mockChangeUserRole } = vi.hoisted(() => ({
+const { mockListUsers, mockChangeUserRole, mockChangeUserAccountTier } = vi.hoisted(() => ({
   mockListUsers: vi.fn(),
   mockChangeUserRole: vi.fn(),
+  mockChangeUserAccountTier: vi.fn(),
 }))
 
 vi.mock('../../lib/adminApi', () => ({
   listUsers: mockListUsers,
   changeUserRole: mockChangeUserRole,
+  changeUserAccountTier: mockChangeUserAccountTier,
 }))
 
 vi.mock('../../lib/supabase', () => ({
@@ -23,14 +25,14 @@ vi.mock('../../lib/supabase', () => ({
 vi.mock('../../lib/accountTiers', () => ({
   useAccountTiers: vi.fn(() => ({
     tiers: [
-      { code: 'individual', name_vi: 'Cá nhân', platform_fee_pct: 20, max_chapters_per_course: 10, is_enterprise: false, requires_approval: true, display_order: 1 },
+      { code: 'individual', name_vi: 'Cá nhân', platform_fee_pct: 20, max_chapters_per_course: 10, is_enterprise: false, requires_approval: false, display_order: 1 },
       { code: 'business', name_vi: 'Doanh nghiệp', platform_fee_pct: 15, max_chapters_per_course: 30, is_enterprise: true, requires_approval: true, display_order: 2 },
     ],
     loading: false,
     getTier: (code: string) => {
-      const tiers: Record<string, { code: string; name_vi: string; is_enterprise: boolean }> = {
-        individual: { code: 'individual', name_vi: 'Cá nhân', is_enterprise: false },
-        business: { code: 'business', name_vi: 'Doanh nghiệp', is_enterprise: true },
+      const tiers: Record<string, { code: string; name_vi: string; is_enterprise: boolean; platform_fee_pct: number; max_chapters_per_course: number }> = {
+        individual: { code: 'individual', name_vi: 'Cá nhân', is_enterprise: false, platform_fee_pct: 20, max_chapters_per_course: 10 },
+        business: { code: 'business', name_vi: 'Doanh nghiệp', is_enterprise: true, platform_fee_pct: 15, max_chapters_per_course: 30 },
       }
       return tiers[code]
     },
@@ -185,16 +187,110 @@ describe('AdminUsersPage', () => {
     await userEvent.click(screen.getByRole('button', { name: /xác nhận/i }))
 
     await waitFor(() => {
-      expect(mockChangeUserRole).toHaveBeenCalledWith(
-        expect.anything(),
-        'u1',
-        'creator'
-      )
+      expect(mockChangeUserRole).toHaveBeenCalledWith(expect.anything(), 'u1', 'creator')
     })
 
     await waitFor(() => {
       const pills = screen.getAllByText('Người tạo')
       expect(pills.length).toBeGreaterThanOrEqual(2)
+    })
+  })
+
+  describe('tier change', () => {
+    it('shows Đổi tier button for non-admin users', async () => {
+      renderPage()
+      await waitFor(() => screen.getByText('Alice'))
+
+      expect(screen.getByTestId('change-tier-btn-u1')).toBeInTheDocument()
+      expect(screen.getByTestId('change-tier-btn-u2')).toBeInTheDocument()
+    })
+
+    it('does not show Đổi tier button for admin users', async () => {
+      const adminUser = { ...mockUsers[0], id: 'u-admin', role: 'admin' as const }
+      mockListUsers.mockResolvedValue({ users: [adminUser], total: 1, error: null })
+
+      renderPage()
+      await waitFor(() => screen.getByText('Alice'))
+
+      expect(screen.queryByTestId('change-tier-btn-u-admin')).not.toBeInTheDocument()
+    })
+
+    it('opens tier change dialog when button clicked', async () => {
+      renderPage()
+      await waitFor(() => screen.getByText('Alice'))
+
+      await userEvent.click(screen.getByTestId('change-tier-btn-u1'))
+
+      expect(screen.getByTestId('tier-change-dialog')).toBeInTheDocument()
+    })
+
+    it('tier dialog shows fee and max chapters for selected tier', async () => {
+      renderPage()
+      await waitFor(() => screen.getByText('Alice'))
+
+      await userEvent.click(screen.getByTestId('change-tier-btn-u1'))
+
+      expect(screen.getByTestId('tier-change-dialog')).toBeInTheDocument()
+      // Should show fee/max info for individual tier (20%, 10 chapters)
+      expect(screen.getByTestId('tier-change-dialog')).toHaveTextContent('20')
+    })
+
+    it('calls changeUserAccountTier on confirm and updates tier badge', async () => {
+      const updatedAlice = { ...mockUsers[0], account_tier_id: 'business' as const }
+      mockChangeUserAccountTier.mockResolvedValue({ user: updatedAlice, error: null })
+
+      renderPage()
+      await waitFor(() => screen.getByText('Alice'))
+
+      await userEvent.click(screen.getByTestId('change-tier-btn-u1'))
+
+      const tierSelect = screen.getByTestId('tier-select')
+      await userEvent.selectOptions(tierSelect, 'business')
+
+      await userEvent.click(screen.getByTestId('tier-change-confirm'))
+
+      await waitFor(() => {
+        expect(mockChangeUserAccountTier).toHaveBeenCalledWith(
+          expect.anything(),
+          'u1',
+          'business'
+        )
+      })
+      expect(screen.queryByTestId('tier-change-dialog')).not.toBeInTheDocument()
+    })
+
+    it('shows error when downgrade violates chapter limit', async () => {
+      mockChangeUserAccountTier.mockResolvedValue({
+        user: null,
+        error: { message: 'tier_downgrade_violates_chapter_limit' },
+      })
+
+      renderPage()
+      await waitFor(() => screen.getByText('Bob'))
+
+      await userEvent.click(screen.getByTestId('change-tier-btn-u2'))
+
+      const tierSelect = screen.getByTestId('tier-select')
+      await userEvent.selectOptions(tierSelect, 'individual')
+
+      await userEvent.click(screen.getByTestId('tier-change-confirm'))
+
+      await waitFor(() => {
+        expect(screen.getByTestId('tier-change-error')).toBeInTheDocument()
+      })
+      // Dialog stays open
+      expect(screen.getByTestId('tier-change-dialog')).toBeInTheDocument()
+    })
+
+    it('closes dialog on cancel', async () => {
+      renderPage()
+      await waitFor(() => screen.getByText('Alice'))
+
+      await userEvent.click(screen.getByTestId('change-tier-btn-u1'))
+      expect(screen.getByTestId('tier-change-dialog')).toBeInTheDocument()
+
+      await userEvent.click(screen.getByRole('button', { name: /hủy/i }))
+      expect(screen.queryByTestId('tier-change-dialog')).not.toBeInTheDocument()
     })
   })
 })

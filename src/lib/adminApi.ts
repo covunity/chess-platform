@@ -41,6 +41,18 @@ export async function listUsers(
   return { users: (data as AdminUser[]) ?? [], total: count ?? 0, error: error as Error | null }
 }
 
+export async function changeUserAccountTier(
+  client: SupabaseClient,
+  userId: string,
+  tierCode: AccountTierCode
+): Promise<{ user: AdminUser | null; error: Error | null }> {
+  const { data, error } = await client.rpc('change_user_account_tier', {
+    target_user_id: userId,
+    new_tier: tierCode,
+  })
+  return { user: (data as AdminUser) ?? null, error: error as Error | null }
+}
+
 export async function changeUserRole(
   client: SupabaseClient,
   userId: string,

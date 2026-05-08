@@ -140,6 +140,39 @@
       "approveError": "Không thể duyệt đơn. Vui lòng thử lại.",
       "rejectError": "Không thể từ chối đơn. Vui lòng thử lại."
     },
+    "applications": {
+      "pageTitle": "Đơn đăng ký tài khoản",
+      "tab": {
+        "pending": "Đang chờ",
+        "approved": "Đã duyệt",
+        "rejected": "Đã từ chối",
+        "superseded": "Đã thay thế"
+      },
+      "empty": "Không có đơn nào ở trạng thái này.",
+      "selectHint": "Chọn một đơn để xem chi tiết.",
+      "filterAllTiers": "Tất cả tier",
+      "colTier": "Tier yêu cầu",
+      "fieldTier": "Tier yêu cầu",
+      "fieldMotivation": "Động lực",
+      "fieldExperience": "Kinh nghiệm",
+      "fieldSample": "Link mẫu",
+      "fieldRejectionReason": "Lý do từ chối",
+      "approve": "Duyệt & nâng vai trò",
+      "reject": "Từ chối",
+      "rejectReasonLabel": "Lý do từ chối",
+      "rejectReasonError": "Vui lòng nhập lý do từ chối (tối thiểu 5 ký tự).",
+      "confirmReject": "Từ chối đơn",
+      "cancel": "Hủy",
+      "approveError": "Không thể duyệt đơn. Vui lòng thử lại.",
+      "rejectError": "Không thể từ chối đơn. Vui lòng thử lại.",
+      "metadata": {
+        "businessName": "Tên doanh nghiệp",
+        "businessRegistrationNo": "Mã đăng ký kinh doanh",
+        "federationOrTeam": "Liên đoàn / Đội",
+        "centerAddress": "Địa chỉ trung tâm",
+        "centerSize": "Quy mô"
+      }
+    },
     "users": {
       "pageTitle": "Người dùng",
       "searchPlaceholder": "Tìm theo tên hoặc email...",
@@ -157,6 +190,12 @@
       "changeRoleTitle": "Thay đổi vai trò?",
       "changeRoleBody": "Thay đổi {{name}} từ {{from}} thành {{to}}?",
       "changeRoleWarning": "Thao tác này sẽ cập nhật quyền truy cập của người dùng ngay lập tức.",
+      "changeTier": "Đổi tier",
+      "changeTierTitle": "Đổi tier tài khoản?",
+      "changeTierBody": "Đổi tier cho {{name}}",
+      "changeTierSelectLabel": "Chọn tier mới",
+      "changeTierFeeNote": "Phí nền tảng: {{pct}}% · Tối đa {{max}} chương/khóa học",
+      "changeTierError": "Không thể đổi tier. Vui lòng thử lại.",
       "cancel": "Hủy",
       "confirm": "Xác nhận"
     },
@@ -598,6 +637,7 @@
     "trainingCenter": "Trung tâm đào tạo"
   },
   "errors": {
-    "chapterLimitReached": "Bạn đã đạt giới hạn số chương cho gói tài khoản hiện tại."
+    "chapterLimitReached": "Bạn đã đạt giới hạn số chương cho gói tài khoản hiện tại.",
+    "tierDowngradeBlocked": "Không thể đổi tier: có khóa học đang vượt giới hạn số chương của tier mới."
   }
 }

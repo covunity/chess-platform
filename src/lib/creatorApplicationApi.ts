@@ -35,7 +35,7 @@ export async function submitCreatorApplication(
   input: SubmitInput
 ): Promise<{ application: CreatorApplication | null; error: Error | null }> {
   const { data, error } = await client
-    .from('creator_applications')
+    .from('account_applications')
     .insert({
       user_id: userId,
       motivation: input.motivation.trim(),
@@ -56,7 +56,7 @@ export async function getMyLatestApplication(
   userId: string
 ): Promise<{ application: CreatorApplication | null; error: Error | null }> {
   const { data, error } = await client
-    .from('creator_applications')
+    .from('account_applications')
     .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
@@ -76,9 +76,9 @@ export async function listCreatorApplications(
   const { status, limit = 50 } = options
 
   let query = client
-    .from('creator_applications')
+    .from('account_applications')
     .select(
-      'id, user_id, status, motivation, experience, sample_url, rejection_reason, created_at, reviewed_at, reviewed_by, applicant:users!creator_applications_user_id_fkey(id, name, email)'
+      'id, user_id, status, motivation, experience, sample_url, rejection_reason, created_at, reviewed_at, reviewed_by, applicant:users!account_applications_user_id_fkey(id, name, email)'
     )
     .order('created_at', { ascending: false })
     .limit(limit)
@@ -96,8 +96,8 @@ export async function approveCreatorApplication(
   client: SupabaseClient,
   applicationId: string
 ): Promise<{ application: CreatorApplication | null; error: Error | null }> {
-  const { data, error } = await client.rpc('approve_creator_application', {
-    application_id: applicationId,
+  const { data, error } = await client.rpc('approve_account_application', {
+    app_id: applicationId,
   })
 
   return {
@@ -111,8 +111,8 @@ export async function rejectCreatorApplication(
   applicationId: string,
   reason: string
 ): Promise<{ application: CreatorApplication | null; error: Error | null }> {
-  const { data, error } = await client.rpc('reject_creator_application', {
-    application_id: applicationId,
+  const { data, error } = await client.rpc('reject_account_application', {
+    app_id: applicationId,
     reason,
   })
 
