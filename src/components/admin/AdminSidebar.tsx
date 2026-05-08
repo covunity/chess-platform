@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 
@@ -28,10 +28,10 @@ export default function AdminSidebar() {
     >
       {/* Logo + eyebrow */}
       <div className="px-4 pt-5 pb-4">
-        <div className="flex items-center gap-2 mb-1">
+        <Link to="/" className="flex items-center gap-2 mb-1" aria-label="Gambitly home" style={{ textDecoration: 'none' }}>
           <span className="logo-mark" aria-hidden="true" style={{ fontSize: 17 }} />
           <span className="font-serif text-base text-(--ink-1)">Gambitly</span>
-        </div>
+        </Link>
         <p
           className="text-(--ink-3) uppercase font-medium tracking-widest"
           style={{ fontSize: 11, letterSpacing: '0.06em' }}
