@@ -77,6 +77,7 @@ export default function App() {
           <Route path="/dashboard" element={<LearnerDashboardPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/become-creator" element={<BecomeCreatorPage />} />
+          <Route path="/register-business" element={<BecomeCreatorPage />} />
           <Route path="/courses/:courseId" element={<CourseDetailPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />

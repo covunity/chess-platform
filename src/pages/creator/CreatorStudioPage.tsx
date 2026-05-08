@@ -509,6 +509,40 @@ export default function CreatorStudioPage() {
         />
       </div>
 
+      {/* Upgrade CTA — only for individual tier creators */}
+      {profile?.account_tier_id === 'individual' && (
+        <div
+          data-testid="upgrade-cta-card"
+          className="card"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '16px 24px',
+            marginBottom: 24,
+            background: 'var(--accent-soft)',
+            border: '1px solid var(--accent-border)',
+          }}
+        >
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--accent-ink)', marginBottom: 2 }}>
+              {t('creator.dashboard.upgradeCta.heading')}
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--ink-2)' }}>
+              {t('creator.dashboard.upgradeCta.body')}
+            </div>
+          </div>
+          <Link
+            to="/become-creator"
+            className="btn btn-accent btn-sm"
+            data-testid="upgrade-cta-btn"
+            style={{ flexShrink: 0, marginLeft: 16 }}
+          >
+            {t('creator.dashboard.upgradeCta.btn')}
+          </Link>
+        </div>
+      )}
+
       {/* Courses table or empty state */}
       {!loading && allCourses.length === 0 ? (
         <div

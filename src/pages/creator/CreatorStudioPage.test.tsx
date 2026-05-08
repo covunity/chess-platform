@@ -414,6 +414,31 @@ describe('CreatorStudioPage', () => {
     })
   })
 
+  describe('upgrade CTA card', () => {
+    it('shows upgrade CTA card when creator has individual tier', async () => {
+      mockUseAuth.mockReturnValue({ profile: { id: 'u1', role: 'creator', account_tier_id: 'individual' } })
+      renderPage()
+      await waitFor(() => {
+        expect(screen.getByTestId('upgrade-cta-card')).toBeInTheDocument()
+        expect(screen.getByTestId('upgrade-cta-btn')).toBeInTheDocument()
+      })
+    })
+
+    it('hides upgrade CTA card when creator has enterprise tier', async () => {
+      mockUseAuth.mockReturnValue({ profile: { id: 'u1', role: 'creator', account_tier_id: 'business' } })
+      renderPage()
+      await waitFor(() => screen.getByTestId('kpi-students'))
+      expect(screen.queryByTestId('upgrade-cta-card')).not.toBeInTheDocument()
+    })
+
+    it('upgrade CTA button links to /become-creator', async () => {
+      mockUseAuth.mockReturnValue({ profile: { id: 'u1', role: 'creator', account_tier_id: 'individual' } })
+      renderPage()
+      await waitFor(() => screen.getByTestId('upgrade-cta-btn'))
+      expect(screen.getByTestId('upgrade-cta-btn')).toHaveAttribute('href', '/become-creator')
+    })
+  })
+
   it('export CSV button triggers a file download', async () => {
     const createObjectURL = vi.fn().mockReturnValue('blob:test')
     const revokeObjectURL = vi.fn()

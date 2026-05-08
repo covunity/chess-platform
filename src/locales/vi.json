@@ -27,6 +27,12 @@
     "intro": "Gambitly tuyển chọn các creator có chuyên môn cờ vua rõ ràng. Sau khi gửi đơn, đội ngũ admin sẽ xem xét và phản hồi qua email trong vòng vài ngày.",
     "alreadyCreatorHeading": "Bạn đã là creator.",
     "alreadyCreatorBody": "Bạn đã có quyền tạo và xuất bản khóa học. Truy cập Creator Studio để bắt đầu.",
+    "alreadyEnterpriseHeading": "Bạn đã là enterprise creator.",
+    "alreadyEnterpriseBody": "Tài khoản của bạn đã được nâng cấp lên gói enterprise. Tiếp tục sáng tạo nội dung trong Creator Studio.",
+    "upgradeBanner": "Nâng cấp tài khoản creator lên gói doanh nghiệp để được giảm phí nền tảng và mở khoá thêm nhiều chương.",
+    "upgradeHeading": "Nâng cấp lên Doanh nghiệp",
+    "upgradeIntro": "Chọn gói phù hợp với bạn. Sau khi duyệt, phí nền tảng và giới hạn chương sẽ được cập nhật ngay.",
+    "upgradeSubmit": "Gửi đơn nâng cấp",
     "openStudio": "Mở Creator Studio",
     "statusLoading": "Đang tải...",
     "pendingHeading": "Đơn của bạn đang được xem xét.",
@@ -49,7 +55,41 @@
     "errors": {
       "motivation": "Vui lòng mô tả động lực ít nhất 20 ký tự.",
       "experience": "Vui lòng mô tả kinh nghiệm ít nhất 20 ký tự.",
-      "generic": "Không thể gửi đơn. Vui lòng thử lại."
+      "generic": "Không thể gửi đơn. Vui lòng thử lại.",
+      "businessName": "Vui lòng nhập tên doanh nghiệp.",
+      "businessRegistrationNo": "Vui lòng nhập mã số đăng ký doanh nghiệp.",
+      "federationOrTeam": "Vui lòng nhập liên đoàn hoặc câu lạc bộ.",
+      "centerAddress": "Vui lòng nhập địa chỉ trung tâm đào tạo.",
+      "centerSize": "Vui lòng nhập quy mô hợp lệ (số học viên > 0)."
+    },
+    "tierSelector": {
+      "heading": "Chọn loại tài khoản",
+      "feeLabel": "Phí nền tảng: {{pct}}%",
+      "maxChaptersLabel": "Tối đa {{max}} chương/khóa"
+    },
+    "fields": {
+      "businessName": "Tên doanh nghiệp",
+      "businessRegistrationNo": "Mã số đăng ký doanh nghiệp",
+      "federationOrTeam": "Liên đoàn / Câu lạc bộ",
+      "centerAddress": "Địa chỉ trung tâm đào tạo",
+      "centerSize": "Quy mô (số học viên)"
+    },
+    "combined": {
+      "authSection": "Thông tin tài khoản",
+      "applicationSection": "Đơn đăng ký creator (tùy chọn)",
+      "optionalHint": "Tùy chọn — bạn có thể bổ sung sau khi xác nhận email.",
+      "fieldNameLabel": "Tên hiển thị",
+      "fieldEmailLabel": "Email",
+      "fieldPasswordLabel": "Mật khẩu",
+      "fieldPasswordHint": "Tối thiểu 6 ký tự.",
+      "submitBtn": "Tạo tài khoản & gửi đơn",
+      "orLogin": "Đã có tài khoản?",
+      "loginLink": "Đăng nhập",
+      "errors": {
+        "name": "Vui lòng nhập tên hiển thị.",
+        "email": "Vui lòng nhập email.",
+        "password": "Mật khẩu phải có ít nhất 6 ký tự."
+      }
     }
   },
   "home": {
@@ -258,6 +298,13 @@
       "emptyCtaLabel": "+ Tạo khóa học mới",
       "duplicateToast": "Đã nhân bản khóa học",
       "duplicateError": "Không thể nhân bản khóa học"
+    },
+    "dashboard": {
+      "upgradeCta": {
+        "heading": "Nâng cấp tài khoản để mở thêm tính năng",
+        "body": "Tham gia gói Doanh nghiệp, Vận động viên hoặc Trung tâm để giảm phí nền tảng và tạo nhiều chương hơn.",
+        "btn": "Nâng cấp ngay"
+      }
     },
     "newCourse": {
       "pageTitle": "Khóa học mới",

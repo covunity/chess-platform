@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import AuthLayout from '../components/auth/AuthLayout'
 import { useAuth } from '../context/AuthContext'
 import { validateLogin } from '../lib/authValidation'
+import { getPendingAccountApplication } from '../lib/pendingAccountApplication'
 
 export default function LoginPage() {
   const { t } = useTranslation()
@@ -39,7 +40,11 @@ export default function LoginPage() {
         setServerError(error.message)
         return
       }
-      navigate('/')
+      if (getPendingAccountApplication()) {
+        navigate('/become-creator')
+      } else {
+        navigate('/')
+      }
     } finally {
       setSubmitting(false)
     }

@@ -10,10 +10,20 @@ import { AuthContext } from '../context/AuthContext'
 const mockSignIn = vi.fn()
 const mockNavigate = vi.fn()
 
+const { mockGetPendingAccountApplication } = vi.hoisted(() => ({
+  mockGetPendingAccountApplication: vi.fn(),
+}))
+
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom')
   return { ...actual, useNavigate: () => mockNavigate }
 })
+
+vi.mock('../lib/pendingAccountApplication', () => ({
+  getPendingAccountApplication: mockGetPendingAccountApplication,
+  savePendingAccountApplication: vi.fn(),
+  clearPendingAccountApplication: vi.fn(),
+}))
 
 function makeAuthContext(overrides = {}) {
   return {
@@ -44,6 +54,7 @@ describe('LoginPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockSignIn.mockResolvedValue({ error: null })
+    mockGetPendingAccountApplication.mockReturnValue(null)
   })
 
   it('renders the login heading', () => {
@@ -113,5 +124,16 @@ describe('LoginPage', () => {
   it('has a link to create account', () => {
     renderPage()
     expect(screen.getByRole('link', { name: /tạo tài khoản/i })).toHaveAttribute('href', '/signup')
+  })
+
+  it('redirects to /become-creator after login when pendingAccountApplication exists', async () => {
+    mockGetPendingAccountApplication.mockReturnValue({ requested_tier_code: 'individual' })
+    renderPage()
+    await userEvent.type(screen.getByLabelText(/^email$/i), 'john@example.com')
+    await userEvent.type(screen.getByLabelText(/^mật khẩu$/i), 'Password1')
+    await userEvent.click(screen.getByRole('button', { name: /^đăng nhập$/i }))
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/become-creator')
+    })
   })
 })
