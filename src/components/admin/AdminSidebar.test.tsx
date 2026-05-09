@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 import { I18nextProvider } from 'react-i18next'
@@ -7,6 +7,14 @@ import AdminSidebar from './AdminSidebar'
 import { AuthContext } from '../../context/AuthContext'
 import type { AuthContextValue } from '../../context/AuthContext'
 import type { User } from '@supabase/supabase-js'
+
+const { mockGetPendingOrderCount } = vi.hoisted(() => ({
+  mockGetPendingOrderCount: vi.fn(),
+}))
+
+vi.mock('../../lib/adminOrdersApi', () => ({
+  getPendingOrderCount: mockGetPendingOrderCount,
+}))
 
 vi.mock('../../lib/supabase', () => ({
   supabase: {
@@ -55,6 +63,11 @@ function renderSidebar(path = '/admin/users') {
 }
 
 describe('AdminSidebar', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockGetPendingOrderCount.mockResolvedValue({ count: 0, error: null })
+  })
+
   it('renders ADMIN eyebrow label', () => {
     renderSidebar()
     expect(screen.getByText('ADMIN')).toBeInTheDocument()
@@ -86,5 +99,21 @@ describe('AdminSidebar', () => {
     renderSidebar()
     expect(screen.getByText('Admin User')).toBeInTheDocument()
     expect(screen.getByText('admin@test.com')).toBeInTheDocument()
+  })
+
+  it('shows pending-orders badge when there are pending orders', async () => {
+    mockGetPendingOrderCount.mockResolvedValueOnce({ count: 7, error: null })
+    renderSidebar()
+    await waitFor(() => {
+      expect(screen.getByTestId('orders-pending-badge')).toHaveTextContent('7')
+    })
+  })
+
+  it('hides the badge when count is 0', async () => {
+    mockGetPendingOrderCount.mockResolvedValueOnce({ count: 0, error: null })
+    renderSidebar()
+    // Wait for the resolve to flush, then assert no badge appears.
+    await waitFor(() => expect(mockGetPendingOrderCount).toHaveBeenCalled())
+    expect(screen.queryByTestId('orders-pending-badge')).not.toBeInTheDocument()
   })
 })

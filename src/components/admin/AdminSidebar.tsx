@@ -1,6 +1,9 @@
-import { NavLink, Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { NavLink, Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
+import { supabase } from '../../lib/supabase'
+import { getPendingOrderCount } from '../../lib/adminOrdersApi'
 
 const NAV_ITEMS = [
   { key: 'overview', to: '/admin/overview' },
@@ -15,6 +18,27 @@ const NAV_ITEMS = [
 export default function AdminSidebar() {
   const { t } = useTranslation()
   const { profile } = useAuth()
+  const location = useLocation()
+  const [pendingCount, setPendingCount] = useState<number | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    getPendingOrderCount(supabase).then(({ count }) => {
+      if (!cancelled) setPendingCount(count)
+    })
+    const onFocus = () => {
+      getPendingOrderCount(supabase).then(({ count }) => {
+        if (!cancelled) setPendingCount(count)
+      })
+    }
+    window.addEventListener('focus', onFocus)
+    return () => {
+      cancelled = true
+      window.removeEventListener('focus', onFocus)
+    }
+    // Refetch when navigating between admin pages — e.g. after a confirm/cancel
+    // on /admin/orders changes the underlying count.
+  }, [location.pathname])
 
   const initials = profile?.name
     ? profile.name.charAt(0).toUpperCase()
@@ -48,14 +72,31 @@ export default function AdminSidebar() {
             to={to}
             className={({ isActive }) =>
               [
-                'flex items-center gap-2 rounded-(--r-md) px-3 py-2 text-sm transition-colors',
+                'flex items-center justify-between gap-2 rounded-(--r-md) px-3 py-2 text-sm transition-colors',
                 isActive
                   ? 'text-(--ink-1) bg-(--surface-2) font-medium'
                   : 'text-(--ink-2) hover:bg-(--surface-2) hover:text-(--ink-1)',
               ].join(' ')
             }
           >
-            {t(`admin.sidebar.${key}`)}
+            <span>{t(`admin.sidebar.${key}`)}</span>
+            {key === 'orders' && pendingCount !== null && pendingCount > 0 && (
+              <span
+                data-testid="orders-pending-badge"
+                className="pill"
+                style={{
+                  background: 'var(--accent-soft)',
+                  color: 'var(--accent-ink)',
+                  border: '1px solid var(--accent-border)',
+                  fontSize: 11,
+                  padding: '1px 8px',
+                  minWidth: 22,
+                  textAlign: 'center',
+                }}
+              >
+                {pendingCount}
+              </span>
+            )}
           </NavLink>
         ))}
       </nav>

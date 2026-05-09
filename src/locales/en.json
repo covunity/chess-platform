@@ -95,6 +95,49 @@
       "approveError": "Could not approve. Please try again.",
       "rejectError": "Could not reject. Please try again."
     },
+    "orders": {
+      "pageTitle": "Orders",
+      "tab": {
+        "pending": "Pending",
+        "all": "All orders"
+      },
+      "filter": {
+        "all": "All statuses",
+        "pending": "Pending",
+        "active": "Paid",
+        "cancelled": "Cancelled"
+      },
+      "status": {
+        "pending": "Pending",
+        "active": "Paid",
+        "cancelled": "Cancelled"
+      },
+      "searchPlaceholder": "Search by order code or email…",
+      "colCode": "Order",
+      "colLearner": "Learner",
+      "colCourse": "Course",
+      "colAmount": "Amount",
+      "colFeePayout": "Fee → Payout",
+      "colCreated": "Created",
+      "colStatus": "Status",
+      "empty": "No orders.",
+      "confirm": "Confirm",
+      "cancel": "Cancel order",
+      "menu": "Open menu",
+      "actionSuccess": "Order updated",
+      "actionError": "Couldn't update. Please try again.",
+      "cancelDialog": {
+        "title": "Cancel this order?",
+        "body": "You are cancelling order",
+        "reasonLabel": "Reason (required)",
+        "reasonPlaceholder": "e.g. wrong amount transferred",
+        "charCount": "{n}/500",
+        "tooLong": "Reason must be 500 chars or fewer.",
+        "cancel": "Close",
+        "confirm": "Cancel order",
+        "error": "Couldn't cancel order. Please try again."
+      }
+    },
     "users": {
       "pageTitle": "Users",
       "searchPlaceholder": "Search by name or email...",

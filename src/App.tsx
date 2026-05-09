@@ -7,6 +7,7 @@ import ProtectedAdminRoute from './components/admin/ProtectedAdminRoute'
 import AdminLayout from './components/admin/AdminLayout'
 import AdminUsersPage from './pages/admin/AdminUsersPage'
 import AdminReportsPage from './pages/admin/AdminReportsPage'
+import AdminOrdersPage from './pages/admin/AdminOrdersPage'
 import AdminCreatorApplicationsPage from './pages/admin/AdminCreatorApplicationsPage'
 import AdminSettingsPage from './pages/admin/AdminSettingsPage'
 import AdminComingSoonPage from './pages/admin/AdminComingSoonPage'
@@ -52,6 +53,7 @@ export default function App() {
           <Route element={<AdminLayout />}>
             <Route index element={<Navigate to="users" replace />} />
             <Route path="users" element={<AdminUsersPage />} />
+            <Route path="orders" element={<AdminOrdersPage />} />
             <Route path="creator-applications" element={<AdminCreatorApplicationsPage />} />
             <Route path="reports" element={<AdminReportsPage />} />
             <Route path="settings" element={<AdminSettingsPage />} />

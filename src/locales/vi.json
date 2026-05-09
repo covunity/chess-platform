@@ -224,6 +224,49 @@
         "centerSize": "Quy mô"
       }
     },
+    "orders": {
+      "pageTitle": "Đơn hàng",
+      "tab": {
+        "pending": "Đơn chờ duyệt",
+        "all": "Tất cả đơn"
+      },
+      "filter": {
+        "all": "Tất cả trạng thái",
+        "pending": "Đang chờ",
+        "active": "Đã thanh toán",
+        "cancelled": "Đã huỷ"
+      },
+      "status": {
+        "pending": "Chờ duyệt",
+        "active": "Đã thanh toán",
+        "cancelled": "Đã huỷ"
+      },
+      "searchPlaceholder": "Tìm theo mã đơn hoặc email…",
+      "colCode": "Mã đơn",
+      "colLearner": "Học viên",
+      "colCourse": "Khoá học",
+      "colAmount": "Số tiền",
+      "colFeePayout": "Phí → Payout",
+      "colCreated": "Tạo lúc",
+      "colStatus": "Trạng thái",
+      "empty": "Không có đơn nào.",
+      "confirm": "Xác nhận",
+      "cancel": "Huỷ đơn",
+      "menu": "Mở menu",
+      "actionSuccess": "Đã cập nhật đơn",
+      "actionError": "Không thể cập nhật. Vui lòng thử lại.",
+      "cancelDialog": {
+        "title": "Huỷ đơn này?",
+        "body": "Bạn đang huỷ đơn",
+        "reasonLabel": "Lý do huỷ (bắt buộc)",
+        "reasonPlaceholder": "Ví dụ: chuyển khoản sai số tiền",
+        "charCount": "{n}/500",
+        "tooLong": "Lý do tối đa 500 ký tự.",
+        "cancel": "Đóng",
+        "confirm": "Huỷ đơn",
+        "error": "Không thể huỷ đơn. Vui lòng thử lại."
+      }
+    },
     "users": {
       "pageTitle": "Người dùng",
       "searchPlaceholder": "Tìm theo tên hoặc email...",
