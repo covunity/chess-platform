@@ -87,12 +87,21 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
           { to: '/', labelKey: 'nav.browse', end: true },
           { to: '/practice', labelKey: 'nav.practice', end: false },
           { to: '/dashboard', labelKey: 'nav.library', end: false },
+          ...(profile?.role === 'creator' || profile?.role === 'admin'
+            ? []
+            : [{ to: '/become-creator', labelKey: 'nav.becomeCreator', end: false }]),
         ].map(link => (
           <NavLink
             key={link.to}
             to={link.to}
             end={link.end}
-            data-testid={link.labelKey === 'nav.library' ? 'nav-library-link' : undefined}
+            data-testid={
+              link.labelKey === 'nav.library'
+                ? 'nav-library-link'
+                : link.labelKey === 'nav.becomeCreator'
+                  ? 'nav-become-creator-link'
+                  : undefined
+            }
             style={({ isActive }) => ({
               padding: '8px 12px',
               borderRadius: 'var(--r-md)',

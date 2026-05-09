@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { listPublishedCourses } from '../lib/coursesApi'
@@ -417,6 +417,109 @@ export default function HomePage() {
           ) : (
             courses.map(course => <CourseCard key={course.id} course={course} />)
           )}
+        </div>
+      </section>
+
+      {/* Creator CTA */}
+      <section
+        data-testid="home-creator-cta"
+        style={{
+          padding: '64px 56px',
+          background: 'var(--surface-2)',
+          borderTop: '1px solid var(--border)',
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 1280,
+            margin: '0 auto',
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 24,
+            alignItems: 'stretch',
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <span
+              style={{
+                fontSize: 11.5,
+                fontWeight: 600,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: 'var(--accent-ink)',
+              }}
+            >
+              {t('home.creatorCta.eyebrow')}
+            </span>
+            <h2
+              style={{
+                fontFamily: 'var(--font-serif)',
+                fontSize: 36,
+                lineHeight: 1.1,
+                color: 'var(--ink-1)',
+                margin: '12px 0 0',
+              }}
+            >
+              {t('home.creatorCta.heading')}
+            </h2>
+            <p
+              style={{
+                fontSize: 15,
+                color: 'var(--ink-2)',
+                lineHeight: 1.55,
+                marginTop: 16,
+                maxWidth: 520,
+              }}
+            >
+              {t('home.creatorCta.body')}
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, justifyContent: 'center' }}>
+            <Link
+              to="/become-creator"
+              data-testid="home-cta-become-creator"
+              className="card"
+              style={{
+                padding: 20,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+                textDecoration: 'none',
+                border: '1px solid var(--border-strong)',
+                background: 'var(--surface)',
+              }}
+            >
+              <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink-1)' }}>
+                {t('home.creatorCta.individualCta')} →
+              </span>
+              <span style={{ fontSize: 13, color: 'var(--ink-3)' }}>
+                {t('home.creatorCta.individualHint')}
+              </span>
+            </Link>
+
+            <Link
+              to="/register-business?tier=business"
+              data-testid="home-cta-register-business"
+              className="card"
+              style={{
+                padding: 20,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+                textDecoration: 'none',
+                border: '1px solid var(--accent-border)',
+                background: 'var(--accent-soft)',
+              }}
+            >
+              <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--accent-ink)' }}>
+                {t('home.creatorCta.businessCta')} →
+              </span>
+              <span style={{ fontSize: 13, color: 'var(--accent-ink)', opacity: 0.8 }}>
+                {t('home.creatorCta.businessHint')}
+              </span>
+            </Link>
+          </div>
         </div>
       </section>
     </main>
