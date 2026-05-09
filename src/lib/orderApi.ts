@@ -35,3 +35,25 @@ export async function createOrder(
 
   return { order: (data as Order) ?? null, error: error as Error | null }
 }
+
+export async function confirmOrder(
+  client: SupabaseClient,
+  orderId: string
+): Promise<{ order: Order | null; error: Error | null }> {
+  const { data, error } = await client.rpc('confirm_order', {
+    p_order_id: orderId,
+  })
+  return { order: (data as Order) ?? null, error: error as Error | null }
+}
+
+export async function cancelOrder(
+  client: SupabaseClient,
+  orderId: string,
+  reason: string
+): Promise<{ order: Order | null; error: Error | null }> {
+  const { data, error } = await client.rpc('cancel_order', {
+    p_order_id: orderId,
+    p_reason: reason,
+  })
+  return { order: (data as Order) ?? null, error: error as Error | null }
+}
