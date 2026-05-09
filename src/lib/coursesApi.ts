@@ -176,6 +176,37 @@ export async function getCourseDetail(
   }
 }
 
+export async function listReviews(
+  client: SupabaseClient,
+  courseId: string,
+  page: number,
+  limit = 10
+): Promise<{ reviews: CourseReview[]; total: number; error: Error | null }> {
+  const offset = (page - 1) * limit
+  const { data, error, count } = await client
+    .from('reviews')
+    .select('id, rating, title, body, created_at, reviewer:reviewer_id(name)', { count: 'exact' })
+    .eq('course_id', courseId)
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1)
+
+  if (error) return { reviews: [], total: 0, error: error as unknown as Error }
+
+  const rows = (data ?? []) as Array<Record<string, unknown>>
+  const reviews: CourseReview[] = rows.map(r => {
+    const reviewer = r.reviewer as { name?: string } | null
+    return {
+      id: r.id as string,
+      reviewer_name: reviewer?.name ?? null,
+      rating: r.rating as number,
+      title: (r.title as string | null) ?? null,
+      body: (r.body as string | null) ?? null,
+      created_at: r.created_at as string,
+    }
+  })
+  return { reviews, total: count ?? 0, error: null }
+}
+
 export async function checkUserEnrollment(
   client: SupabaseClient,
   courseId: string,

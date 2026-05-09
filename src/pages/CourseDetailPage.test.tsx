@@ -37,6 +37,7 @@ const mockUpdateComment = vi.spyOn(commentsApi, 'updateComment')
 const mockDeleteComment = vi.spyOn(commentsApi, 'deleteComment')
 
 const mockGetCourseDetail = vi.spyOn(coursesApi, 'getCourseDetail')
+const mockListReviews = vi.spyOn(coursesApi, 'listReviews')
 const mockCheckUserEnrollment = vi.spyOn(coursesApi, 'checkUserEnrollment')
 const mockEnrollForFree = vi.spyOn(enrollmentApi, 'enrollForFree')
 const mockGetFirstLesson = vi.spyOn(enrollmentApi, 'getFirstLesson')
@@ -160,6 +161,7 @@ describe('CourseDetailPage', () => {
     mockReportComment.mockResolvedValue({ error: null })
     mockCreateOrder.mockResolvedValue({ order: null, error: null })
     mockGetPendingOrderForCourse.mockResolvedValue({ order: null, error: null })
+    mockListReviews.mockResolvedValue({ reviews: [], total: 0, error: null })
   })
 
   describe('loading state', () => {
@@ -835,6 +837,92 @@ describe('CourseDetailPage', () => {
       renderPage(loggedInContext)
       await waitFor(() => expect(screen.getByTestId('course-hero')).toBeInTheDocument())
       expect(screen.queryByTestId('paywall-banner')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('reviews pagination', () => {
+    function makeReviews(count: number) {
+      return Array.from({ length: count }, (_, i) => ({
+        id: `rv-${i}`,
+        reviewer_name: `Reviewer ${i}`,
+        rating: 5,
+        title: `Review title ${i}`,
+        body: `Review body ${i}`,
+        created_at: '2026-03-01T00:00:00Z',
+      }))
+    }
+
+    it('renders first 10 reviews and shows Load-more when more exist', async () => {
+      const twelveReviews = makeReviews(12)
+      mockGetCourseDetail.mockResolvedValue({
+        course: { ...sampleCourse, reviews: twelveReviews, rating_count: 12 },
+        error: null,
+      })
+      renderPage()
+      await waitFor(() => screen.getByText('Review body 0'))
+      // First 10 shown
+      expect(screen.getByText('Review body 9')).toBeInTheDocument()
+      expect(screen.queryByText('Review body 10')).not.toBeInTheDocument()
+      // Load more button present
+      expect(screen.getByTestId('reviews-load-more')).toBeInTheDocument()
+    })
+
+    it('hides Load-more when all reviews fit in first page', async () => {
+      mockGetCourseDetail.mockResolvedValue({
+        course: { ...sampleCourse, reviews: makeReviews(5), rating_count: 5 },
+        error: null,
+      })
+      renderPage()
+      await waitFor(() => screen.getByText('Review body 0'))
+      expect(screen.queryByTestId('reviews-load-more')).not.toBeInTheDocument()
+    })
+
+    it('clicking Load-more calls listReviews and appends results', async () => {
+      const user = userEvent.setup()
+      const twelveReviews = makeReviews(12)
+      const page2Reviews = makeReviews(2).map((r, i) => ({ ...r, id: `rv-p2-${i}`, body: `Page2 body ${i}` }))
+      mockGetCourseDetail.mockResolvedValue({
+        course: { ...sampleCourse, reviews: twelveReviews, rating_count: 12 },
+        error: null,
+      })
+      mockListReviews.mockResolvedValue({ reviews: page2Reviews, total: 12, error: null })
+      renderPage()
+      await waitFor(() => screen.getByTestId('reviews-load-more'))
+      await user.click(screen.getByTestId('reviews-load-more'))
+      await waitFor(() => {
+        expect(mockListReviews).toHaveBeenCalledWith(expect.anything(), 'c1', 2, 10)
+        expect(screen.getByText('Page2 body 0')).toBeInTheDocument()
+        expect(screen.getByText('Page2 body 1')).toBeInTheDocument()
+      })
+    })
+
+    it('hides Load-more after all reviews are loaded', async () => {
+      const user = userEvent.setup()
+      const twelveReviews = makeReviews(12)
+      const page2Reviews = makeReviews(2).map((r, i) => ({ ...r, id: `rv-p2-${i}`, body: `Page2 body ${i}` }))
+      mockGetCourseDetail.mockResolvedValue({
+        course: { ...sampleCourse, reviews: twelveReviews, rating_count: 12 },
+        error: null,
+      })
+      mockListReviews.mockResolvedValue({ reviews: page2Reviews, total: 12, error: null })
+      renderPage()
+      await waitFor(() => screen.getByTestId('reviews-load-more'))
+      await user.click(screen.getByTestId('reviews-load-more'))
+      await waitFor(() => {
+        expect(screen.queryByTestId('reviews-load-more')).not.toBeInTheDocument()
+      })
+    })
+
+    it('histogram uses all reviews regardless of display page', async () => {
+      const twelveReviews = makeReviews(12)
+      mockGetCourseDetail.mockResolvedValue({
+        course: { ...sampleCourse, reviews: twelveReviews, rating_count: 12, rating_avg: 5 },
+        error: null,
+      })
+      renderPage()
+      await waitFor(() => screen.getByText('Review body 0'))
+      // rating_count shown in histogram — all 12 reflected in rating-count-display
+      expect(screen.getByTestId('rating-count-display').textContent).toMatch(/12/)
     })
   })
 

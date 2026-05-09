@@ -492,7 +492,8 @@
     "loginRequired": "Đăng nhập để đánh giá",
     "enrollRequired": "Đăng ký khóa học để đánh giá",
     "editHeading": "Chỉnh sửa đánh giá của bạn",
-    "update": "Cập nhật đánh giá"
+    "update": "Cập nhật đánh giá",
+    "loadMore": "Xem thêm đánh giá"
   },
   "comments": {
     "heading": "Thảo luận",

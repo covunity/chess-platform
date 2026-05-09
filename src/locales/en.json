@@ -333,7 +333,8 @@
     "loginRequired": "Sign in to write a review",
     "enrollRequired": "Enroll to write a review",
     "editHeading": "Edit your review",
-    "update": "Update review"
+    "update": "Update review",
+    "loadMore": "Load more reviews"
   },
   "comments": {
     "heading": "Discussion",

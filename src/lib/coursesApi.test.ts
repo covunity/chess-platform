@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { listPublishedCourses } from './coursesApi'
+import { listPublishedCourses, listReviews } from './coursesApi'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 function makeSupabase(rows: unknown[] = [], error: unknown = null) {
@@ -154,5 +154,65 @@ describe('listPublishedCourses', () => {
       await listPublishedCourses(client, { sort: 'newest' })
       expect(client._query.order).toHaveBeenCalledWith('created_at', { ascending: false })
     })
+  })
+})
+
+function makeReviewsSupabase(rows: unknown[], total = rows.length, error: unknown = null) {
+  const query = {
+    eq: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    range: vi.fn().mockResolvedValue({ data: rows, error, count: total }),
+  }
+  return {
+    from: vi.fn().mockReturnValue({ select: vi.fn().mockReturnValue(query) }),
+    _query: query,
+  } as unknown as SupabaseClient & { _query: typeof query }
+}
+
+const sampleReviewRow = {
+  id: 'r1',
+  rating: 5,
+  title: 'Tuyệt vời',
+  body: 'Rất hay',
+  created_at: '2026-03-01T00:00:00Z',
+  reviewer: { name: 'Nguyễn A' },
+}
+
+describe('listReviews', () => {
+  it('returns mapped reviews and total', async () => {
+    const client = makeReviewsSupabase([sampleReviewRow], 12)
+    const { reviews, total, error } = await listReviews(client, 'c1', 1)
+    expect(error).toBeNull()
+    expect(total).toBe(12)
+    expect(reviews).toHaveLength(1)
+    expect(reviews[0].id).toBe('r1')
+    expect(reviews[0].reviewer_name).toBe('Nguyễn A')
+    expect(reviews[0].rating).toBe(5)
+  })
+
+  it('passes correct range for page 1 (limit 10)', async () => {
+    const client = makeReviewsSupabase([])
+    await listReviews(client, 'c1', 1, 10)
+    expect(client._query.range).toHaveBeenCalledWith(0, 9)
+  })
+
+  it('passes correct range for page 2 (limit 10)', async () => {
+    const client = makeReviewsSupabase([])
+    await listReviews(client, 'c1', 2, 10)
+    expect(client._query.range).toHaveBeenCalledWith(10, 19)
+  })
+
+  it('filters by course_id', async () => {
+    const client = makeReviewsSupabase([])
+    await listReviews(client, 'course-xyz', 1)
+    expect(client._query.eq).toHaveBeenCalledWith('course_id', 'course-xyz')
+  })
+
+  it('returns empty array and zero total on DB error', async () => {
+    const client = makeReviewsSupabase([], 0, { message: 'DB error' })
+    const { reviews, total, error } = await listReviews(client, 'c1', 1)
+    expect(error).not.toBeNull()
+    expect(reviews).toHaveLength(0)
+    expect(total).toBe(0)
   })
 })

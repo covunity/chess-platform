@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import {
   getCourseDetail,
   checkUserEnrollment,
+  listReviews,
 } from '../lib/coursesApi'
 import type { CourseDetail, CourseDetailLesson, CourseDetailChapter } from '../lib/coursesApi'
 import { enrollForFree, getFirstLesson } from '../lib/enrollmentApi'
@@ -1220,6 +1221,9 @@ export default function CourseDetailPage() {
   const [enrolling, setEnrolling] = useState(false)
   const [userReview, setUserReview] = useState<Review | null>(null)
   const [pendingOrder, setPendingOrder] = useState<Order | null>(null)
+  const [displayedReviews, setDisplayedReviews] = useState<CourseDetail['reviews']>([])
+  const [reviewPage, setReviewPage] = useState(1)
+  const [reviewsLoadingMore, setReviewsLoadingMore] = useState(false)
 
   useEffect(() => {
     if (!courseId) return
@@ -1228,6 +1232,10 @@ export default function CourseDetailPage() {
       setCourse(data)
       if (data && data.chapters.length > 0) {
         setExpandedChapters(new Set([data.chapters[0].id]))
+      }
+      if (data) {
+        setDisplayedReviews(data.reviews.slice(0, 10))
+        setReviewPage(1)
       }
       setLoading(false)
     })
@@ -1245,6 +1253,16 @@ export default function CourseDetailPage() {
       setPendingOrder(order)
     })
   }, [user, courseId])
+
+  async function handleLoadMoreReviews() {
+    if (!courseId) return
+    setReviewsLoadingMore(true)
+    const nextPage = reviewPage + 1
+    const { reviews: more } = await listReviews(supabase, courseId, nextPage, 10)
+    setDisplayedReviews(prev => [...prev, ...more])
+    setReviewPage(nextPage)
+    setReviewsLoadingMore(false)
+  }
 
   function toggleChapter(chapterId: string) {
     setExpandedChapters(prev => {
@@ -1737,11 +1755,22 @@ export default function CourseDetailPage() {
                 </div>
               )}
 
-              {course.reviews.length > 0 && (
+              {displayedReviews.length > 0 && (
                 <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {course.reviews.map(review => (
+                  {displayedReviews.map(review => (
                     <ReviewCard key={review.id} review={review} />
                   ))}
+                  {displayedReviews.length < course.rating_count && (
+                    <button
+                      type="button"
+                      data-testid="reviews-load-more"
+                      className="btn btn-ghost"
+                      disabled={reviewsLoadingMore}
+                      onClick={handleLoadMoreReviews}
+                    >
+                      {t('reviews.loadMore')}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
