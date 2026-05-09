@@ -8,6 +8,7 @@ import AdminLayout from './components/admin/AdminLayout'
 import AdminUsersPage from './pages/admin/AdminUsersPage'
 import AdminReportsPage from './pages/admin/AdminReportsPage'
 import AdminCreatorApplicationsPage from './pages/admin/AdminCreatorApplicationsPage'
+import AdminSettingsPage from './pages/admin/AdminSettingsPage'
 import AdminComingSoonPage from './pages/admin/AdminComingSoonPage'
 import ProtectedCreatorRoute from './components/creator/ProtectedCreatorRoute'
 import CreatorLayout from './components/creator/CreatorLayout'
@@ -53,6 +54,7 @@ export default function App() {
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="creator-applications" element={<AdminCreatorApplicationsPage />} />
             <Route path="reports" element={<AdminReportsPage />} />
+            <Route path="settings" element={<AdminSettingsPage />} />
             <Route path="*" element={<AdminComingSoonPage />} />
           </Route>
         </Route>

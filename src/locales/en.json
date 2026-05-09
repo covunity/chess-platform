@@ -119,6 +119,24 @@
       "title": "403 — Access Denied",
       "body": "You don't have permission to access this page."
     },
+    "settings": {
+      "title": "Settings",
+      "payment": {
+        "tabLabel": "Payment",
+        "cardTitle": "Bank transfer details",
+        "bankShortName": "VietQR bank short name",
+        "bin": "Bank BIN (6 digits)",
+        "accountNumber": "Account number",
+        "accountName": "Account holder name",
+        "preview": "QR preview",
+        "save": "Save",
+        "saved": "Payment info saved",
+        "saveError": "Couldn't save. Please try again.",
+        "validation": {
+          "binFormat": "BIN must be exactly 6 digits."
+        }
+      }
+    },
     "comingSoon": "Coming soon"
   },
   "creator": {

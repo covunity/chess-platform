@@ -254,6 +254,24 @@
       "title": "403 — Không có quyền truy cập",
       "body": "Bạn không có quyền truy cập trang này."
     },
+    "settings": {
+      "title": "Cài đặt",
+      "payment": {
+        "tabLabel": "Thanh toán",
+        "cardTitle": "Thông tin chuyển khoản",
+        "bankShortName": "Mã ngân hàng (VietQR)",
+        "bin": "BIN ngân hàng (6 chữ số)",
+        "accountNumber": "Số tài khoản",
+        "accountName": "Tên chủ tài khoản",
+        "preview": "Xem trước mã QR",
+        "save": "Lưu",
+        "saved": "Đã lưu thông tin thanh toán",
+        "saveError": "Không thể lưu. Vui lòng thử lại.",
+        "validation": {
+          "binFormat": "BIN phải gồm đúng 6 chữ số."
+        }
+      }
+    },
     "comingSoon": "Sắp ra mắt"
   },
   "creator": {
