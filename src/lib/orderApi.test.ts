@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { createOrder, confirmOrder, cancelOrder } from './orderApi'
+import { createOrder, confirmOrder, cancelOrder, listMyOrders } from './orderApi'
 
 const sampleOrder = {
   id: 'ord-1',
@@ -95,5 +95,53 @@ describe('cancelOrder', () => {
     const { order, error } = await cancelOrder(client, 'ord-1', 'duplicate')
     expect(order).toBeNull()
     expect((error as { message?: string }).message).toBe('order_already_cancelled')
+  })
+})
+
+// ── listMyOrders ───────────────────────────────────────────────────────────
+
+describe('listMyOrders', () => {
+  function makeChain(data: unknown[] = [], total = 0, error: unknown = null) {
+    return {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      range: vi.fn().mockResolvedValue({ data, count: total, error }),
+    }
+  }
+
+  const row = {
+    ...sampleOrder,
+    course: { id: 'c-1', title: 'Chess Basics', thumbnail_url: '/t.jpg' },
+  }
+
+  it('returns rows joined with course thumbnail and orders by created_at desc', async () => {
+    const chain = makeChain([row], 1)
+    const client = { from: vi.fn().mockReturnValue(chain) } as unknown as SupabaseClient
+
+    const { orders, total, error } = await listMyOrders(client, { page: 1, pageSize: 20 })
+    expect(error).toBeNull()
+    expect(total).toBe(1)
+    expect(orders[0].course?.thumbnail_url).toBe('/t.jpg')
+    expect(client.from).toHaveBeenCalledWith('orders')
+    expect(chain.eq).not.toHaveBeenCalled()
+    expect(chain.order).toHaveBeenCalledWith('created_at', { ascending: false })
+    expect(chain.range).toHaveBeenCalledWith(0, 19)
+  })
+
+  it('applies status filter when provided', async () => {
+    const chain = makeChain([row], 1)
+    const client = { from: vi.fn().mockReturnValue(chain) } as unknown as SupabaseClient
+
+    await listMyOrders(client, { status: 'pending', page: 1, pageSize: 20 })
+    expect(chain.eq).toHaveBeenCalledWith('status', 'pending')
+  })
+
+  it('paginates correctly for page 3 / pageSize 10', async () => {
+    const chain = makeChain([], 0)
+    const client = { from: vi.fn().mockReturnValue(chain) } as unknown as SupabaseClient
+
+    await listMyOrders(client, { page: 3, pageSize: 10 })
+    expect(chain.range).toHaveBeenCalledWith(20, 29)
   })
 })

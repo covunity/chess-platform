@@ -25,6 +25,10 @@ export interface Order {
   updated_at: string
 }
 
+export interface MyOrderRow extends Order {
+  course: { id: string; title: string; thumbnail_url: string | null } | null
+}
+
 export async function createOrder(
   client: SupabaseClient,
   courseId: string
@@ -56,4 +60,38 @@ export async function cancelOrder(
     p_reason: reason,
   })
   return { order: (data as Order) ?? null, error: error as Error | null }
+}
+
+export async function listMyOrders(
+  client: SupabaseClient,
+  options: { status?: OrderStatus; page?: number; pageSize?: number } = {}
+): Promise<{ orders: MyOrderRow[]; total: number; error: Error | null }> {
+  const { status, page = 1, pageSize = 20 } = options
+  const from = (page - 1) * pageSize
+  const to = from + pageSize - 1
+
+  let query = client
+    .from('orders')
+    .select(
+      `
+      id, course_id, user_id, status, amount, code, notes,
+      platform_fee_pct, platform_fee_amount, creator_payout_amount, creator_payout,
+      account_tier_code, confirmed_at, confirmed_by, cancelled_at, cancelled_by, cancelled_reason,
+      created_at, updated_at,
+      course:course_id(id, title, thumbnail_url)
+    `,
+      { count: 'exact' }
+    )
+
+  if (status) query = query.eq('status', status)
+
+  const { data, count, error } = await query
+    .order('created_at', { ascending: false })
+    .range(from, to)
+
+  return {
+    orders: (data as unknown as MyOrderRow[]) ?? [],
+    total: count ?? 0,
+    error: error as Error | null,
+  }
 }

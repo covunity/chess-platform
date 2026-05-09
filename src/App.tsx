@@ -21,6 +21,7 @@ import CourseDetailPage from './pages/CourseDetailPage'
 import LessonPlayerPage from './pages/LessonPlayerPage'
 import PracticePage from './pages/PracticePage'
 import LearnerDashboardPage from './pages/LearnerDashboardPage'
+import AccountOrdersPage from './pages/AccountOrdersPage'
 import BecomeCreatorPage from './pages/BecomeCreatorPage'
 import TermsPage from './pages/TermsPage'
 import PrivacyPage from './pages/PrivacyPage'
@@ -80,6 +81,7 @@ export default function App() {
           <Route path="/practice" element={<PracticePage />} />
           <Route path="/dashboard" element={<LearnerDashboardPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/account/orders" element={<AccountOrdersPage />} />
           <Route path="/become-creator" element={<BecomeCreatorPage />} />
           <Route path="/register-business" element={<BecomeCreatorPage />} />
           <Route path="/courses/:courseId" element={<CourseDetailPage />} />

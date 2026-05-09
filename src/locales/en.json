@@ -6,6 +6,7 @@
     "createAccount": "Create account",
     "logout": "Log out",
     "myProfile": "My profile",
+    "orders": "Order history",
     "dashboard": "Dashboard",
     "creatorStudio": "Creator Studio",
     "admin": "Admin"
@@ -594,6 +595,41 @@
     "cancel": "Cancel",
     "deleteConfirm": "Remove",
     "deleteAriaLabel": "Delete bookmark"
+  },
+  "account": {
+    "eyebrow": "ACCOUNT",
+    "orders": {
+      "title": "Order history",
+      "filterAria": "Filter by status",
+      "filter": {
+        "all": "All",
+        "active": "Paid",
+        "pending": "Pending",
+        "cancelled": "Cancelled"
+      },
+      "status": {
+        "active": "Paid",
+        "pending": "Pending",
+        "cancelled": "Cancelled"
+      },
+      "colCode": "Order",
+      "colCourse": "Course",
+      "colAmount": "Amount",
+      "colStatus": "Status",
+      "colDate": "Date",
+      "free": "Free",
+      "actionLearn": "Open course",
+      "actionCheckout": "View payment instructions",
+      "actionShowReason": "Show reason",
+      "actionHideReason": "Hide reason",
+      "cancelByOwner": "You cancelled this order",
+      "cancelByAdmin": "Admin cancelled",
+      "empty": {
+        "title": "You don't have any orders yet",
+        "body": "When you buy or enrol in a course, the order will appear here.",
+        "cta": "Browse courses"
+      }
+    }
   },
   "accountTier": {
     "individual": "Individual",

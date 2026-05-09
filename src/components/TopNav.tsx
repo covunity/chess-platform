@@ -232,6 +232,15 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
                 >
                   {t('nav.profile', 'Hồ sơ')}
                 </Link>
+                <Link
+                  role="menuitem"
+                  className="nav-dropdown__item"
+                  data-testid="nav-orders-link"
+                  to="/account/orders"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t('nav.orders', 'Lịch sử đơn hàng')}
+                </Link>
                 {(profile?.role === 'creator' || profile?.role === 'admin') && (
                   <Link
                     role="menuitem"

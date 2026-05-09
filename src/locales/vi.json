@@ -11,6 +11,7 @@
     "logout": "Đăng xuất",
     "myProfile": "Hồ sơ của tôi",
     "profile": "Hồ sơ",
+    "orders": "Lịch sử đơn hàng",
     "dashboard": "Bảng điều khiển",
     "creatorStudio": "Creator Studio",
     "admin": "Quản trị",
@@ -753,6 +754,41 @@
     "cancel": "Hủy",
     "deleteConfirm": "Xóa",
     "deleteAriaLabel": "Xóa bookmark"
+  },
+  "account": {
+    "eyebrow": "TÀI KHOẢN",
+    "orders": {
+      "title": "Lịch sử đơn hàng",
+      "filterAria": "Lọc theo trạng thái",
+      "filter": {
+        "all": "Tất cả",
+        "active": "Đã thanh toán",
+        "pending": "Đang chờ",
+        "cancelled": "Đã huỷ"
+      },
+      "status": {
+        "active": "Đã thanh toán",
+        "pending": "Đang chờ",
+        "cancelled": "Đã huỷ"
+      },
+      "colCode": "Mã đơn",
+      "colCourse": "Khoá học",
+      "colAmount": "Số tiền",
+      "colStatus": "Trạng thái",
+      "colDate": "Ngày",
+      "free": "Miễn phí",
+      "actionLearn": "Vào học",
+      "actionCheckout": "Xem hướng dẫn thanh toán",
+      "actionShowReason": "Xem lý do",
+      "actionHideReason": "Ẩn lý do",
+      "cancelByOwner": "Bạn đã huỷ đơn này",
+      "cancelByAdmin": "Admin đã huỷ",
+      "empty": {
+        "title": "Bạn chưa có đơn nào",
+        "body": "Khi bạn mua hoặc đăng ký một khoá học, đơn sẽ xuất hiện ở đây.",
+        "cta": "Khám phá khoá học"
+      }
+    }
   },
   "accountTier": {
     "individual": "Cá nhân",
