@@ -19,6 +19,24 @@ export interface ListUsersResult {
   error: Error | null
 }
 
+export interface ViolatingCourse {
+  id: string
+  title: string
+  chapter_count: number
+}
+
+export function parseViolatingCourses(error: Error | null): ViolatingCourse[] {
+  if (!error) return []
+  const details = (error as { details?: string }).details
+  if (!details) return []
+  try {
+    const parsed = JSON.parse(details) as { violating_courses?: ViolatingCourse[] }
+    return parsed.violating_courses ?? []
+  } catch {
+    return []
+  }
+}
+
 export async function listUsers(
   client: SupabaseClient,
   options: { page?: number; pageSize?: number; search?: string } = {}

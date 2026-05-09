@@ -79,6 +79,29 @@ Design tokens are defined as CSS custom properties in `src/index.css`:
 - **Radius**: `--r-sm` (6px) → `--r-2xl` (28px)
 - **Shared classes**: `.btn`, `.card`, `.pill`, `.input`, `.avatar`, `.logo-mark`
 
+## SQL test scripts
+
+Manual SQL test suites live in `scripts/`. Run them against a **local** Supabase instance after `supabase db reset`:
+
+```bash
+# Start local Supabase (requires supabase CLI)
+supabase start
+
+# Run individual test suites
+psql "$DATABASE_URL" -f scripts/test-account-tier-schema.sql
+psql "$DATABASE_URL" -f scripts/test-chapter-limit.sql
+psql "$DATABASE_URL" -f scripts/test-order-fee-snapshot.sql
+psql "$DATABASE_URL" -f scripts/test-admin-change-tier.sql
+psql "$DATABASE_URL" -f scripts/test-application-supersede.sql
+psql "$DATABASE_URL" -f scripts/test-application-approve.sql
+```
+
+`DATABASE_URL` is printed by `supabase start` (e.g. `postgresql://postgres:postgres@localhost:54322/postgres`).
+
+Each file uses `DO $$ ... $$` blocks with `ASSERT` and `RAISE NOTICE 'PASS: ...'`. A failed assertion stops the script with a non-zero exit code.
+
+> **Note**: Scripts that test RPCs (change-tier, application-approve/supersede) call `set_config('request.jwt.claims', ...)` to simulate `auth.uid()`. They require the corresponding migrations to be applied and write+delete their own test data.
+
 ## Deployment
 
 Pushes to `main` automatically deploy to Vercel via GitHub Actions. Set the following environment variables in your Vercel project settings:

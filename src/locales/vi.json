@@ -690,6 +690,8 @@
   },
   "errors": {
     "chapterLimitReached": "Bạn đã đạt giới hạn số chương cho gói tài khoản hiện tại.",
-    "tierDowngradeBlocked": "Không thể đổi tier: có khóa học đang vượt giới hạn số chương của tier mới."
+    "tierDowngradeBlocked": "Không thể đổi tier: có khóa học đang vượt giới hạn số chương của tier mới.",
+    "tierDowngradeBlockedWithCourses": "Không thể đổi tier: các khoá học sau vượt giới hạn số chương: {{courses}}.",
+    "andMore": "... và {{count}} khoá khác"
   }
 }

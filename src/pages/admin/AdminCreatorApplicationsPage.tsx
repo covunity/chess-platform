@@ -6,6 +6,7 @@ import {
   listAccountApplications,
   rejectAccountApplication,
 } from '../../lib/accountApplicationApi'
+import { parseViolatingCourses } from '../../lib/adminApi'
 import type {
   AccountApplicationStatus,
   AccountApplicationWithApplicant,
@@ -120,7 +121,25 @@ export default function AdminCreatorApplicationsPage() {
     const { error } = await approveAccountApplication(supabase, app.id)
     setSaving(false)
     if (error) {
-      setErrorMsg(t('admin.applications.approveError', 'Không thể duyệt đơn. Vui lòng thử lại.'))
+      const msg = (error as { message?: string }).message ?? ''
+      if (msg.includes('tier_downgrade_violates_chapter_limit')) {
+        const courses = parseViolatingCourses(error)
+        if (courses.length > 0) {
+          const listed = courses
+            .slice(0, 3)
+            .map(c => `${c.title} (${c.chapter_count} chương)`)
+            .join(', ')
+          const extra =
+            courses.length > 3
+              ? ` ${t('errors.andMore', { count: String(courses.length - 3) })}`
+              : ''
+          setErrorMsg(t('errors.tierDowngradeBlockedWithCourses', { courses: listed + extra }))
+        } else {
+          setErrorMsg(t('errors.tierDowngradeBlocked'))
+        }
+      } else {
+        setErrorMsg(t('admin.applications.approveError', 'Không thể duyệt đơn. Vui lòng thử lại.'))
+      }
       return
     }
     setApplications(prev => prev.filter(a => a.id !== app.id))

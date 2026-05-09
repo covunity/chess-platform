@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
-import { listUsers, changeUserRole, changeUserAccountTier } from '../../lib/adminApi'
+import { listUsers, changeUserRole, changeUserAccountTier, parseViolatingCourses } from '../../lib/adminApi'
 import type { AdminUser, UserRole } from '../../lib/adminApi'
 import { useDebounce } from '../../hooks/useDebounce'
 import { useAccountTiers } from '../../lib/accountTiers'
@@ -292,7 +292,20 @@ export default function AdminUsersPage() {
     if (error) {
       const msg = (error as { message?: string }).message ?? ''
       if (msg.includes('tier_downgrade_violates_chapter_limit')) {
-        setTierErrorMsg(t('errors.tierDowngradeBlocked'))
+        const courses = parseViolatingCourses(error)
+        if (courses.length > 0) {
+          const listed = courses
+            .slice(0, 3)
+            .map(c => `${c.title} (${c.chapter_count} chương)`)
+            .join(', ')
+          const extra =
+            courses.length > 3
+              ? ` ${t('errors.andMore', { count: String(courses.length - 3) })}`
+              : ''
+          setTierErrorMsg(t('errors.tierDowngradeBlockedWithCourses', { courses: listed + extra }))
+        } else {
+          setTierErrorMsg(t('errors.tierDowngradeBlocked'))
+        }
       } else {
         setTierErrorMsg(t('admin.users.changeTierError'))
       }

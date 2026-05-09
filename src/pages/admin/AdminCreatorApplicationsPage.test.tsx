@@ -22,6 +22,11 @@ vi.mock('../../lib/accountApplicationApi', () => ({
   rejectAccountApplication: mockRejectAccountApplication,
 }))
 
+vi.mock('../../lib/adminApi', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../lib/adminApi')>()
+  return { parseViolatingCourses: actual.parseViolatingCourses }
+})
+
 vi.mock('../../lib/supabase', () => ({ supabase: {} }))
 
 vi.mock('../../lib/accountTiers', () => ({
@@ -329,6 +334,53 @@ describe('AdminCreatorApplicationsPage', () => {
       expect(screen.queryByTestId('reject-reason')).not.toBeInTheDocument()
       expect(screen.getByTestId('reject-btn')).toBeInTheDocument()
       expect(mockRejectAccountApplication).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('approve downgrade violation', () => {
+    it('shows generic downgrade error when no course details available', async () => {
+      mockApproveAccountApplication.mockResolvedValue({
+        application: null,
+        error: { message: 'tier_downgrade_violates_chapter_limit' },
+      })
+
+      renderPage()
+      await waitFor(() => screen.getByTestId('application-row-app-1'))
+      await userEvent.click(screen.getByTestId('application-row-app-1'))
+      await userEvent.click(screen.getByTestId('approve-btn'))
+
+      await waitFor(() => {
+        const errEl = screen.getByTestId('action-error')
+        expect(errEl).toBeInTheDocument()
+        expect(errEl.textContent).toMatch(/vượt giới hạn số chương/i)
+      })
+      expect(screen.getByTestId('application-row-app-1')).toBeInTheDocument()
+    })
+
+    it('shows violating course names when approve raises downgrade violation with details', async () => {
+      mockApproveAccountApplication.mockResolvedValue({
+        application: null,
+        error: {
+          message: 'tier_downgrade_violates_chapter_limit',
+          details: JSON.stringify({
+            violating_courses: [
+              { id: 'c1', title: 'Khai cuộc Sicilian', chapter_count: 14 },
+              { id: 'c2', title: 'Tàn cuộc xe', chapter_count: 11 },
+            ],
+          }),
+        },
+      })
+
+      renderPage()
+      await waitFor(() => screen.getByTestId('application-row-app-1'))
+      await userEvent.click(screen.getByTestId('application-row-app-1'))
+      await userEvent.click(screen.getByTestId('approve-btn'))
+
+      await waitFor(() => {
+        const errEl = screen.getByTestId('action-error')
+        expect(errEl.textContent).toContain('Khai cuộc Sicilian (14 chương)')
+        expect(errEl.textContent).toContain('Tàn cuộc xe (11 chương)')
+      })
     })
   })
 })

@@ -12,11 +12,15 @@ const { mockListUsers, mockChangeUserRole, mockChangeUserAccountTier } = vi.hois
   mockChangeUserAccountTier: vi.fn(),
 }))
 
-vi.mock('../../lib/adminApi', () => ({
-  listUsers: mockListUsers,
-  changeUserRole: mockChangeUserRole,
-  changeUserAccountTier: mockChangeUserAccountTier,
-}))
+vi.mock('../../lib/adminApi', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../lib/adminApi')>()
+  return {
+    listUsers: mockListUsers,
+    changeUserRole: mockChangeUserRole,
+    changeUserAccountTier: mockChangeUserAccountTier,
+    parseViolatingCourses: actual.parseViolatingCourses,
+  }
+})
 
 vi.mock('../../lib/supabase', () => ({
   supabase: {},
@@ -259,7 +263,7 @@ describe('AdminUsersPage', () => {
       expect(screen.queryByTestId('tier-change-dialog')).not.toBeInTheDocument()
     })
 
-    it('shows error when downgrade violates chapter limit', async () => {
+    it('shows generic error when downgrade violates chapter limit with no course details', async () => {
       mockChangeUserAccountTier.mockResolvedValue({
         user: null,
         error: { message: 'tier_downgrade_violates_chapter_limit' },
@@ -280,6 +284,71 @@ describe('AdminUsersPage', () => {
       })
       // Dialog stays open
       expect(screen.getByTestId('tier-change-dialog')).toBeInTheDocument()
+    })
+
+    it('shows violating course names in error when downgrade detail includes courses', async () => {
+      mockChangeUserAccountTier.mockResolvedValue({
+        user: null,
+        error: {
+          message: 'tier_downgrade_violates_chapter_limit',
+          details: JSON.stringify({
+            violating_courses: [
+              { id: 'c1', title: 'Khai cuộc cơ bản', chapter_count: 12 },
+              { id: 'c2', title: 'Tàn cuộc nâng cao', chapter_count: 15 },
+            ],
+          }),
+        },
+      })
+
+      renderPage()
+      await waitFor(() => screen.getByText('Bob'))
+
+      await userEvent.click(screen.getByTestId('change-tier-btn-u2'))
+
+      const tierSelect = screen.getByTestId('tier-select')
+      await userEvent.selectOptions(tierSelect, 'individual')
+
+      await userEvent.click(screen.getByTestId('tier-change-confirm'))
+
+      await waitFor(() => {
+        const errorEl = screen.getByTestId('tier-change-error')
+        expect(errorEl).toBeInTheDocument()
+        expect(errorEl.textContent).toContain('Khai cuộc cơ bản (12 chương)')
+        expect(errorEl.textContent).toContain('Tàn cuộc nâng cao (15 chương)')
+      })
+      expect(screen.getByTestId('tier-change-dialog')).toBeInTheDocument()
+    })
+
+    it('truncates to 3 courses and appends overflow count', async () => {
+      mockChangeUserAccountTier.mockResolvedValue({
+        user: null,
+        error: {
+          message: 'tier_downgrade_violates_chapter_limit',
+          details: JSON.stringify({
+            violating_courses: [
+              { id: 'c1', title: 'Course A', chapter_count: 11 },
+              { id: 'c2', title: 'Course B', chapter_count: 12 },
+              { id: 'c3', title: 'Course C', chapter_count: 13 },
+              { id: 'c4', title: 'Course D', chapter_count: 14 },
+            ],
+          }),
+        },
+      })
+
+      renderPage()
+      await waitFor(() => screen.getByText('Bob'))
+      await userEvent.click(screen.getByTestId('change-tier-btn-u2'))
+      const tierSelect = screen.getByTestId('tier-select')
+      await userEvent.selectOptions(tierSelect, 'individual')
+      await userEvent.click(screen.getByTestId('tier-change-confirm'))
+
+      await waitFor(() => {
+        const errorEl = screen.getByTestId('tier-change-error')
+        expect(errorEl.textContent).toContain('Course A')
+        expect(errorEl.textContent).toContain('Course C')
+        expect(errorEl.textContent).not.toContain('Course D')
+        expect(errorEl.textContent).toContain('1')
+      })
     })
 
     it('closes dialog on cancel', async () => {
