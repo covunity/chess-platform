@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { listMyOrders } from '../lib/orderApi'
@@ -31,7 +31,11 @@ function formatRelative(iso: string, now = new Date()): string {
 export default function AccountOrdersPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
+
+  const cancelledToast = (location.state as { fromCancelledOrder?: string } | null)?.fromCancelledOrder ?? null
+  const [toastVisible, setToastVisible] = useState(!!cancelledToast)
 
   const [filter, setFilter] = useState<'all' | OrderStatus>('all')
   const [orders, setOrders] = useState<MyOrderRow[]>([])
@@ -78,6 +82,37 @@ export default function AccountOrdersPage() {
       >
         {t('account.orders.title')}
       </h1>
+
+      {/* Cancelled order toast */}
+      {toastVisible && cancelledToast && (
+        <div
+          data-testid="cancelled-order-toast"
+          role="alert"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            background: 'var(--warning-soft)',
+            border: '1px solid var(--warning-border)',
+            borderRadius: 'var(--r-md)',
+            padding: '12px 16px',
+            marginBottom: 20,
+            fontSize: 14,
+            color: 'var(--warning)',
+          }}
+        >
+          <span>{t('account.orders.cancelledToast', { reason: cancelledToast })}</span>
+          <button
+            type="button"
+            aria-label="Đóng"
+            onClick={() => setToastVisible(false)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--warning)', fontSize: 18, lineHeight: 1, padding: 0 }}
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {/* Filter pills */}
       <div className="flex items-center gap-2 mb-6 flex-wrap" role="group" aria-label={t('account.orders.filterAria')}>

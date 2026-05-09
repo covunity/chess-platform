@@ -631,7 +631,8 @@
         "title": "You don't have any orders yet",
         "body": "When you buy or enrol in a course, the order will appear here.",
         "cta": "Browse courses"
-      }
+      },
+      "cancelledToast": "Order cancelled: {{reason}}"
     }
   },
   "accountTier": {
@@ -675,7 +676,17 @@
       "back": "No, keep it"
     },
     "notFound": "Order not found or does not belong to you.",
-    "loadingError": "Unable to load order details."
+    "loadingError": "Unable to load order details.",
+    "awaiting": {
+      "title": "Awaiting admin verification",
+      "body": "We have recorded your payment. Admin will verify within approximately 6 hours and unlock the course for you.",
+      "orderCode": "Order code",
+      "course": "Course",
+      "amount": "Amount",
+      "goHome": "Go to homepage",
+      "viewOrders": "View order history",
+      "cancelledDefault": "Order has been cancelled."
+    }
   },
   "errors": {
     "chapterLimitReached": "You have reached the chapter limit for your current account tier."

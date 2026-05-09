@@ -790,7 +790,8 @@
         "title": "Bạn chưa có đơn nào",
         "body": "Khi bạn mua hoặc đăng ký một khoá học, đơn sẽ xuất hiện ở đây.",
         "cta": "Khám phá khoá học"
-      }
+      },
+      "cancelledToast": "Đơn hàng đã bị huỷ: {{reason}}"
     }
   },
   "accountTier": {
@@ -834,7 +835,17 @@
       "back": "Không, giữ lại"
     },
     "notFound": "Đơn hàng không tồn tại hoặc không thuộc về bạn.",
-    "loadingError": "Không thể tải thông tin đơn hàng."
+    "loadingError": "Không thể tải thông tin đơn hàng.",
+    "awaiting": {
+      "title": "Đang chờ admin xác minh",
+      "body": "Chúng tôi đã ghi nhận thanh toán của bạn. Admin sẽ xác minh trong khoảng 6 giờ và mở khoá khoá học cho bạn.",
+      "orderCode": "Mã đơn hàng",
+      "course": "Khoá học",
+      "amount": "Số tiền",
+      "goHome": "Về trang chủ",
+      "viewOrders": "Xem trong lịch sử đơn",
+      "cancelledDefault": "Đơn hàng đã bị huỷ."
+    }
   },
   "errors": {
     "chapterLimitReached": "Bạn đã đạt giới hạn số chương cho gói tài khoản hiện tại.",
