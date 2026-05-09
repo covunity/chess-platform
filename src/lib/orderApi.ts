@@ -16,6 +16,11 @@ export interface Order {
   creator_payout_amount: number
   creator_payout: number
   account_tier_code: AccountTierCode | null
+  confirmed_at: string | null
+  confirmed_by: string | null
+  cancelled_at: string | null
+  cancelled_by: string | null
+  cancelled_reason: string | null
   created_at: string
   updated_at: string
 }
