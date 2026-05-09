@@ -12,6 +12,8 @@ import { getUserReview, submitReview } from '../lib/reviewsApi'
 import type { Review } from '../lib/reviewsApi'
 import { listComments, createComment, reportComment } from '../lib/commentsApi'
 import type { Comment, ReportReason } from '../lib/commentsApi'
+import { createOrder, getPendingOrderForCourse } from '../lib/orderApi'
+import type { Order } from '../lib/orderApi'
 import { useAuth } from '../context/AuthContext'
 import ChessBoard from '../components/ChessBoard/ChessBoard'
 
@@ -1080,6 +1082,7 @@ export default function CourseDetailPage() {
   const [lockPromptOpen, setLockPromptOpen] = useState(false)
   const [enrolling, setEnrolling] = useState(false)
   const [userReview, setUserReview] = useState<Review | null>(null)
+  const [pendingOrder, setPendingOrder] = useState<Order | null>(null)
 
   useEffect(() => {
     if (!courseId) return
@@ -1101,6 +1104,9 @@ export default function CourseDetailPage() {
     getUserReview(supabase, courseId, user.id).then(({ review }) => {
       setUserReview(review)
     })
+    getPendingOrderForCourse(supabase, courseId).then(({ order }) => {
+      setPendingOrder(order)
+    })
   }, [user, courseId])
 
   function toggleChapter(chapterId: string) {
@@ -1121,6 +1127,11 @@ export default function CourseDetailPage() {
       return
     }
 
+    if (pendingOrder) {
+      navigate(`/checkout/${pendingOrder.id}`)
+      return
+    }
+
     if (course.price === 0) {
       if (!user) {
         navigate(`/signup?redirect=/courses/${courseId}`)
@@ -1138,6 +1149,37 @@ export default function CourseDetailPage() {
         navigate(`/learn/${courseId}/${targetId}?enrolled=true`)
       } else {
         setEnrolling(false)
+      }
+      return
+    }
+
+    // Paid course
+    if (!user) {
+      navigate(`/login?redirect=/courses/${courseId}`)
+      return
+    }
+
+    setEnrolling(true)
+    const { order, error } = await createOrder(supabase, course.id)
+    setEnrolling(false)
+
+    if (order) {
+      navigate(`/checkout/${order.id}`)
+      return
+    }
+
+    if (error) {
+      const msg = (error as { message?: string }).message ?? ''
+      if (msg.includes('duplicate_pending_order')) {
+        const parts = msg.split(':')
+        const existingId = parts[1]?.trim()
+        if (existingId) {
+          navigate(`/checkout/${existingId}`)
+        } else {
+          // fallback: reload pending order
+          const { order: po } = await getPendingOrderForCourse(supabase, course.id)
+          if (po) navigate(`/checkout/${po.id}`)
+        }
       }
     }
   }
@@ -1177,15 +1219,42 @@ export default function CourseDetailPage() {
 
   const ctaLabel = isEnrolled
     ? t('courseDetail.continueLearning')
-    : course.price === 0
-      ? t('courseDetail.enrollFree')
-      : t('courseDetail.purchase')
+    : pendingOrder
+      ? t('courseDetail.continuePaying')
+      : course.price === 0
+        ? t('courseDetail.enrollFree')
+        : t('courseDetail.purchase')
 
   const totalChapters = course.chapters.length
   const totalLessons = course.lessons_count
 
   return (
     <main>
+      {/* ── Pending order banner ───────────────────────────────────────────── */}
+      {pendingOrder && !isEnrolled && (
+        <div
+          data-testid="pending-order-banner"
+          style={{
+            background: 'var(--warning-soft)',
+            borderBottom: '1px solid var(--warning-border)',
+            padding: '14px 56px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
+          <span style={{ fontSize: 14, color: 'var(--warning)', lineHeight: 1.55, flex: 1 }}>
+            {t('courseDetail.pendingOrderBanner')}
+          </span>
+          <Link
+            to={`/account/orders`}
+            style={{ fontSize: 13, color: 'var(--warning)', textDecoration: 'underline', whiteSpace: 'nowrap' }}
+          >
+            {t('courseDetail.viewOrder')}
+          </Link>
+        </div>
+      )}
+
       {/* ── Hero strip ─────────────────────────────────────────────────────── */}
       <section
         style={{

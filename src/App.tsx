@@ -32,6 +32,7 @@ import LoginPage from './pages/LoginPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import CheckEmailPage from './pages/CheckEmailPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
+import CheckoutPage from './pages/CheckoutPage'
 
 function PublicShell() {
   return (
@@ -85,6 +86,8 @@ export default function App() {
           <Route path="/become-creator" element={<BecomeCreatorPage />} />
           <Route path="/register-business" element={<BecomeCreatorPage />} />
           <Route path="/courses/:courseId" element={<CourseDetailPage />} />
+          <Route path="/checkout/:orderId" element={<CheckoutPage />} />
+          <Route path="/checkout/:orderId/awaiting" element={<div />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/signup" element={<SignUpPage />} />

@@ -572,7 +572,10 @@
     "lockPromptLogin": "Đăng nhập để xem thử",
     "closePreview": "Đóng",
     "free": "Miễn phí",
-    "closeBtn": "×"
+    "closeBtn": "×",
+    "pendingOrderBanner": "Đơn của bạn đang chờ admin xác minh. Khoá học sẽ mở khoá ngay sau khi xác nhận.",
+    "viewOrder": "Xem đơn hàng",
+    "continuePaying": "Tiếp tục thanh toán"
   },
   "auth": {
     "brand": {
@@ -795,6 +798,43 @@
     "business": "Doanh nghiệp",
     "athlete": "Vận động viên",
     "trainingCenter": "Trung tâm đào tạo"
+  },
+  "checkout": {
+    "title": "Thanh toán",
+    "summary": {
+      "heading": "Tóm tắt đơn hàng",
+      "price": "Giá khoá học",
+      "total": "Tổng cộng",
+      "orderCode": "Mã đơn hàng"
+    },
+    "qr": {
+      "heading": "Quét để thanh toán",
+      "fallback": "Thông tin chuyển khoản"
+    },
+    "bank": {
+      "bankName": "Ngân hàng",
+      "accountNumber": "Số tài khoản",
+      "accountName": "Tên tài khoản",
+      "amount": "Số tiền",
+      "note": "Nội dung chuyển khoản"
+    },
+    "noteWarning": "Vui lòng nhập đúng mã đơn hàng vào nội dung chuyển khoản để được xác nhận nhanh hơn.",
+    "copyOrderCode": "Sao chép mã đơn",
+    "copied": "Đã sao chép",
+    "action": {
+      "iPaid": "Tôi đã thanh toán",
+      "notPaidYet": "Tôi chưa thanh toán",
+      "cancel": "Huỷ đơn"
+    },
+    "cancelDialog": {
+      "title": "Huỷ đơn này?",
+      "body": "Vui lòng cho chúng tôi biết lý do để cải thiện dịch vụ.",
+      "reasonPlaceholder": "Nhập lý do huỷ đơn...",
+      "confirm": "Huỷ đơn",
+      "back": "Không, giữ lại"
+    },
+    "notFound": "Đơn hàng không tồn tại hoặc không thuộc về bạn.",
+    "loadingError": "Không thể tải thông tin đơn hàng."
   },
   "errors": {
     "chapterLimitReached": "Bạn đã đạt giới hạn số chương cho gói tài khoản hiện tại.",

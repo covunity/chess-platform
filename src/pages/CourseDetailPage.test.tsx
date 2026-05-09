@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { vi, beforeEach, describe, it } from 'vitest'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useParams } from 'react-router-dom'
 import { I18nextProvider } from 'react-i18next'
 import i18n from '../i18n'
 import CourseDetailPage from './CourseDetailPage'
@@ -9,6 +9,7 @@ import * as coursesApi from '../lib/coursesApi'
 import * as enrollmentApi from '../lib/enrollmentApi'
 import * as reviewsApi from '../lib/reviewsApi'
 import * as commentsApi from '../lib/commentsApi'
+import * as orderApi from '../lib/orderApi'
 import type { CourseDetail } from '../lib/coursesApi'
 import { AuthContext } from '../context/AuthContext'
 import type { AuthContextValue } from '../context/AuthContext'
@@ -37,6 +38,8 @@ const mockGetCourseDetail = vi.spyOn(coursesApi, 'getCourseDetail')
 const mockCheckUserEnrollment = vi.spyOn(coursesApi, 'checkUserEnrollment')
 const mockEnrollForFree = vi.spyOn(enrollmentApi, 'enrollForFree')
 const mockGetFirstLesson = vi.spyOn(enrollmentApi, 'getFirstLesson')
+const mockCreateOrder = vi.spyOn(orderApi, 'createOrder')
+const mockGetPendingOrderForCourse = vi.spyOn(orderApi, 'getPendingOrderForCourse')
 
 const sampleCourse: CourseDetail = {
   id: 'c1',
@@ -119,6 +122,11 @@ const loggedInContext: AuthContextValue = {
   },
 }
 
+function CheckoutStub() {
+  const { orderId } = useParams<{ orderId: string }>()
+  return <div data-testid={`checkout-page-${orderId}`} />
+}
+
 function renderPage(auth = noAuthContext) {
   return render(
     <AuthContext.Provider value={auth}>
@@ -128,6 +136,8 @@ function renderPage(auth = noAuthContext) {
             <Route path="/courses/:courseId" element={<CourseDetailPage />} />
             <Route path="/learn/:courseId/:lessonId" element={<div data-testid="lesson-player-page" />} />
             <Route path="/signup" element={<div data-testid="signup-page" />} />
+            <Route path="/login" element={<div data-testid="login-page" />} />
+            <Route path="/checkout/:orderId" element={<CheckoutStub />} />
           </Routes>
         </I18nextProvider>
       </MemoryRouter>
@@ -146,6 +156,8 @@ describe('CourseDetailPage', () => {
     mockSubmitReview.mockResolvedValue({ review: null, error: null })
     mockCreateComment.mockResolvedValue({ comment: null, error: null })
     mockReportComment.mockResolvedValue({ error: null })
+    mockCreateOrder.mockResolvedValue({ order: null, error: null })
+    mockGetPendingOrderForCourse.mockResolvedValue({ order: null, error: null })
   })
 
   describe('loading state', () => {
@@ -703,6 +715,91 @@ describe('CourseDetailPage', () => {
       await user.click(screen.getByRole('button', { name: /đăng ký miễn phí/i }))
       await waitFor(() => {
         expect(screen.getByTestId('cta-loading')).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('paid course buy flow', () => {
+    beforeEach(() => {
+      mockGetCourseDetail.mockResolvedValue({ course: sampleCourse, error: null })
+    })
+
+    it('clicking "Mua khoá học" when not logged in redirects to /login', async () => {
+      const user = userEvent.setup()
+      renderPage(noAuthContext)
+      await waitFor(() => screen.getByRole('button', { name: /mua khóa học/i }))
+      await user.click(screen.getByRole('button', { name: /mua khóa học/i }))
+      await waitFor(() => {
+        expect(screen.getByTestId('login-page')).toBeInTheDocument()
+      })
+    })
+
+    it('clicking "Mua khoá học" when logged in calls createOrder and navigates to checkout', async () => {
+      const user = userEvent.setup()
+      mockCreateOrder.mockResolvedValue({
+        order: {
+          id: 'ord-99', course_id: 'c1', user_id: 'u99', status: 'pending',
+          amount: 480000, code: 'ORD-2026-000099',
+        } as never,
+        error: null,
+      })
+      renderPage(loggedInContext)
+      await waitFor(() => screen.getByRole('button', { name: /mua khóa học/i }))
+      await user.click(screen.getByRole('button', { name: /mua khóa học/i }))
+      await waitFor(() => {
+        expect(mockCreateOrder).toHaveBeenCalledWith(expect.anything(), 'c1')
+        expect(screen.getByTestId('checkout-page-ord-99')).toBeInTheDocument()
+      })
+    })
+
+    it('handles duplicate_pending_order error by navigating to the existing order checkout', async () => {
+      const user = userEvent.setup()
+      mockCreateOrder.mockResolvedValue({
+        order: null,
+        error: { message: 'duplicate_pending_order:ord-existing', code: 'P0001' },
+      })
+      renderPage(loggedInContext)
+      await waitFor(() => screen.getByRole('button', { name: /mua khóa học/i }))
+      await user.click(screen.getByRole('button', { name: /mua khóa học/i }))
+      await waitFor(() => {
+        expect(mockCreateOrder).toHaveBeenCalledTimes(1)
+        expect(screen.getByTestId('checkout-page-ord-existing')).toBeInTheDocument()
+      })
+    })
+
+    it('shows pending order banner when user has pending order', async () => {
+      mockGetPendingOrderForCourse.mockResolvedValue({
+        order: { id: 'ord-p', code: 'ORD-2026-000001', status: 'pending', amount: 480000 } as never,
+        error: null,
+      })
+      renderPage(loggedInContext)
+      await waitFor(() => {
+        expect(screen.getByTestId('pending-order-banner')).toBeInTheDocument()
+      })
+    })
+
+    it('shows "Tiếp tục thanh toán" CTA when user has pending order', async () => {
+      mockGetPendingOrderForCourse.mockResolvedValue({
+        order: { id: 'ord-p', code: 'ORD-2026-000001', status: 'pending', amount: 480000 } as never,
+        error: null,
+      })
+      renderPage(loggedInContext)
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /tiếp tục thanh toán/i })).toBeInTheDocument()
+      })
+    })
+
+    it('clicking "Tiếp tục thanh toán" navigates to existing pending order checkout', async () => {
+      const user = userEvent.setup()
+      mockGetPendingOrderForCourse.mockResolvedValue({
+        order: { id: 'ord-p', code: 'ORD-2026-000001', status: 'pending', amount: 480000 } as never,
+        error: null,
+      })
+      renderPage(loggedInContext)
+      await waitFor(() => screen.getByRole('button', { name: /tiếp tục thanh toán/i }))
+      await user.click(screen.getByRole('button', { name: /tiếp tục thanh toán/i }))
+      await waitFor(() => {
+        expect(screen.getByTestId('checkout-page-ord-p')).toBeInTheDocument()
       })
     })
   })

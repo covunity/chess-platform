@@ -98,6 +98,73 @@ describe('cancelOrder', () => {
   })
 })
 
+// ── getOrder ───────────────────────────────────────────────────────────────
+
+describe('getOrder', () => {
+  it('fetches single order with course join by order id', async () => {
+    const row = {
+      ...sampleOrder,
+      course: { id: 'c-1', title: 'Chess Basics', thumbnail_url: '/t.jpg' },
+    }
+    const chain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: row, error: null }),
+    }
+    const client = { from: vi.fn().mockReturnValue(chain) } as unknown as SupabaseClient
+
+    const { order, error } = await (await import('./orderApi')).getOrder(client, 'ord-1')
+    expect(error).toBeNull()
+    expect(order?.id).toBe('ord-1')
+    expect(client.from).toHaveBeenCalledWith('orders')
+    expect(chain.eq).toHaveBeenCalledWith('id', 'ord-1')
+  })
+
+  it('returns null when not found', async () => {
+    const chain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: { message: 'not found' } }),
+    }
+    const client = { from: vi.fn().mockReturnValue(chain) } as unknown as SupabaseClient
+
+    const { order, error } = await (await import('./orderApi')).getOrder(client, 'ord-missing')
+    expect(order).toBeNull()
+    expect(error).toBeTruthy()
+  })
+})
+
+// ── getPendingOrderForCourse ────────────────────────────────────────────────
+
+describe('getPendingOrderForCourse', () => {
+  it('returns pending order for given course', async () => {
+    const pending = { ...sampleOrder, status: 'pending' as const }
+    const chain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: pending, error: null }),
+    }
+    const client = { from: vi.fn().mockReturnValue(chain) } as unknown as SupabaseClient
+
+    const { order, error } = await (await import('./orderApi')).getPendingOrderForCourse(client, 'c-1')
+    expect(error).toBeNull()
+    expect(order?.status).toBe('pending')
+  })
+
+  it('returns null when no pending order exists', async () => {
+    const chain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+    }
+    const client = { from: vi.fn().mockReturnValue(chain) } as unknown as SupabaseClient
+
+    const { order, error } = await (await import('./orderApi')).getPendingOrderForCourse(client, 'c-no-order')
+    expect(order).toBeNull()
+    expect(error).toBeNull()
+  })
+})
+
 // ── listMyOrders ───────────────────────────────────────────────────────────
 
 describe('listMyOrders', () => {

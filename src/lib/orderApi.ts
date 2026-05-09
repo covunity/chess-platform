@@ -62,6 +62,51 @@ export async function cancelOrder(
   return { order: (data as Order) ?? null, error: error as Error | null }
 }
 
+export interface OrderWithCourse extends Order {
+  course: { id: string; title: string; thumbnail_url: string | null } | null
+}
+
+export async function getOrder(
+  client: SupabaseClient,
+  orderId: string
+): Promise<{ order: OrderWithCourse | null; error: Error | null }> {
+  const { data, error } = await client
+    .from('orders')
+    .select(
+      `
+      id, course_id, user_id, status, amount, code, notes,
+      platform_fee_pct, platform_fee_amount, creator_payout_amount, creator_payout,
+      account_tier_code, confirmed_at, confirmed_by, cancelled_at, cancelled_by, cancelled_reason,
+      created_at, updated_at,
+      course:course_id(id, title, thumbnail_url)
+    `
+    )
+    .eq('id', orderId)
+    .single()
+
+  return {
+    order: (data as unknown as OrderWithCourse) ?? null,
+    error: error as Error | null,
+  }
+}
+
+export async function getPendingOrderForCourse(
+  client: SupabaseClient,
+  courseId: string
+): Promise<{ order: Order | null; error: Error | null }> {
+  const { data, error } = await client
+    .from('orders')
+    .select('id, course_id, user_id, status, amount, code, created_at, updated_at')
+    .eq('course_id', courseId)
+    .eq('status', 'pending')
+    .maybeSingle()
+
+  return {
+    order: (data as Order) ?? null,
+    error: error as Error | null,
+  }
+}
+
 export async function listMyOrders(
   client: SupabaseClient,
   options: { status?: OrderStatus; page?: number; pageSize?: number } = {}

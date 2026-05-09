@@ -413,7 +413,10 @@
     "lockPromptLogin": "Sign in to preview",
     "closePreview": "Close",
     "free": "Free",
-    "closeBtn": "×"
+    "closeBtn": "×",
+    "pendingOrderBanner": "Your order is awaiting admin verification. The course will unlock as soon as it is confirmed.",
+    "viewOrder": "View order",
+    "continuePaying": "Continue to payment"
   },
   "auth": {
     "brand": {
@@ -636,6 +639,43 @@
     "business": "Business",
     "athlete": "Athlete",
     "trainingCenter": "Training Center"
+  },
+  "checkout": {
+    "title": "Payment",
+    "summary": {
+      "heading": "Order summary",
+      "price": "Course price",
+      "total": "Total",
+      "orderCode": "Order code"
+    },
+    "qr": {
+      "heading": "Scan to pay",
+      "fallback": "Bank transfer details"
+    },
+    "bank": {
+      "bankName": "Bank",
+      "accountNumber": "Account number",
+      "accountName": "Account name",
+      "amount": "Amount",
+      "note": "Transfer note"
+    },
+    "noteWarning": "Please enter the order code in the transfer note for faster confirmation.",
+    "copyOrderCode": "Copy order code",
+    "copied": "Copied",
+    "action": {
+      "iPaid": "I have paid",
+      "notPaidYet": "I haven't paid yet",
+      "cancel": "Cancel order"
+    },
+    "cancelDialog": {
+      "title": "Cancel this order?",
+      "body": "Please let us know the reason so we can improve our service.",
+      "reasonPlaceholder": "Enter reason for cancellation...",
+      "confirm": "Cancel order",
+      "back": "No, keep it"
+    },
+    "notFound": "Order not found or does not belong to you.",
+    "loadingError": "Unable to load order details."
   },
   "errors": {
     "chapterLimitReached": "You have reached the chapter limit for your current account tier."
