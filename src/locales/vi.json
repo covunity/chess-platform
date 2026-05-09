@@ -575,7 +575,8 @@
     "closeBtn": "×",
     "pendingOrderBanner": "Đơn của bạn đang chờ admin xác minh. Khoá học sẽ mở khoá ngay sau khi xác nhận.",
     "viewOrder": "Xem đơn hàng",
-    "continuePaying": "Tiếp tục thanh toán"
+    "continuePaying": "Tiếp tục thanh toán",
+    "paywallBanner": "Bài học này yêu cầu mua khoá học để truy cập."
   },
   "auth": {
     "brand": {

@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import {
@@ -1071,8 +1071,10 @@ function CommentsSection({
 export default function CourseDetailPage() {
   const { courseId } = useParams<{ courseId: string }>()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { user } = useAuth()
   const { t } = useTranslation()
+  const showPaywallBanner = searchParams.get('paywall') === 'true'
 
   const [course, setCourse] = useState<CourseDetail | null>(null)
   const [loading, setLoading] = useState(true)
@@ -1255,8 +1257,28 @@ export default function CourseDetailPage() {
         </div>
       )}
 
+      {/* ── Paywall banner ─────────────────────────────────────────────────── */}
+      {showPaywallBanner && (
+        <div
+          data-testid="paywall-banner"
+          style={{
+            background: 'var(--danger-soft)',
+            borderBottom: '1px solid var(--danger-border)',
+            padding: '14px 56px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
+          <span style={{ fontSize: 14, color: 'var(--danger)', lineHeight: 1.55 }}>
+            {t('courseDetail.paywallBanner')}
+          </span>
+        </div>
+      )}
+
       {/* ── Hero strip ─────────────────────────────────────────────────────── */}
       <section
+        data-testid="course-hero"
         style={{
           background: 'var(--surface)',
           borderBottom: '1px solid var(--border)',

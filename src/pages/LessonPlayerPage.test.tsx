@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { vi, describe, it, beforeEach, expect } from 'vitest'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useSearchParams } from 'react-router-dom'
 import { I18nextProvider } from 'react-i18next'
 import i18n from '../i18n'
 import LessonPlayerPage from './LessonPlayerPage'
@@ -9,9 +9,21 @@ import * as enrollmentApi from '../lib/enrollmentApi'
 import * as coursesApi from '../lib/coursesApi'
 import * as lessonPlayerApi from '../lib/lessonPlayerApi'
 import * as bookmarkApi from '../lib/bookmarkApi'
+import * as orderApi from '../lib/orderApi'
 import { AuthContext } from '../context/AuthContext'
 import type { AuthContextValue } from '../context/AuthContext'
 import type { CourseDetail } from '../lib/coursesApi'
+
+function CourseDetailStub() {
+  const [searchParams] = useSearchParams()
+  return (
+    <div
+      data-testid="course-detail-page"
+      data-paywall={searchParams.get('paywall') ?? ''}
+      data-pending-order={searchParams.get('pendingOrder') ?? ''}
+    />
+  )
+}
 
 vi.mock('../lib/supabase', () => ({
   supabase: {
@@ -38,6 +50,7 @@ const mockGetFirstLesson = vi.spyOn(enrollmentApi, 'getFirstLesson')
 const mockGetLessonForPlayer = vi.spyOn(lessonPlayerApi, 'getLessonForPlayer')
 const mockMarkLessonCompleted = vi.spyOn(lessonPlayerApi, 'markLessonCompleted')
 const mockGetBookmarkForLesson = vi.spyOn(bookmarkApi, 'getBookmarkForLesson')
+const mockGetPendingOrderForCourse = vi.spyOn(orderApi, 'getPendingOrderForCourse')
 
 const sampleCourse: CourseDetail = {
   id: 'c1',
@@ -111,6 +124,19 @@ const unauthenticated: AuthContextValue = {
   profile: null,
 }
 
+const adminUser: AuthContextValue = {
+  ...enrolledUser,
+  user: { id: 'u-admin', email: 'admin@example.com' } as AuthContextValue['user'],
+  profile: {
+    id: 'u-admin',
+    email: 'admin@example.com',
+    name: 'Admin',
+    avatar_url: null,
+    role: 'admin',
+    created_at: '2026-01-01T00:00:00Z',
+  },
+}
+
 function renderPlayer(
   auth = enrolledUser,
   path = '/learn/c1/l1'
@@ -122,7 +148,7 @@ function renderPlayer(
           <Routes>
             <Route path="/learn/:courseId/:lessonId" element={<LessonPlayerPage />} />
             <Route path="/learn/:courseId" element={<LessonPlayerPage />} />
-            <Route path="/courses/:courseId" element={<div data-testid="course-detail-page" />} />
+            <Route path="/courses/:courseId" element={<CourseDetailStub />} />
             <Route path="/login" element={<div data-testid="login-page" />} />
           </Routes>
         </I18nextProvider>
@@ -151,21 +177,38 @@ describe('LessonPlayerPage', () => {
     })
     mockMarkLessonCompleted.mockResolvedValue({ error: null })
     mockGetBookmarkForLesson.mockResolvedValue({ bookmark: null, error: null })
+    mockGetPendingOrderForCourse.mockResolvedValue({ order: null, error: null })
   })
 
   describe('access control', () => {
-    it('redirects unauthenticated user to course detail page', async () => {
-      renderPlayer(unauthenticated)
+    it('redirects unauthenticated user trying to access a paid lesson to course detail with ?paywall=true', async () => {
+      renderPlayer(unauthenticated, '/learn/c1/l2')
       await waitFor(() => {
-        expect(screen.getByTestId('course-detail-page')).toBeInTheDocument()
+        const el = screen.getByTestId('course-detail-page')
+        expect(el).toBeInTheDocument()
+        expect(el.getAttribute('data-paywall')).toBe('true')
       })
     })
 
-    it('redirects non-enrolled user to course detail page', async () => {
+    it('redirects non-enrolled user trying to access paid lesson to course detail with ?paywall=true', async () => {
       mockCheckUserEnrollment.mockResolvedValue(false)
-      renderPlayer(enrolledUser)
+      // l1 is free_preview=true in sampleCourse; l2 is free_preview=false
+      renderPlayer(enrolledUser, '/learn/c1/l2')
       await waitFor(() => {
-        expect(screen.getByTestId('course-detail-page')).toBeInTheDocument()
+        const el = screen.getByTestId('course-detail-page')
+        expect(el).toBeInTheDocument()
+        expect(el.getAttribute('data-paywall')).toBe('true')
+      })
+    })
+
+    it('redirects non-enrolled user with pending order to course detail with ?pendingOrder=true', async () => {
+      mockCheckUserEnrollment.mockResolvedValue(false)
+      mockGetPendingOrderForCourse.mockResolvedValue({ order: { id: 'ord-1' } as never, error: null })
+      renderPlayer(enrolledUser, '/learn/c1/l2')
+      await waitFor(() => {
+        const el = screen.getByTestId('course-detail-page')
+        expect(el).toBeInTheDocument()
+        expect(el.getAttribute('data-pending-order')).toBe('true')
       })
     })
 
@@ -173,6 +216,31 @@ describe('LessonPlayerPage', () => {
       renderPlayer(enrolledUser)
       await waitFor(() => {
         expect(screen.getByTestId('lesson-player-layout')).toBeInTheDocument()
+      })
+    })
+
+    it('renders player for unauthenticated user accessing a free-preview lesson', async () => {
+      // l1 is free_preview=true in sampleCourse
+      renderPlayer(unauthenticated, '/learn/c1/l1')
+      await waitFor(() => {
+        expect(screen.getByTestId('lesson-player-layout')).toBeInTheDocument()
+      })
+    })
+
+    it('renders player for non-enrolled authenticated user accessing a free-preview lesson', async () => {
+      mockCheckUserEnrollment.mockResolvedValue(false)
+      renderPlayer(enrolledUser, '/learn/c1/l1')
+      await waitFor(() => {
+        expect(screen.getByTestId('lesson-player-layout')).toBeInTheDocument()
+      })
+    })
+
+    it('renders player with admin-watermark for admin not enrolled on a paid lesson', async () => {
+      mockCheckUserEnrollment.mockResolvedValue(false)
+      renderPlayer(adminUser, '/learn/c1/l2')
+      await waitFor(() => {
+        expect(screen.getByTestId('lesson-player-layout')).toBeInTheDocument()
+        expect(screen.getByTestId('admin-watermark')).toBeInTheDocument()
       })
     })
   })

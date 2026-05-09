@@ -803,4 +803,36 @@ describe('CourseDetailPage', () => {
       })
     })
   })
+
+  describe('paywall banner', () => {
+    function renderWithPaywall(auth = loggedInContext) {
+      return render(
+        <AuthContext.Provider value={auth}>
+          <MemoryRouter initialEntries={['/courses/c1?paywall=true']}>
+            <I18nextProvider i18n={i18n}>
+              <Routes>
+                <Route path="/courses/:courseId" element={<CourseDetailPage />} />
+                <Route path="/learn/:courseId/:lessonId" element={<div data-testid="lesson-player-page" />} />
+                <Route path="/login" element={<div data-testid="login-page" />} />
+                <Route path="/checkout/:orderId" element={<CheckoutStub />} />
+              </Routes>
+            </I18nextProvider>
+          </MemoryRouter>
+        </AuthContext.Provider>
+      )
+    }
+
+    it('shows paywall banner when ?paywall=true is in the URL', async () => {
+      renderWithPaywall()
+      await waitFor(() => {
+        expect(screen.getByTestId('paywall-banner')).toBeInTheDocument()
+      })
+    })
+
+    it('does NOT show paywall banner when query param is absent', async () => {
+      renderPage(loggedInContext)
+      await waitFor(() => expect(screen.getByTestId('course-hero')).toBeInTheDocument())
+      expect(screen.queryByTestId('paywall-banner')).not.toBeInTheDocument()
+    })
+  })
 })

@@ -416,7 +416,8 @@
     "closeBtn": "×",
     "pendingOrderBanner": "Your order is awaiting admin verification. The course will unlock as soon as it is confirmed.",
     "viewOrder": "View order",
-    "continuePaying": "Continue to payment"
+    "continuePaying": "Continue to payment",
+    "paywallBanner": "This lesson requires purchasing the course to access."
   },
   "auth": {
     "brand": {

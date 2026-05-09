@@ -7,6 +7,8 @@ import { getCourseDetail, checkUserEnrollment } from '../lib/coursesApi'
 import { getFirstLesson, getLastViewedLesson } from '../lib/enrollmentApi'
 import { getLessonForPlayer, getVideoPlaybackInfo, markLessonCompleted } from '../lib/lessonPlayerApi'
 import type { PlayerLesson } from '../lib/lessonPlayerApi'
+import { getPendingOrderForCourse } from '../lib/orderApi'
+import { canAccessLesson } from '../lib/accessControl'
 import VideoView from '../components/VideoView'
 import type { CourseDetail, CourseDetailChapter } from '../lib/coursesApi'
 import { addBookmark, deleteBookmark, getBookmarkForLesson } from '../lib/bookmarkApi'
@@ -257,11 +259,12 @@ export default function LessonPlayerPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { t } = useTranslation()
-  const { user, loading: authLoading } = useAuth()
+  const { user, loading: authLoading, profile } = useAuth()
 
   const [loadState, setLoadState] = useState<LoadState>('loading')
   const [course, setCourse] = useState<CourseDetail | null>(null)
   const [currentLessonId, setCurrentLessonId] = useState<string>('')
+  const [adminWatermark, setAdminWatermark] = useState(false)
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set())
   const [showToast, setShowToast] = useState(false)
   const [playerLesson, setPlayerLesson] = useState<PlayerLesson | null>(null)
@@ -277,7 +280,7 @@ export default function LessonPlayerPage() {
 
   useEffect(() => {
     if (authLoading) return
-    if (!user || !courseId) {
+    if (!courseId) {
       setLoadState('redirect-course')
       return
     }
@@ -285,42 +288,80 @@ export default function LessonPlayerPage() {
     let cancelled = false
 
     async function init() {
-      const [courseResult, isEnrolled] = await Promise.all([
-        getCourseDetail(supabase, courseId!),
-        checkUserEnrollment(supabase, courseId!, user!.id),
-      ])
-
+      const courseResult = await getCourseDetail(supabase, courseId!)
       if (cancelled) return
 
-      if (!courseResult.course || !isEnrolled) {
+      if (!courseResult.course) {
         setLoadState('redirect-course')
         return
       }
 
-      setCourse(courseResult.course)
+      const courseData = courseResult.course
+      setCourse(courseData)
 
-      // Expand first chapter by default
-      const firstChapter = courseResult.course.chapters[0]
+      const firstChapter = courseData.chapters[0]
       if (firstChapter) {
         setExpandedChapters(new Set([firstChapter.id]))
       }
 
-      // Handle resume routing
-      if (!lessonId) {
-        const lastViewed = await getLastViewedLesson(supabase, courseId!, user!.id)
-        if (cancelled) return
+      const allLessonsFlat = courseData.chapters.flatMap(ch => ch.lessons)
 
-        const targetId = lastViewed.lessonId ?? (await getFirstLesson(supabase, courseId!)).lessonId
-        if (targetId) {
-          setCurrentLessonId(targetId)
-          setLoadState('ready')
-        } else {
-          setLoadState('redirect-course')
+      // Resolve target lesson ID (handles resume routing when no lessonId in URL)
+      let targetLessonId = lessonId
+      if (!targetLessonId) {
+        if (user) {
+          const lastViewed = await getLastViewedLesson(supabase, courseId!, user.id)
+          if (cancelled) return
+          targetLessonId = lastViewed.lessonId ?? undefined
         }
+        if (!targetLessonId) {
+          const first = await getFirstLesson(supabase, courseId!)
+          if (cancelled) return
+          targetLessonId = first.lessonId ?? undefined
+        }
+        if (!targetLessonId) {
+          setLoadState('redirect-course')
+          return
+        }
+      }
+
+      const lessonMeta = allLessonsFlat.find(l => l.id === targetLessonId)
+
+      // Check enrollment and pending order only when a user is logged in
+      let isEnrolled = false
+      let hasPendingOrder = false
+      if (user) {
+        const [enrolledResult, pendingOrderResult] = await Promise.all([
+          checkUserEnrollment(supabase, courseId!, user.id),
+          getPendingOrderForCourse(supabase, courseId!),
+        ])
+        if (cancelled) return
+        isEnrolled = enrolledResult
+        hasPendingOrder = !!pendingOrderResult.order
+      }
+
+      const accessDecision = canAccessLesson(
+        profile?.role,
+        isEnrolled,
+        { free_preview: lessonMeta?.free_preview ?? false },
+        hasPendingOrder
+      )
+
+      if (accessDecision === 'paywall') {
+        navigate(`/courses/${courseId}?paywall=true`, { replace: true })
         return
       }
 
-      setCurrentLessonId(lessonId)
+      if (accessDecision === 'pending-paywall') {
+        navigate(`/courses/${courseId}?pendingOrder=true`, { replace: true })
+        return
+      }
+
+      if (accessDecision === 'allow-admin') {
+        setAdminWatermark(true)
+      }
+
+      setCurrentLessonId(targetLessonId)
       setLoadState('ready')
 
       if (enrolled) {
@@ -331,7 +372,7 @@ export default function LessonPlayerPage() {
 
     init()
     return () => { cancelled = true }
-  }, [authLoading, user, courseId, lessonId, enrolled])
+  }, [authLoading, user, courseId, lessonId, enrolled, profile])
 
   // Redirect to course detail if not authorized
   useEffect(() => {
@@ -402,7 +443,7 @@ export default function LessonPlayerPage() {
   }, [loadState, course, currentLessonId])
 
   async function handleBookmark(playedPlies: number, currentFen: string, totalPlies: number) {
-    if (!user || !currentLessonId) return
+    if (!user || !currentLessonId || adminWatermark) return
 
     if (currentBookmark) {
       // Toggle off — remove existing bookmark
@@ -429,7 +470,7 @@ export default function LessonPlayerPage() {
   }
 
   async function handleLessonComplete() {
-    if (!user || !courseId || !currentLessonId) return
+    if (!user || !courseId || !currentLessonId || adminWatermark) return
     await markLessonCompleted(supabase, {
       courseId,
       lessonId: currentLessonId,
@@ -465,8 +506,31 @@ export default function LessonPlayerPage() {
   return (
     <div
       data-testid="lesson-player-layout"
-      style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg)' }}
+      style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg)', position: 'relative' }}
     >
+      {adminWatermark && (
+        <div
+          data-testid="admin-watermark"
+          style={{
+            position: 'fixed',
+            top: 12,
+            right: 16,
+            zIndex: 500,
+            background: 'var(--warning)',
+            color: 'var(--ink-1)',
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+            padding: '4px 10px',
+            borderRadius: 'var(--r-sm)',
+            pointerEvents: 'none',
+            opacity: 0.85,
+          }}
+        >
+          Admin Preview
+        </div>
+      )}
       {/* Sidebar */}
       <PlayerSidebar
         course={course}
