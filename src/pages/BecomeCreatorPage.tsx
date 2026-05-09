@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
@@ -235,6 +235,7 @@ export default function BecomeCreatorPage() {
 
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const submittingRef = useRef(false)
 
   useEffect(() => {
     if (!user) {
@@ -261,6 +262,11 @@ export default function BecomeCreatorPage() {
     const pending = getPendingAccountApplication()
     if (!pending) return
 
+    // Guard against StrictMode double-fire: ref persists across the unmount/remount cycle
+    if (submittingRef.current) return
+    submittingRef.current = true
+
+    let cancelled = false
     setSubmitting(true)
     setSubmitError(null)
     submitAccountApplication(supabase, {
@@ -270,6 +276,7 @@ export default function BecomeCreatorPage() {
       sample_url: pending.sample_url,
       metadata: pending.metadata,
     }).then(({ id, error }) => {
+      if (cancelled) return
       setSubmitting(false)
       if (error) {
         setSubmitError(t('becomeCreator.errors.generic'))
@@ -278,10 +285,14 @@ export default function BecomeCreatorPage() {
       clearPendingAccountApplication()
       if (id) {
         getMyLatestAccountApplication(supabase, user.id).then(({ application: app }) => {
-          setApplication(app)
+          if (!cancelled) setApplication(app)
         })
       }
     })
+
+    return () => {
+      cancelled = true
+    }
   }, [user, loading, application, profile, t])
 
   if (authLoading || profileLoading) {

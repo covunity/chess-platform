@@ -1,4 +1,5 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, act } from '@testing-library/react'
+import { StrictMode } from 'react'
 import userEvent from '@testing-library/user-event'
 import { vi, beforeEach } from 'vitest'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
@@ -626,6 +627,38 @@ describe('BecomeCreatorPage', () => {
       renderPage({ user: stubUser, profile: profileFor('learner') })
       await waitFor(() => screen.getByTestId('application-status-pending'))
       expect(mockSubmitAccountApplication).not.toHaveBeenCalled()
+    })
+
+    it('calls submitAccountApplication exactly once under StrictMode double-mount', async () => {
+      ;(getPendingAccountApplication as ReturnType<typeof vi.fn>).mockReturnValue({
+        requested_tier_code: 'individual',
+        motivation: 'StrictMode test motivation',
+        experience: 'StrictMode test experience',
+      })
+      // StrictMode runs fetch twice: first is cancelled, second sets loading=false + app=null.
+      // Third call is the post-submit refresh.
+      mockGetMyLatestAccountApplication
+        .mockResolvedValueOnce({ application: null, error: null })
+        .mockResolvedValueOnce({ application: null, error: null })
+        .mockResolvedValue({ application: sampleApp, error: null })
+
+      render(
+        <StrictMode>
+          <I18nextProvider i18n={i18n}>
+            <MemoryRouter initialEntries={['/become-creator']}>
+              <AuthContext.Provider value={makeCtx({ user: stubUser, profile: profileFor('learner') })}>
+                <Routes>
+                  <Route path="/become-creator" element={<BecomeCreatorPage />} />
+                </Routes>
+              </AuthContext.Provider>
+            </MemoryRouter>
+          </I18nextProvider>
+        </StrictMode>
+      )
+
+      await waitFor(() => {
+        expect(mockSubmitAccountApplication).toHaveBeenCalledTimes(1)
+      })
     })
   })
 })
