@@ -10,7 +10,7 @@ import type { CourseDetail, CourseDetailLesson, CourseDetailChapter } from '../l
 import { enrollForFree, getFirstLesson } from '../lib/enrollmentApi'
 import { getUserReview, submitReview } from '../lib/reviewsApi'
 import type { Review } from '../lib/reviewsApi'
-import { listComments, createComment, reportComment } from '../lib/commentsApi'
+import { listComments, createComment, reportComment, updateComment, deleteComment } from '../lib/commentsApi'
 import type { Comment, ReportReason } from '../lib/commentsApi'
 import { createOrder, getPendingOrderForCourse } from '../lib/orderApi'
 import type { Order } from '../lib/orderApi'
@@ -812,20 +812,66 @@ function CommentRow({
   comment,
   currentUserId,
   onReport,
+  onEdit,
+  onDelete,
 }: {
   comment: Comment
   currentUserId: string | null
   onReport: (commentId: string) => void
+  onEdit: (commentId: string, updated: Comment) => void
+  onDelete: (commentId: string) => void
 }) {
   const { t } = useTranslation()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const [editing, setEditing] = useState(false)
+  const [editBody, setEditBody] = useState('')
+  const [editSaving, setEditSaving] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const isOwner = currentUserId === comment.author_id
   const authorName = comment.author?.name ?? '—'
   const initials = authorName.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)
   const date = new Date(comment.created_at).toLocaleDateString('vi-VN', { day: 'numeric', month: 'short', year: 'numeric' })
   const isEdited = comment.updated_at !== comment.created_at
+
+  function handleEditOpen() {
+    setEditBody(comment.body)
+    setEditError(null)
+    setEditing(true)
+    setMenuOpen(false)
+  }
+
+  async function handleSaveEdit() {
+    if (!currentUserId) return
+    setEditSaving(true)
+    setEditError(null)
+    const { comment: updated, error } = await updateComment(supabase, comment.id, currentUserId, editBody)
+    setEditSaving(false)
+    if (error || !updated) {
+      setEditError(error?.message ?? 'Lỗi khi lưu bình luận')
+      return
+    }
+    setEditing(false)
+    onEdit(comment.id, updated)
+  }
+
+  function handleDeleteOpen() {
+    setConfirmDelete(true)
+    setMenuOpen(false)
+  }
+
+  async function handleConfirmDelete() {
+    if (!currentUserId) return
+    setDeleting(true)
+    const { error } = await deleteComment(supabase, comment.id, currentUserId)
+    setDeleting(false)
+    if (error) return
+    setConfirmDelete(false)
+    onDelete(comment.id)
+  }
 
   if (comment.is_hidden) {
     return (
@@ -887,7 +933,7 @@ function CommentRow({
                     <button
                       type="button"
                       data-testid={`edit-btn-${comment.id}`}
-                      onClick={() => setMenuOpen(false)}
+                      onClick={handleEditOpen}
                       style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 12px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: 'var(--ink-1)', height: 28 }}
                     >
                       {t('comments.edit')}
@@ -895,7 +941,7 @@ function CommentRow({
                     <button
                       type="button"
                       data-testid={`delete-btn-${comment.id}`}
-                      onClick={() => setMenuOpen(false)}
+                      onClick={handleDeleteOpen}
                       style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 12px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: 'var(--danger)', height: 28 }}
                     >
                       {t('comments.delete')}
@@ -915,7 +961,85 @@ function CommentRow({
             )}
           </div>
         </div>
-        <p style={{ margin: 0, fontSize: 13.5, color: 'var(--ink-2)', lineHeight: 1.55 }}>{comment.body}</p>
+
+        {/* Inline edit form */}
+        {editing ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <textarea
+              data-testid={`edit-textarea-${comment.id}`}
+              className="input"
+              rows={3}
+              value={editBody}
+              onChange={e => setEditBody(e.target.value)}
+              maxLength={2000}
+              style={{ width: '100%', resize: 'vertical' }}
+            />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>{editBody.length}/2000</span>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  type="button"
+                  data-testid={`cancel-edit-btn-${comment.id}`}
+                  className="btn btn-ghost"
+                  onClick={() => setEditing(false)}
+                >
+                  {t('comments.cancelEdit')}
+                </button>
+                <button
+                  type="button"
+                  data-testid={`save-edit-btn-${comment.id}`}
+                  className="btn btn-primary"
+                  disabled={!editBody.trim() || editSaving}
+                  onClick={handleSaveEdit}
+                >
+                  {t('comments.saveEdit')}
+                </button>
+              </div>
+            </div>
+            {editError && <p style={{ fontSize: 12, color: 'var(--danger)', margin: 0 }}>{editError}</p>}
+          </div>
+        ) : (
+          <p style={{ margin: 0, fontSize: 13.5, color: 'var(--ink-2)', lineHeight: 1.55 }}>{comment.body}</p>
+        )}
+
+        {/* Delete confirm dialog */}
+        {confirmDelete && (
+          <div
+            data-testid={`delete-confirm-dialog-${comment.id}`}
+            style={{
+              marginTop: 10,
+              padding: '12px 16px',
+              background: 'var(--surface-2)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--r-md)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+            }}
+          >
+            <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>{t('comments.deleteConfirm')}</span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                type="button"
+                data-testid={`cancel-delete-btn-${comment.id}`}
+                className="btn btn-ghost"
+                onClick={() => setConfirmDelete(false)}
+              >
+                {t('comments.cancelEdit')}
+              </button>
+              <button
+                type="button"
+                data-testid={`confirm-delete-btn-${comment.id}`}
+                className="btn btn-danger"
+                disabled={deleting}
+                onClick={handleConfirmDelete}
+              >
+                {t('comments.delete')}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -968,6 +1092,15 @@ function CommentsSection({
     const { comments: more } = await listComments(supabase, courseId, nextPage)
     setComments(prev => [...prev, ...more])
     setPage(nextPage)
+  }
+
+  function handleEditComment(commentId: string, updated: Comment) {
+    setComments(prev => prev.map(c => c.id === commentId ? updated : c))
+  }
+
+  function handleDeleteComment(commentId: string) {
+    setComments(prev => prev.filter(c => c.id !== commentId))
+    setTotal(prev => prev - 1)
   }
 
   return (
@@ -1038,6 +1171,8 @@ function CommentsSection({
             comment={comment}
             currentUserId={currentUserId}
             onReport={id => setReportTarget(id)}
+            onEdit={handleEditComment}
+            onDelete={handleDeleteComment}
           />
         ))}
       </div>

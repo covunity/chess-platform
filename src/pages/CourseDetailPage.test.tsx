@@ -33,6 +33,8 @@ const mockSubmitReview = vi.spyOn(reviewsApi, 'submitReview')
 const mockListComments = vi.spyOn(commentsApi, 'listComments')
 const mockCreateComment = vi.spyOn(commentsApi, 'createComment')
 const mockReportComment = vi.spyOn(commentsApi, 'reportComment')
+const mockUpdateComment = vi.spyOn(commentsApi, 'updateComment')
+const mockDeleteComment = vi.spyOn(commentsApi, 'deleteComment')
 
 const mockGetCourseDetail = vi.spyOn(coursesApi, 'getCourseDetail')
 const mockCheckUserEnrollment = vi.spyOn(coursesApi, 'checkUserEnrollment')
@@ -833,6 +835,146 @@ describe('CourseDetailPage', () => {
       renderPage(loggedInContext)
       await waitFor(() => expect(screen.getByTestId('course-hero')).toBeInTheDocument())
       expect(screen.queryByTestId('paywall-banner')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('comment edit and delete', () => {
+    const ownComment = {
+      id: 'cmt-own',
+      course_id: 'c1',
+      author_id: 'u99',
+      body: 'My original comment',
+      is_hidden: false,
+      created_at: '2026-01-10T00:00:00Z',
+      updated_at: '2026-01-10T00:00:00Z',
+      author: { name: 'Test User' },
+    }
+
+    beforeEach(() => {
+      mockGetCourseDetail.mockResolvedValue({ course: sampleCourse, error: null })
+      mockCheckUserEnrollment.mockResolvedValue(true)
+      mockListComments.mockResolvedValue({ comments: [ownComment], total: 1, error: null })
+    })
+
+    it('owner sees Edit and Delete buttons in kebab menu', async () => {
+      const user = userEvent.setup()
+      renderPage(loggedInContext)
+      await waitFor(() => screen.getByText('My original comment'))
+      await user.click(screen.getByTestId('comment-kebab-cmt-own'))
+      await waitFor(() => screen.getByTestId('edit-btn-cmt-own'))
+      expect(screen.getByTestId('edit-btn-cmt-own')).toBeInTheDocument()
+      expect(screen.getByTestId('delete-btn-cmt-own')).toBeInTheDocument()
+    })
+
+    it('click Edit shows inline textarea pre-filled with comment body', async () => {
+      const user = userEvent.setup()
+      renderPage(loggedInContext)
+      await waitFor(() => screen.getByText('My original comment'))
+      await user.click(screen.getByTestId('comment-kebab-cmt-own'))
+      await user.click(screen.getByTestId('edit-btn-cmt-own'))
+      await waitFor(() => {
+        const textarea = screen.getByTestId('edit-textarea-cmt-own') as HTMLTextAreaElement
+        expect(textarea).toBeInTheDocument()
+        expect(textarea.value).toBe('My original comment')
+      })
+    })
+
+    it('saving edit calls updateComment and updates comment in list', async () => {
+      const user = userEvent.setup()
+      const updated = { ...ownComment, body: 'Updated body', updated_at: '2026-01-11T00:00:00Z' }
+      mockUpdateComment.mockResolvedValue({ comment: updated, error: null })
+      renderPage(loggedInContext)
+      await waitFor(() => screen.getByText('My original comment'))
+      await user.click(screen.getByTestId('comment-kebab-cmt-own'))
+      await user.click(screen.getByTestId('edit-btn-cmt-own'))
+      await waitFor(() => screen.getByTestId('edit-textarea-cmt-own'))
+      await user.clear(screen.getByTestId('edit-textarea-cmt-own'))
+      await user.type(screen.getByTestId('edit-textarea-cmt-own'), 'Updated body')
+      await user.click(screen.getByTestId('save-edit-btn-cmt-own'))
+      await waitFor(() => {
+        expect(mockUpdateComment).toHaveBeenCalledWith(
+          expect.anything(), 'cmt-own', 'u99', 'Updated body'
+        )
+        expect(screen.getByText('Updated body')).toBeInTheDocument()
+      })
+    })
+
+    it('cancel edit hides inline form and keeps original body', async () => {
+      const user = userEvent.setup()
+      renderPage(loggedInContext)
+      await waitFor(() => screen.getByText('My original comment'))
+      await user.click(screen.getByTestId('comment-kebab-cmt-own'))
+      await user.click(screen.getByTestId('edit-btn-cmt-own'))
+      await waitFor(() => screen.getByTestId('edit-textarea-cmt-own'))
+      await user.click(screen.getByTestId('cancel-edit-btn-cmt-own'))
+      await waitFor(() => {
+        expect(screen.queryByTestId('edit-textarea-cmt-own')).not.toBeInTheDocument()
+        expect(screen.getByText('My original comment')).toBeInTheDocument()
+      })
+    })
+
+    it('edit textarea enforces 2000-char maxLength', async () => {
+      const user = userEvent.setup()
+      renderPage(loggedInContext)
+      await waitFor(() => screen.getByText('My original comment'))
+      await user.click(screen.getByTestId('comment-kebab-cmt-own'))
+      await user.click(screen.getByTestId('edit-btn-cmt-own'))
+      await waitFor(() => screen.getByTestId('edit-textarea-cmt-own'))
+      const textarea = screen.getByTestId('edit-textarea-cmt-own') as HTMLTextAreaElement
+      expect(textarea.maxLength).toBe(2000)
+    })
+
+    it('click Delete shows confirm dialog', async () => {
+      const user = userEvent.setup()
+      renderPage(loggedInContext)
+      await waitFor(() => screen.getByText('My original comment'))
+      await user.click(screen.getByTestId('comment-kebab-cmt-own'))
+      await user.click(screen.getByTestId('delete-btn-cmt-own'))
+      await waitFor(() => {
+        expect(screen.getByTestId('delete-confirm-dialog-cmt-own')).toBeInTheDocument()
+      })
+    })
+
+    it('confirming delete calls deleteComment and removes comment', async () => {
+      const user = userEvent.setup()
+      mockDeleteComment.mockResolvedValue({ error: null })
+      renderPage(loggedInContext)
+      await waitFor(() => screen.getByText('My original comment'))
+      await user.click(screen.getByTestId('comment-kebab-cmt-own'))
+      await user.click(screen.getByTestId('delete-btn-cmt-own'))
+      await waitFor(() => screen.getByTestId('delete-confirm-dialog-cmt-own'))
+      await user.click(screen.getByTestId('confirm-delete-btn-cmt-own'))
+      await waitFor(() => {
+        expect(mockDeleteComment).toHaveBeenCalledWith(expect.anything(), 'cmt-own', 'u99')
+        expect(screen.queryByText('My original comment')).not.toBeInTheDocument()
+      })
+    })
+
+    it('cancelling delete dialog keeps comment in list', async () => {
+      const user = userEvent.setup()
+      renderPage(loggedInContext)
+      await waitFor(() => screen.getByText('My original comment'))
+      await user.click(screen.getByTestId('comment-kebab-cmt-own'))
+      await user.click(screen.getByTestId('delete-btn-cmt-own'))
+      await waitFor(() => screen.getByTestId('delete-confirm-dialog-cmt-own'))
+      await user.click(screen.getByTestId('cancel-delete-btn-cmt-own'))
+      await waitFor(() => {
+        expect(screen.queryByTestId('delete-confirm-dialog-cmt-own')).not.toBeInTheDocument()
+        expect(screen.getByText('My original comment')).toBeInTheDocument()
+      })
+    })
+
+    it('non-owner sees only Report, not Edit or Delete', async () => {
+      const otherComment = { ...ownComment, id: 'cmt-other', author_id: 'u-other' }
+      mockListComments.mockResolvedValue({ comments: [otherComment], total: 1, error: null })
+      const user = userEvent.setup()
+      renderPage(loggedInContext)
+      await waitFor(() => screen.getByText('My original comment'))
+      await user.click(screen.getByTestId('comment-kebab-cmt-other'))
+      await waitFor(() => screen.getByTestId('kebab-menu-cmt-other'))
+      expect(screen.queryByTestId('edit-btn-cmt-other')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('delete-btn-cmt-other')).not.toBeInTheDocument()
+      expect(screen.getByTestId('report-btn-cmt-other')).toBeInTheDocument()
     })
   })
 })
