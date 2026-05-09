@@ -71,6 +71,9 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
         gap: 24,
         background: 'var(--surface)',
         borderBottom: '1px solid var(--border-strong)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
       }}
     >
       <Link to="/" className="flex items-center gap-2" aria-label="Gambitly home" style={{ flexShrink: 0 }}>
