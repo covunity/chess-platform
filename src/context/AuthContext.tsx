@@ -20,7 +20,7 @@ export interface AuthContextValue {
   loading: boolean
   profile: UserProfile | null
   profileLoading: boolean
-  signUp: (name: string, email: string, password: string) => Promise<{ error: Error | null }>
+  signUp: (name: string, email: string, password: string, extraData?: Record<string, unknown>) => Promise<{ error: Error | null }>
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<{ error: Error | null }>
@@ -67,11 +67,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
   }, [user?.id])
 
-  async function signUp(name: string, email: string, password: string) {
+  async function signUp(name: string, email: string, password: string, extraData?: Record<string, unknown>) {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name } },
+      options: { data: { name, ...extraData } },
     })
     return { error }
   }

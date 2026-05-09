@@ -9,6 +9,8 @@ import {
   savePendingAccountApplication,
   getPendingAccountApplication,
   clearPendingAccountApplication,
+  getPendingApplicationFromUserMetadata,
+  clearPendingApplicationFromMetadata,
 } from '../lib/pendingAccountApplication'
 import { useAccountTiers } from '../lib/accountTiers'
 import type { AccountTier, AccountTierCode } from '../lib/accountTiers'
@@ -259,7 +261,9 @@ export default function BecomeCreatorPage() {
     if (application && (application.status === 'pending' || application.status === 'approved')) return
     if (profile?.role === 'creator' || profile?.role === 'admin') return
 
-    const pending = getPendingAccountApplication()
+    const pending =
+      getPendingAccountApplication() ??
+      getPendingApplicationFromUserMetadata(user.user_metadata as Record<string, unknown>)
     if (!pending) return
 
     // Guard against StrictMode double-fire: ref persists across the unmount/remount cycle
@@ -283,6 +287,7 @@ export default function BecomeCreatorPage() {
         return
       }
       clearPendingAccountApplication()
+      clearPendingApplicationFromMetadata(supabase)
       if (id) {
         getMyLatestAccountApplication(supabase, user.id).then(({ application: app }) => {
           if (!cancelled) setApplication(app)
@@ -649,7 +654,7 @@ interface AnonFormProps {
   sampleUrl: string; setSampleUrl: (v: string) => void
   submitting: boolean; setSubmitting: (v: boolean) => void
   submitError: string | null; setSubmitError: (v: string | null) => void
-  signUp: (name: string, email: string, password: string) => Promise<{ error: Error | null }>
+  signUp: (name: string, email: string, password: string, extraData?: Record<string, unknown>) => Promise<{ error: Error | null }>
   navigate: (path: string) => void
 }
 
@@ -691,15 +696,18 @@ function AnonCombinedForm({
 
     const metadata = buildMetadata(requestedTier, tierFields)
 
-    savePendingAccountApplication({
+    const pendingPayload = {
       requested_tier_code: requestedTier,
       motivation: motivation.trim() || undefined,
       experience: experience.trim() || undefined,
       sample_url: sampleUrl.trim() || undefined,
       metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
-    })
+    }
+    savePendingAccountApplication(pendingPayload)
 
-    const { error } = await signUp(displayName, email.trim(), password)
+    const { error } = await signUp(displayName, email.trim(), password, {
+      pending_application: pendingPayload,
+    })
     setSubmitting(false)
     if (error) {
       setSubmitError((error as { message?: string }).message ?? t('becomeCreator.errors.generic'))

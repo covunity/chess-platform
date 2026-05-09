@@ -26,6 +26,8 @@ vi.mock('../lib/pendingAccountApplication', () => ({
   savePendingAccountApplication: vi.fn(),
   getPendingAccountApplication: vi.fn(() => null),
   clearPendingAccountApplication: vi.fn(),
+  getPendingApplicationFromUserMetadata: vi.fn(() => null),
+  clearPendingApplicationFromMetadata: vi.fn(),
 }))
 
 vi.mock('../lib/accountTiers', () => ({
@@ -45,6 +47,8 @@ import {
   savePendingAccountApplication,
   getPendingAccountApplication,
   clearPendingAccountApplication,
+  getPendingApplicationFromUserMetadata,
+  clearPendingApplicationFromMetadata,
 } from '../lib/pendingAccountApplication'
 
 const mockNavigate = vi.fn()
@@ -232,7 +236,7 @@ describe('BecomeCreatorPage', () => {
         expect(savePendingAccountApplication).toHaveBeenCalledWith(
           expect.objectContaining({ requested_tier_code: 'individual' })
         )
-        expect(mockSignUp).toHaveBeenCalledWith('Alice', 'alice@test.com', 'secret123')
+        expect(mockSignUp).toHaveBeenCalledWith('Alice', 'alice@test.com', 'secret123', expect.objectContaining({ pending_application: expect.objectContaining({ requested_tier_code: 'individual' }) }))
       })
     })
 
@@ -280,7 +284,7 @@ describe('BecomeCreatorPage', () => {
       await userEvent.click(screen.getByTestId('anon-submit'))
 
       await waitFor(() => {
-        expect(mockSignUp).toHaveBeenCalledWith('Chess Corp', 'corp@test.com', 'secret123')
+        expect(mockSignUp).toHaveBeenCalledWith('Chess Corp', 'corp@test.com', 'secret123', expect.objectContaining({ pending_application: expect.objectContaining({ requested_tier_code: 'business' }) }))
         expect(savePendingAccountApplication).toHaveBeenCalledWith(
           expect.objectContaining({
             requested_tier_code: 'business',
@@ -658,6 +662,68 @@ describe('BecomeCreatorPage', () => {
 
       await waitFor(() => {
         expect(mockSubmitAccountApplication).toHaveBeenCalledTimes(1)
+      })
+    })
+
+    it('auto-submits from user_metadata when localStorage is empty (cross-tab scenario)', async () => {
+      // Simulate: localStorage is empty (different browser/tab) but user_metadata has the payload
+      ;(getPendingAccountApplication as ReturnType<typeof vi.fn>).mockReturnValue(null)
+      ;(getPendingApplicationFromUserMetadata as ReturnType<typeof vi.fn>).mockReturnValue({
+        requested_tier_code: 'individual',
+        motivation: 'Cross-tab motivation',
+        experience: 'Cross-tab experience',
+      })
+      mockGetMyLatestAccountApplication
+        .mockResolvedValueOnce({ application: null, error: null })
+        .mockResolvedValueOnce({ application: sampleApp, error: null })
+      mockSubmitAccountApplication.mockResolvedValue({ id: 'app-1', error: null })
+
+      const userWithMeta = {
+        ...stubUser,
+        user_metadata: {
+          pending_application: {
+            requested_tier_code: 'individual',
+            motivation: 'Cross-tab motivation',
+            experience: 'Cross-tab experience',
+            expires_at: Date.now() + 86400000,
+          },
+        },
+      } as unknown as typeof stubUser
+
+      renderPage({ user: userWithMeta, profile: profileFor('learner') })
+
+      await waitFor(() => {
+        expect(mockSubmitAccountApplication).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.objectContaining({ requested_tier_code: 'individual', motivation: 'Cross-tab motivation' })
+        )
+      })
+      await waitFor(() => {
+        expect(clearPendingApplicationFromMetadata).toHaveBeenCalled()
+        expect(screen.getByTestId('application-status-pending')).toBeInTheDocument()
+      })
+    })
+
+    it('passes pending_application to signUp extraData on anon form submit', async () => {
+      mockSignUp.mockResolvedValue({ error: null })
+
+      renderPage({ user: null, loading: false })
+
+      await userEvent.type(screen.getByTestId('field-name'), 'Test User')
+      await userEvent.type(screen.getByTestId('field-email'), 'test@example.com')
+      await userEvent.type(screen.getByTestId('field-password'), 'password123')
+
+      await userEvent.click(screen.getByTestId('anon-submit'))
+
+      await waitFor(() => {
+        expect(mockSignUp).toHaveBeenCalledWith(
+          'Test User',
+          'test@example.com',
+          'password123',
+          expect.objectContaining({
+            pending_application: expect.objectContaining({ requested_tier_code: 'individual' }),
+          })
+        )
       })
     })
   })
