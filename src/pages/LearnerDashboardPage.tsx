@@ -13,6 +13,8 @@ import type {
   EnrolledCourseProgress,
   RecommendedCourse,
 } from '../lib/dashboardApi'
+import { listMyOrders } from '../lib/orderApi'
+import type { MyOrderRow } from '../lib/orderApi'
 import MiniBoard from '../components/MiniBoard'
 
 const ZERO_STATS: LearnerStats = {
@@ -109,6 +111,115 @@ function StatCard({ testId, tone, icon, label, value, sub }: StatCardProps) {
   )
 }
 
+function PendingOrderRow({ order }: { order: MyOrderRow }) {
+  const { t } = useTranslation()
+  return (
+    <div
+      data-testid={`pending-order-${order.id}`}
+      style={{
+        background: 'var(--surface)',
+        border: '1px solid var(--warning-border)',
+        borderRadius: 'var(--r-lg)',
+        padding: 16,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 20,
+      }}
+    >
+      <div style={{
+        width: 120, height: 90, borderRadius: 'var(--r-md)',
+        background: 'var(--surface-3)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexShrink: 0, overflow: 'hidden',
+      }}>
+        <MiniBoard size={88} />
+      </div>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}>
+        <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink-1)', margin: 0 }}>
+          {order.course?.title ?? ''}
+        </h3>
+        <div style={{ fontSize: 12.5, color: 'var(--warning)' }}>
+          {t('dashboard.pendingPaymentStatus', 'Đang chờ xác nhận thanh toán')}
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>
+          {t('dashboard.pendingOrderCode', 'Mã đơn: {{code}}', { code: order.code })}
+        </div>
+      </div>
+      <Link
+        data-testid={`pending-pay-btn-${order.id}`}
+        to={`/checkout/${order.id}`}
+        style={{
+          display: 'inline-flex', alignItems: 'center',
+          height: 40, padding: '0 18px',
+          borderRadius: 'var(--r-md)',
+          background: 'var(--warning)',
+          color: 'white',
+          textDecoration: 'none', fontSize: 13, fontWeight: 500, flexShrink: 0,
+        }}
+      >
+        {t('dashboard.goPay', 'Tiến hành thanh toán')}
+      </Link>
+    </div>
+  )
+}
+
+function CancelledOrderRow({ order }: { order: MyOrderRow }) {
+  const { t } = useTranslation()
+  const [showReason, setShowReason] = useState(false)
+  return (
+    <div
+      data-testid={`cancelled-order-${order.id}`}
+      style={{
+        background: 'var(--surface)',
+        border: '1px solid var(--danger-border)',
+        borderRadius: 'var(--r-lg)',
+        padding: 16,
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 20,
+      }}
+    >
+      <div style={{
+        width: 120, height: 90, borderRadius: 'var(--r-md)',
+        background: 'var(--surface-3)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexShrink: 0, overflow: 'hidden',
+      }}>
+        <MiniBoard size={88} />
+      </div>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}>
+        <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink-2)', margin: 0 }}>
+          {order.course?.title ?? ''}
+        </h3>
+        <div style={{ fontSize: 12.5, color: 'var(--danger)' }}>
+          {t('dashboard.cancelledStatus', 'Đơn đã bị huỷ')}
+        </div>
+        {showReason && order.cancelled_reason && (
+          <div
+            data-testid={`cancelled-reason-${order.id}`}
+            style={{ fontSize: 12, color: 'var(--ink-2)' }}
+          >
+            {t('dashboard.cancelledReasonLabel', 'Lý do:')}{' '}{order.cancelled_reason}
+          </div>
+        )}
+        {order.cancelled_reason && (
+          <button
+            type="button"
+            data-testid={`cancelled-reveal-btn-${order.id}`}
+            className="btn btn-ghost btn-sm"
+            style={{ alignSelf: 'flex-start', fontSize: 12 }}
+            onClick={() => setShowReason(prev => !prev)}
+          >
+            {showReason
+              ? t('dashboard.cancelledHideReason', 'Ẩn lý do')
+              : t('dashboard.cancelledShowReason', 'Xem lý do')}
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function LevelPill({ level }: { level: string }) {
   const { t } = useTranslation()
   const labelKey =
@@ -141,6 +252,8 @@ export default function LearnerDashboardPage() {
 
   const [stats, setStats] = useState<LearnerStats>(ZERO_STATS)
   const [enrolled, setEnrolled] = useState<EnrolledCourseProgress[] | null>(null)
+  const [pendingOrders, setPendingOrders] = useState<MyOrderRow[]>([])
+  const [cancelledOrders, setCancelledOrders] = useState<MyOrderRow[]>([])
   const [recommended, setRecommended] = useState<RecommendedCourse[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -151,11 +264,15 @@ export default function LearnerDashboardPage() {
       getLearnerStats(supabase, user.id),
       getEnrolledCoursesProgress(supabase, user.id),
       getRecommendedCourses(supabase, user.id, 3),
-    ]).then(([statsRes, enrolledRes, recRes]) => {
+      listMyOrders(supabase, { status: 'pending' }),
+      listMyOrders(supabase, { status: 'cancelled' }),
+    ]).then(([statsRes, enrolledRes, recRes, pendingRes, cancelledRes]) => {
       if (cancelled) return
       if (statsRes.stats) setStats(statsRes.stats)
       setEnrolled(enrolledRes.courses ?? [])
       setRecommended(recRes.courses ?? [])
+      setPendingOrders(pendingRes.orders)
+      setCancelledOrders(cancelledRes.orders)
       setLoading(false)
     })
     return () => { cancelled = true }
@@ -300,16 +417,16 @@ export default function LearnerDashboardPage() {
           <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--ink-1)', margin: 0 }}>
             {t('dashboard.myCoursesHeading', 'Khóa học của tôi')}
           </h2>
-          {(enrolled?.length ?? 0) > 0 && (
+          {((enrolled?.length ?? 0) + pendingOrders.length + cancelledOrders.length) > 0 && (
             <span style={{ fontSize: 13, color: 'var(--accent-ink)', fontWeight: 500 }}>
-              {t('dashboard.myCoursesCount', '{{count}} khóa học', { count: enrolled?.length ?? 0 })}
+              {t('dashboard.myCoursesCount', '{{count}} khóa học', { count: (enrolled?.length ?? 0) + pendingOrders.length + cancelledOrders.length })}
             </span>
           )}
         </div>
 
         {loading ? (
           <div style={{ color: 'var(--ink-3)', fontSize: 14 }}>{t('dashboard.loading', 'Đang tải...')}</div>
-        ) : (enrolled?.length ?? 0) === 0 ? (
+        ) : (enrolled?.length ?? 0) === 0 && pendingOrders.length === 0 && cancelledOrders.length === 0 ? (
           <div
             data-testid="my-courses-empty"
             style={{
@@ -427,6 +544,12 @@ export default function LearnerDashboardPage() {
                 </div>
               )
             })}
+            {pendingOrders.map(order => (
+              <PendingOrderRow key={order.id} order={order} />
+            ))}
+            {cancelledOrders.map(order => (
+              <CancelledOrderRow key={order.id} order={order} />
+            ))}
           </div>
         )}
       </section>
@@ -567,8 +690,10 @@ export default function LearnerDashboardPage() {
                         {c.creator_name ?? ''} · ⭐ {c.rating_avg.toFixed(1)}
                       </div>
                     </div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--success)', flexShrink: 0 }}>
-                      {t('dashboard.priceFree', 'Miễn phí')}
+                    <div style={{ fontSize: 13, fontWeight: 600, color: c.price === 0 ? 'var(--success)' : 'var(--ink-1)', flexShrink: 0 }}>
+                      {c.price === 0
+                        ? t('dashboard.priceFree', 'Miễn phí')
+                        : `${c.price.toLocaleString('vi-VN')} ₫`}
                     </div>
                   </div>
                 </Link>

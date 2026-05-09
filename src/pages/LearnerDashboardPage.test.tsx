@@ -1,10 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { vi, describe, it, beforeEach, expect } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { I18nextProvider } from 'react-i18next'
 import i18n from '../i18n'
 import LearnerDashboardPage from './LearnerDashboardPage'
 import * as dashboardApi from '../lib/dashboardApi'
+import * as orderApi from '../lib/orderApi'
 import { AuthContext } from '../context/AuthContext'
 import type { AuthContextValue } from '../context/AuthContext'
 
@@ -23,6 +25,7 @@ vi.mock('../lib/supabase', () => ({
 const mockGetLearnerStats = vi.spyOn(dashboardApi, 'getLearnerStats')
 const mockGetEnrolledCoursesProgress = vi.spyOn(dashboardApi, 'getEnrolledCoursesProgress')
 const mockGetRecommendedCourses = vi.spyOn(dashboardApi, 'getRecommendedCourses')
+const mockListMyOrders = vi.spyOn(orderApi, 'listMyOrders')
 
 const mockUser = {
   id: 'u1',
@@ -92,6 +95,38 @@ const sampleRecommended: dashboardApi.RecommendedCourse[] = [
   },
 ]
 
+const basePendingOrder: orderApi.MyOrderRow = {
+  id: 'ord-p1',
+  course_id: 'c-paid-1',
+  user_id: 'u1',
+  status: 'pending',
+  amount: 480000,
+  code: 'ORD-2026-000099',
+  notes: null,
+  platform_fee_pct: 20,
+  platform_fee_amount: 96000,
+  creator_payout_amount: 384000,
+  creator_payout: 384000,
+  account_tier_code: 'individual',
+  confirmed_at: null,
+  confirmed_by: null,
+  cancelled_at: null,
+  cancelled_by: null,
+  cancelled_reason: null,
+  created_at: '2026-05-09T10:00:00Z',
+  updated_at: '2026-05-09T10:00:00Z',
+  course: { id: 'c-paid-1', title: 'The Sicilian Dragon', thumbnail_url: null },
+}
+
+const baseCancelledOrder: orderApi.MyOrderRow = {
+  ...basePendingOrder,
+  id: 'ord-c1',
+  status: 'cancelled',
+  cancelled_at: '2026-05-09T12:00:00Z',
+  cancelled_by: 'admin',
+  cancelled_reason: 'Chuyển khoản sai nội dung',
+}
+
 function renderPage() {
   return render(
     <MemoryRouter>
@@ -110,6 +145,7 @@ describe('LearnerDashboardPage', () => {
     mockGetLearnerStats.mockResolvedValue({ stats: sampleStats, error: null })
     mockGetEnrolledCoursesProgress.mockResolvedValue({ courses: sampleEnrolled, error: null })
     mockGetRecommendedCourses.mockResolvedValue({ courses: sampleRecommended, error: null })
+    mockListMyOrders.mockResolvedValue({ orders: [], total: 0, error: null })
   })
 
   it('renders the welcome header with the learner name', async () => {
@@ -189,6 +225,92 @@ describe('LearnerDashboardPage', () => {
     renderPage()
     await waitFor(() => {
       expect(screen.getByTestId('my-courses-empty')).toBeInTheDocument()
+    })
+  })
+
+  describe('recommended course price display', () => {
+    it('shows "Miễn phí" for a free recommended course', async () => {
+      renderPage()
+      await waitFor(() => expect(screen.getByTestId('recommended-c10')).toBeInTheDocument())
+      expect(screen.getByTestId('recommended-c10').textContent ?? '').toMatch(/Miễn phí/i)
+    })
+
+    it('shows formatted ₫ price for a paid recommended course', async () => {
+      mockGetRecommendedCourses.mockResolvedValue({
+        courses: [{ ...sampleRecommended[0], price: 299000 }],
+        error: null,
+      })
+      renderPage()
+      await waitFor(() => expect(screen.getByTestId('recommended-c10')).toBeInTheDocument())
+      expect(screen.getByTestId('recommended-c10').textContent ?? '').toContain('₫')
+      expect(screen.getByTestId('recommended-c10').textContent ?? '').not.toMatch(/Miễn phí/i)
+    })
+  })
+
+  describe('pending order row', () => {
+    beforeEach(() => {
+      mockListMyOrders.mockImplementation(async (_client, opts) => {
+        if (opts?.status === 'pending') return { orders: [basePendingOrder], total: 1, error: null }
+        return { orders: [], total: 0, error: null }
+      })
+    })
+
+    it('shows a pending-payment row in My-courses with course title', async () => {
+      renderPage()
+      await waitFor(() => {
+        expect(screen.getByTestId('pending-order-ord-p1')).toBeInTheDocument()
+      })
+      expect(screen.getByTestId('pending-order-ord-p1').textContent ?? '').toMatch(/Sicilian Dragon/i)
+    })
+
+    it('shows "Đang chờ xác nhận" status text in the pending row', async () => {
+      renderPage()
+      await waitFor(() => expect(screen.getByTestId('pending-order-ord-p1')).toBeInTheDocument())
+      expect(screen.getByTestId('pending-order-ord-p1').textContent ?? '').toMatch(/Đang chờ|chờ xác nhận/i)
+    })
+
+    it('renders a checkout link for the pending order and no Resume button', async () => {
+      renderPage()
+      await waitFor(() => expect(screen.getByTestId('pending-pay-btn-ord-p1')).toBeInTheDocument())
+      expect(screen.getByTestId('pending-pay-btn-ord-p1')).toHaveAttribute('href', '/checkout/ord-p1')
+      expect(screen.queryByTestId('resume-ord-p1')).not.toBeInTheDocument()
+    })
+
+    it('does not show the empty state when only pending orders exist', async () => {
+      mockGetEnrolledCoursesProgress.mockResolvedValue({ courses: [], error: null })
+      renderPage()
+      await waitFor(() => expect(screen.getByTestId('pending-order-ord-p1')).toBeInTheDocument())
+      expect(screen.queryByTestId('my-courses-empty')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('cancelled order row', () => {
+    beforeEach(() => {
+      mockListMyOrders.mockImplementation(async (_client, opts) => {
+        if (opts?.status === 'cancelled') return { orders: [baseCancelledOrder], total: 1, error: null }
+        return { orders: [], total: 0, error: null }
+      })
+    })
+
+    it('shows a cancelled-order row in My-courses with course title', async () => {
+      renderPage()
+      await waitFor(() => {
+        expect(screen.getByTestId('cancelled-order-ord-c1')).toBeInTheDocument()
+      })
+      expect(screen.getByTestId('cancelled-order-ord-c1').textContent ?? '').toMatch(/Sicilian Dragon/i)
+    })
+
+    it('renders a reason-reveal button that toggles the cancellation reason', async () => {
+      const user = userEvent.setup()
+      renderPage()
+      await waitFor(() => expect(screen.getByTestId('cancelled-reveal-btn-ord-c1')).toBeInTheDocument())
+      // Reason not visible before clicking
+      expect(screen.queryByTestId('cancelled-reason-ord-c1')).not.toBeInTheDocument()
+      await user.click(screen.getByTestId('cancelled-reveal-btn-ord-c1'))
+      await waitFor(() => {
+        expect(screen.getByTestId('cancelled-reason-ord-c1')).toBeInTheDocument()
+      })
+      expect(screen.getByTestId('cancelled-reason-ord-c1').textContent ?? '').toMatch(/Chuyển khoản sai nội dung/i)
     })
   })
 })

@@ -709,7 +709,14 @@
     "recommendedHeading": "Gợi ý cho bạn",
     "recommendedSub": "Dựa trên hành trình học của bạn",
     "recommendedEmpty": "Chưa có gợi ý nào.",
-    "priceFree": "Miễn phí"
+    "priceFree": "Miễn phí",
+    "pendingPaymentStatus": "Đang chờ xác nhận thanh toán",
+    "pendingOrderCode": "Mã đơn: {{code}}",
+    "goPay": "Tiến hành thanh toán",
+    "cancelledStatus": "Đơn đã bị huỷ",
+    "cancelledReasonLabel": "Lý do:",
+    "cancelledShowReason": "Xem lý do",
+    "cancelledHideReason": "Ẩn lý do"
   },
   "profile": {
     "eyebrow": "HỒ SƠ CÁ NHÂN",

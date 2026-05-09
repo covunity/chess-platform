@@ -243,7 +243,7 @@ describe('getEnrolledCoursesProgress', () => {
 // ── getRecommendedCourses ───────────────────────────────────────────────
 
 describe('getRecommendedCourses', () => {
-  it('returns only free, published courses the user is not enrolled in, ranked by rating × enrollment_count, capped at limit', async () => {
+  it('returns published courses (including paid) the user is not enrolled in, ranked by rating × enrollment_count, capped at limit', async () => {
     const publishedRows = [
       {
         id: 'c1',
@@ -301,8 +301,8 @@ describe('getRecommendedCourses', () => {
     const client = makeRecommendedClient({ publishedRows, userEnrollments })
     const { courses } = await getRecommendedCourses(client, 'u1', 3)
 
-    // c1 excluded (enrolled), c5 excluded (paid); c2 > c4 > c3 by rating × pop
-    expect(courses?.map(c => c.id)).toEqual(['c2', 'c4', 'c3'])
+    // c1 excluded (enrolled); c2 (5×4=20) > c5 (5×2=10) > c4 (4×2=8); c3 drops off limit
+    expect(courses?.map(c => c.id)).toEqual(['c2', 'c5', 'c4'])
     expect(courses).toHaveLength(3)
   })
 

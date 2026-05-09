@@ -313,7 +313,7 @@ export async function getRecommendedCourses(
   const rows = (coursesRes.data ?? []) as Array<Record<string, unknown>>
 
   const candidates: RecommendedCourse[] = rows
-    .filter(row => (row.price as number) === 0 && !enrolledIds.has(row.id as string))
+    .filter(row => !enrolledIds.has(row.id as string))
     .map(row => {
       const reviews = Array.isArray(row.reviews) ? (row.reviews as Array<{ rating: number }>) : []
       const enrollments = Array.isArray(row.enrollments) ? row.enrollments : []

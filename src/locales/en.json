@@ -550,7 +550,14 @@
     "recommendedHeading": "Recommended for you",
     "recommendedSub": "Based on your study history",
     "recommendedEmpty": "No recommendations yet.",
-    "priceFree": "Free"
+    "priceFree": "Free",
+    "pendingPaymentStatus": "Awaiting payment confirmation",
+    "pendingOrderCode": "Order code: {{code}}",
+    "goPay": "Complete payment",
+    "cancelledStatus": "Order cancelled",
+    "cancelledReasonLabel": "Reason:",
+    "cancelledShowReason": "View reason",
+    "cancelledHideReason": "Hide reason"
   },
   "profile": {
     "eyebrow": "PERSONAL PROFILE",
