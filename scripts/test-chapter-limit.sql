@@ -165,3 +165,22 @@ BEGIN
   DELETE FROM public.users WHERE id = v_user_id;
 END;
 $$;
+
+-- ── Test 5 (migration 025): FOR UPDATE lock prevents concurrent race ───────────
+-- The concurrent scenario cannot be reliably reproduced in a single-session DO block.
+-- Verify instead that the trigger function body contains FOR UPDATE.
+DO $$
+DECLARE
+  v_func_src text;
+BEGIN
+  SELECT prosrc INTO v_func_src
+  FROM pg_proc
+  WHERE proname = 'enforce_chapter_limit'
+    AND pronamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public');
+
+  ASSERT v_func_src IS NOT NULL, 'enforce_chapter_limit function must exist';
+  ASSERT v_func_src LIKE '%FOR UPDATE%',
+    'enforce_chapter_limit must lock course row with FOR UPDATE to prevent race condition';
+  RAISE NOTICE 'PASS: enforce_chapter_limit contains FOR UPDATE lock (migration 025)';
+END;
+$$;

@@ -2,8 +2,17 @@
 -- Adds requested_tier_code + metadata columns, 'superseded' status value,
 -- and new RPCs (submit / approve / reject) that supersede the old ones.
 
--- ── 1. Rename table ──────────────────────────────────────────────────────────
-ALTER TABLE public.creator_applications RENAME TO account_applications;
+-- ── 1. Rename table (idempotent guard) ───────────────────────────────────────
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'creator_applications'
+  ) THEN
+    ALTER TABLE public.creator_applications RENAME TO account_applications;
+  END IF;
+END
+$$;
 
 -- Rename auto-generated indexes for clarity
 ALTER INDEX IF EXISTS creator_applications_one_pending_per_user
@@ -17,9 +26,14 @@ ALTER TABLE public.account_applications
   DROP CONSTRAINT IF EXISTS creator_applications_status_check,
   DROP CONSTRAINT IF EXISTS account_applications_status_check;
 
-ALTER TABLE public.account_applications
-  ADD CONSTRAINT account_applications_status_check
-  CHECK (status IN ('pending', 'approved', 'rejected', 'superseded'));
+DO $$
+BEGIN
+  ALTER TABLE public.account_applications
+    ADD CONSTRAINT account_applications_status_check
+    CHECK (status IN ('pending', 'approved', 'rejected', 'superseded'));
+EXCEPTION WHEN duplicate_object THEN NULL;
+END
+$$;
 
 -- ── 3. New columns ───────────────────────────────────────────────────────────
 ALTER TABLE public.account_applications

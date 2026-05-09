@@ -145,3 +145,71 @@ BEGIN
   DELETE FROM public.users WHERE id = v_user_id;
 END;
 $$;
+
+-- ── Test 8: Duplicate free-course order returns existing, no second insert ────
+-- Verifies migration 026 short-circuit: calling RPC twice for a free course
+-- must yield the same order id, not two separate rows.
+-- NOTE: Requires auth.uid() to be simulated in a real Supabase session.
+-- This block documents the expected invariant rather than executing the RPC.
+DO $$
+BEGIN
+  ASSERT EXISTS (
+    SELECT 1 FROM pg_indexes
+    WHERE schemaname = 'public'
+      AND tablename  = 'orders'
+      AND indexname  = 'orders_one_active_per_user_course'
+  ), 'Partial unique index orders_one_active_per_user_course must exist';
+  RAISE NOTICE 'PASS: duplicate-order prevention index exists';
+END;
+$$;
+
+-- ── Test 9: Partial unique index allows cancelled order + new pending ─────────
+DO $$
+DECLARE
+  v_user_id   uuid := gen_random_uuid();
+  v_course_id uuid := gen_random_uuid();
+  v_order1    uuid := gen_random_uuid();
+  v_order2    uuid := gen_random_uuid();
+  v_raised    boolean := false;
+BEGIN
+  INSERT INTO public.users (id, email, name, role, account_tier_id)
+  VALUES (v_user_id, 'dup_order_test@test.local', 'Dup Test', 'creator', 'individual');
+
+  INSERT INTO public.courses (id, creator_id, title, status, price, level, language)
+  VALUES (v_course_id, v_user_id, 'Paid Course Dup', 'published', 100000, 'beginner', 'vi');
+
+  -- Insert first order as cancelled
+  INSERT INTO public.orders (id, course_id, user_id, status, amount, code,
+                             platform_fee_pct, platform_fee_amount, creator_payout_amount,
+                             creator_payout, account_tier_code)
+  VALUES (v_order1, v_course_id, v_user_id, 'cancelled', 100000, 'ORD-2026-000001',
+          20, 20000, 80000, 80000, 'individual');
+
+  -- Second order as pending should succeed (cancelled doesn't block)
+  INSERT INTO public.orders (id, course_id, user_id, status, amount, code,
+                             platform_fee_pct, platform_fee_amount, creator_payout_amount,
+                             creator_payout, account_tier_code)
+  VALUES (v_order2, v_course_id, v_user_id, 'pending', 100000, 'ORD-2026-000002',
+          20, 20000, 80000, 80000, 'individual');
+
+  RAISE NOTICE 'PASS: cancelled + new pending allowed by partial index';
+
+  -- Now a second pending should be blocked by the unique index
+  BEGIN
+    INSERT INTO public.orders (id, course_id, user_id, status, amount, code,
+                               platform_fee_pct, platform_fee_amount, creator_payout_amount,
+                               creator_payout, account_tier_code)
+    VALUES (gen_random_uuid(), v_course_id, v_user_id, 'pending', 100000, 'ORD-2026-000003',
+            20, 20000, 80000, 80000, 'individual');
+  EXCEPTION WHEN unique_violation THEN
+    v_raised := true;
+  END;
+
+  ASSERT v_raised, 'Second pending order for same (user, course) must be rejected by unique index';
+  RAISE NOTICE 'PASS: second pending order blocked by partial unique index';
+
+  DELETE FROM public.orders  WHERE course_id = v_course_id;
+  DELETE FROM public.courses WHERE id = v_course_id;
+  DELETE FROM public.users   WHERE id = v_user_id;
+END;
+$$;
