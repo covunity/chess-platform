@@ -370,13 +370,9 @@ export default function HomePage() {
       {/* Course grid */}
       <section style={{ padding: '32px 56px 64px' }}>
         <div
-          style={{
-            maxWidth: 1280,
-            margin: '0 auto',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 20,
-          }}
+          data-testid="course-grid"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
+          style={{ maxWidth: 1280, margin: '0 auto' }}
         >
           {loading ? (
             Array.from({ length: 9 }).map((_, i) => <CourseSkeleton key={i} />)

@@ -112,6 +112,17 @@ describe('HomePage', () => {
         expect(screen.getByText('Chiến thuật nâng cao')).toBeInTheDocument()
       })
     })
+
+    it('course grid has responsive breakpoint classes for mobile and tablet', async () => {
+      mockListPublishedCourses.mockResolvedValue({ courses: sampleCourses, error: null })
+      renderHome()
+      await waitFor(() => screen.getByTestId('course-grid'))
+      const grid = screen.getByTestId('course-grid')
+      // Must have single-column class for small screens
+      expect(grid.className).toMatch(/grid-cols-1/)
+      // Must have two-column class for medium screens
+      expect(grid.className).toMatch(/md:grid-cols-2|sm:grid-cols-2/)
+    })
   })
 
   describe('empty state', () => {

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { vi, beforeEach } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
@@ -6,6 +6,9 @@ import { I18nextProvider } from 'react-i18next'
 import i18n from '../i18n'
 import TopNav from './TopNav'
 import { AuthContext } from '../context/AuthContext'
+import * as coursesApi from '../lib/coursesApi'
+
+const mockListPublishedCourses = vi.spyOn(coursesApi, 'listPublishedCourses')
 
 const mockSignOut = vi.fn()
 const mockNavigate = vi.fn()
@@ -180,6 +183,61 @@ describe('TopNav', () => {
       renderNav()
       const input = screen.getByRole('searchbox')
       expect(input).toHaveAttribute('placeholder')
+    })
+  })
+
+  describe('search overlay', () => {
+    const overlayCourses = [
+      {
+        id: 'ov1', title: 'Sicilian Defense', description: null, thumbnail_url: null,
+        price: 0, level: 'beginner' as const, tags: [], creator_id: 'u1',
+        creator_name: 'GM X', rating_avg: 4.5, rating_count: 10,
+        lessons_count: 5, hours_total: 2, enrollment_count: 50,
+        created_at: '2026-01-01T00:00:00Z',
+      },
+    ]
+
+    beforeEach(() => {
+      mockListPublishedCourses.mockResolvedValue({ courses: overlayCourses, error: null })
+    })
+
+    it('shows search overlay after typing in the search box', async () => {
+      const user = userEvent.setup({ delay: null })
+      renderNav()
+      const input = screen.getByRole('searchbox')
+      await user.type(input, 'Sicilian')
+      await waitFor(() => {
+        expect(screen.getByTestId('search-overlay')).toBeInTheDocument()
+      }, { timeout: 1000 })
+    })
+
+    it('overlay shows a result row for each matching course', async () => {
+      const user = userEvent.setup({ delay: null })
+      renderNav()
+      await user.type(screen.getByRole('searchbox'), 'Sicilian')
+      await waitFor(() => screen.getByTestId('search-overlay'))
+      expect(screen.getByTestId('search-overlay-result-ov1')).toBeInTheDocument()
+      expect(screen.getByTestId('search-overlay-result-ov1').textContent).toMatch(/Sicilian Defense/)
+    })
+
+    it('clicking an overlay result navigates to the course detail page', async () => {
+      const user = userEvent.setup({ delay: null })
+      renderNav()
+      await user.type(screen.getByRole('searchbox'), 'Sicilian')
+      await waitFor(() => screen.getByTestId('search-overlay-result-ov1'))
+      await user.click(screen.getByTestId('search-overlay-result-ov1'))
+      expect(mockNavigate).toHaveBeenCalledWith('/courses/ov1')
+    })
+
+    it('overlay hides when input is cleared', async () => {
+      const user = userEvent.setup({ delay: null })
+      renderNav()
+      await user.type(screen.getByRole('searchbox'), 'Sicilian')
+      await waitFor(() => screen.getByTestId('search-overlay'))
+      await user.clear(screen.getByRole('searchbox'))
+      await waitFor(() => {
+        expect(screen.queryByTestId('search-overlay')).not.toBeInTheDocument()
+      })
     })
   })
 })

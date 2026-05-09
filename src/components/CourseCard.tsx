@@ -5,9 +5,10 @@ import ChessBoard from './ChessBoard/ChessBoard'
 
 const INITIAL_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
-function Badge({ label, color }: { label: string; color: string }) {
+function Badge({ label, color, testId }: { label: string; color: string; testId?: string }) {
   return (
     <span
+      data-testid={testId}
       style={{
         position: 'absolute',
         top: 12,
@@ -31,15 +32,32 @@ function Badge({ label, color }: { label: string; color: string }) {
 export default function CourseCard({ course }: { course: PublicCourse }) {
   const { t } = useTranslation()
 
-  const badgeLabel = course.price === 0
-    ? t('home.badgeFree')
-    : course.enrollment_count > 100
-      ? t('home.badgeBestseller')
-      : null
+  const thirtyDaysAgo = new Date()
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+  const isNew = new Date(course.created_at) > thirtyDaysAgo
 
-  const badgeColor = course.price === 0
+  type BadgeKind = 'free' | 'bestseller' | 'new' | null
+  const badgeKind: BadgeKind = course.price === 0
+    ? 'free'
+    : course.enrollment_count > 100
+      ? 'bestseller'
+      : isNew
+        ? 'new'
+        : null
+
+  const badgeLabel = badgeKind === 'free'
+    ? t('home.badgeFree')
+    : badgeKind === 'bestseller'
+      ? t('home.badgeBestseller')
+      : badgeKind === 'new'
+        ? t('home.badgeNew')
+        : null
+
+  const badgeColor = badgeKind === 'free'
     ? 'var(--success)'
-    : 'oklch(0.62 0.16 30)'
+    : badgeKind === 'new'
+      ? 'var(--accent)'
+      : 'oklch(0.62 0.16 30)'
 
   const levelLabel = {
     beginner: t('home.levelBadgeBeginner'),
@@ -64,7 +82,7 @@ export default function CourseCard({ course }: { course: PublicCourse }) {
     >
       {/* Thumbnail */}
       <div style={{ position: 'relative', aspectRatio: '16/10', background: 'var(--surface-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-        {badgeLabel && <Badge label={badgeLabel} color={badgeColor} />}
+        {badgeLabel && <Badge label={badgeLabel} color={badgeColor} testId={badgeKind ? `badge-${badgeKind}` : undefined} />}
 
         {firstTag && (
           <span

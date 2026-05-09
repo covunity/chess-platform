@@ -123,4 +123,43 @@ describe('CourseCard', () => {
     renderCard(courses[0])
     expect(screen.getByText('GM Tuấn Phạm')).toBeInTheDocument()
   })
+
+  describe('"New" badge', () => {
+    function recentCourse(daysAgo: number): PublicCourse {
+      const d = new Date()
+      d.setDate(d.getDate() - daysAgo)
+      return { ...paidCourse, id: 'c-new', enrollment_count: 10, created_at: d.toISOString() }
+    }
+
+    it('shows "New" badge for paid course created within 30 days', () => {
+      renderCard(recentCourse(5))
+      expect(screen.getByTestId('badge-new')).toBeInTheDocument()
+    })
+
+    it('does NOT show "New" badge for course older than 30 days', () => {
+      renderCard(recentCourse(31))
+      expect(screen.queryByTestId('badge-new')).not.toBeInTheDocument()
+    })
+
+    it('does NOT show "New" badge for free courses (Free badge takes priority)', () => {
+      const newFree = recentCourse(5)
+      renderCard({ ...newFree, price: 0 })
+      expect(screen.queryByTestId('badge-new')).not.toBeInTheDocument()
+      expect(screen.getByTestId('badge-free')).toBeInTheDocument()
+    })
+
+    it('does NOT show "New" badge for bestseller courses (Bestseller takes priority)', () => {
+      const newBestseller = recentCourse(5)
+      renderCard({ ...newBestseller, enrollment_count: 200 })
+      expect(screen.queryByTestId('badge-new')).not.toBeInTheDocument()
+      expect(screen.getByTestId('badge-bestseller')).toBeInTheDocument()
+    })
+
+    it('shows no badge for old non-free non-bestseller course', () => {
+      renderCard(recentCourse(60))
+      expect(screen.queryByTestId('badge-new')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('badge-free')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('badge-bestseller')).not.toBeInTheDocument()
+    })
+  })
 })

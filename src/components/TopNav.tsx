@@ -1,9 +1,11 @@
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useCallback } from 'react'
 import { Link, NavLink, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { getBookmarks } from '../lib/bookmarkApi'
+import { listPublishedCourses } from '../lib/coursesApi'
+import type { PublicCourse } from '../lib/coursesApi'
 
 export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } = {}) {
   const { t } = useTranslation()
@@ -14,11 +16,26 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
   const [searchParams, setSearchParams] = useSearchParams()
   const searchRef = useRef<HTMLInputElement>(null)
   const [bookmarkCount, setBookmarkCount] = useState(0)
+  const [overlayQuery, setOverlayQuery] = useState('')
+  const [overlayResults, setOverlayResults] = useState<PublicCourse[]>([])
+  const overlayRef = useRef<HTMLDivElement>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const fetchOverlay = useCallback((q: string) => {
+    if (!q.trim()) { setOverlayResults([]); return }
+    listPublishedCourses(supabase, { q }).then(({ courses }) => {
+      setOverlayResults((courses ?? []).slice(0, 8))
+    })
+  }, [])
 
   function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value
+    setOverlayQuery(val)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => fetchOverlay(val), 250)
     setSearchParams(prev => {
       const next = new URLSearchParams(prev)
-      if (e.target.value) next.set('q', e.target.value)
+      if (val) next.set('q', val)
       else next.delete('q')
       return next
     })
@@ -174,6 +191,51 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
         >
           ⌘K
         </span>
+        {overlayQuery.length > 0 && overlayResults.length > 0 && (
+          <div
+            ref={overlayRef}
+            data-testid="search-overlay"
+            style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              marginTop: 4,
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--r-md)',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+              zIndex: 100,
+              overflow: 'hidden',
+            }}
+          >
+            {overlayResults.map(course => (
+              <button
+                key={course.id}
+                type="button"
+                data-testid={`search-overlay-result-${course.id}`}
+                onClick={() => {
+                  setOverlayQuery('')
+                  setOverlayResults([])
+                  navigate(`/courses/${course.id}`)
+                }}
+                style={{
+                  width: '100%',
+                  textAlign: 'left',
+                  padding: '10px 14px',
+                  border: 'none',
+                  background: 'transparent',
+                  cursor: 'pointer',
+                  fontSize: 13,
+                  color: 'var(--ink-1)',
+                  display: 'block',
+                }}
+              >
+                {course.title}
+              </button>
+            ))}
+          </div>
+        )}
       </div>}
 
       <div className="flex items-center" style={{ marginLeft: 'auto', gap: 8 }}>
