@@ -13,6 +13,18 @@ const { mockCreateCourse, mockNavigate } = vi.hoisted(() => ({
 
 vi.mock('../../lib/creatorApi', () => ({ createCourse: mockCreateCourse }))
 vi.mock('../../lib/supabase', () => ({ supabase: {} }))
+vi.mock('../../lib/creatorTagsApi', () => ({
+  listCreatorTags: vi.fn(() => Promise.resolve({ tags: [], error: null })),
+  createCreatorTag: vi.fn((_c: unknown, creatorId: string, name: string) =>
+    Promise.resolve({
+      tag: { id: 't-' + name, creator_id: creatorId, tag_name: name, created_at: '2026-01-01T00:00:00Z' },
+      error: null,
+    })
+  ),
+  deleteCreatorTag: vi.fn(() => Promise.resolve({ error: null })),
+  normalizeTagName: (raw: string) => raw.trim().slice(0, 50),
+  MAX_TAG_LENGTH: 50,
+}))
 vi.mock('react-router-dom', async (importOriginal) => {
   const mod = await importOriginal<typeof import('react-router-dom')>()
   return { ...mod, useNavigate: () => mockNavigate }
@@ -76,9 +88,9 @@ describe('NewCoursePage', () => {
     expect(screen.getByTestId('course-language-select')).toBeInTheDocument()
   })
 
-  it('renders tags input', () => {
+  it('renders tags select component', () => {
     renderPage()
-    expect(screen.getByTestId('course-tags-input')).toBeInTheDocument()
+    expect(screen.getByTestId('course-tags-select')).toBeInTheDocument()
   })
 
   it('renders thumbnail uploader zone', () => {
@@ -122,14 +134,16 @@ describe('NewCoursePage', () => {
     })
   })
 
-  it('adds tag chips when comma-separated input provided', async () => {
+  it('selects a popular tag from the dropdown', async () => {
     renderPage()
-    const tagsInput = screen.getByTestId('course-tags-input')
-    await userEvent.type(tagsInput, 'tactics,endgame')
-    await userEvent.keyboard('{Enter}')
+    const tagsContainer = screen.getByTestId('course-tags-select')
+    const input = tagsContainer.querySelector('input') as HTMLInputElement
+    await userEvent.click(input)
+    // "Khai cuộc" is the Vietnamese label for the 'openings' popular tag
+    const option = await screen.findByText('Khai cuộc')
+    await userEvent.click(option)
     await waitFor(() => {
-      expect(screen.getByText('tactics')).toBeInTheDocument()
-      expect(screen.getByText('endgame')).toBeInTheDocument()
+      expect(tagsContainer.querySelector('.course-tags-select__multi-value')).toBeInTheDocument()
     })
   })
 

@@ -12,6 +12,7 @@ interface PaywallSheetProps {
   onClose: () => void
   course: CourseSnapshot
   isLoggedIn: boolean
+  onPurchase?: () => void
 }
 
 function formatPriceRaw(price: number): string {
@@ -42,7 +43,7 @@ const PANEL_STYLE = `
   }
 `
 
-export default function PaywallSheet({ onClose, course, isLoggedIn }: PaywallSheetProps) {
+export default function PaywallSheet({ onClose, course, isLoggedIn, onPurchase }: PaywallSheetProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
@@ -50,7 +51,7 @@ export default function PaywallSheet({ onClose, course, isLoggedIn }: PaywallShe
     if (!isLoggedIn) {
       navigate('/login')
     } else {
-      onClose()
+      onPurchase ? onPurchase() : onClose()
     }
   }
 

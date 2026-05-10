@@ -246,7 +246,7 @@
       "languageVi": "Vietnamese",
       "languageEn": "English",
       "labelTags": "Tags",
-      "tagsHelper": "Separate with commas, max 10 tags",
+      "tagsHelper": "Up to 10 tags. Type a new tag name and pick the create option.",
       "cancel": "Cancel",
       "submit": "Create course",
       "validationTitle": "Title is required.",
@@ -259,6 +259,14 @@
         "payoutAmount": "{{amount}}₫",
         "free": "Free — no platform fee"
       }
+    },
+    "tagsSelect": {
+      "placeholder": "Select or create a tag…",
+      "groupPopular": "Popular tags",
+      "groupYours": "Your tags",
+      "createLabel": "Create tag \"{{name}}\"",
+      "noOptions": "Type to create a new tag",
+      "helper": "Up to {{max}} tags. New tags are saved to your library."
     },
     "courseEdit": {
       "curriculum": "CURRICULUM",

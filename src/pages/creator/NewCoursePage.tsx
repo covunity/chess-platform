@@ -6,6 +6,7 @@ import { createCourse } from '../../lib/creatorApi'
 import type { CourseLevel } from '../../lib/creatorApi'
 import { useAuth } from '../../context/AuthContext'
 import { useAccountTiers, computeFeeFloor } from '../../lib/accountTiers'
+import CourseTagsSelect from '../../components/CourseTagsSelect'
 
 const MAX_TITLE = 200
 const MAX_TAGS = 10
@@ -23,34 +24,11 @@ export default function NewCoursePage() {
   const [level, setLevel] = useState<CourseLevel>('beginner')
   const [language, setLanguage] = useState<'vi' | 'en'>('vi')
   const [tags, setTags] = useState<string[]>([])
-  const [tagInput, setTagInput] = useState('')
   const [thumbnail, setThumbnail] = useState<File | null>(null)
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null)
   const [titleError, setTitleError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
-
-  function parseTags(raw: string): string[] {
-    return raw
-      .split(',')
-      .map(t => t.trim())
-      .filter(Boolean)
-      .slice(0, MAX_TAGS)
-  }
-
-  function commitTags() {
-    if (!tagInput.trim()) return
-    const incoming = parseTags(tagInput)
-    setTags(prev => {
-      const merged = [...prev, ...incoming.filter(t => !prev.includes(t))]
-      return merged.slice(0, MAX_TAGS)
-    })
-    setTagInput('')
-  }
-
-  function removeTag(tag: string) {
-    setTags(prev => prev.filter(t => t !== tag))
-  }
 
   function handleThumbnailFile(file: File) {
     if (!file.type.startsWith('image/') || file.size > MAX_THUMBNAIL_BYTES) return
@@ -263,40 +241,14 @@ export default function NewCoursePage() {
             {/* Tags */}
             <div>
               <label className="label" htmlFor="course-tags">{t('creator.newCourse.labelTags')}</label>
-              {tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {tags.map(tag => (
-                    <span key={tag} className="pill pill-accent" style={{ gap: 4 }}>
-                      {tag}
-                      <button
-                        type="button"
-                        onClick={() => removeTag(tag)}
-                        style={{ marginLeft: 4, fontWeight: 700, cursor: 'pointer', background: 'none', border: 'none', color: 'inherit', padding: 0 }}
-                        aria-label={`remove ${tag}`}
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
+              {profile?.id && (
+                <CourseTagsSelect
+                  creatorId={profile.id}
+                  value={tags}
+                  onChange={setTags}
+                  maxTags={MAX_TAGS}
+                />
               )}
-              <input
-                id="course-tags"
-                data-testid="course-tags-input"
-                type="text"
-                className="input"
-                value={tagInput}
-                placeholder={t('creator.newCourse.tagsHelper')}
-                onChange={e => setTagInput(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' || e.key === ',') {
-                    e.preventDefault()
-                    commitTags()
-                  }
-                }}
-                onBlur={commitTags}
-              />
-              <p className="text-xs mt-1 text-(--ink-3)">{t('creator.newCourse.tagsHelper')}</p>
             </div>
 
           </div>

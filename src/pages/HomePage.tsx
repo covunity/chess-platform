@@ -17,13 +17,7 @@ const LEVELS: Array<{ key: CourseLevel | 'all'; labelKey: string }> = [
   { key: 'advanced', labelKey: 'home.levelAdvanced' },
 ]
 
-const TAGS: Array<{ key: string; labelKey: string }> = [
-  { key: 'openings', labelKey: 'home.tagOpenings' },
-  { key: 'tactics', labelKey: 'home.tagTactics' },
-  { key: 'endgame', labelKey: 'home.tagEndgame' },
-  { key: 'strategy', labelKey: 'home.tagStrategy' },
-  { key: 'master-games', labelKey: 'home.tagMasterGames' },
-]
+import { POPULAR_TAGS as TAGS } from '../lib/popularTags'
 
 function CourseSkeleton() {
   return (
