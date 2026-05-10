@@ -18,6 +18,7 @@ export interface GuidedChessPlayerProps {
   lesson: GuidedLesson
   lessonNumber: number
   totalLessons: number
+  initialNodeId?: string
   onComplete?: () => void
   onBookmark?: (nodeId: string, currentFen: string, depth: number, totalDepth: number) => void
 }
@@ -148,6 +149,7 @@ export default function GuidedChessPlayer({
   lesson,
   lessonNumber,
   totalLessons,
+  initialNodeId,
   onComplete,
   onBookmark,
 }: GuidedChessPlayerProps) {
@@ -155,7 +157,7 @@ export default function GuidedChessPlayer({
   const parsed = useMemo(() => parsePgn(lesson.pgn_data), [lesson.pgn_data])
   const totalPlies = parsed.mainLine.length
 
-  const [currentNodeId, setCurrentNodeId] = useState<string>('root')
+  const [currentNodeId, setCurrentNodeId] = useState<string>(initialNodeId ?? 'root')
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null)
   const [wrongMoveSquare, setWrongMoveSquare] = useState<string | null>(null)
   const [hintActive, setHintActive] = useState(false)

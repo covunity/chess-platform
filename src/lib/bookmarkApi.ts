@@ -1,10 +1,13 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { PgnParseResult, PgnNode } from '../utils/parsePgn'
 
 export interface BookmarkRow {
   id: string
   user_id: string
   lesson_id: string
   pgn_snapshot: string
+  node_id: string | null
+  played_plies: number | null
   created_at: string
 }
 
@@ -14,12 +17,42 @@ export interface BookmarkWithDetails extends BookmarkRow {
   course_title: string
 }
 
+// ---- resolveBookmark ----
+
+export function resolveBookmark(
+  parsed: PgnParseResult,
+  bookmark: BookmarkRow,
+): { nodeId: string; node: PgnNode } | null {
+  if (!parsed.valid || !parsed.root) return null
+
+  // Fast O(1) path: node_id is set and exists in the current tree
+  if (bookmark.node_id) {
+    const node = parsed.nodeMap.get(bookmark.node_id)
+    if (node) return { nodeId: bookmark.node_id, node }
+    // stale node_id — fall through to legacy ply-walk
+  }
+
+  // Legacy ply-walk: walk children[0] × played_plies times
+  if (bookmark.played_plies != null && bookmark.played_plies > 0) {
+    let node: PgnNode = parsed.root
+    for (let i = 0; i < bookmark.played_plies; i++) {
+      if (!node.children[0]) break
+      node = node.children[0]
+    }
+    return { nodeId: node.id, node }
+  }
+
+  return null
+}
+
 // ---- addBookmark ----
 
 export interface AddBookmarkArgs {
   userId: string
   lessonId: string
   pgnSnapshot: string
+  nodeId?: string
+  playedPlies?: number
 }
 
 export interface AddBookmarkResult {
@@ -29,11 +62,17 @@ export interface AddBookmarkResult {
 
 export async function addBookmark(
   client: SupabaseClient,
-  { userId, lessonId, pgnSnapshot }: AddBookmarkArgs
+  { userId, lessonId, pgnSnapshot, nodeId, playedPlies }: AddBookmarkArgs
 ): Promise<AddBookmarkResult> {
   const { data, error } = await client
     .from('bookmarks')
-    .insert({ user_id: userId, lesson_id: lessonId, pgn_snapshot: pgnSnapshot })
+    .insert({
+      user_id: userId,
+      lesson_id: lessonId,
+      pgn_snapshot: pgnSnapshot,
+      node_id: nodeId ?? null,
+      played_plies: playedPlies ?? null,
+    })
     .select()
     .single()
 
@@ -61,6 +100,8 @@ export async function getBookmarks(
       user_id,
       lesson_id,
       pgn_snapshot,
+      node_id,
+      played_plies,
       created_at,
       lessons!inner(
         id,
@@ -83,6 +124,8 @@ export async function getBookmarks(
     user_id: string
     lesson_id: string
     pgn_snapshot: string
+    node_id: string | null
+    played_plies: number | null
     created_at: string
     lessons: {
       id: string
@@ -99,6 +142,8 @@ export async function getBookmarks(
     user_id: row.user_id,
     lesson_id: row.lesson_id,
     pgn_snapshot: row.pgn_snapshot,
+    node_id: row.node_id ?? null,
+    played_plies: row.played_plies ?? null,
     created_at: row.created_at,
     lesson_title: row.lessons?.title ?? '',
     course_id: row.lessons?.chapters?.course_id ?? '',
@@ -147,7 +192,7 @@ export async function getBookmarkForLesson(
 ): Promise<GetBookmarkForLessonResult> {
   const { data, error } = await client
     .from('bookmarks')
-    .select('id, user_id, lesson_id, pgn_snapshot, created_at')
+    .select('id, user_id, lesson_id, pgn_snapshot, node_id, played_plies, created_at')
     .eq('user_id', userId)
     .eq('lesson_id', lessonId)
     .maybeSingle()

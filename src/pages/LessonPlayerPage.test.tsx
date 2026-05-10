@@ -50,6 +50,7 @@ const mockGetFirstLesson = vi.spyOn(enrollmentApi, 'getFirstLesson')
 const mockGetLessonForPlayer = vi.spyOn(lessonPlayerApi, 'getLessonForPlayer')
 const mockMarkLessonCompleted = vi.spyOn(lessonPlayerApi, 'markLessonCompleted')
 const mockGetBookmarkForLesson = vi.spyOn(bookmarkApi, 'getBookmarkForLesson')
+const mockAddBookmark = vi.spyOn(bookmarkApi, 'addBookmark')
 const mockGetPendingOrderForCourse = vi.spyOn(orderApi, 'getPendingOrderForCourse')
 
 const sampleCourse: CourseDetail = {
@@ -177,6 +178,18 @@ describe('LessonPlayerPage', () => {
     })
     mockMarkLessonCompleted.mockResolvedValue({ error: null })
     mockGetBookmarkForLesson.mockResolvedValue({ bookmark: null, error: null })
+    mockAddBookmark.mockResolvedValue({
+      bookmark: {
+        id: 'bm-new',
+        user_id: 'u99',
+        lesson_id: 'l2',
+        pgn_snapshot: '',
+        node_id: null,
+        played_plies: 0,
+        created_at: '2026-05-10T00:00:00Z',
+      },
+      error: null,
+    })
     mockGetPendingOrderForCourse.mockResolvedValue({ order: null, error: null })
   })
 
@@ -410,6 +423,40 @@ describe('LessonPlayerPage', () => {
         expect(mockMarkLessonCompleted).toHaveBeenCalledWith(
           expect.anything(),
           { courseId: 'c1', lessonId: 'l2', userId: 'u99' }
+        )
+      })
+    })
+  })
+
+  describe('bookmark restore round-trip (issue #167)', () => {
+    it('renders chess player without crashing when bookmark has played_plies for restore', async () => {
+      mockGetBookmarkForLesson.mockResolvedValue({
+        bookmark: {
+          id: 'bm1',
+          user_id: 'u99',
+          lesson_id: 'l2',
+          pgn_snapshot: 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1',
+          node_id: null,
+          played_plies: 1,
+          created_at: '2026-05-01T00:00:00Z',
+        },
+        error: null,
+      })
+      renderPlayer(enrolledUser, '/learn/c1/l2')
+      await waitFor(() => {
+        expect(screen.getByTestId('guided-player-root')).toBeInTheDocument()
+      })
+    })
+
+    it('addBookmark is called with played_plies when bookmark button clicked', async () => {
+      const user = userEvent.setup()
+      renderPlayer(enrolledUser, '/learn/c1/l2')
+      await waitFor(() => screen.getByTestId('header-bookmark-btn'))
+      await user.click(screen.getByTestId('header-bookmark-btn'))
+      await waitFor(() => {
+        expect(mockAddBookmark).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.objectContaining({ playedPlies: 0 })
         )
       })
     })

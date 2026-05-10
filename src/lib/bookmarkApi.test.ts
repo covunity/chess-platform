@@ -5,7 +5,62 @@ import {
   getBookmarks,
   deleteBookmark,
   getBookmarkForLesson,
+  resolveBookmark,
 } from './bookmarkApi'
+import type { BookmarkRow } from './bookmarkApi'
+import type { PgnParseResult, PgnNode } from '../utils/parsePgn'
+
+// ---- resolveBookmark helpers ----
+
+function makeNode(id: string, parentId: string | null, children: PgnNode[] = []): PgnNode {
+  return {
+    id,
+    san: 'e4',
+    from: 'e2',
+    to: 'e4',
+    promotion: undefined,
+    fen: `fen-${id}`,
+    moveNumber: 1,
+    side: 'w',
+    annotation: undefined,
+    parentId,
+    children,
+    depthFromRoot: 1,
+  }
+}
+
+function makeBookmark(overrides: Partial<BookmarkRow> = {}): BookmarkRow {
+  return {
+    id: 'bm1',
+    user_id: 'u1',
+    lesson_id: 'l1',
+    pgn_snapshot: 'fen-node-b',
+    node_id: null,
+    played_plies: null,
+    created_at: '2026-05-01T00:00:00Z',
+    ...overrides,
+  }
+}
+
+function makeParsed(nodes: PgnNode[]): PgnParseResult {
+  const root = makeNode('root', null, nodes)
+  root.san = ''
+  const nodeMap = new Map<string, PgnNode>([['root', root]])
+  for (const n of nodes) nodeMap.set(n.id, n)
+  return {
+    valid: true,
+    root,
+    totalNodes: nodes.length + 1,
+    variationCount: 0,
+    maxDepth: nodes.length,
+    mainLine: nodes,
+    nodeMap,
+    moveCount: nodes.length,
+    annotationCount: 0,
+    fen: nodes[nodes.length - 1]?.fen ?? '',
+    annotations: [],
+  }
+}
 
 function makeClient(overrides: Record<string, unknown> = {}): SupabaseClient {
   const chain = {
@@ -23,6 +78,50 @@ function makeClient(overrides: Record<string, unknown> = {}): SupabaseClient {
   } as unknown as SupabaseClient
 }
 
+describe('resolveBookmark', () => {
+  it('returns node via nodeMap when node_id is set and found (O(1) hit)', () => {
+    const nodeB = makeNode('node-b', 'root')
+    const parsed = makeParsed([nodeB])
+    const bookmark = makeBookmark({ node_id: 'node-b' })
+
+    // spy on nodeMap.get to confirm it is called (O(1) path, no walk)
+    const getSpy = vi.spyOn(parsed.nodeMap, 'get')
+    const result = resolveBookmark(parsed, bookmark)
+
+    expect(result).not.toBeNull()
+    expect(result!.nodeId).toBe('node-b')
+    expect(result!.node).toBe(nodeB)
+    expect(getSpy).toHaveBeenCalledWith('node-b')
+  })
+
+  it('walks children[0] × played_plies when node_id is NULL', () => {
+    const nodeA = makeNode('node-a', 'root')
+    const nodeB = makeNode('node-b', 'node-a')
+    nodeA.children = [nodeB]
+    const parsed = makeParsed([nodeA, nodeB])
+    const bookmark = makeBookmark({ node_id: null, played_plies: 2 })
+
+    const result = resolveBookmark(parsed, bookmark)
+
+    expect(result).not.toBeNull()
+    expect(result!.nodeId).toBe('node-b')
+  })
+
+  it('falls through to legacy ply-walk when node_id is stale (not in tree)', () => {
+    const nodeA = makeNode('node-a', 'root')
+    const nodeB = makeNode('node-b', 'node-a')
+    nodeA.children = [nodeB]
+    const parsed = makeParsed([nodeA, nodeB])
+    const bookmark = makeBookmark({ node_id: 'stale-id-xyz', played_plies: 1 })
+
+    const result = resolveBookmark(parsed, bookmark)
+
+    // stale node_id falls through to ply-walk → depth 1 → node-a
+    expect(result).not.toBeNull()
+    expect(result!.nodeId).toBe('node-a')
+  })
+})
+
 describe('addBookmark', () => {
   it('inserts a bookmark row and returns it', async () => {
     const mockBookmark = {
@@ -30,6 +129,8 @@ describe('addBookmark', () => {
       user_id: 'u1',
       lesson_id: 'l1',
       pgn_snapshot: 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1',
+      node_id: 'node-abc',
+      played_plies: 1,
       created_at: '2026-05-01T00:00:00Z',
     }
 
@@ -45,6 +146,8 @@ describe('addBookmark', () => {
       userId: 'u1',
       lessonId: 'l1',
       pgnSnapshot: mockBookmark.pgn_snapshot,
+      nodeId: 'node-abc',
+      playedPlies: 1,
     })
 
     expect(result.bookmark).toEqual(mockBookmark)
@@ -53,6 +156,8 @@ describe('addBookmark', () => {
       user_id: 'u1',
       lesson_id: 'l1',
       pgn_snapshot: mockBookmark.pgn_snapshot,
+      node_id: 'node-abc',
+      played_plies: 1,
     })
   })
 

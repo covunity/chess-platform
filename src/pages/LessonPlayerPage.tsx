@@ -11,8 +11,9 @@ import { getPendingOrderForCourse } from '../lib/orderApi'
 import { canAccessLesson } from '../lib/accessControl'
 import VideoView from '../components/VideoView'
 import type { CourseDetail, CourseDetailChapter } from '../lib/coursesApi'
-import { addBookmark, deleteBookmark, getBookmarkForLesson } from '../lib/bookmarkApi'
+import { addBookmark, deleteBookmark, getBookmarkForLesson, resolveBookmark } from '../lib/bookmarkApi'
 import type { BookmarkRow } from '../lib/bookmarkApi'
+import { parsePgn } from '../utils/parsePgn'
 import GuidedChessPlayer from '../components/GuidedChessPlayer/GuidedChessPlayer'
 import PaywallSheet from '../components/PaywallSheet'
 
@@ -293,6 +294,13 @@ export default function LessonPlayerPage() {
   const [bookmarkToast, setBookmarkToast] = useState<{ moveLabel: string } | null>(null)
   const bookmarkToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Derive initialNodeId from bookmark when both lesson PGN and bookmark are loaded
+  const initialNodeId = (() => {
+    if (!currentBookmark || !playerLesson?.pgn_data) return undefined
+    const parsed = parsePgn(playerLesson.pgn_data)
+    return resolveBookmark(parsed, currentBookmark)?.nodeId
+  })()
+
   const enrolled = searchParams.get('enrolled') === 'true'
 
   useEffect(() => {
@@ -475,6 +483,8 @@ export default function LessonPlayerPage() {
       userId: user.id,
       lessonId: currentLessonId,
       pgnSnapshot: currentFen,
+      nodeId: _nodeId !== 'root' ? _nodeId : undefined,
+      playedPlies: depth,
     })
     if (bookmark) {
       setCurrentBookmark(bookmark)
@@ -703,6 +713,7 @@ export default function LessonPlayerPage() {
               lesson={playerLesson}
               lessonNumber={lessonIndex + 1}
               totalLessons={allLessons.length}
+              initialNodeId={initialNodeId}
               onComplete={handleLessonComplete}
               onBookmark={handleBookmark}
             />
