@@ -508,7 +508,11 @@
       "puzzleComingSoon": "Trình soạn bài tập sắp ra mắt",
       "videoUploading": "Đang tải video lên…",
       "videoProcessing": "Đang xử lý video…",
-      "videoEmpty": "Chưa có video"
+      "videoEmpty": "Chưa có video",
+      "pgnVariationSummary": "({{variations}} nhánh phụ, độ sâu tối đa {{depth}})",
+      "variationListHeading": "Cây nước đi",
+      "variationListClickHint": "Bấm vào nước đi để xem trước trên bàn cờ",
+      "opponentBranchWarning": "⚠ Đối thủ sẽ chỉ đi {{san}} — các nhánh phụ sẽ không hiển thị cho học viên"
     },
     "deleteConfirm": {
       "title": "Xóa khóa học?",

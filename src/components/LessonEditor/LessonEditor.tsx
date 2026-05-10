@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import ChessBoard from "../ChessBoard/ChessBoard";
 import { parsePgn } from "../../utils/parsePgn";
-import type { PgnParseResult } from "../../utils/parsePgn";
+import type { PgnParseResult, PgnNode } from "../../utils/parsePgn";
 import VideoLessonEditor from "./VideoLessonEditor";
 import type { VideoStatus } from "../../lib/creatorApi";
 import type { VideoProviderName } from "../../lib/video/types";
@@ -42,7 +42,7 @@ const LESSON_TYPE_ICON: Record<LessonType, string> = {
 
 const LESSON_TAB_VALUES: LessonType[] = ['video', 'chess', 'puzzle'];
 
-const MAX_PGN_CHARS = 5000;
+const MAX_PGN_CHARS = 50000; // V-12, up from 5000
 
 const PLACEHOLDER_PGN = `1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5
 4. c3 Nf6 {The mainline. Black contests the center immediately.}
@@ -77,6 +77,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   const [perspective, setPerspective] = useState<"white" | "black">(lesson.board_perspective);
   const [isFreePreview, setIsFreePreview] = useState(lesson.is_free_preview);
   const [parseResult, setParseResult] = useState<PgnParseResult | null>(null);
+  const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<LessonType>(lesson.type ?? 'chess');
   const [videoLesson, setVideoLesson] = useState(() => ({
     id: lesson.id,
@@ -89,30 +90,36 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
     video_size_bytes: lesson.video_size_bytes ?? null,
   }));
 
-  const parsePgnValue = useCallback((value: string) => {
-    if (!value.trim()) {
-      setParseResult(null);
-      return;
-    }
-    const result = parsePgn(value);
-    setParseResult(result);
-  }, []);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    parsePgnValue(pgn);
-  }, [pgn, parsePgnValue]);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!pgn.trim()) {
+      setParseResult(null);
+      setHighlightedNodeId(null);
+      return;
+    }
+    debounceRef.current = setTimeout(() => {
+      setParseResult(parsePgn(pgn));
+      setHighlightedNodeId(null);
+    }, 250);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [pgn]);
 
   const handleSave = () => {
     onSave({ pgn_data: pgn, board_perspective: perspective, is_free_preview: isFreePreview, title });
   };
 
-  const currentFen = parseResult?.valid && parseResult.mainLine.length > 0
-    ? parseResult.fen
-    : STARTING_FEN;
-
-  const lastMoveInfo = parseResult?.valid && parseResult.mainLine.length > 0
-    ? parseResult.mainLine[parseResult.mainLine.length - 1]
-    : null;
+  // Preview node: highlighted (click in variation list) or last main-line node
+  const previewNode = useMemo<PgnNode | null>(() => {
+    if (!parseResult?.valid) return null;
+    if (highlightedNodeId) return parseResult.nodeMap.get(highlightedNodeId) ?? null;
+    return parseResult.mainLine.length > 0
+      ? parseResult.mainLine[parseResult.mainLine.length - 1]
+      : null;
+  }, [parseResult, highlightedNodeId]);
 
   function sqToRowCol(sq: string): [number, number] {
     const col = sq.charCodeAt(0) - 97;
@@ -120,19 +127,22 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
     return [row, col];
   }
 
+  const currentFen = previewNode?.fen ?? STARTING_FEN;
+  const lastMoveInfo = previewNode;
+
   const lastMove = lastMoveInfo
     ? { from: sqToRowCol(lastMoveInfo.from), to: sqToRowCol(lastMoveInfo.to) }
     : undefined;
 
-  const currentAnnotation = lastMoveInfo
-    ? parseResult?.annotations.find((a) => a.moveNumber === lastMoveInfo.moveNumber)
-    : undefined;
+  const currentAnnotation = lastMoveInfo?.annotation ?? null;
 
   const moveCount = parseResult?.moveCount ?? 0;
   const annotationCount = parseResult?.annotationCount ?? 0;
-  const totalMoveNumber = parseResult?.valid && lastMoveInfo
-    ? parseResult.mainLine.indexOf(lastMoveInfo) + 1
-    : 0;
+  const variationCount = parseResult?.variationCount ?? 0;
+  const maxDepth = parseResult?.maxDepth ?? 0;
+  const totalMoveNumber = previewNode?.depthFromRoot ?? 0;
+  const mainLineSet = useMemo(() => new Set(parseResult?.mainLine?.map(n => n.id) ?? []), [parseResult]);
+  const learnerSide: "w" | "b" = perspective === 'white' ? 'w' : 'b';
 
   const perspectiveButton = (val: "white" | "black", label: string) => (
     <button
@@ -333,6 +343,11 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
                     <span style={{ fontSize: 12, color: "var(--success)" }}>
                       {t('creator.lessonEditor.pgnParsedMoves', { count: moveCount })}{" "}
                       {t('creator.lessonEditor.pgnAnnotationsCount', { count: annotationCount })}
+                      {variationCount > 0 && (
+                        <span data-testid="variation-summary" style={{ color: "var(--ink-2)" }}>
+                          {" "}{t('creator.lessonEditor.pgnVariationSummary', { variations: variationCount, depth: maxDepth })}
+                        </span>
+                      )}
                     </span>
                   ) : (
                     <span role="alert" style={{ fontSize: 12, color: "var(--danger)" }}>
@@ -345,6 +360,76 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
                 </span>
               </div>
             </div>
+
+            {/* Variation tree panel — only shown when PGN has branching */}
+            {variationCount > 0 && parseResult?.root && (() => {
+              function renderVarNode(node: PgnNode): React.ReactNode[] {
+                const rows: React.ReactNode[] = [];
+                const isMain = mainLineSet.has(node.id);
+                rows.push(
+                  <div
+                    key={node.id}
+                    data-testid={`variation-node-${node.id}`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setHighlightedNodeId(node.id)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setHighlightedNodeId(node.id); }}
+                    style={{
+                      paddingLeft: node.depthFromRoot * 16,
+                      paddingTop: 2,
+                      paddingBottom: 2,
+                      cursor: 'pointer',
+                      color: isMain ? 'var(--ink-1)' : 'var(--ink-2)',
+                      fontSize: 12,
+                      background: highlightedNodeId === node.id ? 'var(--surface-3)' : 'transparent',
+                      borderRadius: 'var(--r-sm)',
+                    }}
+                  >
+                    {!isMain && '( '}
+                    {node.moveNumber}{node.side === 'w' ? '.' : '...'}{node.san}
+                    {!isMain && ' )'}
+                    {node.annotation && (
+                      <span style={{ color: 'var(--ink-3)', fontStyle: 'italic', marginLeft: 4 }}>
+                        {node.annotation}
+                      </span>
+                    )}
+                  </div>
+                );
+                if (node.children.length > 1 && node.children[0].side !== learnerSide) {
+                  rows.push(
+                    <div
+                      key={`warn-${node.id}`}
+                      data-testid="opponent-branch-warning"
+                      style={{ paddingLeft: (node.depthFromRoot + 1) * 16, fontSize: 11, color: 'var(--warn)', paddingTop: 1 }}
+                    >
+                      {t('creator.lessonEditor.opponentBranchWarning', { san: node.children[0].san })}
+                    </div>
+                  );
+                }
+                for (const child of node.children) {
+                  rows.push(...renderVarNode(child));
+                }
+                return rows;
+              }
+              return (
+                <div
+                  data-testid="variation-list"
+                  style={{
+                    marginTop: 8,
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--r-sm)',
+                    padding: 8,
+                    maxHeight: 200,
+                    overflowY: 'auto',
+                  }}
+                >
+                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-2)', marginBottom: 4 }}>
+                    {t('creator.lessonEditor.variationListHeading')} · {t('creator.lessonEditor.variationListClickHint')}
+                  </div>
+                  {parseResult.root.children.flatMap(child => renderVarNode(child))}
+                </div>
+              );
+            })()}
           </>
         ) : activeTab === "video" ? (
           <>
@@ -528,7 +613,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
                   {lastMoveInfo.moveNumber}. {lastMoveInfo.san}
                 </div>
                 <div style={{ fontSize: 12, color: "var(--ink-2)", lineHeight: 1.5 }}>
-                  {currentAnnotation.text}
+                  {currentAnnotation}
                 </div>
               </div>
             )}

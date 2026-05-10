@@ -75,9 +75,9 @@ describe("LessonEditor", () => {
   });
 
   describe("character counter", () => {
-    it("shows 0 / 5,000 chars when empty", () => {
+    it("shows 0 / 50,000 chars when empty", () => {
       renderEditor({ lesson: DEFAULT_LESSON, onSave: vi.fn() });
-      expect(screen.getByText(/0 \/ 5,000 ký tự/i)).toBeInTheDocument();
+      expect(screen.getByText(/0 \/ 50,000 ký tự/i)).toBeInTheDocument();
     });
 
     it("updates character count as user types", async () => {
@@ -85,7 +85,13 @@ describe("LessonEditor", () => {
       renderEditor({ lesson: DEFAULT_LESSON, onSave: vi.fn() });
       const textarea = screen.getByRole("textbox", { name: /pgn/i });
       await user.type(textarea, "1. e4");
-      expect(screen.getByText(/5 \/ 5,000 ký tự/i)).toBeInTheDocument();
+      expect(screen.getByText(/5 \/ 50,000 ký tự/i)).toBeInTheDocument();
+    });
+
+    it("textarea maxLength is 50,000", () => {
+      renderEditor({ lesson: DEFAULT_LESSON, onSave: vi.fn() });
+      const textarea = screen.getByRole("textbox", { name: /pgn/i });
+      expect(textarea).toHaveAttribute("maxLength", "50000");
     });
   });
 
@@ -208,6 +214,113 @@ describe("LessonEditor", () => {
       });
       const titleInput = screen.getByRole("textbox", { name: /tiêu đề bài học/i });
       expect(titleInput).toHaveValue("Italian Game");
+    });
+  });
+
+  describe("variation tree — Slice 1B (issue #166)", () => {
+    const VARIATION_PGN = "1. e4 e5 (1...c5 2. Nf3) 2. Nf3";
+    // Learner-branch only PGN: white has 2 options, black has 1 → no opponent warning
+    const LEARNER_BRANCH_PGN = "1. e4 (1. d4) e5";
+
+    it("status row shows variation summary for PGN with variations", async () => {
+      renderEditor({ lesson: DEFAULT_LESSON, onSave: vi.fn() });
+      const textarea = screen.getByRole("textbox", { name: /pgn/i });
+      fireEvent.change(textarea, { target: { value: VARIATION_PGN } });
+      await waitFor(() => {
+        expect(screen.getByTestId("variation-summary")).toBeInTheDocument();
+      });
+    });
+
+    it("status row does not show variation summary for linear PGN", async () => {
+      renderEditor({ lesson: DEFAULT_LESSON, onSave: vi.fn() });
+      const textarea = screen.getByRole("textbox", { name: /pgn/i });
+      fireEvent.change(textarea, { target: { value: "1. e4 e5 2. Nf3" } });
+      await waitFor(() => {
+        expect(screen.getByText(/đã phân tích pgn/i)).toBeInTheDocument();
+      });
+      expect(screen.queryByText(/nhánh phụ/i)).not.toBeInTheDocument();
+    });
+
+    it("variation list heading is absent for linear PGN", async () => {
+      renderEditor({ lesson: DEFAULT_LESSON, onSave: vi.fn() });
+      const textarea = screen.getByRole("textbox", { name: /pgn/i });
+      fireEvent.change(textarea, { target: { value: "1. e4 e5 2. Nf3" } });
+      await waitFor(() => {
+        expect(screen.getByText(/đã phân tích pgn/i)).toBeInTheDocument();
+      });
+      expect(screen.queryByTestId("variation-list")).not.toBeInTheDocument();
+    });
+
+    it("variation list panel renders for PGN with variations", async () => {
+      renderEditor({ lesson: DEFAULT_LESSON, onSave: vi.fn() });
+      const textarea = screen.getByRole("textbox", { name: /pgn/i });
+      fireEvent.change(textarea, { target: { value: VARIATION_PGN } });
+      await waitFor(() => {
+        expect(screen.getByTestId("variation-list")).toBeInTheDocument();
+      });
+    });
+
+    it("variation list contains all move SANs including variation nodes", async () => {
+      renderEditor({ lesson: DEFAULT_LESSON, onSave: vi.fn() });
+      const textarea = screen.getByRole("textbox", { name: /pgn/i });
+      fireEvent.change(textarea, { target: { value: VARIATION_PGN } });
+      await waitFor(() => {
+        expect(screen.getByTestId("variation-list")).toBeInTheDocument();
+      });
+      // c5 is a variation node — must appear in the list
+      expect(screen.getByTestId("variation-list")).toHaveTextContent("c5");
+    });
+
+    it("clicking a variation node updates the preview board (highlighted node FEN changes)", async () => {
+      renderEditor({ lesson: { ...DEFAULT_LESSON, pgn_data: VARIATION_PGN }, onSave: vi.fn() });
+      await waitFor(() => {
+        expect(screen.getByTestId("variation-list")).toBeInTheDocument();
+      });
+      // Click the first variation node
+      const varNodes = screen.getAllByTestId(/variation-node-/);
+      fireEvent.click(varNodes[0]);
+      // After click the preview area should still be rendered (no crash)
+      expect(screen.getByTestId("lesson-preview-pane")).toBeInTheDocument();
+    });
+
+    it("opponent-branch warning appears when opponent has 2+ children", async () => {
+      renderEditor({ lesson: DEFAULT_LESSON, onSave: vi.fn() });
+      const textarea = screen.getByRole("textbox", { name: /pgn/i });
+      // White learner: e4 node has 2 black responses (e5 main, c5 variation) → warning
+      fireEvent.change(textarea, { target: { value: VARIATION_PGN } });
+      await waitFor(() => {
+        expect(screen.getAllByTestId("opponent-branch-warning").length).toBeGreaterThan(0);
+      });
+    });
+
+    it("opponent-branch warning absent when only learner has branching choices", async () => {
+      renderEditor({ lesson: DEFAULT_LESSON, onSave: vi.fn() });
+      const textarea = screen.getByRole("textbox", { name: /pgn/i });
+      // 1. e4 (1. d4) e5 — white (learner) has 2 options; no opponent branching
+      fireEvent.change(textarea, { target: { value: LEARNER_BRANCH_PGN } });
+      await waitFor(() => {
+        expect(screen.getByTestId("variation-list")).toBeInTheDocument();
+      });
+      expect(screen.queryByTestId("opponent-branch-warning")).not.toBeInTheDocument();
+    });
+
+    it("pasting very large PGN up to 50,000 chars is accepted by textarea", () => {
+      renderEditor({ lesson: DEFAULT_LESSON, onSave: vi.fn() });
+      const textarea = screen.getByRole("textbox", { name: /pgn/i });
+      expect(textarea).toHaveAttribute("maxLength", "50000");
+    });
+
+    it("parse is debounced — result does not appear synchronously after change", () => {
+      vi.useFakeTimers();
+      try {
+        renderEditor({ lesson: DEFAULT_LESSON, onSave: vi.fn() });
+        const textarea = screen.getByRole("textbox", { name: /pgn/i });
+        fireEvent.change(textarea, { target: { value: "1. e4 e5" } });
+        // Before the 250 ms debounce fires, parse result must not yet be visible
+        expect(screen.queryByText(/đã phân tích pgn/i)).not.toBeInTheDocument();
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 

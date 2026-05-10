@@ -349,7 +349,11 @@
       "puzzleComingSoon": "Puzzle editor coming soon",
       "videoUploading": "Uploading video…",
       "videoProcessing": "Processing video…",
-      "videoEmpty": "No video"
+      "videoEmpty": "No video",
+      "pgnVariationSummary": "({{variations}} variation(s), max depth {{depth}})",
+      "variationListHeading": "Move tree",
+      "variationListClickHint": "Click a move to preview on the board",
+      "opponentBranchWarning": "⚠ Opponent will only play {{san}} — side variations will not be shown to learners"
     },
     "deleteConfirm": {
       "title": "Delete course?",
