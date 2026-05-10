@@ -402,7 +402,7 @@
       "languageVi": "Tiếng Việt",
       "languageEn": "Tiếng Anh",
       "labelTags": "Thẻ",
-      "tagsHelper": "Phân tách bằng dấu phẩy, tối đa 10 thẻ",
+      "tagsHelper": "Tối đa 10 thẻ. Gõ tên thẻ mới rồi chọn để tạo.",
       "cancel": "Hủy",
       "submit": "Tạo khóa học",
       "validationTitle": "Tiêu đề là bắt buộc.",
@@ -415,6 +415,14 @@
         "payoutAmount": "{{amount}}₫",
         "free": "Miễn phí — không tính phí"
       }
+    },
+    "tagsSelect": {
+      "placeholder": "Chọn hoặc tạo thẻ…",
+      "groupPopular": "Thẻ phổ biến",
+      "groupYours": "Thẻ của bạn",
+      "createLabel": "Tạo thẻ \"{{name}}\"",
+      "noOptions": "Gõ để tạo thẻ mới",
+      "helper": "Tối đa {{max}} thẻ. Thẻ mới sẽ được lưu vào danh sách của bạn."
     },
     "courseEdit": {
       "curriculum": "CHƯƠNG TRÌNH HỌC",
