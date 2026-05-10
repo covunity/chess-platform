@@ -56,24 +56,35 @@ export interface GetVideoPlaybackInfoResult {
 
 export async function getVideoPlaybackInfo(
   client: SupabaseClient,
-  lesson: Pick<PlayerLesson, 'video_provider' | 'video_provider_id' | 'video_status'>
+  lessonId: string
 ): Promise<GetVideoPlaybackInfoResult> {
-  if (lesson.video_status !== 'ready') {
-    return { url: null, format: 'mp4', error: new Error('Video chưa sẵn sàng.') }
+  const { data: rows, error: rpcError } = await client.rpc('get_video_playback_info', { p_lesson_id: lessonId })
+
+  if (rpcError) {
+    const msg = (rpcError as { message?: string; code?: string }).message ?? 'Không thể tải video.'
+    return { url: null, format: 'mp4', error: new Error(msg) }
   }
-  if (!lesson.video_provider_id) {
+
+  const row = Array.isArray(rows) && rows.length > 0 ? rows[0] as Record<string, string> : null
+  if (!row) {
     return { url: null, format: 'mp4', error: new Error('Bài học chưa có video.') }
   }
-  if (lesson.video_provider === 'supabase') {
+
+  if (row.video_status !== 'ready') {
+    return { url: null, format: 'mp4', error: new Error('Video chưa sẵn sàng.') }
+  }
+
+  if (row.video_provider === 'supabase') {
     const { data, error } = await client
       .storage
       .from('lesson-videos')
-      .createSignedUrl(lesson.video_provider_id, 4 * 3600)
+      .createSignedUrl(row.video_provider_id, 4 * 3600)
     if (error || !data) {
-      return { url: null, format: 'mp4', error: new Error(error?.message ?? 'Không thể tải video.') }
+      return { url: null, format: 'mp4', error: new Error((error as { message?: string })?.message ?? 'Không thể tải video.') }
     }
     return { url: data.signedUrl, format: 'mp4', error: null }
   }
+
   return { url: null, format: 'mp4', error: new Error('Video provider chưa được hỗ trợ.') }
 }
 

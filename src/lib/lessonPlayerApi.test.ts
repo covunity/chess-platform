@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { getLessonForPlayer, markLessonCompleted } from './lessonPlayerApi'
+import { getLessonForPlayer, getVideoPlaybackInfo, markLessonCompleted } from './lessonPlayerApi'
 
 describe('getLessonForPlayer', () => {
   beforeEach(() => {
@@ -54,6 +54,73 @@ describe('getLessonForPlayer', () => {
 
     const result = await getLessonForPlayer(client as never, 'missing')
     expect(result.lesson).toBeNull()
+    expect(result.error).not.toBeNull()
+  })
+})
+
+describe('getVideoPlaybackInfo', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  function makeRpcClient(rpcResult: { data: unknown; error: unknown }, signedUrlResult?: { data: unknown; error: unknown }) {
+    const createSignedUrl = vi.fn().mockResolvedValue(signedUrlResult ?? { data: null, error: { message: 'storage error' } })
+    return {
+      rpc: vi.fn().mockResolvedValue(rpcResult),
+      storage: { from: vi.fn().mockReturnValue({ createSignedUrl }) },
+    }
+  }
+
+  it('calls get_video_playback_info RPC with lesson id', async () => {
+    const client = makeRpcClient(
+      { data: [{ video_provider: 'supabase', video_provider_id: 'u1/l1/video.mp4', video_status: 'ready' }], error: null },
+      { data: { signedUrl: 'https://cdn.example.com/video.mp4' }, error: null }
+    )
+    await getVideoPlaybackInfo(client as never, 'lesson-1')
+    expect(client.rpc).toHaveBeenCalledWith('get_video_playback_info', { p_lesson_id: 'lesson-1' })
+  })
+
+  it('returns signed URL when RPC succeeds and video is ready', async () => {
+    const client = makeRpcClient(
+      { data: [{ video_provider: 'supabase', video_provider_id: 'u1/l1/video.mp4', video_status: 'ready' }], error: null },
+      { data: { signedUrl: 'https://cdn.example.com/video.mp4' }, error: null }
+    )
+    const result = await getVideoPlaybackInfo(client as never, 'lesson-1')
+    expect(result.url).toBe('https://cdn.example.com/video.mp4')
+    expect(result.format).toBe('mp4')
+    expect(result.error).toBeNull()
+  })
+
+  it('returns forbidden error when RPC returns code 42501', async () => {
+    const client = makeRpcClient({ data: null, error: { message: 'forbidden', code: '42501' } })
+    const result = await getVideoPlaybackInfo(client as never, 'lesson-1')
+    expect(result.url).toBeNull()
+    expect(result.error?.message).toMatch(/forbidden|access/i)
+  })
+
+  it('returns error when RPC returns video_status not ready', async () => {
+    const client = makeRpcClient(
+      { data: [{ video_provider: 'supabase', video_provider_id: 'path/video.mp4', video_status: 'uploading' }], error: null }
+    )
+    const result = await getVideoPlaybackInfo(client as never, 'lesson-1')
+    expect(result.url).toBeNull()
+    expect(result.error).not.toBeNull()
+  })
+
+  it('returns error when RPC returns null data', async () => {
+    const client = makeRpcClient({ data: null, error: null })
+    const result = await getVideoPlaybackInfo(client as never, 'lesson-1')
+    expect(result.url).toBeNull()
+    expect(result.error).not.toBeNull()
+  })
+
+  it('returns error when signed URL generation fails', async () => {
+    const client = makeRpcClient(
+      { data: [{ video_provider: 'supabase', video_provider_id: 'u1/l1/video.mp4', video_status: 'ready' }], error: null },
+      { data: null, error: { message: 'storage error' } }
+    )
+    const result = await getVideoPlaybackInfo(client as never, 'lesson-1')
+    expect(result.url).toBeNull()
     expect(result.error).not.toBeNull()
   })
 })

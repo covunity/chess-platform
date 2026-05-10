@@ -428,7 +428,7 @@ export default function LessonPlayerPage() {
       if (cancelled || !pl) return
       setPlayerLesson(pl)
       if (pl.type === 'video') {
-        getVideoPlaybackInfo(supabase, pl).then(({ url, format, error }) => {
+        getVideoPlaybackInfo(supabase, pl.id).then(({ url, format, error }) => {
           if (cancelled) return
           if (error) {
             setVideoError(error.message)
