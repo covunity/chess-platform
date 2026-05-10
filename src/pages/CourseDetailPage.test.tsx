@@ -420,27 +420,27 @@ describe('CourseDetailPage', () => {
       })
     })
 
-    it('clicking a lock icon shows lock prompt', async () => {
+    it('clicking a lock icon shows paywall sheet', async () => {
       const user = userEvent.setup()
       mockGetCourseDetail.mockResolvedValue({ course: sampleCourse, error: null })
       renderPage(noAuthContext)
       await waitFor(() => screen.getByTestId('lock-icon-l2'))
       await user.click(screen.getByTestId('lock-icon-l2'))
       await waitFor(() => {
-        expect(screen.getByTestId('lock-prompt')).toBeInTheDocument()
+        expect(screen.getByTestId('paywall-sheet-title')).toBeInTheDocument()
       })
     })
 
-    it('lock prompt can be closed', async () => {
+    it('paywall sheet can be closed via back link', async () => {
       const user = userEvent.setup()
       mockGetCourseDetail.mockResolvedValue({ course: sampleCourse, error: null })
       renderPage(noAuthContext)
       await waitFor(() => screen.getByTestId('lock-icon-l2'))
       await user.click(screen.getByTestId('lock-icon-l2'))
-      await waitFor(() => screen.getByTestId('lock-prompt'))
-      await user.click(screen.getByTestId('close-lock-prompt'))
+      await waitFor(() => screen.getByTestId('paywall-back'))
+      await user.click(screen.getByTestId('paywall-back'))
       await waitFor(() => {
-        expect(screen.queryByTestId('lock-prompt')).not.toBeInTheDocument()
+        expect(screen.queryByTestId('paywall-sheet-title')).not.toBeInTheDocument()
       })
     })
   })

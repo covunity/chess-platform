@@ -17,6 +17,7 @@ import { createOrder, getPendingOrderForCourse } from '../lib/orderApi'
 import type { Order } from '../lib/orderApi'
 import { useAuth } from '../context/AuthContext'
 import ChessBoard from '../components/ChessBoard/ChessBoard'
+import PaywallSheet from '../components/PaywallSheet'
 
 const INITIAL_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
@@ -461,70 +462,6 @@ function PreviewModal({
   )
 }
 
-function LockPrompt({ onClose }: { onClose: () => void }) {
-  const { t } = useTranslation()
-  return (
-    <div
-      data-testid="lock-prompt"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(15,17,20,0.75)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-      }}
-      onClick={onClose}
-    >
-      <div
-        className="card"
-        style={{ width: 400, padding: 32, textAlign: 'center' }}
-        onClick={e => e.stopPropagation()}
-      >
-        <button
-          type="button"
-          data-testid="close-lock-prompt"
-          onClick={onClose}
-          style={{
-            position: 'absolute',
-            top: 16,
-            right: 16,
-            background: 'none',
-            border: 'none',
-            fontSize: 20,
-            cursor: 'pointer',
-            color: 'var(--ink-3)',
-          }}
-        >
-          {t('courseDetail.closeBtn')}
-        </button>
-        <div style={{ fontSize: 32, marginBottom: 12 }}>🔒</div>
-        <h3
-          style={{
-            fontFamily: 'var(--font-serif)',
-            fontSize: 22,
-            marginBottom: 8,
-            color: 'var(--ink-1)',
-          }}
-        >
-          {t('courseDetail.lockPromptTitle')}
-        </h3>
-        <p style={{ fontSize: 14, color: 'var(--ink-2)', marginBottom: 24 }}>
-          {t('courseDetail.lockPromptBody')}
-        </p>
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-          <Link to="/login" className="btn btn-secondary">
-            {t('courseDetail.lockPromptLogin')}
-          </Link>
-          <button type="button" className="btn btn-accent" onClick={onClose}>
-            {t('courseDetail.purchase')}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 // ── WriteReviewBlock ──────────────────────────────────────────────────────────
 
@@ -1823,8 +1760,12 @@ export default function CourseDetailPage() {
       {previewLesson && (
         <PreviewModal lesson={previewLesson} onClose={() => setPreviewLesson(null)} />
       )}
-      {lockPromptOpen && (
-        <LockPrompt onClose={() => setLockPromptOpen(false)} />
+      {lockPromptOpen && course && (
+        <PaywallSheet
+          onClose={() => setLockPromptOpen(false)}
+          course={course}
+          isLoggedIn={!!user}
+        />
       )}
     </main>
   )

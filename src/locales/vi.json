@@ -608,6 +608,16 @@
     "continuePaying": "Tiếp tục thanh toán",
     "paywallBanner": "Bài học này yêu cầu mua khoá học để truy cập."
   },
+  "paywallSheet": {
+    "title": "Mở khoá toàn bộ khoá học",
+    "bodyLoggedOut": "Đăng nhập để mua khoá học và mở khoá {{n}} bài học.",
+    "bodyLoggedIn": "Mua để mở khoá {{n}} bài học, {{a}} annotations, {{p}} puzzles.",
+    "cta": {
+      "login": "Đăng nhập",
+      "buy": "Mua khoá học — {{price}}₫"
+    },
+    "back": "← Quay lại khoá học"
+  },
   "auth": {
     "brand": {
       "headline1": "Learn chess",

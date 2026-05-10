@@ -449,6 +449,16 @@
     "continuePaying": "Continue to payment",
     "paywallBanner": "This lesson requires purchasing the course to access."
   },
+  "paywallSheet": {
+    "title": "Unlock the full course",
+    "bodyLoggedOut": "Sign in to purchase the course and unlock {{n}} lessons.",
+    "bodyLoggedIn": "Purchase to unlock {{n}} lessons, {{a}} annotations, {{p}} puzzles.",
+    "cta": {
+      "login": "Sign in",
+      "buy": "Buy course — {{price}}₫"
+    },
+    "back": "← Back to course"
+  },
   "auth": {
     "brand": {
       "headline1": "Learn chess",
