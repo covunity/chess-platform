@@ -109,7 +109,7 @@ published → draft  (Creator withdraws)
 | Type | Description |
 |------|-------------|
 | `video` | MP4 (H.264 + AAC) upload via Supabase Storage in Phase 1. Max 50 MB. Phase 2 will switch to Cloudflare Stream for HLS adaptive — see `docs/adr/0001-video-storage-supabase.md`. |
-| `chess` | Linear PGN guided mode with inline `{ }` annotations. |
+| `chess` | PGN guided mode with inline `{ }` annotations and `(...)` variation trees per ADR-0004. |
 | `puzzle` | Bookmark-based review — replays a chess lesson from beginning. |
 
 ### Order status flow
@@ -147,7 +147,7 @@ Platform fee stored per tier in `account_tiers.platform_fee_pct`. The global `co
 | D-04 | Comments have **no reply threading** — each comment is independent. |
 | D-05 | Free course (price=0) auto-activates instantly, same order tracking as paid. |
 | D-06 | Free preview = Creator flags an existing video lesson, not a separate upload. |
-| D-07 | **Guided mode is linear PGN only — no variation tree in Phase 1.** |
+| D-07 | ~~Guided mode is linear PGN only — no variation tree in Phase 1.~~ **Lifted by ADR-0004 + PRD-0003.** Variations live in PGN itself per V-01; player + editor are tree-aware (V-02..V-18). |
 | D-08 | PGN annotations use standard `{ }` comment syntax parsed by chess.js. |
 | D-09 | Board perspective (White/Black) set per lesson by Creator. |
 | D-10 | Wrong move: piece snaps back + red highlight ~1 second. No popup. |
@@ -157,7 +157,7 @@ Platform fee stored per tier in `account_tiers.platform_fee_pct`. The global `co
 | D-14 | Email notifications are low priority — build after core loop is validated. |
 | D-15 | Platform fee 20% in `config`; payout settlement is manual in Phase 1. |
 | D-16 | No Creator public profile page in Phase 1. |
-| D-17 | No "Continue learning" button on Learner dashboard. |
+| D-17 | No “Continue learning” button on Learner dashboard. |
 | D-18 | Refund handling not in Phase 1. |
 | D-19 | Search uses PostgreSQL `ILIKE`. No Elasticsearch. |
 | D-20 | ToS and Privacy Policy are static pages. |
@@ -175,7 +175,7 @@ Platform fee stored per tier in `account_tiers.platform_fee_pct`. The global `co
 | E-07 | Platform fee + creator payout are snapshotted onto `orders` at creation — tier changes don't retroactively alter past orders. |
 | E-08 | Fee formula: `floor(price * pct / 100)` — integer arithmetic, no floating-point rounding. |
 | E-09 | RPC `create_order_with_fee_snapshot` handles all order creation; client never INSERTs `orders` directly. Free courses auto-activate enrollment in the same transaction. |
-| E-10 | AdminUsersPage hides the "Change tier" action for rows where `role = 'admin'`. |
+| E-10 | AdminUsersPage hides the “Change tier” action for rows where `role = 'admin'`. |
 | E-11 | Tier downgrade is blocked if any existing course exceeds the new tier's chapter limit. RPC raises `tier_downgrade_violates_chapter_limit`. |
 | E-12 | `creator_applications` is renamed to `account_applications`; `requested_tier_code` column added (FK → `account_tiers`). |
 | E-13 | RLS on `account_tiers`: public SELECT (anon) allowed — tier list is marketing info needed before sign-up. |
@@ -187,13 +187,35 @@ Platform fee stored per tier in `account_tiers.platform_fee_pct`. The global `co
 | E-19 | Required fields validated at both client layer and RPC layer (`submit_account_application`). |
 | E-20 | Tier upgrade for existing creators: only `account_tier_id` changes; `role` stays `creator`. |
 
+#### Variation tree decisions (ADR-0004, PRD-0003)
+
+| # | Decision |
+|---|----------|
+| V-01 | Variation data is **encoded in PGN itself** using the standard `(...)` syntax. No `mode` column on `lessons`, no separate `lesson_moves` table, no DB migration in this scope. |
+| V-02 | `parsePgn` produces a `PgnNode` tree: each node holds `{ id, san, from, to, promotion, fen, moveNumber, side, annotation, children: PgnNode[], parentId }`. First child = main line; subsequent children = alternatives in PGN order. |
+| V-03 | Linear PGN parses to a tree of degree 1. The legacy `mainLine: PgnNode[]` derived view preserves backwards compat with editor preview and existing tests. |
+| V-04 | The PGN textarea remains the single authoring surface. No graphical tree-builder in Phase 2 — deferred to Phase 3. |
+| V-05 | Editor right-side preview pane has a collapsible variation list. Clicking a node updates the preview FEN + last-move highlight. |
+| V-06 | `GuidedChessPlayer` navigates by `currentNodeId`. Cursor walks `currentNode.children[0]` by default; learner move matching any child advances along that branch. No-match → snap-back (D-10). |
+| V-07 | Hint highlights `children[0]` (main-line continuation). Multiple children → inline pill `+N variations`; hint always points to main line. |
+| V-08 | Opponent (auto-played) picks `children[0]` when multiple exist. Editor surfaces a “Coach: opponent will play X” reminder. |
+| V-09 | Completion (`onComplete`) fires when the learner reaches any leaf node — via main line or side variation. |
+| V-10 | Bookmark contract widened to `onBookmark(currentNodeId, currentFen, depth, totalDepth)`. `bookmarks` table gains nullable `node_id text` + `played_plies integer` (migration 035). Existing bookmarks (`node_id IS NULL`) resolve via legacy ply-walk. |
+| V-11 | Editor PGN status row shows `✓ Đã phân tích PGN · N nước (M nhánh phụ, độ sâu tối đa K)`. |
+| V-12 | `MAX_PGN_CHARS` raised from 5 000 to **50 000** to accommodate realistic repertoire trees. |
+| V-13 | Wrong-move detection matches on `(from, to, promotion)` tuple, not SAN — avoids disambiguation drift and handles under-promotion variations. |
+| V-14 | Back button stays forbidden (D-12). Reset dialog is the only way to retry a different branch. |
+| V-15 | i18n: variation strings live under the existing `guidedPlayer.*` + `creator.lessonEditor.*` namespaces. No new top-level namespace. |
+| V-16 | Node IDs hash on `(parentId, from, to, promotion)`, not SAN. Hash: `sha256((parentId‖'')+'/'+ from+to+(promotion‖'')).slice(0,16)`. |
+| V-17 | PGN-to-tree parser is a **custom recursive-descent tokenizer** tracking `(...)` depth — not `chess.js loadPgn` (which discards parenthesised content). `chess.js` is used only for per-node FEN computation by replaying the path from root. |
+| V-18 | Leaf-completion fires regardless of which side is to move at the leaf. UI omits “your turn” prompt at a leaf. |
+
 ---
 
 ## 7. Phase 1 Constraints — Do NOT scope-creep these
 
 The following are explicitly **deferred to Phase 2**:
 
-- Variation tree (branching PGN / guided mode with alternatives)
 - Automated payment gateway (PayOS / Stripe webhooks)
 - Spaced repetition algorithm (FSRS)
 - Email / in-app notifications
@@ -202,7 +224,7 @@ The following are explicitly **deferred to Phase 2**:
 - Refund handling
 - Mobile app
 
-> **D-07 is locked.** Any request to add variation tree to Phase 1 requires a formal scope change.
+> D-07 has been **lifted** — variation tree shipped in Phase 2 (ADR-0004, PRD-0003, merged 2026-05-10).
 
 ---
 
@@ -212,8 +234,9 @@ The following are explicitly **deferred to Phase 2**:
 - Use **chessboard.js** (CDN) for board rendering.
 - Wrap all `chess.js` calls in `try/catch`. Invalid PGN → show error to Creator, do not crash.
 - Test with: castling, en passant, promotion, and complex PGN files.
-- Guided mode state machine: forward-only. No "previous move" button.
+- Guided mode state machine: forward-only. No “previous move” button.
 - Live board preview in Creator authoring updates as PGN textarea changes.
+- Variation parsing uses a custom recursive-descent tokenizer (V-17), not `chess.js loadPgn`. `chess.js` is the chess engine for FEN/move validation only.
 
 ---
 
@@ -251,7 +274,7 @@ The following are explicitly **deferred to Phase 2**:
 
 1. Learner clicks Purchase → system creates `order` (status = `pending`) with unique code e.g. `ORD-2026-000123`
 2. Payment page shows VietQR code, amount, bank account, required transfer note = order code
-3. Learner clicks "I have paid" → "Awaiting confirmation" screen
+3. Learner clicks “I have paid” → “Awaiting confirmation” screen
 4. Admin verifies in dashboard → Confirm → `order.status = active` + enrollment created
 5. Free courses (price = 0): skip steps 1–4, instant enrollment
 
@@ -299,4 +322,3 @@ The following are explicitly **deferred to Phase 2**:
 4. Admin panel: tables + buttons are sufficient for Phase 1. No charts.
 5. Video upload has many edge cases (large files, encoding delays) — test thoroughly.
 6. Email notifications are low priority — build after core loop is validated.
-7. **Do not scope-creep variation tree into Phase 1.**

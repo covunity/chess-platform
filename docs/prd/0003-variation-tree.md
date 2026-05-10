@@ -1,6 +1,6 @@
 # PRD-0003: Variation Tree for Guided Chess Lessons
 
-> Status: Draft · Owner: @haunguyen1064 · Created: 2026-05-10 · Revised: 2026-05-10 (post-design-review) · Branch: `claude/variation-tree-design`
+> Status: **Shipped** · Owner: @haunguyen1064 · Created: 2026-05-10 · Merged: 2026-05-10 · Branch: `feat/issue-168`
 > Phase: **Phase 2** — unlocks D-07 (Phase 1 lock that forbade variations in guided mode)
 > ADR: `docs/adr/0004-variation-tree-guided-mode.md`
 > Builds on: i18n PR `#154` (translation namespace `guidedPlayer.*` already in place)
