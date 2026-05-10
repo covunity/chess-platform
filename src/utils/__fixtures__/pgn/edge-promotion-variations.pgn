@@ -1,0 +1,4 @@
+; Edge case: promotion variations — same from/to square, different promotion piece
+; Uses a simplified sequence reaching the promotion square
+1. e4 d5 2. e5 f5 3. exf6 e6 4. fxg7 Nf6 5. gxh8=Q
+(5. gxh8=N {Under-promotion to knight — rare but legal})

@@ -1,0 +1,6 @@
+; King's Gambit — accepted and declined lines
+; Variations follow exf4 (the main-line response they replace)
+1. e4 e5 2. f4 exf4
+(2... d5 {Falkbeer Counter-Gambit — phản công năng động} 3. exd5 c6)
+(2... Bc5 {King's Gambit Declined — từ chối gambit} 3. Nf3 d6 4. Nc3)
+3. Nf3 g5 4. h4 g4 5. Ne5 {Kieseritzky Gambit}

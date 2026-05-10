@@ -1,0 +1,2 @@
+; Edge case: pawn promotion including under-promotion
+1. e4 d5 2. e5 f5 3. exf6 e6 4. fxg7 Nf6 5. gxh8=Q {Phong hậu}

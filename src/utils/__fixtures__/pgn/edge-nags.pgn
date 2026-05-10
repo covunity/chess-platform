@@ -1,0 +1,2 @@
+; Edge case: NAG glyphs $1 (good move), $2 (mistake), $3 (brilliant), etc.
+1. e4 $1 e5 $1 2. Nf3 $3 Nc6 $2 3. Bc4 $1 Bc5 $1 4. Bxf7+ $3 {Sacrifice} Kxf7 5. Nxe5+ Ke6 $2 6. Qh5 g6 7. Nxg6

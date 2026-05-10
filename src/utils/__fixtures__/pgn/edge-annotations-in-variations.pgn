@@ -1,0 +1,6 @@
+; Edge case: annotations {} inside variations ()
+1. e4 e5 2. Nf3 Nc6
+(2... d6 {Philidor Defence — thụ động nhưng vững chắc} 3. d4 Nf6 {Tiếp tục phát triển quân})
+3. Bc4 Bc5 {Giacco Piano — thế trận quen thuộc}
+(3... Nf6 {Two Knights — phản công tích cực} 4. Ng5 {Tấn công f7} d5 {Đen phản công} 5. exd5 Na5)
+4. c3 Nf6 {Tấn công trung tâm} 5. d4 exd4 6. cxd4 Bb4+ {Kiểm tra}
