@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import ChessBoard from "../ChessBoard/ChessBoard";
 import { parsePgn } from "../../utils/parsePgn";
 import type { PgnParseResult } from "../../utils/parsePgn";
@@ -39,11 +40,7 @@ const LESSON_TYPE_ICON: Record<LessonType, string> = {
   puzzle: '📋',
 };
 
-const LESSON_TABS: Array<{ value: LessonType; label: string }> = [
-  { value: 'video', label: 'Video' },
-  { value: 'chess', label: 'Chess lesson' },
-  { value: 'puzzle', label: 'Puzzle' },
-];
+const LESSON_TAB_VALUES: LessonType[] = ['video', 'chess', 'puzzle'];
 
 const MAX_PGN_CHARS = 5000;
 
@@ -67,7 +64,14 @@ function formatDuration(seconds: number | undefined | null): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectLesson, onSubmitForReview, showSidebar = true, saveLabel = "Save draft" }: LessonEditorProps) {
+export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectLesson, onSubmitForReview, showSidebar = true, saveLabel }: LessonEditorProps) {
+  const { t } = useTranslation();
+  const resolvedSaveLabel = saveLabel ?? t('creator.lessonEditor.saveDraft');
+  const tabLabels: Record<LessonType, string> = {
+    video: t('creator.lessonEditor.tabVideo'),
+    chess: t('creator.lessonEditor.tabChess'),
+    puzzle: t('creator.lessonEditor.tabPuzzle'),
+  };
   const [title, setTitle] = useState(lesson.title);
   const [pgn, setPgn] = useState(lesson.pgn_data);
   const [perspective, setPerspective] = useState<"white" | "black">(lesson.board_perspective);
@@ -187,7 +191,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
                 letterSpacing: "0.1em",
               }}
             >
-              Lessons
+              {t('creator.lessonEditor.sidebarHeading')}
             </span>
           </div>
           <div style={{ flex: 1, overflowY: "auto" }}>
@@ -228,25 +232,25 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
       <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
         {/* Lesson type tabs */}
         <div style={{ display: "flex", gap: 6 }}>
-          {LESSON_TABS.map((tab) => (
+          {LESSON_TAB_VALUES.map((value) => (
             <button
-              key={tab.value}
+              key={value}
               type="button"
-              data-testid={`lesson-type-tab-${tab.value}`}
-              aria-pressed={activeTab === tab.value}
-              onClick={() => setActiveTab(tab.value)}
+              data-testid={`lesson-type-tab-${value}`}
+              aria-pressed={activeTab === value}
+              onClick={() => setActiveTab(value)}
               style={{
                 padding: "6px 14px",
                 borderRadius: 999,
                 border: "1px solid var(--border)",
-                background: activeTab === tab.value ? "var(--ink-1)" : "var(--surface)",
-                color: activeTab === tab.value ? "var(--ink-on-accent)" : "var(--ink-2)",
+                background: activeTab === value ? "var(--ink-1)" : "var(--surface)",
+                color: activeTab === value ? "var(--ink-on-accent)" : "var(--ink-2)",
                 fontSize: 12.5,
                 fontWeight: 500,
                 cursor: "pointer",
               }}
             >
-              {tab.label}
+              {tabLabels[value]}
             </button>
           ))}
         </div>
@@ -256,13 +260,13 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
             {/* Lesson title */}
             <div>
               <label className="label" htmlFor="lesson-title">
-                Lesson title
+                {t('creator.lessonEditor.lessonTitle')}
               </label>
               <input
                 id="lesson-title"
                 className="input"
                 type="text"
-                aria-label="Lesson title"
+                aria-label={t('creator.lessonEditor.lessonTitle')}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
               />
@@ -271,18 +275,18 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
             {/* Perspective + Free preview row */}
             <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
               <div style={{ flex: 1 }}>
-                <span className="label">Board perspective</span>
+                <span className="label">{t('creator.lessonEditor.boardPerspective')}</span>
                 <div style={{ display: "flex", gap: 8 }}>
-                  {perspectiveButton("white", "White")}
-                  {perspectiveButton("black", "Black")}
+                  {perspectiveButton("white", t('creator.lessonEditor.perspectiveWhite'))}
+                  {perspectiveButton("black", t('creator.lessonEditor.perspectiveBlack'))}
                 </div>
               </div>
               <div style={{ width: 180 }}>
-                <span className="label">Free preview</span>
+                <span className="label">{t('creator.lessonEditor.freePreview')}</span>
                 <button
                   type="button"
                   role="button"
-                  aria-label="Free preview"
+                  aria-label={t('creator.lessonEditor.freePreview')}
                   aria-pressed={isFreePreview}
                   onClick={() => setIsFreePreview((v) => !v)}
                   style={{
@@ -297,7 +301,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
                     cursor: "pointer",
                   }}
                 >
-                  {isFreePreview ? "On" : "Off"}
+                  {isFreePreview ? t('creator.lessonEditor.freePreviewOn') : t('creator.lessonEditor.freePreviewOff')}
                 </button>
               </div>
             </div>
@@ -305,7 +309,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
             {/* PGN textarea */}
             <div style={{ flex: 1 }}>
               <label className="label" htmlFor="pgn-textarea">
-                PGN (with annotations in <code>{"{}"}</code>)
+                {t('creator.lessonEditor.pgnLabel')} <code>{"{}"}</code>{t('creator.lessonEditor.pgnLabelSuffix')}
               </label>
               <textarea
                 id="pgn-textarea"
@@ -322,22 +326,22 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
               <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, alignItems: "center" }}>
                 <div>
                   {parseResult === null ? (
-                    <span style={{ fontSize: 12, color: "var(--ink-3)" }}>Enter PGN above</span>
+                    <span style={{ fontSize: 12, color: "var(--ink-3)" }}>
+                      {t('creator.lessonEditor.pgnPlaceholderEnter')}
+                    </span>
                   ) : parseResult.valid ? (
                     <span style={{ fontSize: 12, color: "var(--success)" }}>
-                      ✓ PGN parsed · {moveCount} moves{" "}
-                      {annotationCount > 0
-                        ? `· ${annotationCount} annotation${annotationCount !== 1 ? "s" : ""}`
-                        : "· 0 annotations"}
+                      {t('creator.lessonEditor.pgnParsedMoves', { count: moveCount })}{" "}
+                      {t('creator.lessonEditor.pgnAnnotationsCount', { count: annotationCount })}
                     </span>
                   ) : (
                     <span role="alert" style={{ fontSize: 12, color: "var(--danger)" }}>
-                      {parseResult.error ?? "Invalid PGN"}
+                      {parseResult.error ?? t('creator.lessonEditor.pgnInvalid')}
                     </span>
                   )}
                 </div>
                 <span style={{ fontSize: 12, color: "var(--ink-3)" }}>
-                  {formatNumber(pgn.length)} / {formatNumber(MAX_PGN_CHARS)} chars
+                  {t('creator.lessonEditor.pgnCharCount', { used: formatNumber(pgn.length), max: formatNumber(MAX_PGN_CHARS) })}
                 </span>
               </div>
             </div>
@@ -347,13 +351,13 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
             {/* Lesson title */}
             <div>
               <label className="label" htmlFor="lesson-title">
-                Lesson title
+                {t('creator.lessonEditor.lessonTitle')}
               </label>
               <input
                 id="lesson-title"
                 className="input"
                 type="text"
-                aria-label="Lesson title"
+                aria-label={t('creator.lessonEditor.lessonTitle')}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
               />
@@ -382,7 +386,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
               padding: 32,
             }}
           >
-            Puzzle editor coming soon
+            {t('creator.lessonEditor.puzzleComingSoon')}
           </div>
         )}
       </div>
@@ -401,7 +405,9 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
       >
         {/* Header row */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-1)" }}>Preview</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-1)" }}>
+            {t('creator.lessonEditor.previewHeading')}
+          </span>
           {activeTab === "video" ? (
             <span
               style={{
@@ -414,7 +420,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
                 fontFamily: "var(--font-mono)",
               }}
             >
-              {formatDuration(videoLesson.duration_seconds)} runtime
+              {t('creator.lessonEditor.previewRuntime', { duration: formatDuration(videoLesson.duration_seconds) })}
             </span>
           ) : parseResult?.valid && moveCount > 0 ? (
             <span
@@ -427,7 +433,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
                 padding: "2px 10px",
               }}
             >
-              Move {totalMoveNumber} of {moveCount}
+              {t('creator.lessonEditor.previewMoveCounter', { current: totalMoveNumber, total: moveCount })}
             </span>
           ) : null}
         </div>
@@ -482,10 +488,10 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
                 }}
               >
                 {videoLesson.video_status === "uploading"
-                  ? "Đang tải video lên…"
+                  ? t('creator.lessonEditor.videoUploading')
                   : videoLesson.video_status === "processing"
-                    ? "Đang xử lý video…"
-                    : "Chưa có video"}
+                    ? t('creator.lessonEditor.videoProcessing')
+                    : t('creator.lessonEditor.videoEmpty')}
               </div>
             )}
           </div>
@@ -536,7 +542,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
             className="btn btn-secondary btn-sm"
             onClick={handleSave}
           >
-            {saveLabel}
+            {resolvedSaveLabel}
           </button>
           {onSubmitForReview && (
             <button
@@ -545,7 +551,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
               className="btn btn-accent btn-sm"
               onClick={onSubmitForReview}
             >
-              Submit for review
+              {t('creator.lessonEditor.submitForReview')}
             </button>
           )}
         </div>

@@ -473,6 +473,35 @@
         "toastUnpublished": "Đã gỡ xuất bản khóa học."
       }
     },
+    "lessonEditor": {
+      "sidebarHeading": "Bài học",
+      "tabVideo": "Video",
+      "tabChess": "Bài cờ",
+      "tabPuzzle": "Bài tập",
+      "lessonTitle": "Tiêu đề bài học",
+      "boardPerspective": "Góc nhìn bàn cờ",
+      "perspectiveWhite": "Trắng",
+      "perspectiveBlack": "Đen",
+      "freePreview": "Xem thử miễn phí",
+      "freePreviewOn": "Bật",
+      "freePreviewOff": "Tắt",
+      "pgnLabel": "PGN (chú thích trong",
+      "pgnLabelSuffix": ")",
+      "pgnPlaceholderEnter": "Nhập PGN ở trên",
+      "pgnParsedMoves": "✓ Đã phân tích PGN · {{count}} nước đi",
+      "pgnAnnotationsCount": "· {{count}} chú thích",
+      "pgnInvalid": "PGN không hợp lệ",
+      "pgnCharCount": "{{used}} / {{max}} ký tự",
+      "saveDraft": "Lưu nháp",
+      "submitForReview": "Gửi duyệt",
+      "previewHeading": "Xem trước",
+      "previewMoveCounter": "Nước {{current}} / {{total}}",
+      "previewRuntime": "{{duration}} thời lượng",
+      "puzzleComingSoon": "Trình soạn bài tập sắp ra mắt",
+      "videoUploading": "Đang tải video lên…",
+      "videoProcessing": "Đang xử lý video…",
+      "videoEmpty": "Chưa có video"
+    },
     "deleteConfirm": {
       "title": "Xóa khóa học?",
       "body": "Thao tác này sẽ xóa {{chapters}} chương và {{lessons}} bài học.",
@@ -856,6 +885,24 @@
       "viewOrders": "Xem trong lịch sử đơn",
       "cancelledDefault": "Đơn hàng đã bị huỷ."
     }
+  },
+  "guidedPlayer": {
+    "eyebrow": "BÀI {{current}} / {{total}}",
+    "helper": "Kéo quân để đi nước của bạn. Nước sai sẽ bật trở lại.",
+    "sideWhite": "Trắng",
+    "sideBlack": "Đen",
+    "sideToMoveAria": "{{side}} đến lượt",
+    "perspectiveSubLabel": "· bạn cầm quân {{color}}",
+    "moveCounter": "Nước {{current}} / {{total}}",
+    "hint": "Gợi ý",
+    "flipBoard": "Lật bàn cờ",
+    "resetLesson": "Bắt đầu lại",
+    "resetDialogBody": "Bắt đầu lại bài học này?",
+    "resetCancel": "Huỷ",
+    "resetConfirm": "Bắt đầu lại",
+    "yourTurnHeading": "Lượt của bạn.",
+    "yourTurnBody": "Hãy đi nước được mong đợi.",
+    "opponentThinking": "Đối thủ đang nghĩ…"
   },
   "errors": {
     "chapterLimitReached": "Bạn đã đạt giới hạn số chương cho gói tài khoản hiện tại.",

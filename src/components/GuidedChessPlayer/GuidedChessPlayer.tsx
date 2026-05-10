@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Chess } from 'chess.js'
 import { parsePgn } from '../../utils/parsePgn'
 
@@ -147,6 +148,7 @@ export default function GuidedChessPlayer({
   onComplete,
   onBookmark,
 }: GuidedChessPlayerProps) {
+  const { t } = useTranslation()
   const parsed = useMemo(() => parsePgn(lesson.pgn_data), [lesson.pgn_data])
   const expectedMoves = parsed.valid ? parsed.moves : []
   const totalPlies = expectedMoves.length
@@ -247,8 +249,9 @@ export default function GuidedChessPlayer({
     }, 1000)
   }
 
-  const sideToMove = playedPlies % 2 === 0 ? 'White' : 'Black'
-  const learnerColorLabel = learnerColor === 'white' ? 'White' : 'Black'
+  const sideToMove = playedPlies % 2 === 0 ? t('guidedPlayer.sideWhite') : t('guidedPlayer.sideBlack')
+  const learnerColorLabel =
+    learnerColor === 'white' ? t('guidedPlayer.sideWhite') : t('guidedPlayer.sideBlack')
 
   // Build move-log entries grouped by full-move number from played plies
   interface FullMoveEntry {
@@ -284,25 +287,25 @@ export default function GuidedChessPlayer({
   return (
     <div data-testid="guided-player-root">
       <div data-testid="guided-player-eyebrow">
-        LESSON {lessonNumber} OF {totalLessons}
+        {t('guidedPlayer.eyebrow', { current: lessonNumber, total: totalLessons })}
       </div>
       <h2 data-testid="guided-player-title">{lesson.title}</h2>
       <p data-testid="guided-player-helper">
-        Drag a piece to make your move. Wrong moves snap back.
+        {t('guidedPlayer.helper')}
       </p>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span
           data-testid="guided-player-side-to-move"
-          aria-label={`${sideToMove} to move`}
+          aria-label={t('guidedPlayer.sideToMoveAria', { side: sideToMove })}
         >
           {sideToMove}
         </span>
         <span data-testid="guided-player-perspective-label">
-          · you'll play as {learnerColorLabel}
+          {t('guidedPlayer.perspectiveSubLabel', { color: learnerColorLabel })}
         </span>
       </div>
       <div data-testid="guided-player-move-counter">
-        Move {Math.min(playedPlies + 1, totalPlies)} of {totalPlies}
+        {t('guidedPlayer.moveCounter', { current: Math.min(playedPlies + 1, totalPlies), total: totalPlies })}
       </div>
       <InteractiveBoard
         fen={currentFen}
@@ -324,33 +327,33 @@ export default function GuidedChessPlayer({
             cursor: awaitingOpponent || upcomingSide !== learnerColor ? 'not-allowed' : undefined,
           }}
         >
-          Hint
+          {t('guidedPlayer.hint')}
         </button>
         <button
           type="button"
           data-testid="guided-player-flip-btn"
           onClick={() => setViewPerspective((p) => (p === 'white' ? 'black' : 'white'))}
         >
-          Flip board
+          {t('guidedPlayer.flipBoard')}
         </button>
         <button
           type="button"
           data-testid="guided-player-reset-btn"
           onClick={() => setResetDialogOpen(true)}
         >
-          Reset lesson
+          {t('guidedPlayer.resetLesson')}
         </button>
       </div>
 
       {resetDialogOpen && (
         <div data-testid="guided-player-reset-dialog" role="dialog" aria-modal="true">
-          <p>Reset the lesson and start over?</p>
+          <p>{t('guidedPlayer.resetDialogBody')}</p>
           <button
             type="button"
             data-testid="guided-player-reset-cancel"
             onClick={() => setResetDialogOpen(false)}
           >
-            Cancel
+            {t('guidedPlayer.resetCancel')}
           </button>
           <button
             type="button"
@@ -367,7 +370,7 @@ export default function GuidedChessPlayer({
               setResetDialogOpen(false)
             }}
           >
-            Reset
+            {t('guidedPlayer.resetConfirm')}
           </button>
         </div>
       )}
@@ -391,7 +394,7 @@ export default function GuidedChessPlayer({
         })}
         {hasPendingMoves && !awaitingOpponent && upcomingSide === learnerColor && (
           <div data-testid="your-turn-prompt">
-            <strong>Your turn.</strong> Play the expected move.
+            <strong>{t('guidedPlayer.yourTurnHeading')}</strong> {t('guidedPlayer.yourTurnBody')}
           </div>
         )}
         {hasPendingMoves && (awaitingOpponent || upcomingSide !== learnerColor) && (
@@ -403,7 +406,7 @@ export default function GuidedChessPlayer({
               color: 'var(--ink-3)',
             }}
           >
-            Opponent thinking…
+            {t('guidedPlayer.opponentThinking')}
           </div>
         )}
       </div>

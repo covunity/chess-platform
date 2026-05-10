@@ -1,7 +1,13 @@
-import { render, screen, act, fireEvent } from '@testing-library/react'
+import { render as rtlRender, screen, act, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { I18nextProvider } from 'react-i18next'
+import i18n from '../../../i18n'
 import GuidedChessPlayer from '../GuidedChessPlayer'
+
+function render(ui: Parameters<typeof rtlRender>[0]) {
+  return rtlRender(<I18nextProvider i18n={i18n}>{ui}</I18nextProvider>)
+}
 
 const OPPONENT_DELAY_MS = 600
 
@@ -23,7 +29,7 @@ describe('GuidedChessPlayer', () => {
         <GuidedChessPlayer lesson={baseLesson} lessonNumber={1} totalLessons={5} />
       )
       expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent(
-        'Move 1 of 5'
+        'Nước 1 / 5'
       )
     })
 
@@ -31,7 +37,7 @@ describe('GuidedChessPlayer', () => {
       render(
         <GuidedChessPlayer lesson={baseLesson} lessonNumber={1} totalLessons={5} />
       )
-      expect(screen.getByTestId('guided-player-side-to-move')).toHaveTextContent('White')
+      expect(screen.getByTestId('guided-player-side-to-move')).toHaveTextContent('Trắng')
     })
 
     it('shows perspective sub-label matching board_perspective', () => {
@@ -39,7 +45,7 @@ describe('GuidedChessPlayer', () => {
         <GuidedChessPlayer lesson={baseLesson} lessonNumber={1} totalLessons={5} />
       )
       expect(screen.getByTestId('guided-player-perspective-label')).toHaveTextContent(
-        /you'll play as White/i
+        /bạn cầm quân Trắng/i
       )
     })
   })
@@ -81,8 +87,8 @@ describe('GuidedChessPlayer', () => {
       await user.click(board.querySelector('[data-square="e2"]')!)
       await user.click(board.querySelector('[data-square="e4"]')!)
 
-      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Move 2 of 5')
-      expect(screen.getByTestId('guided-player-side-to-move')).toHaveTextContent('Black')
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Nước 2 / 5')
+      expect(screen.getByTestId('guided-player-side-to-move')).toHaveTextContent('Đen')
     })
 
     it('does not advance when wrong destination is chosen', async () => {
@@ -95,7 +101,7 @@ describe('GuidedChessPlayer', () => {
       await user.click(board.querySelector('[data-square="e2"]')!)
       await user.click(board.querySelector('[data-square="e3"]')!)
 
-      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Move 1 of 5')
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Nước 1 / 5')
       // Pawn still on e2
       expect(board.querySelector('[data-square="e2"]')).toHaveTextContent('♙')
       expect(board.querySelector('[data-square="e3"]')).toHaveTextContent('')
@@ -247,7 +253,7 @@ describe('GuidedChessPlayer', () => {
 
       expect(screen.getByTestId('guided-player-reset-dialog')).toBeInTheDocument()
       // Move was NOT yet undone
-      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Move 2 of 5')
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Nước 2 / 5')
     })
 
     it('cancelling the dialog closes it without resetting', async () => {
@@ -263,7 +269,7 @@ describe('GuidedChessPlayer', () => {
       await user.click(screen.getByTestId('guided-player-reset-cancel'))
 
       expect(screen.queryByTestId('guided-player-reset-dialog')).not.toBeInTheDocument()
-      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Move 2 of 5')
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Nước 2 / 5')
     })
 
     it('confirming the dialog resets played plies and clears move log', async () => {
@@ -279,7 +285,7 @@ describe('GuidedChessPlayer', () => {
       await user.click(screen.getByTestId('guided-player-reset-confirm'))
 
       expect(screen.queryByTestId('guided-player-reset-dialog')).not.toBeInTheDocument()
-      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Move 1 of 5')
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Nước 1 / 5')
       const log = screen.getByTestId('guided-player-move-log')
       expect(log.querySelectorAll('[data-testid^="move-block-"]').length).toBe(0)
       // Pawn back on e2
@@ -465,12 +471,12 @@ describe('GuidedChessPlayer', () => {
   })
 
   describe('header', () => {
-    it('renders the lesson eyebrow as "LESSON N OF M"', () => {
+    it('renders the lesson eyebrow as "BÀI N / M"', () => {
       render(
         <GuidedChessPlayer lesson={baseLesson} lessonNumber={2} totalLessons={5} />
       )
       expect(screen.getByTestId('guided-player-eyebrow')).toHaveTextContent(
-        'LESSON 2 OF 5'
+        'BÀI 2 / 5'
       )
     })
 
@@ -510,7 +516,7 @@ describe('GuidedChessPlayer', () => {
       })
       expect(board.querySelector('[data-square="e2"]')).toHaveTextContent('♙')
       expect(board.querySelector('[data-square="e4"]')).toHaveTextContent('')
-      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Move 1 of 5')
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Nước 1 / 5')
     })
 
     it('auto-plays white\'s first move after 600ms when board_perspective is "black"', () => {
@@ -532,7 +538,7 @@ describe('GuidedChessPlayer', () => {
         .toHaveTextContent('')
       expect(screen.getByTestId('guided-player-board').querySelector('[data-square="e4"]'))
         .toHaveTextContent('♙')
-      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Move 2 of 5')
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Nước 2 / 5')
     })
 
     it('auto-plays opponent reply 600ms after the learner plays their move', () => {
@@ -557,7 +563,7 @@ describe('GuidedChessPlayer', () => {
       const updatedBoard = screen.getByTestId('guided-player-board')
       expect(updatedBoard.querySelector('[data-square="e7"]')).toHaveTextContent('')
       expect(updatedBoard.querySelector('[data-square="e5"]')).toHaveTextContent('♟')
-      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Move 3 of 5')
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Nước 3 / 5')
     })
 
     it('ignores board clicks while waiting for the opponent', () => {
@@ -574,13 +580,13 @@ describe('GuidedChessPlayer', () => {
       // Still at starting position before the opponent timer fires
       expect(board.querySelector('[data-square="e7"]')).toHaveTextContent('♟')
       expect(board.querySelector('[data-square="e5"]')).toHaveTextContent('')
-      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Move 1 of 5')
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Nước 1 / 5')
 
       // Now the opponent auto-plays e4
       act(() => {
         vi.advanceTimersByTime(OPPONENT_DELAY_MS)
       })
-      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Move 2 of 5')
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Nước 2 / 5')
     })
 
     it('renders annotation for an auto-played opponent ply in the move log', () => {
@@ -647,7 +653,7 @@ describe('GuidedChessPlayer', () => {
       // Learner plays e4 → schedules opponent timer
       fireEvent.click(board.querySelector('[data-square="e2"]')!)
       fireEvent.click(board.querySelector('[data-square="e4"]')!)
-      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Move 2 of 5')
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Nước 2 / 5')
 
       // Open reset dialog and confirm before timer fires
       fireEvent.click(screen.getByTestId('guided-player-reset-btn'))
@@ -662,7 +668,7 @@ describe('GuidedChessPlayer', () => {
       const resetBoard = screen.getByTestId('guided-player-board')
       expect(resetBoard.querySelector('[data-square="e7"]')).toHaveTextContent('♟')
       expect(resetBoard.querySelector('[data-square="e5"]')).toHaveTextContent('')
-      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Move 1 of 5')
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Nước 1 / 5')
     })
 
     it('after reset on a black-perspective lesson, opening auto-move re-fires', () => {
@@ -674,18 +680,18 @@ describe('GuidedChessPlayer', () => {
       act(() => {
         vi.advanceTimersByTime(OPPONENT_DELAY_MS)
       })
-      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Move 2 of 5')
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Nước 2 / 5')
 
       // Reset
       fireEvent.click(screen.getByTestId('guided-player-reset-btn'))
       fireEvent.click(screen.getByTestId('guided-player-reset-confirm'))
-      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Move 1 of 5')
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Nước 1 / 5')
 
       // Opening auto-move re-fires after reset
       act(() => {
         vi.advanceTimersByTime(OPPONENT_DELAY_MS)
       })
-      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Move 2 of 5')
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Nước 2 / 5')
     })
 
     it('unmounting during the opponent delay does not throw or warn', () => {

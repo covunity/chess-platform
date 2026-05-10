@@ -314,6 +314,35 @@
         "toastUnpublished": "Course unpublished."
       }
     },
+    "lessonEditor": {
+      "sidebarHeading": "Lessons",
+      "tabVideo": "Video",
+      "tabChess": "Chess lesson",
+      "tabPuzzle": "Puzzle",
+      "lessonTitle": "Lesson title",
+      "boardPerspective": "Board perspective",
+      "perspectiveWhite": "White",
+      "perspectiveBlack": "Black",
+      "freePreview": "Free preview",
+      "freePreviewOn": "On",
+      "freePreviewOff": "Off",
+      "pgnLabel": "PGN (annotations in",
+      "pgnLabelSuffix": ")",
+      "pgnPlaceholderEnter": "Enter PGN above",
+      "pgnParsedMoves": "✓ PGN parsed · {{count}} moves",
+      "pgnAnnotationsCount": "· {{count}} annotations",
+      "pgnInvalid": "Invalid PGN",
+      "pgnCharCount": "{{used}} / {{max}} chars",
+      "saveDraft": "Save draft",
+      "submitForReview": "Submit for review",
+      "previewHeading": "Preview",
+      "previewMoveCounter": "Move {{current}} of {{total}}",
+      "previewRuntime": "{{duration}} runtime",
+      "puzzleComingSoon": "Puzzle editor coming soon",
+      "videoUploading": "Uploading video…",
+      "videoProcessing": "Processing video…",
+      "videoEmpty": "No video"
+    },
     "deleteConfirm": {
       "title": "Delete course?",
       "body": "This will delete {{chapters}} chapters and {{lessons}} lessons.",
@@ -697,6 +726,24 @@
       "viewOrders": "View order history",
       "cancelledDefault": "Order has been cancelled."
     }
+  },
+  "guidedPlayer": {
+    "eyebrow": "LESSON {{current}} OF {{total}}",
+    "helper": "Drag a piece to make your move. Wrong moves snap back.",
+    "sideWhite": "White",
+    "sideBlack": "Black",
+    "sideToMoveAria": "{{side}} to move",
+    "perspectiveSubLabel": "· you'll play as {{color}}",
+    "moveCounter": "Move {{current}} of {{total}}",
+    "hint": "Hint",
+    "flipBoard": "Flip board",
+    "resetLesson": "Reset lesson",
+    "resetDialogBody": "Reset the lesson and start over?",
+    "resetCancel": "Cancel",
+    "resetConfirm": "Reset",
+    "yourTurnHeading": "Your turn.",
+    "yourTurnBody": "Play the expected move.",
+    "opponentThinking": "Opponent thinking…"
   },
   "errors": {
     "chapterLimitReached": "You have reached the chapter limit for your current account tier."
