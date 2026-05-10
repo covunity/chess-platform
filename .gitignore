@@ -31,3 +31,6 @@ dist-ssr
 *.sw?
 
 /supabase/seed.sql
+
+playwright-report/
+test-results/
