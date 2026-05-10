@@ -106,12 +106,12 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
     onSave({ pgn_data: pgn, board_perspective: perspective, is_free_preview: isFreePreview, title });
   };
 
-  const currentFen = parseResult?.valid && parseResult.moves.length > 0
+  const currentFen = parseResult?.valid && parseResult.mainLine.length > 0
     ? parseResult.fen
     : STARTING_FEN;
 
-  const lastMoveInfo = parseResult?.valid && parseResult.moves.length > 0
-    ? parseResult.moves[parseResult.moves.length - 1]
+  const lastMoveInfo = parseResult?.valid && parseResult.mainLine.length > 0
+    ? parseResult.mainLine[parseResult.mainLine.length - 1]
     : null;
 
   function sqToRowCol(sq: string): [number, number] {
@@ -131,7 +131,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   const moveCount = parseResult?.moveCount ?? 0;
   const annotationCount = parseResult?.annotationCount ?? 0;
   const totalMoveNumber = parseResult?.valid && lastMoveInfo
-    ? parseResult.moves.indexOf(lastMoveInfo) + 1
+    ? parseResult.mainLine.indexOf(lastMoveInfo) + 1
     : 0;
 
   const perspectiveButton = (val: "white" | "black", label: string) => (

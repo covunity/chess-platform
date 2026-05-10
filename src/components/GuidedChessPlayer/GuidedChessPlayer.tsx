@@ -150,7 +150,7 @@ export default function GuidedChessPlayer({
 }: GuidedChessPlayerProps) {
   const { t } = useTranslation()
   const parsed = useMemo(() => parsePgn(lesson.pgn_data), [lesson.pgn_data])
-  const expectedMoves = parsed.valid ? parsed.moves : []
+  const expectedMoves = parsed.valid ? parsed.mainLine : []
   const totalPlies = expectedMoves.length
 
   const [playedPlies, setPlayedPlies] = useState(0)

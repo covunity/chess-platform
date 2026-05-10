@@ -53,10 +53,10 @@ describe("parsePgn — Phase 1 backward-compat", () => {
       expect(result.error).toBeUndefined();
     });
 
-    it("returns moves array with move details", () => {
+    it("returns mainLine array with move details", () => {
       const result = parsePgn(SAMPLE_PGN);
-      expect(Array.isArray(result.moves)).toBe(true);
-      expect(result.moves.length).toBe(15);
+      expect(Array.isArray(result.mainLine)).toBe(true);
+      expect(result.mainLine.length).toBe(15);
     });
 
     it("supports castling (O-O)", () => {
@@ -181,11 +181,6 @@ describe("parsePgn — tree structure (Slice 1A)", () => {
       expect(r.mainLine[2].parentId).toBe(r.mainLine[1].id);
     });
 
-    it("linear PGN mainLine equals derived moves field (backward-compat)", () => {
-      const r = parsePgn(SAMPLE_PGN);
-      expect(r.moves).toBe(r.mainLine); // same reference
-      expect(r.moves.length).toBe(r.mainLine.length);
-    });
   });
 
   // ── AC: variation tree ─────────────────────────────────────────────────────

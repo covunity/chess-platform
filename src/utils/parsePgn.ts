@@ -42,9 +42,6 @@ export interface PgnParseResult {
   maxDepth: number;
   mainLine: PgnNode[];
   nodeMap: Map<string, PgnNode>;
-  // ── Backward-compat flat fields (kept for Phase 1 consumers; migrated in Slice 1B) ──
-  /** @deprecated Use mainLine. Removed in Slice 1B. */
-  moves: PgnNode[];
   moveCount: number;
   annotationCount: number;
   fen: string;
@@ -371,7 +368,6 @@ export function parsePgn(pgn: string): PgnParseResult {
     maxDepth: 0,
     mainLine: [],
     nodeMap: new Map(),
-    moves: [],
     moveCount: 0,
     annotationCount: 0,
     fen: "",
@@ -421,8 +417,6 @@ export function parsePgn(pgn: string): PgnParseResult {
     maxDepth: stats.maxDepth,
     mainLine,
     nodeMap,
-    // backward-compat flat fields
-    moves: mainLine,
     moveCount: mainLine.length,
     annotationCount,
     fen: lastFen,
