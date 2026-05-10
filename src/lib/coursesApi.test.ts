@@ -26,8 +26,9 @@ const sampleRow = {
   creator_id: 'user-1',
   created_at: '2026-01-01T00:00:00Z',
   users: { name: 'Nguyễn Văn A' },
-  reviews: [{ rating: 5 }, { rating: 4 }],
-  enrollments: [{ id: 'e1' }, { id: 'e2' }],
+  avg_rating: 4.5,
+  rating_count: 2,
+  enrollment_count: 2,
   chapters: [{ lessons: [{ id: 'l1' }, { id: 'l2' }] }],
 }
 
@@ -52,7 +53,7 @@ describe('listPublishedCourses', () => {
     expect(courses[0].creator_name).toBe('Nguyễn Văn A')
   })
 
-  it('computes average rating from reviews', async () => {
+  it('reads avg_rating and rating_count from courses row', async () => {
     const client = makeSupabase([sampleRow])
     const { courses } = await listPublishedCourses(client)
     expect(courses[0].rating_avg).toBe(4.5)
@@ -65,7 +66,7 @@ describe('listPublishedCourses', () => {
     expect(courses[0].lessons_count).toBe(2)
   })
 
-  it('counts enrollments', async () => {
+  it('reads enrollment_count from courses row', async () => {
     const client = makeSupabase([sampleRow])
     const { courses } = await listPublishedCourses(client)
     expect(courses[0].enrollment_count).toBe(2)
@@ -96,60 +97,38 @@ describe('listPublishedCourses', () => {
     expect(error).toBeTruthy()
   })
 
-  it('returns 0 rating_avg when no reviews', async () => {
-    const client = makeSupabase([{ ...sampleRow, reviews: [] }])
+  it('returns 0 rating_avg when avg_rating is 0', async () => {
+    const client = makeSupabase([{ ...sampleRow, avg_rating: 0, rating_count: 0 }])
     const { courses } = await listPublishedCourses(client)
     expect(courses[0].rating_avg).toBe(0)
     expect(courses[0].rating_count).toBe(0)
   })
 
   describe('sort behavior', () => {
-    const lowRated = {
-      ...sampleRow,
-      id: 'low',
-      title: 'Low rated',
-      created_at: '2026-03-01T00:00:00Z',
-      reviews: [{ rating: 2 }, { rating: 3 }], // avg 2.5
-      enrollments: [{ id: 'e1' }],
-    }
-    const highRated = {
-      ...sampleRow,
-      id: 'high',
-      title: 'High rated',
-      created_at: '2026-01-01T00:00:00Z',
-      reviews: [{ rating: 5 }, { rating: 5 }], // avg 5
-      enrollments: [{ id: 'e1' }, { id: 'e2' }],
-    }
-    const midRated = {
-      ...sampleRow,
-      id: 'mid',
-      title: 'Mid rated',
-      created_at: '2026-02-01T00:00:00Z',
-      reviews: [{ rating: 4 }], // avg 4
-      enrollments: Array.from({ length: 50 }, (_, i) => ({ id: `e${i}` })),
-    }
-
-    it('orders by rating_avg desc when sort=rating', async () => {
-      const client = makeSupabase([lowRated, highRated, midRated])
-      const { courses } = await listPublishedCourses(client, { sort: 'rating' })
-      expect(courses.map(c => c.id)).toEqual(['high', 'mid', 'low'])
+    it('asks DB to order by avg_rating desc for sort=rating', async () => {
+      const client = makeSupabase([])
+      await listPublishedCourses(client, { sort: 'rating' })
+      expect(client._query.order).toHaveBeenCalledWith('avg_rating', { ascending: false })
     })
 
-    it('orders by enrollment_count desc when sort=popular', async () => {
-      const client = makeSupabase([lowRated, highRated, midRated])
-      const { courses } = await listPublishedCourses(client, { sort: 'popular' })
-      expect(courses.map(c => c.id)).toEqual(['mid', 'high', 'low'])
+    it('asks DB to order by enrollment_count desc for sort=popular', async () => {
+      const client = makeSupabase([])
+      await listPublishedCourses(client, { sort: 'popular' })
+      expect(client._query.order).toHaveBeenCalledWith('enrollment_count', { ascending: false })
     })
 
-    it('keeps DB order (created_at desc) when sort=newest', async () => {
-      // Supabase resolves rows already in created_at desc order.
-      const client = makeSupabase([lowRated, midRated, highRated])
+    it('keeps DB order when sort=newest', async () => {
+      const rows = [
+        { ...sampleRow, id: 'low', created_at: '2026-03-01T00:00:00Z' },
+        { ...sampleRow, id: 'mid', created_at: '2026-02-01T00:00:00Z' },
+        { ...sampleRow, id: 'high', created_at: '2026-01-01T00:00:00Z' },
+      ]
+      const client = makeSupabase(rows)
       const { courses } = await listPublishedCourses(client, { sort: 'newest' })
-      // The API must not re-sort — it must preserve DB order.
       expect(courses.map(c => c.id)).toEqual(['low', 'mid', 'high'])
     })
 
-    it('asks DB to order by created_at desc for newest', async () => {
+    it('asks DB to order by created_at desc for sort=newest', async () => {
       const client = makeSupabase([])
       await listPublishedCourses(client, { sort: 'newest' })
       expect(client._query.order).toHaveBeenCalledWith('created_at', { ascending: false })

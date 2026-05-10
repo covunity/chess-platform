@@ -236,9 +236,10 @@ export async function listPublishedCourses(
       tags,
       creator_id,
       created_at,
+      avg_rating,
+      rating_count,
+      enrollment_count,
       users:creator_id ( name ),
-      reviews ( rating ),
-      enrollments ( id ),
       chapters ( lessons ( id ) )
     `)
     .eq('status', 'published')
@@ -255,9 +256,13 @@ export async function listPublishedCourses(
     query = query.contains('tags', [options.tag])
   }
 
-  // No avg_rating / enrollment_count column on courses yet — popular/rating
-  // are sorted in JS from joined rows below. created_at is the stable base.
-  query = query.order('created_at', { ascending: false })
+  if (options.sort === 'rating') {
+    query = query.order('avg_rating', { ascending: false })
+  } else if (options.sort === 'popular') {
+    query = query.order('enrollment_count', { ascending: false })
+  } else {
+    query = query.order('created_at', { ascending: false })
+  }
 
   const { data, error } = await query
 
@@ -266,12 +271,8 @@ export async function listPublishedCourses(
   }
 
   const courses: PublicCourse[] = (data ?? []).map((row: Record<string, unknown>) => {
-    const reviews = Array.isArray(row.reviews) ? row.reviews as Array<{ rating: number }> : []
-    const enrollments = Array.isArray(row.enrollments) ? row.enrollments : []
     const chapters = Array.isArray(row.chapters) ? row.chapters as Array<{ lessons: Array<unknown> }> : []
     const lessons = chapters.flatMap(ch => Array.isArray(ch.lessons) ? ch.lessons : [])
-    const ratings = reviews.map(r => r.rating)
-    const rating_avg = ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0
     const creator = row.users as { name?: string } | null
 
     return {
@@ -284,20 +285,14 @@ export async function listPublishedCourses(
       tags: Array.isArray(row.tags) ? row.tags as string[] : [],
       creator_id: row.creator_id as string,
       creator_name: creator?.name ?? null,
-      rating_avg,
-      rating_count: ratings.length,
+      rating_avg: (row.avg_rating as number) ?? 0,
+      rating_count: (row.rating_count as number) ?? 0,
       lessons_count: lessons.length,
       hours_total: 0,
       created_at: row.created_at as string,
-      enrollment_count: enrollments.length,
+      enrollment_count: (row.enrollment_count as number) ?? 0,
     }
   })
-
-  if (options.sort === 'rating') {
-    courses.sort((a, b) => b.rating_avg - a.rating_avg)
-  } else if (options.sort === 'popular') {
-    courses.sort((a, b) => b.enrollment_count - a.enrollment_count)
-  }
 
   return { courses, error: null }
 }
