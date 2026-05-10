@@ -515,7 +515,8 @@
     "enrolledToast": "Enrolled · {{count}} lessons unlocked",
     "bookmarkedToast": "Bookmarked · {{moveLabel}}",
     "bookmarkUndo": "Undo",
-    "bookmarkMoveLabel": "Move {{played}} of {{total}}"
+    "bookmarkMoveLabel": "Move {{played}} of {{total}}",
+    "adminWatermark": "Admin preview · not enrolled"
   },
   "dashboard": {
     "welcome": "WELCOME BACK, {{name}}",

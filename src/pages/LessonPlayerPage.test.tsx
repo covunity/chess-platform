@@ -243,6 +243,16 @@ describe('LessonPlayerPage', () => {
         expect(screen.getByTestId('admin-watermark')).toBeInTheDocument()
       })
     })
+
+    it('admin-watermark shows Vietnamese text and correct spec styling', async () => {
+      mockCheckUserEnrollment.mockResolvedValue(false)
+      renderPlayer(adminUser, '/learn/c1/l2')
+      await waitFor(() => {
+        const watermark = screen.getByTestId('admin-watermark')
+        expect(watermark).toHaveTextContent('Admin preview · không enrolled')
+        expect(watermark).toHaveStyle({ background: 'var(--warning-soft)', color: 'var(--warning)', fontSize: '12px', fontWeight: '500' })
+      })
+    })
   })
 
   describe('sidebar', () => {

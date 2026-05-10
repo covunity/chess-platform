@@ -92,12 +92,14 @@ export async function getOrder(
 
 export async function getPendingOrderForCourse(
   client: SupabaseClient,
-  courseId: string
+  courseId: string,
+  userId: string
 ): Promise<{ order: Order | null; error: Error | null }> {
   const { data, error } = await client
     .from('orders')
     .select('id, course_id, user_id, status, amount, code, created_at, updated_at')
     .eq('course_id', courseId)
+    .eq('user_id', userId)
     .eq('status', 'pending')
     .maybeSingle()
 

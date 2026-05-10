@@ -674,7 +674,8 @@
     "enrolledToast": "Đã đăng ký · {{count}} bài học đã mở khóa",
     "bookmarkedToast": "Đã bookmark · {{moveLabel}}",
     "bookmarkUndo": "Hoàn tác",
-    "bookmarkMoveLabel": "Nước {{played}} / {{total}}"
+    "bookmarkMoveLabel": "Nước {{played}} / {{total}}",
+    "adminWatermark": "Admin preview · không enrolled"
   },
   "dashboard": {
     "welcome": "CHÀO MỪNG TRỞ LẠI, {{name}}",

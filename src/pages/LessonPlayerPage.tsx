@@ -333,7 +333,7 @@ export default function LessonPlayerPage() {
       if (user) {
         const [enrolledResult, pendingOrderResult] = await Promise.all([
           checkUserEnrollment(supabase, courseId!, user.id),
-          getPendingOrderForCourse(supabase, courseId!),
+          getPendingOrderForCourse(supabase, courseId!, user.id),
         ])
         if (cancelled) return
         isEnrolled = enrolledResult
@@ -512,23 +512,28 @@ export default function LessonPlayerPage() {
         <div
           data-testid="admin-watermark"
           style={{
-            position: 'fixed',
-            top: 12,
-            right: 16,
+            position: 'sticky',
+            top: 0,
+            alignSelf: 'flex-start',
+            marginLeft: 'auto',
             zIndex: 500,
-            background: 'var(--warning)',
-            color: 'var(--ink-1)',
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
+            background: 'var(--warning-soft)',
+            color: 'var(--warning)',
+            fontSize: 12,
+            fontWeight: 500,
             padding: '4px 10px',
             borderRadius: 'var(--r-sm)',
             pointerEvents: 'none',
-            opacity: 0.85,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
           }}
         >
-          Admin Preview
+          <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+            <circle cx={12} cy={12} r={3} />
+          </svg>
+          {t('player.adminWatermark')}
         </div>
       )}
       {/* Sidebar */}

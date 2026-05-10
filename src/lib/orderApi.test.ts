@@ -137,7 +137,7 @@ describe('getOrder', () => {
 // ── getPendingOrderForCourse ────────────────────────────────────────────────
 
 describe('getPendingOrderForCourse', () => {
-  it('returns pending order for given course', async () => {
+  it('returns pending order for given course and user', async () => {
     const pending = { ...sampleOrder, status: 'pending' as const }
     const chain = {
       select: vi.fn().mockReturnThis(),
@@ -146,9 +146,12 @@ describe('getPendingOrderForCourse', () => {
     }
     const client = { from: vi.fn().mockReturnValue(chain) } as unknown as SupabaseClient
 
-    const { order, error } = await (await import('./orderApi')).getPendingOrderForCourse(client, 'c-1')
+    const { order, error } = await (await import('./orderApi')).getPendingOrderForCourse(client, 'c-1', 'u-1')
     expect(error).toBeNull()
     expect(order?.status).toBe('pending')
+    expect(chain.eq).toHaveBeenCalledWith('course_id', 'c-1')
+    expect(chain.eq).toHaveBeenCalledWith('user_id', 'u-1')
+    expect(chain.eq).toHaveBeenCalledWith('status', 'pending')
   })
 
   it('returns null when no pending order exists', async () => {
@@ -159,9 +162,39 @@ describe('getPendingOrderForCourse', () => {
     }
     const client = { from: vi.fn().mockReturnValue(chain) } as unknown as SupabaseClient
 
-    const { order, error } = await (await import('./orderApi')).getPendingOrderForCourse(client, 'c-no-order')
+    const { order, error } = await (await import('./orderApi')).getPendingOrderForCourse(client, 'c-no-order', 'u-1')
     expect(order).toBeNull()
     expect(error).toBeNull()
+  })
+
+  it('admin browsing course with another user pending order sees null — filtered by own userId', async () => {
+    // Admin's userId is 'admin-1'. Only 'u-2' has a pending order. Query returns null.
+    const chain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+    }
+    const client = { from: vi.fn().mockReturnValue(chain) } as unknown as SupabaseClient
+
+    const { order, error } = await (await import('./orderApi')).getPendingOrderForCourse(client, 'c-1', 'admin-1')
+    expect(order).toBeNull()
+    expect(error).toBeNull()
+    expect(chain.eq).toHaveBeenCalledWith('user_id', 'admin-1')
+  })
+
+  it('does not throw when multiple users have pending orders for same course — filters by userId', async () => {
+    // With user_id filter, maybeSingle() always gets 0 or 1 row — no multi-row error
+    const adminPending = { ...sampleOrder, user_id: 'admin-1', status: 'pending' as const }
+    const chain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: adminPending, error: null }),
+    }
+    const client = { from: vi.fn().mockReturnValue(chain) } as unknown as SupabaseClient
+
+    const { order, error } = await (await import('./orderApi')).getPendingOrderForCourse(client, 'c-1', 'admin-1')
+    expect(error).toBeNull()
+    expect(order?.user_id).toBe('admin-1')
   })
 })
 

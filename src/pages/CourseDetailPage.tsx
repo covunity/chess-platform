@@ -1249,7 +1249,7 @@ export default function CourseDetailPage() {
     getUserReview(supabase, courseId, user.id).then(({ review }) => {
       setUserReview(review)
     })
-    getPendingOrderForCourse(supabase, courseId).then(({ order }) => {
+    getPendingOrderForCourse(supabase, courseId, user.id).then(({ order }) => {
       setPendingOrder(order)
     })
   }, [user, courseId])
@@ -1332,7 +1332,7 @@ export default function CourseDetailPage() {
           navigate(`/checkout/${existingId}`)
         } else {
           // fallback: reload pending order
-          const { order: po } = await getPendingOrderForCourse(supabase, course.id)
+          const { order: po } = await getPendingOrderForCourse(supabase, course.id, user!.id)
           if (po) navigate(`/checkout/${po.id}`)
         }
       }
