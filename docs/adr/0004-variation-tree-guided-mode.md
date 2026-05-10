@@ -1,6 +1,6 @@
 # ADR-0004 — Variation Tree for Guided Chess Lessons
 
-- **Status:** Proposed
+- **Status:** Proposed (revised 2026-05-10 after design review)
 - **Date:** 2026-05-10
 - **PRD:** `docs/prd/0003-variation-tree.md`
 - **Unlocks:** D-07 (Phase 1 lock that forbade variation tree in guided mode)
@@ -40,7 +40,7 @@ We pick option 3.
 | Code | Decision |
 |------|----------|
 | **V-01** | Variation data is **encoded in PGN itself** using the standard `(...)` syntax. No `mode` column on `lessons`, no separate `lesson_moves` table, no DB migration in this scope. |
-| **V-02** | `parsePgn` is rewritten to produce a `PgnNode` tree: each node holds `{ id, san, from, to, fen, moveNumber, side, annotation, children: PgnNode[], parentId }`. The first child of every node is the **main line** by convention; subsequent children are alternatives in PGN appearance order. |
+| **V-02** | `parsePgn` is rewritten to produce a `PgnNode` tree: each node holds `{ id, san, from, to, promotion, fen, moveNumber, side, annotation, children: PgnNode[], parentId }`. The first child of every node is the **main line** by convention; subsequent children are alternatives in PGN appearance order. `promotion` is `'q'|'r'|'b'|'n'|null` — non-null only when the move is a pawn promotion. |
 | **V-03** | Linear PGN parses to a tree of degree 1 — one root, each node has at most one child. The legacy linear contract (`moves: PgnMove[]`) is preserved as a derived view (`mainLine: PgnNode[]`) for backwards compatibility with the editor's preview pane and existing tests. |
 | **V-04** | The PGN textarea remains the single authoring surface in Phase 2. Creators paste tree PGN exported from ChessBase / Lichess / SCID; the editor parses, previews, and validates it. **No graphical tree-builder** in Phase 2 — that's Phase 3 if creator demand justifies it. |
 | **V-05** | The editor's right-side preview pane gets a **collapsible variation list** below the board. Each variation node shows its SAN + indent depth; clicking a node updates the preview FEN + last-move highlight. Annotations on variation nodes render the same as on main-line nodes. |
@@ -50,35 +50,41 @@ We pick option 3.
 | **V-09** | **Completion** fires `onComplete` when the learner reaches a leaf node along **any** path. Reaching a leaf via a side variation counts as completion, not "stuck". This is the pedagogical contract: the lesson teaches "if Black plays X, here's how to continue" — completing the X line completes the lesson. |
 | **V-10** | The bookmark contract (`onBookmark(playedPlies, currentFen, totalPlies)` from Phase 1) is widened to `onBookmark(currentNodeId, currentFen, depth, totalDepth)`. `bookmarks` table gains a nullable `node_id text` column (migration in this PRD). Existing bookmarks (`node_id IS NULL`) still resolve to the linear ply path for back-compat. |
 | **V-11** | `LessonEditor` shows a **variation summary line** in the PGN status row: `✓ Đã phân tích PGN · N nước (M nhánh phụ, độ sâu tối đa K)`. M = count of non-main-line nodes, K = max depth from root. |
-| **V-12** | `MAX_PGN_CHARS` is raised from 5000 to **20000** to accommodate trees. Both the textarea `maxLength` attribute and the server-side validation in `submit_lesson_pgn` (if we add one — currently no server validation exists) are updated. |
-| **V-13** | Wrong-move detection uses **square pair** (`from`, `to`), not SAN, to match `currentNode.children[*].{from,to}`. This avoids edge cases with `Ngf3` / `Nf3` disambiguation when chess.js normalises SAN differently than the creator typed. |
+| **V-12** | `MAX_PGN_CHARS` is raised from 5000 to **50000** to accommodate realistic repertoire trees. 20000 is too low — a Najdorf or Italian Game export from Lichess Studies / ChessBase commonly lands in the 30–80k range once annotations are included. The textarea `maxLength` attribute and any future server-side validation use the same constant. Trees that exceed 50k are deferred to a Phase 2.1 follow-up that can move large `pgn_data` blobs to a Supabase Storage object referenced by URL — no architectural change to the tree model, only the storage path. |
+| **V-13** | Wrong-move detection matches on the tuple `(from, to, promotion)`, not SAN. This avoids `Ngf3` / `Nf3` disambiguation drift between creator-typed SAN and parser-emitted SAN, and crucially handles **under-promotion variations** — a creator can author `e8=N!` as the main line and `e8=Q?` as a side variation; both share `(e7, e8)` and are disambiguated only by the promotion piece. When `from→to` matches multiple children with different promotion pieces, the player MUST surface a promotion picker (Q/R/B/N) before committing the move. |
 | **V-14** | The "back" button stays forbidden (D-12). Variation **does not** mean scrubbing — once the learner picks a child node, they can't undo to take a different branch. Reset (existing dialog) is the only way to retry. This keeps the spaced-repetition pressure that motivates D-12. |
 | **V-15** | i18n: variation-specific strings (`Có {{n}} biến`, `Đối thủ sẽ đi {{san}}`, `Chú thích biến`) live under the existing `guidedPlayer.*` namespace added in the i18n PR. No new top-level namespace. |
+| **V-16** | Node IDs hash on `(parentId, from, to, promotion)`, **not** on SAN. SAN normalisation by `chess.js` (e.g. dropping unnecessary disambiguation, capitalising castling) would silently invalidate bookmark IDs even when the move is unchanged. Hashing on geometric move coordinates is parser-output-stable and exactly aligns with V-13's match key. Hash function: `sha256((parentId || '') + '/' + from + to + (promotion || '')).slice(0, 16)`. |
+| **V-17** | The PGN-to-tree parser is a **custom recursive-descent tokenizer that tracks `(...)` paren depth** — not `chess.js loadPgn`. Empirically `chess.js` (all versions through current) parses only the main line and discards content inside parentheses; relying on it would force a rewrite mid-slice. We use `chess.js` only for per-node FEN computation by replaying the path from root. The tokenizer reuses the `(...)` handling already proven in `extractAnnotations`. |
+| **V-18** | Leaf-completion (V-09) fires regardless of which side is to move at the leaf. A leaf with the **learner** to move (i.e. the lesson ends mid-move-pair) still fires `onComplete` — creators authoring such trees are explicitly choosing to end the lesson there. UI does not show a "your turn" prompt at a leaf, just the completion check. |
 
 ### Tree shape (TypeScript)
 
 ```ts
 interface PgnNode {
-  id: string                   // stable hash of path-from-root (so bookmarks survive editor edits unchanged paths)
-  san: string                  // 'e4', 'Nf3', 'O-O', etc.
-  from: string                 // 'e2'
-  to: string                   // 'e4'
-  fen: string                  // FEN after this move
-  moveNumber: number           // 1-indexed full-move number
-  side: 'w' | 'b'              // who played this move
-  annotation: string | null    // text from { } following this move
+  id: string                          // sha256((parentId||'') + '/' + from + to + (promotion||'')).slice(0,16) — V-16
+  san: string                         // 'e4', 'Nf3', 'O-O', 'e8=Q', etc. (display only — not used for matching)
+  from: string                        // 'e2'
+  to: string                          // 'e4'
+  promotion: 'q'|'r'|'b'|'n'|null     // V-13: only non-null for pawn promotions
+  fen: string                         // FEN after this move
+  moveNumber: number                  // 1-indexed full-move number
+  side: 'w' | 'b'                     // who played this move
+  annotation: string | null           // text from { } following this move
   parentId: string | null
-  children: PgnNode[]          // children[0] = main-line continuation
+  children: PgnNode[]                 // children[0] = main-line continuation
+  depthFromRoot: number               // 0 for root, used by bookmark depth + completion checks
 }
 
 interface PgnParseResult {
   valid: boolean
-  root: PgnNode | null         // null when invalid
+  root: PgnNode | null                // null when invalid; sentinel root has no san/from/to (children[0] is move 1)
   totalNodes: number
-  variationCount: number       // total non-main-line nodes (sum over all branches)
-  maxDepth: number             // longest path from root to any leaf
-  annotations: number          // total annotation count across the tree
-  mainLine: PgnNode[]          // derived: walk children[0] from root, for editor preview & legacy callers
+  variationCount: number              // total non-main-line nodes (sum over all branches)
+  maxDepth: number                    // longest path from root to any leaf
+  annotations: number                 // total annotation count across the tree
+  mainLine: PgnNode[]                 // derived: walk children[0] from root, for editor preview & legacy callers
+  nodeMap: Map<string, PgnNode>       // id → node, built once at parse time; consumed by player + bookmark adapter
   error?: string
 }
 ```
@@ -90,14 +96,21 @@ State: { currentNodeId: string }                    // the node the learner just
 Initial: { currentNodeId: root.id }                 // root is the starting position (no move played yet)
 
 On learner click (square pair from→to):
-  let next = currentNode.children.find(c => c.from === from && c.to === to)
-  if (next) {
-    setState({ currentNodeId: next.id })
-    if (next.children.length === 0) onComplete()    // V-09
-    if (next.side opposite of learnerColor) auto-play next.children[0] after 600ms (V-08)
-  } else {
+  let candidates = currentNode.children.filter(c => c.from === from && c.to === to)
+  if (candidates.length === 0) {
     show wrongMove(from)                            // D-10 preserved
+  } else if (candidates.length === 1) {
+    commit(candidates[0])
+  } else {
+    // V-13: ambiguity = under-promotion variations sharing (from,to)
+    showPromotionPicker(candidates.map(c => c.promotion))
+    // on pick: commit(candidates.find(c => c.promotion === picked))
   }
+
+function commit(next):
+  setState({ currentNodeId: next.id })
+  if (next.children.length === 0) onComplete()     // V-09 + V-18: fires regardless of side-to-move at leaf
+  if (next.children[0]?.side opposite of learnerColor) auto-play next.children[0] after 600ms (V-08)
 
 On Hint:
   next = currentNode.children[0]                    // V-07
@@ -138,11 +151,12 @@ ALTER TABLE public.bookmarks
 
 ### Negative
 
-- **PGN textarea reaches its limit faster.** A deep repertoire tree can blow past 20000 chars. We accept this as Phase 2 — Phase 3 ADR may move large trees to a `lesson_moves` table or storage object.
-- **Tree node IDs are content-derived (path hash).** Editing the middle of a tree invalidates downstream bookmark IDs. Mitigation: bookmarks store the path as a sequence of SAN moves, not just the leaf id; resolution walks from root. (Implementation detail in PRD-0003.)
-- **`chess.js` PGN-with-variations parser has been historically flaky** on edge cases (NAGs, nested annotations, comments inside variations). We need to pin a chess.js version we've smoke-tested with sample repertoire PGNs from Lichess and ChessBase.
-- **Test count balloons.** Each existing 44 player tests now needs a "linear PGN parses to degree-1 tree" assertion plus tree-specific tests for navigation, hint, completion, wrong-move within a variation. Estimate +30 player tests, +10 parser tests.
+- **PGN textarea still has a finite cap.** 50000 chars (V-12) covers realistic repertoire trees from Lichess Studies and ChessBase but a heavily-annotated full-coverage opening book (Najdorf with 6 sub-systems + prose) can still exceed it. Trees that hit the cap are a Phase 2.1 follow-up: spill to a Supabase Storage object referenced from `lessons.pgn_data_url`. The tree model itself does not change — only the storage path.
+- **Tree node IDs are content-derived (V-16 hash on `parentId + from + to + promotion`).** Editing a node mid-tree (e.g. swapping `Nf3` for `Bc4` at move 3) invalidates IDs of all downstream nodes on that branch. Mitigation: `resolveBookmark` (PRD-0003 §5.5) falls through to legacy ply-walk when the stored `node_id` is not found, landing the learner at the closest valid main-line position.
+- **Custom tokenizer means we own a PGN parser.** V-17 commits to the recursive-descent tokenizer rather than relying on `chess.js`. Edge cases — NAGs (`$1`), nested `{ }` inside `(...)`, escape sequences in tags — are now our problem. Mitigation: parser ships with a fixture suite of 10+ real-world PGNs from Lichess Studies + ChessBase before Slice 1 lands.
+- **Test count balloons.** Tree navigation has many shapes: multi-child branches, nested variations, opponent at branch point, promotion picker, leaf-on-learner-turn vs leaf-on-opponent-turn, reset from deep branch, bookmark restore after tree edit. Honest estimate: +60 player tests, +25 parser tests, +10 editor tests over the Phase 1 baseline.
 - **Editor preview only shows main line by default.** Creators with deep trees need the V-05 collapsible variation panel to see what they authored — adds editor surface area.
+- **Branching at opponent's turn is silently ignored by the player.** V-08 forces opponent to play `children[0]`, so alternatives authored at opponent-move nodes never reach the learner. Creators teaching "what if Black plays X vs Y vs Z" must structure those as **alternatives at the learner's move** in a follow-up node, or ship separate lessons. Mitigation: V-05 editor panel surfaces a `Đối thủ sẽ đi {san}` warning at every opponent-move branch so creators see the constraint while authoring.
 
 ### Neutral
 
@@ -172,19 +186,18 @@ ALTER TABLE lessons ADD COLUMN pgn_tree jsonb;
 - Cons: divergence from PGN as the lingua franca of chess; creators can't paste from external tools; we'd need an export-to-PGN step for sharing; bookmark IDs still need stable hashing across edits.
 - **Rejected.** PGN is the standard interchange. Storing as PGN keeps round-tripping with ChessBase / Lichess trivial.
 
-### D. `chess.js` v2 vs v0/v1 native variations
-- `chess.js` >= v0.13 supports `loadPgn` with variations behind `{ permissive: true }` flag (per upstream changelog). We need to:
-  - Verify which version `package.json` pins.
-  - Smoke-test against a ~50-move tree PGN exported from Lichess Studies.
-  - If the API doesn't expose the tree directly (it returns a flat history of the *first* line traversed), write a small custom PGN tokenizer using the `(...)` paren depth — same approach the existing `extractAnnotations` regex uses, but recursive.
-- **Decision deferred to PRD execution** — verify chess.js capability in Slice 1 of the PRD; fall back to custom paren-depth tokenizer if needed.
+### D. Rely on `chess.js` `loadPgn` for variation parsing
+- Initial design considered using `chess.js loadPgn` (with or without a `permissive` flag) to extract the tree directly.
+- Empirical reality: `chess.js` parses only the main line and silently drops content inside `(...)`. The library's `history()` output is a flat array of the first traversed line; nested variations are not represented in any public API.
+- **Rejected.** V-17 commits to the recursive-descent tokenizer as the primary parser path. `chess.js` is still used per-node to compute FEN by replaying the path from root — that role is unaffected. This removes the Slice 1 spike risk that the original draft carried.
 
 ## Open questions for PRD execution
 
-1. **chess.js version + variation parsing depth.** What does `loadPgn` with `(...)` actually return today? If insufficient, we ship the tokenizer — quote the file we'll write to (`src/utils/parsePgn.ts`) up front.
-2. **Node ID stability.** Hash of `(parent_id, san)` chain vs `(depth, fen)` vs explicit `(annotation_anchor)`. Affects whether bookmarks survive a creator inserting a comment mid-tree.
-3. **What does the editor show when trees are huge?** First 3 levels expanded, rest collapsed? Search-by-SAN? Defer to UX iteration after Slice 1 ships.
-4. **PGN export.** When trees grow beyond textarea, do we add a "Download PGN" button? Likely yes, but post-Phase 2.
+1. **Editor UX for huge trees.** First 3 levels expanded, rest collapsed? Search-by-SAN? Defer to UX iteration after Slice 1 ships.
+2. **PGN export.** When trees grow beyond textarea, do we add a "Download PGN" button? Likely yes, but post-Phase 2.
+3. **Promotion picker styling.** Reuse existing chessboard.js modal patterns or a custom popover? Decided in Slice 2 alongside the picker implementation (V-13).
+
+(Resolved during this revision: parser path → V-17; node-id hash basis → V-16; promotion handling → V-13; leaf semantics → V-18; MAX_PGN_CHARS sizing → V-12.)
 
 ## References
 
