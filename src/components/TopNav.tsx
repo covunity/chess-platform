@@ -103,10 +103,14 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
         {[
           { to: '/', labelKey: 'nav.browse', end: true },
           { to: '/practice', labelKey: 'nav.practice', end: false },
-          { to: '/dashboard', labelKey: 'nav.library', end: false },
-          ...(profile?.role === 'creator' || profile?.role === 'admin'
-            ? []
-            : [{ to: '/become-creator', labelKey: 'nav.becomeCreator', end: false }]),
+          ...(profile?.role === 'admin'
+            ? [{ to: '/admin', labelKey: 'nav.admin', end: false }]
+            : profile?.role === 'creator'
+              ? [{ to: '/creator', labelKey: 'nav.creatorStudio', end: false }]
+              : [
+                  { to: '/dashboard', labelKey: 'nav.library', end: false },
+                  { to: '/become-creator', labelKey: 'nav.becomeCreator', end: false },
+                ]),
         ].map(link => (
           <NavLink
             key={link.to}
@@ -117,7 +121,11 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
                 ? 'nav-library-link'
                 : link.labelKey === 'nav.becomeCreator'
                   ? 'nav-become-creator-link'
-                  : undefined
+                  : link.labelKey === 'nav.creatorStudio'
+                    ? 'nav-creator-link'
+                    : link.labelKey === 'nav.admin'
+                      ? 'nav-admin-link'
+                      : undefined
             }
             style={({ isActive }) => ({
               padding: '8px 12px',
@@ -303,7 +311,7 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
                 >
                   {t('nav.orders', 'Lịch sử đơn hàng')}
                 </Link>
-                {(profile?.role === 'creator' || profile?.role === 'admin') && (
+                {profile?.role === 'admin' && (
                   <Link
                     role="menuitem"
                     className="nav-dropdown__item"
@@ -312,17 +320,6 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
                     onClick={() => setMenuOpen(false)}
                   >
                     {t('nav.creatorStudio', 'Creator Studio')}
-                  </Link>
-                )}
-                {profile?.role === 'admin' && (
-                  <Link
-                    role="menuitem"
-                    className="nav-dropdown__item"
-                    data-testid="nav-admin-link"
-                    to="/admin"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    {t('nav.admin', 'Quản trị')}
                   </Link>
                 )}
                 <button

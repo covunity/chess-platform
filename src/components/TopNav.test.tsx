@@ -129,7 +129,40 @@ describe('TopNav', () => {
     })
   })
 
-  describe('role-based dropdown', () => {
+  describe('role-based top nav', () => {
+    const loggedInUser = { email: 'user@example.com', id: '123', user_metadata: { name: 'John Doe' } }
+
+    it('learner role shows library + become-creator, hides creator/admin links', () => {
+      renderNav({ user: loggedInUser, profile: profileFor('learner') })
+      expect(screen.getByTestId('nav-library-link')).toHaveAttribute('href', '/dashboard')
+      expect(screen.getByTestId('nav-become-creator-link')).toHaveAttribute('href', '/become-creator')
+      expect(screen.queryByTestId('nav-creator-link')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('nav-admin-link')).not.toBeInTheDocument()
+    })
+
+    it('creator role shows Creator Studio in top nav, hides library + become-creator + admin', () => {
+      renderNav({ user: loggedInUser, profile: profileFor('creator') })
+      expect(screen.getByTestId('nav-creator-link')).toHaveAttribute('href', '/creator')
+      expect(screen.queryByTestId('nav-library-link')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('nav-become-creator-link')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('nav-admin-link')).not.toBeInTheDocument()
+    })
+
+    it('admin role shows Quản trị in top nav, hides library + become-creator', () => {
+      renderNav({ user: loggedInUser, profile: profileFor('admin') })
+      expect(screen.getByTestId('nav-admin-link')).toHaveAttribute('href', '/admin')
+      expect(screen.queryByTestId('nav-library-link')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('nav-become-creator-link')).not.toBeInTheDocument()
+    })
+
+    it('shows learner-style nav when profile is null (still loading)', () => {
+      renderNav({ user: loggedInUser, profile: null })
+      expect(screen.getByTestId('nav-library-link')).toHaveAttribute('href', '/dashboard')
+      expect(screen.queryByTestId('nav-admin-link')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('avatar dropdown role-based items', () => {
     const loggedInUser = { email: 'user@example.com', id: '123', user_metadata: { name: 'John Doe' } }
 
     async function openDropdown() {
@@ -137,37 +170,27 @@ describe('TopNav', () => {
       await waitFor(() => screen.getByRole('menuitem', { name: /đăng xuất/i }))
     }
 
-    it('hides Creator Studio + Admin links for learner role', async () => {
+    it('learner dropdown does not include Creator Studio', async () => {
       renderNav({ user: loggedInUser, profile: profileFor('learner') })
       await openDropdown()
-      expect(screen.queryByTestId('nav-creator-link')).not.toBeInTheDocument()
-      expect(screen.queryByTestId('nav-admin-link')).not.toBeInTheDocument()
+      expect(screen.queryByRole('menuitem', { name: /creator studio/i })).not.toBeInTheDocument()
     })
 
-    it('shows Creator Studio link for creator role, hides Admin link', async () => {
+    it('creator dropdown does not include Creator Studio (it is in top nav)', async () => {
       renderNav({ user: loggedInUser, profile: profileFor('creator') })
       await openDropdown()
-      expect(screen.getByTestId('nav-creator-link')).toHaveAttribute('href', '/creator')
-      expect(screen.queryByTestId('nav-admin-link')).not.toBeInTheDocument()
+      expect(screen.queryByRole('menuitem', { name: /creator studio/i })).not.toBeInTheDocument()
     })
 
-    it('shows both Creator Studio and Admin links for admin role', async () => {
+    it('admin dropdown still includes Creator Studio (since top nav shows Quản trị)', async () => {
       renderNav({ user: loggedInUser, profile: profileFor('admin') })
       await openDropdown()
-      expect(screen.getByTestId('nav-creator-link')).toHaveAttribute('href', '/creator')
-      expect(screen.getByTestId('nav-admin-link')).toHaveAttribute('href', '/admin')
-    })
-
-    it('hides role-specific links when profile is null (still loading)', async () => {
-      renderNav({ user: loggedInUser, profile: null })
-      await openDropdown()
-      expect(screen.queryByTestId('nav-creator-link')).not.toBeInTheDocument()
-      expect(screen.queryByTestId('nav-admin-link')).not.toBeInTheDocument()
+      expect(screen.getByRole('menuitem', { name: /creator studio/i })).toHaveAttribute('href', '/creator')
     })
   })
 
   describe('library link', () => {
-    it('points to /dashboard (not the dead /library route)', () => {
+    it('points to /dashboard (not the dead /library route) when no profile', () => {
       renderNav()
       expect(screen.getByTestId('nav-library-link')).toHaveAttribute('href', '/dashboard')
     })
