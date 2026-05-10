@@ -765,7 +765,14 @@
     "resetConfirm": "Reset",
     "yourTurnHeading": "Your turn.",
     "yourTurnBody": "Play the expected move.",
-    "opponentThinking": "Opponent thinking…"
+    "opponentThinking": "Opponent thinking…",
+    "variationCountPill": "+{{n}} variation(s)",
+    "promotionPickerTitle": "Choose promotion piece",
+    "promotionPickerDismiss": "Cancel",
+    "promotionPieceQueen": "Queen",
+    "promotionPieceRook": "Rook",
+    "promotionPieceBishop": "Bishop",
+    "promotionPieceKnight": "Knight"
   },
   "errors": {
     "chapterLimitReached": "You have reached the chapter limit for your current account tier."

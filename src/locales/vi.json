@@ -924,7 +924,14 @@
     "resetConfirm": "Bắt đầu lại",
     "yourTurnHeading": "Lượt của bạn.",
     "yourTurnBody": "Hãy đi nước được mong đợi.",
-    "opponentThinking": "Đối thủ đang nghĩ…"
+    "opponentThinking": "Đối thủ đang nghĩ…",
+    "variationCountPill": "+{{n}} biến",
+    "promotionPickerTitle": "Chọn quân phong cấp",
+    "promotionPickerDismiss": "Huỷ",
+    "promotionPieceQueen": "Hậu",
+    "promotionPieceRook": "Xe",
+    "promotionPieceBishop": "Tượng",
+    "promotionPieceKnight": "Mã"
   },
   "errors": {
     "chapterLimitReached": "Bạn đã đạt giới hạn số chương cho gói tài khoản hiện tại.",

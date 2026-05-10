@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { I18nextProvider } from 'react-i18next'
 import i18n from '../../../i18n'
 import GuidedChessPlayer from '../GuidedChessPlayer'
+import PromotionPicker from '../PromotionPicker'
 
 function render(ui: Parameters<typeof rtlRender>[0]) {
   return rtlRender(<I18nextProvider i18n={i18n}>{ui}</I18nextProvider>)
@@ -734,5 +735,667 @@ describe('GuidedChessPlayer', () => {
 
       expect(onComplete).toHaveBeenCalledTimes(1)
     })
+  })
+})
+
+// ── New tests for Slice 2 (issue #165) ──────────────────────────────────────
+
+// White (learner) has 2 choices at root: e4 or d4
+const LEARNER_BRANCH_PGN = '1. e4 (1. d4 d5 2. Nf3) e5 2. Nf3'
+// Opponent (black) has 2 choices after e4: e5 or c5
+const OPPONENT_BRANCH_PGN = '1. e4 e5 (1...c5 2. Nf3) 2. Nf3'
+// PGN ending on learner's (white's) move — V-18
+const LEARNER_LEAF_PGN = '1. e4'
+// Promotion PGN: white pawn promotes on g8 via h4→h7→g8 path (9 plies)
+// 1. h4 g5 2. hxg5 h5 3. gxh6 a6 4. h7 a5 5. hxg8=Q (5. hxg8=N)
+const PROMO_PGN = '1. h4 g5 2. hxg5 h5 3. gxh6 a6 4. h7 a5 5. hxg8=Q (5. hxg8=N)'
+
+describe('GuidedChessPlayer — Slice 2: tree navigation (issue #165)', () => {
+  describe('learner branching', () => {
+    it('plays into main line (e4) when learner clicks e2→e4', async () => {
+      const user = userEvent.setup()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_BRANCH_PGN }} lessonNumber={1} totalLessons={3} />)
+      const board = screen.getByTestId('guided-player-board')
+      await user.click(board.querySelector('[data-square="e2"]')!)
+      await user.click(board.querySelector('[data-square="e4"]')!)
+      expect(board.querySelector('[data-square="e4"]')).toHaveTextContent('♙')
+      expect(board.querySelector('[data-square="e2"]')).toHaveTextContent('')
+    })
+
+    it('plays into variation (d4) when learner clicks d2→d4', async () => {
+      const user = userEvent.setup()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_BRANCH_PGN }} lessonNumber={1} totalLessons={3} />)
+      const board = screen.getByTestId('guided-player-board')
+      await user.click(board.querySelector('[data-square="d2"]')!)
+      await user.click(board.querySelector('[data-square="d4"]')!)
+      expect(board.querySelector('[data-square="d4"]')).toHaveTextContent('♙')
+      expect(board.querySelector('[data-square="d2"]')).toHaveTextContent('')
+    })
+
+    it('move log shows d4 after playing into d4 variation', async () => {
+      const user = userEvent.setup()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_BRANCH_PGN }} lessonNumber={1} totalLessons={3} />)
+      const board = screen.getByTestId('guided-player-board')
+      await user.click(board.querySelector('[data-square="d2"]')!)
+      await user.click(board.querySelector('[data-square="d4"]')!)
+      expect(screen.getByTestId('move-block-1')).toHaveTextContent('d4')
+    })
+
+    it('move log shows e4 after playing main line', async () => {
+      const user = userEvent.setup()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_BRANCH_PGN }} lessonNumber={1} totalLessons={3} />)
+      const board = screen.getByTestId('guided-player-board')
+      await user.click(board.querySelector('[data-square="e2"]')!)
+      await user.click(board.querySelector('[data-square="e4"]')!)
+      expect(screen.getByTestId('move-block-1')).toHaveTextContent('e4')
+    })
+
+    it('opponent auto-plays d5 after learner plays d4 (variation auto-play)', () => {
+      vi.useFakeTimers()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_BRANCH_PGN }} lessonNumber={1} totalLessons={3} />)
+      const board = screen.getByTestId('guided-player-board')
+      fireEvent.click(board.querySelector('[data-square="d2"]')!)
+      fireEvent.click(board.querySelector('[data-square="d4"]')!)
+      act(() => { vi.advanceTimersByTime(OPPONENT_DELAY_MS) })
+      const b = screen.getByTestId('guided-player-board')
+      expect(b.querySelector('[data-square="d5"]')).toHaveTextContent('♟')
+      expect(b.querySelector('[data-square="d7"]')).toHaveTextContent('')
+      vi.useRealTimers()
+    })
+
+    it('move counter advances after navigating into variation', async () => {
+      const user = userEvent.setup()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_BRANCH_PGN }} lessonNumber={1} totalLessons={3} />)
+      const board = screen.getByTestId('guided-player-board')
+      await user.click(board.querySelector('[data-square="d2"]')!)
+      await user.click(board.querySelector('[data-square="d4"]')!)
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Nước 2')
+    })
+
+    it('reaching leaf via d4 variation fires onComplete', () => {
+      vi.useFakeTimers()
+      const onComplete = vi.fn()
+      // d4 line: root→d4→d5(auto)→Nf3(leaf)
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_BRANCH_PGN }} lessonNumber={1} totalLessons={3} onComplete={onComplete} />)
+      const board = screen.getByTestId('guided-player-board')
+      // Play d4
+      fireEvent.click(board.querySelector('[data-square="d2"]')!)
+      fireEvent.click(board.querySelector('[data-square="d4"]')!)
+      // d5 auto-plays
+      act(() => { vi.advanceTimersByTime(OPPONENT_DELAY_MS) })
+      // Play Nf3
+      const b2 = screen.getByTestId('guided-player-board')
+      fireEvent.click(b2.querySelector('[data-square="g1"]')!)
+      fireEvent.click(b2.querySelector('[data-square="f3"]')!)
+      expect(onComplete).toHaveBeenCalledTimes(1)
+      vi.useRealTimers()
+    })
+
+    it('wrong move in variation shows wrong-move marker', () => {
+      vi.useFakeTimers()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_BRANCH_PGN }} lessonNumber={1} totalLessons={3} />)
+      const board = screen.getByTestId('guided-player-board')
+      fireEvent.click(board.querySelector('[data-square="d2"]')!)
+      fireEvent.click(board.querySelector('[data-square="d4"]')!)
+      act(() => { vi.advanceTimersByTime(OPPONENT_DELAY_MS) })
+      // Now expect Nf3 (g1→f3) but play wrong move
+      const b2 = screen.getByTestId('guided-player-board')
+      fireEvent.click(b2.querySelector('[data-square="g1"]')!)
+      fireEvent.click(b2.querySelector('[data-square="e2"]')!) // wrong destination
+      expect(screen.getByTestId('guided-player-board').querySelector('[data-square="g1"]')).toHaveAttribute('data-wrong-move', 'true')
+      vi.useRealTimers()
+    })
+
+    it('wrong move in variation does not advance move counter', () => {
+      vi.useFakeTimers()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_BRANCH_PGN }} lessonNumber={1} totalLessons={3} />)
+      const board = screen.getByTestId('guided-player-board')
+      fireEvent.click(board.querySelector('[data-square="d2"]')!)
+      fireEvent.click(board.querySelector('[data-square="d4"]')!)
+      act(() => { vi.advanceTimersByTime(OPPONENT_DELAY_MS) })
+      // After d4 (depth 1) and d5 auto (depth 2), counter = 3
+      const b2 = screen.getByTestId('guided-player-board')
+      fireEvent.click(b2.querySelector('[data-square="g1"]')!)
+      fireEvent.click(b2.querySelector('[data-square="e2"]')!) // wrong move
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Nước 3')
+      vi.useRealTimers()
+    })
+  })
+
+  describe('opponent branching', () => {
+    it('opponent auto-plays main-line child (e5) when it has 2 children', () => {
+      vi.useFakeTimers()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: OPPONENT_BRANCH_PGN }} lessonNumber={1} totalLessons={3} />)
+      const board = screen.getByTestId('guided-player-board')
+      fireEvent.click(board.querySelector('[data-square="e2"]')!)
+      fireEvent.click(board.querySelector('[data-square="e4"]')!)
+      act(() => { vi.advanceTimersByTime(OPPONENT_DELAY_MS) })
+      const b = screen.getByTestId('guided-player-board')
+      // Main line: e5 (not c5)
+      expect(b.querySelector('[data-square="e5"]')).toHaveTextContent('♟')
+      expect(b.querySelector('[data-square="c5"]')).toHaveTextContent('')
+      vi.useRealTimers()
+    })
+
+    it('variation pill shows after e4 while opponent has 2+ children', () => {
+      vi.useFakeTimers()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: OPPONENT_BRANCH_PGN }} lessonNumber={1} totalLessons={3} />)
+      const board = screen.getByTestId('guided-player-board')
+      fireEvent.click(board.querySelector('[data-square="e2"]')!)
+      fireEvent.click(board.querySelector('[data-square="e4"]')!)
+      // Before opponent auto-plays: currentNode = e4 (2 children)
+      expect(screen.getByTestId('variation-count-pill')).toBeInTheDocument()
+      vi.useRealTimers()
+    })
+
+    it('opponent-thinking indicator shows during auto-play after e4', () => {
+      vi.useFakeTimers()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: OPPONENT_BRANCH_PGN }} lessonNumber={1} totalLessons={3} />)
+      const board = screen.getByTestId('guided-player-board')
+      fireEvent.click(board.querySelector('[data-square="e2"]')!)
+      fireEvent.click(board.querySelector('[data-square="e4"]')!)
+      expect(screen.getByTestId('opponent-thinking-indicator')).toBeInTheDocument()
+      vi.useRealTimers()
+    })
+  })
+
+  describe('variation count pill', () => {
+    it('pill shows "+1 biến" when currentNode has 2 children (learner branching)', () => {
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_BRANCH_PGN }} lessonNumber={1} totalLessons={3} />)
+      // At root: 2 children (e4 and d4), learner's turn
+      const pill = screen.getByTestId('variation-count-pill')
+      expect(pill).toHaveTextContent('+1')
+    })
+
+    it('pill absent when currentNode has exactly 1 child', () => {
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: SAMPLE_PGN }} lessonNumber={1} totalLessons={5} />)
+      // Root has 1 child (e4 only)
+      expect(screen.queryByTestId('variation-count-pill')).not.toBeInTheDocument()
+    })
+
+    it('pill absent at leaf (no children)', () => {
+      vi.useFakeTimers()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_LEAF_PGN }} lessonNumber={1} totalLessons={1} />)
+      const board = screen.getByTestId('guided-player-board')
+      fireEvent.click(board.querySelector('[data-square="e2"]')!)
+      fireEvent.click(board.querySelector('[data-square="e4"]')!)
+      expect(screen.queryByTestId('variation-count-pill')).not.toBeInTheDocument()
+      vi.useRealTimers()
+    })
+
+    it('pill disappears after learner follows one of the variation choices', async () => {
+      const user = userEvent.setup()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_BRANCH_PGN }} lessonNumber={1} totalLessons={3} />)
+      expect(screen.getByTestId('variation-count-pill')).toBeInTheDocument()
+      const board = screen.getByTestId('guided-player-board')
+      await user.click(board.querySelector('[data-square="e2"]')!)
+      await user.click(board.querySelector('[data-square="e4"]')!)
+      // After e4, currentNode = e4 which has only [e5] child → no pill
+      expect(screen.queryByTestId('variation-count-pill')).not.toBeInTheDocument()
+    })
+
+    it('pill absent for pure linear PGN', () => {
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: SAMPLE_PGN }} lessonNumber={1} totalLessons={5} />)
+      expect(screen.queryByTestId('variation-count-pill')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('leaf on learner\'s turn (V-18)', () => {
+    it('onComplete fires immediately after learner plays the only leaf move', () => {
+      const onComplete = vi.fn()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_LEAF_PGN }} lessonNumber={1} totalLessons={1} onComplete={onComplete} />)
+      expect(onComplete).not.toHaveBeenCalled()
+      const board = screen.getByTestId('guided-player-board')
+      fireEvent.click(board.querySelector('[data-square="e2"]')!)
+      fireEvent.click(board.querySelector('[data-square="e4"]')!)
+      expect(onComplete).toHaveBeenCalledTimes(1)
+    })
+
+    it('onComplete does not fire before the leaf move is played', () => {
+      const onComplete = vi.fn()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_LEAF_PGN }} lessonNumber={1} totalLessons={1} onComplete={onComplete} />)
+      expect(onComplete).not.toHaveBeenCalled()
+    })
+
+    it('completedFiredRef prevents double-firing onComplete', () => {
+      const onComplete = vi.fn()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_LEAF_PGN }} lessonNumber={1} totalLessons={1} onComplete={onComplete} />)
+      const board = screen.getByTestId('guided-player-board')
+      fireEvent.click(board.querySelector('[data-square="e2"]')!)
+      fireEvent.click(board.querySelector('[data-square="e4"]')!)
+      expect(onComplete).toHaveBeenCalledTimes(1)
+    })
+
+    it('after reset, onComplete can fire again when leaf re-played', async () => {
+      const user = userEvent.setup()
+      const onComplete = vi.fn()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_LEAF_PGN }} lessonNumber={1} totalLessons={1} onComplete={onComplete} />)
+      const board = screen.getByTestId('guided-player-board')
+      fireEvent.click(board.querySelector('[data-square="e2"]')!)
+      fireEvent.click(board.querySelector('[data-square="e4"]')!)
+      expect(onComplete).toHaveBeenCalledTimes(1)
+      // Reset
+      await user.click(screen.getByTestId('guided-player-reset-btn'))
+      await user.click(screen.getByTestId('guided-player-reset-confirm'))
+      // Play again
+      const b2 = screen.getByTestId('guided-player-board')
+      fireEvent.click(b2.querySelector('[data-square="e2"]')!)
+      fireEvent.click(b2.querySelector('[data-square="e4"]')!)
+      expect(onComplete).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  describe('reset from variation', () => {
+    it('reset from variation returns board to starting position', async () => {
+      const user = userEvent.setup()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_BRANCH_PGN }} lessonNumber={1} totalLessons={3} />)
+      const board = screen.getByTestId('guided-player-board')
+      await user.click(board.querySelector('[data-square="d2"]')!)
+      await user.click(board.querySelector('[data-square="d4"]')!)
+      await user.click(screen.getByTestId('guided-player-reset-btn'))
+      await user.click(screen.getByTestId('guided-player-reset-confirm'))
+      const b2 = screen.getByTestId('guided-player-board')
+      expect(b2.querySelector('[data-square="d2"]')).toHaveTextContent('♙')
+      expect(b2.querySelector('[data-square="d4"]')).toHaveTextContent('')
+    })
+
+    it('reset from variation clears move log', async () => {
+      const user = userEvent.setup()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_BRANCH_PGN }} lessonNumber={1} totalLessons={3} />)
+      const board = screen.getByTestId('guided-player-board')
+      await user.click(board.querySelector('[data-square="d2"]')!)
+      await user.click(board.querySelector('[data-square="d4"]')!)
+      await user.click(screen.getByTestId('guided-player-reset-btn'))
+      await user.click(screen.getByTestId('guided-player-reset-confirm'))
+      const log = screen.getByTestId('guided-player-move-log')
+      expect(log.querySelectorAll('[data-testid^="move-block-"]').length).toBe(0)
+    })
+
+    it('reset from variation resets move counter to 1', async () => {
+      const user = userEvent.setup()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_BRANCH_PGN }} lessonNumber={1} totalLessons={3} />)
+      const board = screen.getByTestId('guided-player-board')
+      await user.click(board.querySelector('[data-square="d2"]')!)
+      await user.click(board.querySelector('[data-square="d4"]')!)
+      await user.click(screen.getByTestId('guided-player-reset-btn'))
+      await user.click(screen.getByTestId('guided-player-reset-confirm'))
+      expect(screen.getByTestId('guided-player-move-counter')).toHaveTextContent('Nước 1')
+    })
+
+    it('your-turn prompt reappears after reset from variation', async () => {
+      const user = userEvent.setup()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_BRANCH_PGN }} lessonNumber={1} totalLessons={3} />)
+      const board = screen.getByTestId('guided-player-board')
+      await user.click(board.querySelector('[data-square="d2"]')!)
+      await user.click(board.querySelector('[data-square="d4"]')!)
+      await user.click(screen.getByTestId('guided-player-reset-btn'))
+      await user.click(screen.getByTestId('guided-player-reset-confirm'))
+      expect(screen.getByTestId('your-turn-prompt')).toBeInTheDocument()
+    })
+  })
+
+  describe('hint in variation', () => {
+    it('hint highlights children[0] (main-line child) at branching point', async () => {
+      const user = userEvent.setup()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_BRANCH_PGN }} lessonNumber={1} totalLessons={3} />)
+      await user.click(screen.getByTestId('guided-player-hint-btn'))
+      const board = screen.getByTestId('guided-player-board')
+      // First child of root is e4 (e2→e4)
+      expect(board.querySelector('[data-square="e2"]')).toHaveAttribute('data-hint', 'true')
+      expect(board.querySelector('[data-square="e4"]')).toHaveAttribute('data-hint', 'true')
+    })
+
+    it('hint button disabled while opponent auto-plays in variation', () => {
+      vi.useFakeTimers()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_BRANCH_PGN }} lessonNumber={1} totalLessons={3} />)
+      const board = screen.getByTestId('guided-player-board')
+      fireEvent.click(board.querySelector('[data-square="d2"]')!)
+      fireEvent.click(board.querySelector('[data-square="d4"]')!)
+      // d5 hasn't auto-played yet — it's opponent's turn
+      expect(screen.getByTestId('guided-player-hint-btn')).toBeDisabled()
+      vi.useRealTimers()
+    })
+  })
+
+  describe('your-turn prompt in variation', () => {
+    it('your-turn prompt shows when learner\'s turn in variation', async () => {
+      vi.useFakeTimers()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_BRANCH_PGN }} lessonNumber={1} totalLessons={3} />)
+      const board = screen.getByTestId('guided-player-board')
+      fireEvent.click(board.querySelector('[data-square="d2"]')!)
+      fireEvent.click(board.querySelector('[data-square="d4"]')!)
+      act(() => { vi.advanceTimersByTime(OPPONENT_DELAY_MS) })
+      // After d5 auto-plays, it's learner's turn again
+      expect(screen.getByTestId('your-turn-prompt')).toBeInTheDocument()
+      vi.useRealTimers()
+    })
+
+    it('your-turn prompt hidden during opponent auto-play after branching', () => {
+      vi.useFakeTimers()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_BRANCH_PGN }} lessonNumber={1} totalLessons={3} />)
+      const board = screen.getByTestId('guided-player-board')
+      fireEvent.click(board.querySelector('[data-square="d2"]')!)
+      fireEvent.click(board.querySelector('[data-square="d4"]')!)
+      // Opponent hasn't played yet
+      expect(screen.queryByTestId('your-turn-prompt')).not.toBeInTheDocument()
+      vi.useRealTimers()
+    })
+  })
+
+  describe('onBookmark new signature', () => {
+    it('onBookmark first arg is a string (nodeId)', () => {
+      const onBookmark = vi.fn()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: SAMPLE_PGN }} lessonNumber={1} totalLessons={5} onBookmark={onBookmark} />)
+      fireEvent.keyDown(window, { key: 'b' })
+      expect(typeof onBookmark.mock.calls[0][0]).toBe('string')
+    })
+
+    it('nodeId is "root" before any move', () => {
+      const onBookmark = vi.fn()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: SAMPLE_PGN }} lessonNumber={1} totalLessons={5} onBookmark={onBookmark} />)
+      fireEvent.keyDown(window, { key: 'b' })
+      expect(onBookmark.mock.calls[0][0]).toBe('root')
+    })
+
+    it('nodeId changes after first move', async () => {
+      const user = userEvent.setup()
+      const onBookmark = vi.fn()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: SAMPLE_PGN }} lessonNumber={1} totalLessons={5} onBookmark={onBookmark} />)
+      const board = screen.getByTestId('guided-player-board')
+      await user.click(board.querySelector('[data-square="e2"]')!)
+      await user.click(board.querySelector('[data-square="e4"]')!)
+      fireEvent.keyDown(window, { key: 'b' })
+      expect(onBookmark.mock.calls[0][0]).not.toBe('root')
+    })
+
+    it('depth arg is 0 before any move', () => {
+      const onBookmark = vi.fn()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: SAMPLE_PGN }} lessonNumber={1} totalLessons={5} onBookmark={onBookmark} />)
+      fireEvent.keyDown(window, { key: 'b' })
+      expect(onBookmark.mock.calls[0][2]).toBe(0)
+    })
+
+    it('depth arg is 1 after one move', async () => {
+      const user = userEvent.setup()
+      const onBookmark = vi.fn()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: SAMPLE_PGN }} lessonNumber={1} totalLessons={5} onBookmark={onBookmark} />)
+      const board = screen.getByTestId('guided-player-board')
+      await user.click(board.querySelector('[data-square="e2"]')!)
+      await user.click(board.querySelector('[data-square="e4"]')!)
+      fireEvent.keyDown(window, { key: 'b' })
+      expect(onBookmark.mock.calls[0][2]).toBe(1)
+    })
+  })
+
+  describe('move log in variation', () => {
+    it('move log shows d4 path (not e4) when navigated to d4 variation', async () => {
+      const user = userEvent.setup()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_BRANCH_PGN }} lessonNumber={1} totalLessons={3} />)
+      const board = screen.getByTestId('guided-player-board')
+      await user.click(board.querySelector('[data-square="d2"]')!)
+      await user.click(board.querySelector('[data-square="d4"]')!)
+      const log = screen.getByTestId('guided-player-move-log')
+      expect(log).toHaveTextContent('d4')
+      expect(log).not.toHaveTextContent('e4')
+    })
+
+    it('sideToMove label shows Black after learner plays white move into variation', async () => {
+      const user = userEvent.setup()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_BRANCH_PGN }} lessonNumber={1} totalLessons={3} />)
+      const board = screen.getByTestId('guided-player-board')
+      await user.click(board.querySelector('[data-square="d2"]')!)
+      await user.click(board.querySelector('[data-square="d4"]')!)
+      expect(screen.getByTestId('guided-player-side-to-move')).toHaveTextContent('Đen')
+    })
+
+    it('move log shows both d4 and d5 after opponent auto-plays in variation', () => {
+      vi.useFakeTimers()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_BRANCH_PGN }} lessonNumber={1} totalLessons={3} />)
+      const board = screen.getByTestId('guided-player-board')
+      fireEvent.click(board.querySelector('[data-square="d2"]')!)
+      fireEvent.click(board.querySelector('[data-square="d4"]')!)
+      act(() => { vi.advanceTimersByTime(OPPONENT_DELAY_MS) })
+      const block = screen.getByTestId('move-block-1')
+      expect(block).toHaveTextContent('d4')
+      expect(block).toHaveTextContent('d5')
+      vi.useRealTimers()
+    })
+
+    it('move log empty after reset from variation', async () => {
+      const user = userEvent.setup()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_BRANCH_PGN }} lessonNumber={1} totalLessons={3} />)
+      const board = screen.getByTestId('guided-player-board')
+      await user.click(board.querySelector('[data-square="d2"]')!)
+      await user.click(board.querySelector('[data-square="d4"]')!)
+      await user.click(screen.getByTestId('guided-player-reset-btn'))
+      await user.click(screen.getByTestId('guided-player-reset-confirm'))
+      const log = screen.getByTestId('guided-player-move-log')
+      expect(log.querySelectorAll('[data-testid^="move-block-"]').length).toBe(0)
+    })
+  })
+
+  describe('flip board in variation', () => {
+    it('flip board works while in variation', async () => {
+      const user = userEvent.setup()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_BRANCH_PGN }} lessonNumber={1} totalLessons={3} />)
+      const board = screen.getByTestId('guided-player-board')
+      await user.click(board.querySelector('[data-square="d2"]')!)
+      await user.click(board.querySelector('[data-square="d4"]')!)
+      await user.click(screen.getByTestId('guided-player-flip-btn'))
+      expect(screen.getByTestId('guided-player-board').getAttribute('aria-label')).toMatch(/black perspective/i)
+    })
+
+    it('after flip in variation, move log preserves played moves', async () => {
+      const user = userEvent.setup()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: LEARNER_BRANCH_PGN }} lessonNumber={1} totalLessons={3} />)
+      const board = screen.getByTestId('guided-player-board')
+      await user.click(board.querySelector('[data-square="d2"]')!)
+      await user.click(board.querySelector('[data-square="d4"]')!)
+      await user.click(screen.getByTestId('guided-player-flip-btn'))
+      expect(screen.getByTestId('move-block-1')).toHaveTextContent('d4')
+    })
+  })
+
+  describe('promotion integration', () => {
+    beforeEach(() => { vi.useFakeTimers() })
+    afterEach(() => { vi.useRealTimers() })
+
+    function playPromoLine() {
+      const board = () => screen.getByTestId('guided-player-board')
+      // 1. h4
+      fireEvent.click(board().querySelector('[data-square="h2"]')!)
+      fireEvent.click(board().querySelector('[data-square="h4"]')!)
+      act(() => { vi.advanceTimersByTime(OPPONENT_DELAY_MS) }) // g5 auto
+      // 2. hxg5
+      fireEvent.click(board().querySelector('[data-square="h4"]')!)
+      fireEvent.click(board().querySelector('[data-square="g5"]')!)
+      act(() => { vi.advanceTimersByTime(OPPONENT_DELAY_MS) }) // h5 auto
+      // 3. gxh6
+      fireEvent.click(board().querySelector('[data-square="g5"]')!)
+      fireEvent.click(board().querySelector('[data-square="h6"]')!)
+      act(() => { vi.advanceTimersByTime(OPPONENT_DELAY_MS) }) // a6 auto
+      // 4. h7
+      fireEvent.click(board().querySelector('[data-square="h6"]')!)
+      fireEvent.click(board().querySelector('[data-square="h7"]')!)
+      act(() => { vi.advanceTimersByTime(OPPONENT_DELAY_MS) }) // a5 auto
+    }
+
+    it('promotion picker appears when learner clicks to square with 2 promotion candidates', () => {
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: PROMO_PGN }} lessonNumber={1} totalLessons={5} />)
+      playPromoLine()
+      // 5. hxg8 — two promotions
+      const board = screen.getByTestId('guided-player-board')
+      fireEvent.click(board.querySelector('[data-square="h7"]')!)
+      fireEvent.click(board.querySelector('[data-square="g8"]')!)
+      expect(screen.getByTestId('promotion-picker')).toBeInTheDocument()
+    })
+
+    it('picker closed and queen committed after picking Q', () => {
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: PROMO_PGN }} lessonNumber={1} totalLessons={5} />)
+      playPromoLine()
+      const board = screen.getByTestId('guided-player-board')
+      fireEvent.click(board.querySelector('[data-square="h7"]')!)
+      fireEvent.click(board.querySelector('[data-square="g8"]')!)
+      fireEvent.click(screen.getByTestId('promotion-piece-q'))
+      expect(screen.queryByTestId('promotion-picker')).not.toBeInTheDocument()
+    })
+
+    it('dismissing picker leaves position unchanged and closes picker', () => {
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: PROMO_PGN }} lessonNumber={1} totalLessons={5} />)
+      playPromoLine()
+      const board = screen.getByTestId('guided-player-board')
+      fireEvent.click(board.querySelector('[data-square="h7"]')!)
+      fireEvent.click(board.querySelector('[data-square="g8"]')!)
+      fireEvent.click(screen.getByTestId('promotion-dismiss'))
+      expect(screen.queryByTestId('promotion-picker')).not.toBeInTheDocument()
+      // Position unchanged — h7 still has pawn
+      expect(screen.getByTestId('guided-player-board').querySelector('[data-square="h7"]')).toHaveTextContent('♙')
+    })
+
+    it('picker shows only the offered promotion pieces', () => {
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: PROMO_PGN }} lessonNumber={1} totalLessons={5} />)
+      playPromoLine()
+      const board = screen.getByTestId('guided-player-board')
+      fireEvent.click(board.querySelector('[data-square="h7"]')!)
+      fireEvent.click(board.querySelector('[data-square="g8"]')!)
+      // Only Q and N offered in PROMO_PGN
+      expect(screen.getByTestId('promotion-piece-q')).toBeInTheDocument()
+      expect(screen.getByTestId('promotion-piece-n')).toBeInTheDocument()
+      expect(screen.queryByTestId('promotion-piece-r')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('promotion-piece-b')).not.toBeInTheDocument()
+    })
+
+    it('picking N commits knight variation (onComplete fires at leaf)', () => {
+      const onComplete = vi.fn()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: PROMO_PGN }} lessonNumber={1} totalLessons={5} onComplete={onComplete} />)
+      playPromoLine()
+      const board = screen.getByTestId('guided-player-board')
+      fireEvent.click(board.querySelector('[data-square="h7"]')!)
+      fireEvent.click(board.querySelector('[data-square="g8"]')!)
+      fireEvent.click(screen.getByTestId('promotion-piece-n'))
+      expect(onComplete).toHaveBeenCalledTimes(1)
+    })
+
+    it('picking Q also fires onComplete when main-line queen move is at a leaf', () => {
+      const onComplete = vi.fn()
+      render(<GuidedChessPlayer lesson={{ ...baseLesson, pgn_data: PROMO_PGN }} lessonNumber={1} totalLessons={5} onComplete={onComplete} />)
+      playPromoLine()
+      const board = screen.getByTestId('guided-player-board')
+      fireEvent.click(board.querySelector('[data-square="h7"]')!)
+      fireEvent.click(board.querySelector('[data-square="g8"]')!)
+      fireEvent.click(screen.getByTestId('promotion-piece-q'))
+      expect(onComplete).toHaveBeenCalledTimes(1)
+    })
+  })
+})
+
+describe('PromotionPicker component', () => {
+  function renderPicker(props?: Partial<React.ComponentProps<typeof PromotionPicker>>) {
+    return rtlRender(
+      <I18nextProvider i18n={i18n}>
+        <PromotionPicker
+          offered={['q', 'r', 'b', 'n']}
+          onPick={vi.fn()}
+          onDismiss={vi.fn()}
+          {...props}
+        />
+      </I18nextProvider>
+    )
+  }
+
+  it('has data-testid="promotion-picker"', () => {
+    renderPicker()
+    expect(screen.getByTestId('promotion-picker')).toBeInTheDocument()
+  })
+
+  it('renders 4 buttons when offered all 4 pieces', () => {
+    renderPicker()
+    expect(screen.getByTestId('promotion-piece-q')).toBeInTheDocument()
+    expect(screen.getByTestId('promotion-piece-r')).toBeInTheDocument()
+    expect(screen.getByTestId('promotion-piece-b')).toBeInTheDocument()
+    expect(screen.getByTestId('promotion-piece-n')).toBeInTheDocument()
+  })
+
+  it('renders only offered pieces when offered=["q","n"]', () => {
+    renderPicker({ offered: ['q', 'n'] })
+    expect(screen.getByTestId('promotion-piece-q')).toBeInTheDocument()
+    expect(screen.getByTestId('promotion-piece-n')).toBeInTheDocument()
+    expect(screen.queryByTestId('promotion-piece-r')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('promotion-piece-b')).not.toBeInTheDocument()
+  })
+
+  it('calls onPick("q") when Q is clicked', async () => {
+    const onPick = vi.fn()
+    const user = userEvent.setup()
+    renderPicker({ onPick })
+    await user.click(screen.getByTestId('promotion-piece-q'))
+    expect(onPick).toHaveBeenCalledWith('q')
+  })
+
+  it('calls onPick("r") when R is clicked', async () => {
+    const onPick = vi.fn()
+    const user = userEvent.setup()
+    renderPicker({ onPick })
+    await user.click(screen.getByTestId('promotion-piece-r'))
+    expect(onPick).toHaveBeenCalledWith('r')
+  })
+
+  it('calls onPick("b") when B is clicked', async () => {
+    const onPick = vi.fn()
+    const user = userEvent.setup()
+    renderPicker({ onPick })
+    await user.click(screen.getByTestId('promotion-piece-b'))
+    expect(onPick).toHaveBeenCalledWith('b')
+  })
+
+  it('calls onPick("n") when N is clicked', async () => {
+    const onPick = vi.fn()
+    const user = userEvent.setup()
+    renderPicker({ onPick })
+    await user.click(screen.getByTestId('promotion-piece-n'))
+    expect(onPick).toHaveBeenCalledWith('n')
+  })
+
+  it('calls onDismiss when dismiss button is clicked', async () => {
+    const onDismiss = vi.fn()
+    const user = userEvent.setup()
+    renderPicker({ onDismiss })
+    await user.click(screen.getByTestId('promotion-dismiss'))
+    expect(onDismiss).toHaveBeenCalledTimes(1)
+  })
+
+  it('dismiss button has data-testid="promotion-dismiss"', () => {
+    renderPicker()
+    expect(screen.getByTestId('promotion-dismiss')).toBeInTheDocument()
+  })
+
+  it('title shows "Chọn quân phong cấp"', () => {
+    renderPicker()
+    expect(screen.getByText(/chọn quân phong cấp/i)).toBeInTheDocument()
+  })
+
+  it('each piece button has correct data-testid', () => {
+    renderPicker()
+    for (const p of ['q', 'r', 'b', 'n']) {
+      expect(screen.getByTestId(`promotion-piece-${p}`)).toBeInTheDocument()
+    }
+  })
+
+  it('does not render when offered is empty', () => {
+    renderPicker({ offered: [] })
+    // No piece buttons rendered
+    for (const p of ['q', 'r', 'b', 'n']) {
+      expect(screen.queryByTestId(`promotion-piece-${p}`)).not.toBeInTheDocument()
+    }
+  })
+
+  it('queen piece button has aria-label "Hậu"', () => {
+    renderPicker({ offered: ['q'] })
+    expect(screen.getByTestId('promotion-piece-q')).toHaveAttribute('aria-label', 'Hậu')
+  })
+
+  it('root element has role="dialog"', () => {
+    renderPicker()
+    expect(screen.getByTestId('promotion-picker')).toHaveAttribute('role', 'dialog')
   })
 })

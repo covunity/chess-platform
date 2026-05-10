@@ -460,7 +460,7 @@ export default function LessonPlayerPage() {
     return () => { cancelled = true }
   }, [loadState, course, currentLessonId])
 
-  async function handleBookmark(playedPlies: number, currentFen: string, totalPlies: number) {
+  async function handleBookmark(_nodeId: string, currentFen: string, depth: number, totalDepth: number) {
     if (!user || !currentLessonId || adminWatermark) return
 
     if (currentBookmark) {
@@ -470,7 +470,7 @@ export default function LessonPlayerPage() {
       return
     }
 
-    const moveLabel = t('player.bookmarkMoveLabel', 'Move {{played}} of {{total}}', { played: playedPlies, total: totalPlies })
+    const moveLabel = t('player.bookmarkMoveLabel', 'Move {{played}} of {{total}}', { played: depth, total: totalDepth })
     const { bookmark } = await addBookmark(supabase, {
       userId: user.id,
       lessonId: currentLessonId,
@@ -605,7 +605,7 @@ export default function LessonPlayerPage() {
             <button
               data-testid="header-bookmark-btn"
               data-bookmarked={currentBookmark ? 'true' : 'false'}
-              onClick={() => handleBookmark(0, playerLesson?.pgn_data ?? '', 0)}
+              onClick={() => handleBookmark('root', playerLesson?.pgn_data ?? '', 0, 0)}
               style={{
                 display: 'flex',
                 alignItems: 'center',

@@ -2,6 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Chess } from 'chess.js'
 import { parsePgn } from '../../utils/parsePgn'
+import type { PgnNode } from '../../utils/parsePgn'
+import PromotionPicker from './PromotionPicker'
+import type { PromotionPiece } from './PromotionPicker'
 
 export interface GuidedLesson {
   id: string
@@ -16,7 +19,7 @@ export interface GuidedChessPlayerProps {
   lessonNumber: number
   totalLessons: number
   onComplete?: () => void
-  onBookmark?: (playedPlies: number, currentFen: string, totalPlies: number) => void
+  onBookmark?: (nodeId: string, currentFen: string, depth: number, totalDepth: number) => void
 }
 
 const PIECE_UNICODE: Record<string, string> = {
@@ -150,36 +153,65 @@ export default function GuidedChessPlayer({
 }: GuidedChessPlayerProps) {
   const { t } = useTranslation()
   const parsed = useMemo(() => parsePgn(lesson.pgn_data), [lesson.pgn_data])
-  const expectedMoves = parsed.valid ? parsed.mainLine : []
-  const totalPlies = expectedMoves.length
+  const totalPlies = parsed.mainLine.length
 
-  const [playedPlies, setPlayedPlies] = useState(0)
+  const [currentNodeId, setCurrentNodeId] = useState<string>('root')
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null)
   const [wrongMoveSquare, setWrongMoveSquare] = useState<string | null>(null)
   const [hintActive, setHintActive] = useState(false)
   const [viewPerspective, setViewPerspective] = useState<'white' | 'black'>(lesson.board_perspective)
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
+  const [promotionCandidates, setPromotionCandidates] = useState<PgnNode[]>([])
+
   const completedFiredRef = useRef(false)
   const opponentTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const wrongMoveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const learnerColor = lesson.board_perspective
-  const upcomingSide: 'white' | 'black' = playedPlies % 2 === 0 ? 'white' : 'black'
-  const awaitingOpponent = playedPlies < totalPlies && upcomingSide !== learnerColor
+  const learnerSide: 'w' | 'b' = learnerColor === 'white' ? 'w' : 'b'
 
-  // Compute currentFen early so it can be used in the keyboard shortcut effect below
-  const currentFen = playedPlies === 0
-    ? STARTING_FEN
-    : expectedMoves[playedPlies - 1].fen
+  // Derive current node from tree; fall back to root
+  const currentNode: PgnNode | null = parsed.root
+    ? (parsed.nodeMap.get(currentNodeId) ?? parsed.root)
+    : null
 
+  const atLeaf = !currentNode || currentNode.children.length === 0
+  const hasPendingMoves = !atLeaf
+  const nextChild = currentNode?.children[0]
+  const awaitingOpponent = hasPendingMoves && nextChild!.side !== learnerSide
+  const upcomingSide: 'white' | 'black' = nextChild?.side === 'w' ? 'white' : 'black'
+
+  // Path from root to currentNode (for move log)
+  const pathFromRoot = useMemo<PgnNode[]>(() => {
+    if (!currentNode || currentNode.parentId === null) return []
+    const path: PgnNode[] = []
+    let node: PgnNode | undefined = currentNode
+    while (node && node.parentId !== null) {
+      path.unshift(node)
+      node = parsed.nodeMap.get(node.parentId)
+    }
+    return path
+  }, [currentNode, parsed.nodeMap])
+
+  const currentFen = currentNode?.fen ?? STARTING_FEN
+  const lastMove = currentNode && currentNode.parentId !== null
+    ? { from: currentNode.from, to: currentNode.to }
+    : undefined
+
+  // onComplete when leaf reached
   useEffect(() => {
-    if (totalPlies > 0 && playedPlies >= totalPlies && !completedFiredRef.current) {
+    // Fire onComplete when at a non-root leaf
+    if (atLeaf && currentNode && currentNode.parentId !== null && !completedFiredRef.current) {
       completedFiredRef.current = true
       onComplete?.()
     }
-    if (playedPlies < totalPlies) {
+    if (!atLeaf) {
       completedFiredRef.current = false
     }
-  }, [playedPlies, totalPlies, onComplete])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [atLeaf, currentNodeId])
 
+  // Keyboard bookmark
   useEffect(() => {
     if (!onBookmark) return
     function handleKeyDown(e: KeyboardEvent) {
@@ -189,24 +221,27 @@ export default function GuidedChessPlayer({
         const tag = target.tagName
         if (tag === 'INPUT' || tag === 'TEXTAREA' || target.isContentEditable) return
       }
-      onBookmark!(playedPlies, currentFen, totalPlies)
+      const depth = currentNode?.depthFromRoot ?? 0
+      onBookmark!(currentNodeId, currentFen, depth, totalPlies)
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [onBookmark, playedPlies, currentFen, totalPlies])
-  const wrongMoveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  }, [onBookmark, currentNodeId, currentFen, currentNode, totalPlies])
 
+  // Clear wrong-move timer on unmount
   useEffect(() => {
     return () => {
       if (wrongMoveTimer.current) clearTimeout(wrongMoveTimer.current)
     }
   }, [])
 
+  // Opponent auto-play
   useEffect(() => {
-    if (!awaitingOpponent) return
+    if (!awaitingOpponent || !currentNode) return
+    const next = currentNode.children[0]
     opponentTimer.current = setTimeout(() => {
       opponentTimer.current = null
-      setPlayedPlies((p) => p + 1)
+      setCurrentNodeId(next.id)
     }, OPPONENT_DELAY_MS)
     return () => {
       if (opponentTimer.current) {
@@ -214,18 +249,17 @@ export default function GuidedChessPlayer({
         opponentTimer.current = null
       }
     }
-  }, [awaitingOpponent, playedPlies])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [awaitingOpponent, currentNodeId])
 
-  const lastMove = playedPlies === 0
-    ? undefined
-    : { from: expectedMoves[playedPlies - 1].from, to: expectedMoves[playedPlies - 1].to }
+  function commitNode(next: PgnNode) {
+    setCurrentNodeId(next.id)
+  }
 
   function handleSquareClick(square: string) {
     if (hintActive) setHintActive(false)
-    if (playedPlies >= totalPlies) return
+    if (atLeaf) return
     if (awaitingOpponent) return
-
-    const expected = expectedMoves[playedPlies]
 
     if (selectedSquare === null) {
       setSelectedSquare(square)
@@ -236,53 +270,61 @@ export default function GuidedChessPlayer({
     const to = square
     setSelectedSquare(null)
 
-    if (from === expected.from && to === expected.to) {
-      setPlayedPlies(playedPlies + 1)
-      return
-    }
+    const candidates = (currentNode?.children ?? []).filter(c => c.from === from && c.to === to)
 
-    setWrongMoveSquare(from)
-    if (wrongMoveTimer.current) clearTimeout(wrongMoveTimer.current)
-    wrongMoveTimer.current = setTimeout(() => {
-      setWrongMoveSquare(null)
-      wrongMoveTimer.current = null
-    }, 1000)
+    if (candidates.length === 0) {
+      setWrongMoveSquare(from)
+      if (wrongMoveTimer.current) clearTimeout(wrongMoveTimer.current)
+      wrongMoveTimer.current = setTimeout(() => {
+        setWrongMoveSquare(null)
+        wrongMoveTimer.current = null
+      }, 1000)
+    } else if (candidates.length === 1) {
+      commitNode(candidates[0])
+    } else {
+      // Multiple candidates = promotion picker
+      setPromotionCandidates(candidates)
+    }
   }
 
-  const sideToMove = playedPlies % 2 === 0 ? t('guidedPlayer.sideWhite') : t('guidedPlayer.sideBlack')
-  const learnerColorLabel =
-    learnerColor === 'white' ? t('guidedPlayer.sideWhite') : t('guidedPlayer.sideBlack')
-
-  // Build move-log entries grouped by full-move number from played plies
+  // Build move log from path-from-root
   interface FullMoveEntry {
     moveNumber: number
     white?: string
     black?: string
   }
   const playedFullMoves: FullMoveEntry[] = []
-  for (let i = 0; i < playedPlies; i++) {
-    const ply = expectedMoves[i]
+  for (let i = 0; i < pathFromRoot.length; i++) {
+    const node = pathFromRoot[i]
     const idx = Math.floor(i / 2)
     if (!playedFullMoves[idx]) {
       playedFullMoves[idx] = { moveNumber: idx + 1 }
     }
     if (i % 2 === 0) {
-      playedFullMoves[idx].white = ply.san
+      playedFullMoves[idx].white = node.san
     } else {
-      playedFullMoves[idx].black = ply.san
+      playedFullMoves[idx].black = node.san
     }
   }
 
-  const annotationsByMove = new Map<number, string>()
-  for (const annotation of parsed.annotations ?? []) {
-    annotationsByMove.set(annotation.moveNumber, annotation.text)
-  }
+  // Annotations from path (covers main line and variations)
+  const annotationsByMove = useMemo(() => {
+    const map = new Map<number, string>()
+    for (const node of pathFromRoot) {
+      if (node.annotation !== undefined) {
+        map.set(node.moveNumber, node.annotation)
+      }
+    }
+    return map
+  }, [pathFromRoot])
 
-  const hasPendingMoves = playedPlies < totalPlies
-  const nextExpected = hasPendingMoves ? expectedMoves[playedPlies] : null
-  const hintSquares = hintActive && nextExpected
-    ? { from: nextExpected.from, to: nextExpected.to }
+  const hintSquares = hintActive && hasPendingMoves && currentNode
+    ? { from: currentNode.children[0].from, to: currentNode.children[0].to }
     : null
+
+  const sideToMove = upcomingSide === 'white' ? t('guidedPlayer.sideWhite') : t('guidedPlayer.sideBlack')
+  const learnerColorLabel = learnerColor === 'white' ? t('guidedPlayer.sideWhite') : t('guidedPlayer.sideBlack')
+  const depthFromRoot = currentNode?.depthFromRoot ?? 0
 
   return (
     <div data-testid="guided-player-root">
@@ -305,8 +347,15 @@ export default function GuidedChessPlayer({
         </span>
       </div>
       <div data-testid="guided-player-move-counter">
-        {t('guidedPlayer.moveCounter', { current: Math.min(playedPlies + 1, totalPlies), total: totalPlies })}
+        {t('guidedPlayer.moveCounter', { current: Math.min(depthFromRoot + 1, totalPlies), total: totalPlies })}
       </div>
+
+      {currentNode && currentNode.children.length > 1 && (
+        <span data-testid="variation-count-pill" style={{ fontSize: 11, color: 'var(--ink-3)' }}>
+          {t('guidedPlayer.variationCountPill', { n: currentNode.children.length - 1 })}
+        </span>
+      )}
+
       <InteractiveBoard
         fen={currentFen}
         perspective={viewPerspective}
@@ -315,6 +364,18 @@ export default function GuidedChessPlayer({
         hintSquares={hintSquares}
         onSquareClick={handleSquareClick}
       />
+
+      {promotionCandidates.length > 0 && (
+        <PromotionPicker
+          offered={promotionCandidates.map(c => c.promotion as PromotionPiece)}
+          onPick={(piece) => {
+            const chosen = promotionCandidates.find(c => c.promotion === piece)
+            setPromotionCandidates([])
+            if (chosen) commitNode(chosen)
+          }}
+          onDismiss={() => setPromotionCandidates([])}
+        />
+      )}
 
       <div style={{ display: 'flex', gap: 8, marginTop: 20, alignItems: 'center' }}>
         <button
@@ -363,10 +424,11 @@ export default function GuidedChessPlayer({
                 clearTimeout(opponentTimer.current)
                 opponentTimer.current = null
               }
-              setPlayedPlies(0)
+              setCurrentNodeId('root')
               setSelectedSquare(null)
               setWrongMoveSquare(null)
               setHintActive(false)
+              setPromotionCandidates([])
               setResetDialogOpen(false)
             }}
           >
@@ -392,12 +454,12 @@ export default function GuidedChessPlayer({
             </div>
           )
         })}
-        {hasPendingMoves && !awaitingOpponent && upcomingSide === learnerColor && (
+        {hasPendingMoves && !awaitingOpponent && (
           <div data-testid="your-turn-prompt">
             <strong>{t('guidedPlayer.yourTurnHeading')}</strong> {t('guidedPlayer.yourTurnBody')}
           </div>
         )}
-        {hasPendingMoves && (awaitingOpponent || upcomingSide !== learnerColor) && (
+        {hasPendingMoves && awaitingOpponent && (
           <div
             data-testid="opponent-thinking-indicator"
             style={{
