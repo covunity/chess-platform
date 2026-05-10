@@ -14,6 +14,7 @@ import type { CourseDetail, CourseDetailChapter } from '../lib/coursesApi'
 import { addBookmark, deleteBookmark, getBookmarkForLesson } from '../lib/bookmarkApi'
 import type { BookmarkRow } from '../lib/bookmarkApi'
 import GuidedChessPlayer from '../components/GuidedChessPlayer/GuidedChessPlayer'
+import PaywallSheet from '../components/PaywallSheet'
 
 type LoadState = 'loading' | 'redirect-course' | 'redirect-lesson' | 'ready'
 
@@ -78,6 +79,15 @@ function ChessIcon() {
   )
 }
 
+function LockIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  )
+}
+
 function lessonTypeIcon(type: string) {
   if (type === 'video') return <VideoIcon />
   return <ChessIcon />
@@ -89,9 +99,12 @@ interface SidebarProps {
   expandedChapters: Set<string>
   onToggleChapter: (chapterId: string) => void
   onSelectLesson: (lessonId: string) => void
+  isEnrolled: boolean
+  isAdmin: boolean
+  onLockedLessonClick: () => void
 }
 
-function PlayerSidebar({ course, currentLessonId, expandedChapters, onToggleChapter, onSelectLesson }: SidebarProps) {
+function PlayerSidebar({ course, currentLessonId, expandedChapters, onToggleChapter, onSelectLesson, isEnrolled, isAdmin, onLockedLessonClick }: SidebarProps) {
   const { t } = useTranslation()
   const totalLessons = course.chapters.reduce((sum, ch) => sum + ch.lessons.length, 0)
 
@@ -196,12 +209,14 @@ function PlayerSidebar({ course, currentLessonId, expandedChapters, onToggleChap
 
               {isExpanded && chapter.lessons.map(lesson => {
                 const isCurrent = lesson.id === currentLessonId
+                const isLocked = !lesson.free_preview && !isEnrolled && !isAdmin
                 return (
                   <button
                     key={lesson.id}
                     data-testid={`lesson-item-${lesson.id}`}
                     data-current={isCurrent ? 'true' : 'false'}
-                    onClick={() => onSelectLesson(lesson.id)}
+                    data-locked={isLocked ? 'true' : 'false'}
+                    onClick={() => isLocked ? onLockedLessonClick() : onSelectLesson(lesson.id)}
                     style={{
                       width: '100%',
                       display: 'flex',
@@ -211,7 +226,7 @@ function PlayerSidebar({ course, currentLessonId, expandedChapters, onToggleChap
                       background: isCurrent ? 'var(--accent-soft)' : 'transparent',
                       border: 'none',
                       borderLeft: isCurrent ? '2px solid var(--accent)' : '2px solid transparent',
-                      cursor: 'pointer',
+                      cursor: isLocked ? 'not-allowed' : 'pointer',
                       textAlign: 'left',
                     }}
                   >
@@ -225,14 +240,14 @@ function PlayerSidebar({ course, currentLessonId, expandedChapters, onToggleChap
                       flexShrink: 0,
                       background: isCurrent ? 'transparent' : 'var(--surface-2)',
                       border: isCurrent ? '2px solid var(--accent)' : 'none',
-                      color: 'var(--ink-3)',
+                      color: 'var(--ink-4)',
                     }}>
-                      {lessonTypeIcon(lesson.type)}
+                      {isLocked ? <LockIcon /> : lessonTypeIcon(lesson.type)}
                     </span>
                     <span style={{
                       flex: 1,
                       fontSize: 12.5,
-                      color: isCurrent ? 'var(--accent-ink)' : 'var(--ink-1)',
+                      color: isLocked ? 'var(--ink-3)' : isCurrent ? 'var(--accent-ink)' : 'var(--ink-1)',
                       fontWeight: isCurrent ? 600 : 400,
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -265,6 +280,8 @@ export default function LessonPlayerPage() {
   const [course, setCourse] = useState<CourseDetail | null>(null)
   const [currentLessonId, setCurrentLessonId] = useState<string>('')
   const [adminWatermark, setAdminWatermark] = useState(false)
+  const [isEnrolled, setIsEnrolled] = useState(false)
+  const [showSidebarPaywall, setShowSidebarPaywall] = useState(false)
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set())
   const [showToast, setShowToast] = useState(false)
   const [playerLesson, setPlayerLesson] = useState<PlayerLesson | null>(null)
@@ -338,6 +355,7 @@ export default function LessonPlayerPage() {
         if (cancelled) return
         isEnrolled = enrolledResult
         hasPendingOrder = !!pendingOrderResult.order
+        setIsEnrolled(enrolledResult)
       }
 
       const accessDecision = canAccessLesson(
@@ -508,34 +526,6 @@ export default function LessonPlayerPage() {
       data-testid="lesson-player-layout"
       style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg)', position: 'relative' }}
     >
-      {adminWatermark && (
-        <div
-          data-testid="admin-watermark"
-          style={{
-            position: 'sticky',
-            top: 0,
-            alignSelf: 'flex-start',
-            marginLeft: 'auto',
-            zIndex: 500,
-            background: 'var(--warning-soft)',
-            color: 'var(--warning)',
-            fontSize: 12,
-            fontWeight: 500,
-            padding: '4px 10px',
-            borderRadius: 'var(--r-sm)',
-            pointerEvents: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
-          }}
-        >
-          <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-            <circle cx={12} cy={12} r={3} />
-          </svg>
-          {t('player.adminWatermark')}
-        </div>
-      )}
       {/* Sidebar */}
       <PlayerSidebar
         course={course}
@@ -543,10 +533,40 @@ export default function LessonPlayerPage() {
         expandedChapters={expandedChapters}
         onToggleChapter={toggleChapter}
         onSelectLesson={selectLesson}
+        isEnrolled={isEnrolled}
+        isAdmin={adminWatermark}
+        onLockedLessonClick={() => setShowSidebarPaywall(true)}
       />
 
       {/* Right side */}
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+        {adminWatermark && (
+          <div
+            data-testid="admin-watermark"
+            style={{
+              position: 'absolute',
+              top: 12,
+              right: 16,
+              zIndex: 500,
+              background: 'var(--warning-soft)',
+              color: 'var(--warning)',
+              fontSize: 12,
+              fontWeight: 500,
+              padding: '4px 10px',
+              borderRadius: 'var(--r-sm)',
+              pointerEvents: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle cx={12} cy={12} r={3} />
+            </svg>
+            {t('player.adminWatermark')}
+          </div>
+        )}
         {/* Header bar */}
         <header
           data-testid="player-header"
@@ -739,6 +759,18 @@ export default function LessonPlayerPage() {
           )}
         </div>
       </div>
+
+      {showSidebarPaywall && course && (
+        <PaywallSheet
+          onClose={() => setShowSidebarPaywall(false)}
+          course={course}
+          isLoggedIn={!!user}
+          onPurchase={() => {
+            setShowSidebarPaywall(false)
+            navigate(`/courses/${courseId}#buy-card`)
+          }}
+        />
+      )}
     </div>
   )
 }

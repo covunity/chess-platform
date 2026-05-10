@@ -1149,6 +1149,18 @@ export default function CourseDetailPage() {
   const { t } = useTranslation()
   const showPaywallBanner = searchParams.get('paywall') === 'true'
 
+  const [paywallBannerDismissed, setPaywallBannerDismissed] = useState(() => {
+    if (typeof window !== 'undefined' && courseId) {
+      return sessionStorage.getItem(`paywallBannerDismissed-${courseId}`) === '1'
+    }
+    return false
+  })
+
+  function dismissPaywallBanner() {
+    if (courseId) sessionStorage.setItem(`paywallBannerDismissed-${courseId}`, '1')
+    setPaywallBannerDismissed(true)
+  }
+
   const [course, setCourse] = useState<CourseDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [isEnrolled, setIsEnrolled] = useState(false)
@@ -1348,21 +1360,62 @@ export default function CourseDetailPage() {
       )}
 
       {/* ── Paywall banner ─────────────────────────────────────────────────── */}
-      {showPaywallBanner && (
+      {showPaywallBanner && !paywallBannerDismissed && (
         <div
           data-testid="paywall-banner"
           style={{
-            background: 'var(--danger-soft)',
-            borderBottom: '1px solid var(--danger-border)',
-            padding: '14px 56px',
+            background: 'var(--accent-soft)',
+            border: '1px solid var(--accent-border)',
+            borderTop: 'none',
+            padding: '0 56px',
+            height: 56,
             display: 'flex',
             alignItems: 'center',
-            gap: 12,
+            gap: 10,
           }}
         >
-          <span style={{ fontSize: 14, color: 'var(--danger)', lineHeight: 1.55 }}>
+          <svg
+            aria-hidden="true"
+            width={16}
+            height={16}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--accent-ink)"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ flexShrink: 0 }}
+          >
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          <span style={{ fontSize: 14, color: 'var(--ink-1)', flex: 1, lineHeight: 1.55 }}>
             {t('courseDetail.paywallBanner')}
           </span>
+          <a
+            href="#buy-card"
+            className="btn btn-accent btn-sm"
+            style={{ flexShrink: 0 }}
+          >
+            {t('courseDetail.purchase')}
+          </a>
+          <button
+            type="button"
+            aria-label={t('courseDetail.closeBtn')}
+            onClick={dismissPaywallBanner}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--ink-3)',
+              fontSize: 18,
+              lineHeight: 1,
+              padding: '0 4px',
+              flexShrink: 0,
+            }}
+          >
+            ×
+          </button>
         </div>
       )}
 
@@ -1493,7 +1546,7 @@ export default function CourseDetailPage() {
           </div>
 
           {/* Right column — Buy card */}
-          <div className="card" style={{ boxShadow: 'var(--sh-2)', alignSelf: 'start' }}>
+          <div id="buy-card" className="card" style={{ boxShadow: 'var(--sh-2)', alignSelf: 'start' }}>
             {/* Thumbnail / board preview */}
             <div
               style={{
@@ -1765,6 +1818,10 @@ export default function CourseDetailPage() {
           onClose={() => setLockPromptOpen(false)}
           course={course}
           isLoggedIn={!!user}
+          onPurchase={() => {
+            setLockPromptOpen(false)
+            document.getElementById('buy-card')?.scrollIntoView({ behavior: 'smooth' })
+          }}
         />
       )}
     </main>
