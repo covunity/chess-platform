@@ -699,6 +699,88 @@ describe('duplicateCourse', () => {
     expect(inserted.every(l => l.chapter_id === 'ch1-copy')).toBe(true)
     expect(inserted.every(l => !('id' in l))).toBe(true)
   })
+
+  it('preserves video fields for video lessons when duplicating', async () => {
+    const original = {
+      id: 'c1', creator_id: 'u1', title: 'VidCourse', description: null, thumbnail_url: null,
+      price: 0, level: 'beginner', language: 'vi', tags: [], status: 'draft',
+      created_at: '', updated_at: '',
+    }
+    const newCourse = { ...original, id: 'c1-copy', title: 'Copy of VidCourse', status: 'draft' as CourseStatus }
+    const videoLesson = {
+      id: 'l1', chapter_id: 'ch1', title: 'Intro video', type: 'video', position: 0,
+      free_preview: false, pgn_data: '', board_perspective: 'white', created_at: '',
+      video_provider: 'supabase', video_provider_id: 'uid/l1/intro.mp4',
+      video_status: 'ready', video_filename: 'intro.mp4',
+      video_size_bytes: 8000000, video_mime: 'video/mp4', video_error: null,
+      duration_seconds: 120,
+    }
+    const chapter1 = { id: 'ch1', course_id: 'c1', title: 'Ch1', position: 0, created_at: '', lessons: [videoLesson] }
+    const newCh1 = { id: 'ch1-copy', course_id: 'c1-copy', title: 'Ch1', position: 0, created_at: '' }
+    const lessonsInsertChain = makeChain({ data: null, error: null })
+    const chains = [
+      makeChain({ data: original, error: null }),
+      makeChain({ data: newCourse, error: null }),
+      makeChain({ data: [chapter1], error: null }),
+      makeChain({ data: newCh1, error: null }),
+      lessonsInsertChain,
+    ]
+    let call = 0
+    const client = { from: vi.fn(() => chains[call++]) }
+    await duplicateCourse(client as never, 'c1')
+    const inserted = (lessonsInsertChain.insert as ReturnType<typeof vi.fn>).mock.calls[0][0] as Record<string, unknown>[]
+    expect(inserted[0].video_provider).toBe('supabase')
+    expect(inserted[0].video_provider_id).toBe('uid/l1/intro.mp4')
+    expect(inserted[0].video_status).toBe('ready')
+    expect(inserted[0].video_filename).toBe('intro.mp4')
+    expect(inserted[0].video_size_bytes).toBe(8000000)
+    expect(inserted[0].video_mime).toBe('video/mp4')
+    expect(inserted[0].duration_seconds).toBe(120)
+  })
+
+  it('duplicates mix of video + chess + puzzle lessons preserving type-specific fields', async () => {
+    const original = {
+      id: 'c1', creator_id: 'u1', title: 'Mix', description: null, thumbnail_url: null,
+      price: 0, level: 'beginner', language: 'vi', tags: [], status: 'draft',
+      created_at: '', updated_at: '',
+    }
+    const newCourse = { ...original, id: 'c1-copy', title: 'Copy of Mix', status: 'draft' as CourseStatus }
+    const lessons = [
+      {
+        id: 'l1', chapter_id: 'ch1', title: 'Vid', type: 'video', position: 0,
+        free_preview: false, pgn_data: '', board_perspective: 'white', created_at: '',
+        video_provider: 'supabase', video_provider_id: 'uid/l1/vid.mp4',
+        video_status: 'ready', video_filename: 'vid.mp4', video_size_bytes: 1000,
+        video_mime: 'video/mp4', duration_seconds: 60,
+      },
+      {
+        id: 'l2', chapter_id: 'ch1', title: 'Chess', type: 'chess', position: 1,
+        free_preview: true, pgn_data: '1. e4 e5', board_perspective: 'black' as const, created_at: '',
+        video_provider: null, video_provider_id: null, video_status: undefined,
+      },
+    ]
+    const chapter1 = { id: 'ch1', course_id: 'c1', title: 'Ch1', position: 0, created_at: '', lessons }
+    const newCh1 = { id: 'ch1-copy', course_id: 'c1-copy', title: 'Ch1', position: 0, created_at: '' }
+    const lessonsInsertChain = makeChain({ data: null, error: null })
+    const chains = [
+      makeChain({ data: original, error: null }),
+      makeChain({ data: newCourse, error: null }),
+      makeChain({ data: [chapter1], error: null }),
+      makeChain({ data: newCh1, error: null }),
+      lessonsInsertChain,
+    ]
+    let call = 0
+    const client = { from: vi.fn(() => chains[call++]) }
+    await duplicateCourse(client as never, 'c1')
+    const inserted = (lessonsInsertChain.insert as ReturnType<typeof vi.fn>).mock.calls[0][0] as Record<string, unknown>[]
+    expect(inserted).toHaveLength(2)
+    // Video lesson retains video reference
+    expect(inserted[0].video_provider_id).toBe('uid/l1/vid.mp4')
+    expect(inserted[0].duration_seconds).toBe(60)
+    // Chess lesson retains pgn_data and board_perspective
+    expect(inserted[1].pgn_data).toBe('1. e4 e5')
+    expect(inserted[1].board_perspective).toBe('black')
+  })
 })
 
 // ── submitCourseForReview ─────────────────────────────────────────────────

@@ -209,6 +209,13 @@ export async function duplicateCourse(
         free_preview: l.free_preview,
         pgn_data: l.pgn_data,
         board_perspective: l.board_perspective,
+        video_provider: l.video_provider,
+        video_provider_id: l.video_provider_id,
+        video_status: l.video_status,
+        video_filename: l.video_filename,
+        video_size_bytes: l.video_size_bytes,
+        video_mime: l.video_mime,
+        duration_seconds: l.duration_seconds,
       }))
       await client.from('lessons').insert(lessonsInsert)
     }
