@@ -135,12 +135,12 @@ CREATE POLICY "Enrollment-gated lesson_progress update"
 
 CREATE OR REPLACE FUNCTION public.get_course_lesson_list(p_course_id uuid)
 RETURNS TABLE(
-  id              uuid,
-  chapter_id      uuid,
-  title           text,
-  type            text,
-  position        int,
-  free_preview    boolean,
+  id               uuid,
+  chapter_id       uuid,
+  title            text,
+  type             text,
+  "position"       int,
+  free_preview     boolean,
   duration_seconds int
 )
 LANGUAGE sql
