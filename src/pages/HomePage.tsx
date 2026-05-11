@@ -150,10 +150,18 @@ export default function HomePage() {
             </p>
 
             <div style={{ display: 'flex', gap: 12 }}>
-              <button type="button" className="btn btn-accent btn-lg">
+              <button
+                type="button"
+                className="btn btn-accent btn-lg"
+                onClick={() => (() => { const el = document.getElementById('course-section'); const navHeight = (document.querySelector('header[role="banner"]') as HTMLElement)?.offsetHeight ?? 0; if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - navHeight, behavior: 'smooth' }) })()}
+              >
                 {t('home.heroCta1')} →
               </button>
-              <button type="button" className="btn btn-ghost btn-lg">
+              <button
+                type="button"
+                className="btn btn-ghost btn-lg"
+                onClick={() => (() => { const el = document.getElementById('course-section'); const navHeight = (document.querySelector('header[role="banner"]') as HTMLElement)?.offsetHeight ?? 0; if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - navHeight, behavior: 'smooth' }) })()}
+              >
                 {t('home.heroCta2')}
               </button>
             </div>
@@ -255,7 +263,7 @@ export default function HomePage() {
       </section>
 
       {/* Filter section */}
-      <section style={{ padding: '32px 56px 0' }}>
+      <section id="course-section"  style={{ padding: '32px 56px 0' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
           {/* Title row */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>

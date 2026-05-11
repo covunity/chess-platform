@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
+import { Search } from 'lucide-react'
 import { Link, NavLink, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
@@ -100,18 +101,21 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
 
       {/* Nav links */}
       <nav className="flex items-center" style={{ gap: 4 }}>
-        {[
-          { to: '/', labelKey: 'nav.browse', end: true },
-          { to: '/practice', labelKey: 'nav.practice', end: false },
-          ...(profile?.role === 'admin'
-            ? [{ to: '/admin', labelKey: 'nav.admin', end: false }]
-            : profile?.role === 'creator'
-              ? [{ to: '/creator', labelKey: 'nav.creatorStudio', end: false }]
-              : [
-                  { to: '/dashboard', labelKey: 'nav.library', end: false },
-                  { to: '/become-creator', labelKey: 'nav.becomeCreator', end: false },
-                ]),
-        ].map(link => (
+        {(user
+          ? [
+              { to: '/', labelKey: 'nav.browse', end: true },
+              { to: '/practice', labelKey: 'nav.practice', end: false },
+              ...(profile?.role === 'admin'
+                ? [{ to: '/admin', labelKey: 'nav.admin', end: false }]
+                : profile?.role === 'creator'
+                  ? [{ to: '/creator', labelKey: 'nav.creatorStudio', end: false }]
+                  : [
+                      { to: '/dashboard', labelKey: 'nav.library', end: false },
+                      { to: '/become-creator', labelKey: 'nav.becomeCreator', end: false },
+                    ]),
+            ]
+          : []
+        ).map(link => (
           <NavLink
             key={link.to}
             to={link.to}
@@ -162,7 +166,7 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
       </nav>
 
       {/* Search box */}
-      {!hideSearch && <div style={{ position: 'relative', flex: 1, maxWidth: 320 }}>
+      {!hideSearch && <div style={{ position: 'relative', flex: 1, maxWidth: user ? 320 : 560 }}>
         <input
           ref={searchRef}
           role="searchbox"
@@ -191,13 +195,11 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
             fontSize: 11,
             fontFamily: 'var(--font-mono)',
             color: 'var(--ink-4)',
-            border: '1px solid var(--border-strong)',
-            borderRadius: 4,
             padding: '1px 5px',
             pointerEvents: 'none',
           }}
         >
-          ⌘K
+          <Search size={12} />
         </span>
         {overlayQuery.length > 0 && overlayResults.length > 0 && (
           <div
@@ -248,7 +250,7 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
 
       <div className="flex items-center" style={{ marginLeft: 'auto', gap: 8 }}>
         {/* Bell icon */}
-        <button
+        {/* <button
           type="button"
           aria-label={t('nav.notifications')}
           style={{
@@ -268,7 +270,7 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
             <path d="M13.73 21a2 2 0 0 1-3.46 0" />
           </svg>
-        </button>
+        </button> */}
 
         {user ? (
           <div className="nav-avatar-menu" ref={menuRef}>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { ChevronLeft } from 'lucide-react'
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
@@ -41,13 +42,6 @@ function ChevronRight() {
   )
 }
 
-function ChevronLeft() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M10 4l-4 4 4 4" />
-    </svg>
-  )
-}
 
 function BookmarkIcon({ filled = false }: { filled?: boolean }) {
   if (filled) {
@@ -126,37 +120,36 @@ function PlayerSidebar({ course, currentLessonId, expandedChapters, onToggleChap
       }}
     >
       {/* Header */}
-      <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-        <Link
-          to={`/courses/${course.id}`}
-          data-testid="sidebar-back-btn"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 28,
-            height: 28,
-            borderRadius: 'var(--r-sm)',
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            color: 'var(--ink-2)',
-            flexShrink: 0,
-            marginTop: 2,
-          }}
-        >
-          <ChevronLeft />
-        </Link>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4 }}>
+      <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}>
+          <Link
+            to={`/courses/${course.id}`}
+            data-testid="sidebar-back-btn"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 16,
+              height: 16,
+              borderRadius: 'var(--r-sm)',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--ink-3)',
+              flexShrink: 0,
+            }}
+          >
+            <ChevronLeft size={14} />
+          </Link>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
             {t('player.courseLabel', 'KHÓA HỌC')}
           </div>
-          <div
-            data-testid="sidebar-course-title"
-            style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-          >
-            {course.title}
-          </div>
+        </div>
+        <div
+          data-testid="sidebar-course-title"
+          style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+        >
+          {course.title}
         </div>
       </div>
 
