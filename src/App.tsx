@@ -25,6 +25,7 @@ import AccountOrdersPage from './pages/AccountOrdersPage'
 import BecomeCreatorPage from './pages/BecomeCreatorPage'
 import TermsPage from './pages/TermsPage'
 import PrivacyPage from './pages/PrivacyPage'
+import HelpPage from './pages/HelpPage'
 import ProfilePage from './pages/ProfilePage'
 import NotFoundPage from './pages/NotFoundPage'
 import SignUpPage from './pages/SignUpPage'
@@ -91,6 +92,7 @@ export default function App() {
           <Route path="/checkout/:orderId/awaiting" element={<CheckoutAwaitingPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/help" element={<HelpPage />} />
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />

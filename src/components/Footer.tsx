@@ -8,7 +8,7 @@ export default function Footer() {
       <div className="max-w-[1280px] mx-auto flex flex-wrap items-center gap-6 text-[13px] text-(--ink-3)">
         <span className="font-serif text-(--ink-1)">Gambitly</span>
         <Link to="/become-creator">{t('footer.becomeCreator', 'Trở thành creator')}</Link>
-        <Link to="#">{t('footer.help', 'Trợ giúp')}</Link>
+        <Link to="/help">{t('footer.help', 'Trợ giúp')}</Link>
         <Link to="/terms">{t('footer.terms', 'Điều khoản')}</Link>
         <Link to="/privacy">{t('footer.privacy', 'Bảo mật')}</Link>
         <span className="ml-auto">VI</span>
