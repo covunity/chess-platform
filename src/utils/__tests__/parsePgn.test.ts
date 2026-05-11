@@ -272,9 +272,6 @@ describe("parsePgn — tree structure (Slice 1A)", () => {
       const r = parsePgn(
         "1. e4 d5 2. e5 f5 3. exf6 e6 4. fxg7 Nf6 5. gxh8=Q (5. gxh8=N)"
       );
-      const g7Node = r.mainLine[r.mainLine.length - 1].parentId
-        ? r.nodeMap.get(r.mainLine[r.mainLine.length - 1].parentId!)!
-        : null;
       // The parent of the last main-line move and the variation share the same
       // grandparent but have different promotion values → different IDs
       const mainLeaf = r.mainLine[r.mainLine.length - 1];

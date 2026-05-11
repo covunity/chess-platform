@@ -50,10 +50,6 @@ function makeDeleteChain(error: unknown = null) {
   return { eq: vi.fn().mockReturnValue(inner) }
 }
 
-function makeReportInsertChain(error: unknown = null) {
-  return { then: undefined, ...Promise.resolve({ error }) }
-}
-
 // ── listComments ───────────────────────────────────────────────────────────
 
 describe('listComments', () => {

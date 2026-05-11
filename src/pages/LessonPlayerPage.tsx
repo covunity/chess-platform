@@ -278,12 +278,14 @@ export default function LessonPlayerPage() {
   const [showSidebarPaywall, setShowSidebarPaywall] = useState(false)
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set())
   const [showToast, setShowToast] = useState(false)
-  const [playerLesson, setPlayerLesson] = useState<PlayerLesson | null>(null)
-  const [videoUrl, setVideoUrl] = useState<string | null>(null)
-  const [videoFormat, setVideoFormat] = useState<'mp4' | 'hls'>('mp4')
-  const [videoError, setVideoError] = useState<string | null>(null)
-  const [videoCompleted, setVideoCompleted] = useState(false)
-  const [currentBookmark, setCurrentBookmark] = useState<BookmarkRow | null>(null)
+  const [playerState, setPlayerState] = useState<{ lessonId: string; lesson: PlayerLesson; videoUrl: string | null; videoFormat: 'mp4' | 'hls'; videoError: string | null; videoCompleted: boolean } | null>(null)
+  const playerLesson = playerState?.lessonId === currentLessonId ? playerState.lesson : null
+  const videoUrl = playerState?.lessonId === currentLessonId ? playerState.videoUrl : null
+  const videoFormat = playerState?.lessonId === currentLessonId ? playerState.videoFormat : 'mp4'
+  const videoError = playerState?.lessonId === currentLessonId ? playerState.videoError : null
+  const videoCompleted = playerState?.lessonId === currentLessonId ? playerState.videoCompleted : false
+  const [fetchedBookmark, setFetchedBookmark] = useState<{ lessonId: string; bookmark: BookmarkRow | null } | null>(null)
+  const currentBookmark = fetchedBookmark?.lessonId === currentLessonId ? fetchedBookmark.bookmark : null
   const [bookmarkToast, setBookmarkToast] = useState<{ moveLabel: string } | null>(null)
   const bookmarkToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -299,7 +301,7 @@ export default function LessonPlayerPage() {
   useEffect(() => {
     if (authLoading) return
     if (!courseId) {
-      setLoadState('redirect-course')
+      navigate('/courses', { replace: true })
       return
     }
 
@@ -391,7 +393,7 @@ export default function LessonPlayerPage() {
 
     init()
     return () => { cancelled = true }
-  }, [authLoading, user, courseId, lessonId, enrolled, profile])
+  }, [authLoading, user, courseId, lessonId, enrolled, profile, navigate])
 
   // Redirect to course detail if not authorized
   useEffect(() => {
@@ -420,9 +422,8 @@ export default function LessonPlayerPage() {
   // Load bookmark state when lesson changes
   useEffect(() => {
     if (loadState !== 'ready' || !user || !currentLessonId) return
-    setCurrentBookmark(null)
     getBookmarkForLesson(supabase, { userId: user.id, lessonId: currentLessonId }).then(({ bookmark }) => {
-      setCurrentBookmark(bookmark)
+      setFetchedBookmark({ lessonId: currentLessonId, bookmark })
     })
   }, [loadState, user, currentLessonId])
 
@@ -436,26 +437,16 @@ export default function LessonPlayerPage() {
 
     if (!lesson) return
 
-    // Reset video state on lesson change
-    setPlayerLesson(null)
-    setVideoUrl(null)
-    setVideoError(null)
-    setVideoCompleted(false)
-
     let cancelled = false
     getLessonForPlayer(supabase, currentLessonId).then(({ lesson: pl }) => {
       if (cancelled || !pl) return
-      setPlayerLesson(pl)
       if (pl.type === 'video') {
         getVideoPlaybackInfo(supabase, pl.id).then(({ url, format, error }) => {
           if (cancelled) return
-          if (error) {
-            setVideoError(error.message)
-          } else {
-            setVideoUrl(url)
-            setVideoFormat(format)
-          }
+          setPlayerState({ lessonId: currentLessonId, lesson: pl, videoUrl: error ? null : url, videoFormat: format ?? 'mp4', videoError: error ? error.message : null, videoCompleted: false })
         })
+      } else {
+        setPlayerState({ lessonId: currentLessonId, lesson: pl, videoUrl: null, videoFormat: 'mp4', videoError: null, videoCompleted: false })
       }
     })
     return () => { cancelled = true }
@@ -467,7 +458,7 @@ export default function LessonPlayerPage() {
     if (currentBookmark) {
       // Toggle off — remove existing bookmark
       await deleteBookmark(supabase, currentBookmark.id)
-      setCurrentBookmark(null)
+      setFetchedBookmark({ lessonId: currentLessonId, bookmark: null })
       return
     }
 
@@ -480,7 +471,7 @@ export default function LessonPlayerPage() {
       playedPlies: depth,
     })
     if (bookmark) {
-      setCurrentBookmark(bookmark)
+      setFetchedBookmark({ lessonId: currentLessonId, bookmark })
       if (bookmarkToastTimer.current) clearTimeout(bookmarkToastTimer.current)
       setBookmarkToast({ moveLabel })
       bookmarkToastTimer.current = setTimeout(() => {
@@ -502,7 +493,7 @@ export default function LessonPlayerPage() {
   function handleVideoTimeUpdate(currentTime: number, duration: number) {
     if (videoCompleted) return
     if (duration > 0 && currentTime / duration >= 0.8) {
-      setVideoCompleted(true)
+      setPlayerState(prev => prev ? { ...prev, videoCompleted: true } : prev)
       handleLessonComplete()
     }
   }
@@ -658,7 +649,7 @@ export default function LessonPlayerPage() {
               onClick={async () => {
                 if (currentBookmark) {
                   await deleteBookmark(supabase, currentBookmark.id)
-                  setCurrentBookmark(null)
+                  setFetchedBookmark({ lessonId: currentLessonId, bookmark: null })
                 }
                 setBookmarkToast(null)
               }}

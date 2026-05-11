@@ -51,7 +51,10 @@ export default function AdminSettingsPage() {
   }
 
   useEffect(() => {
-    loadConfig()
+    getBankConfig(supabase).then(({ bank }) => {
+      setForm(bankToForm(bank))
+      setLoading(false)
+    })
   }, [])
 
   const previewUrl = useMemo(() => {

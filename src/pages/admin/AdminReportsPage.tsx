@@ -25,7 +25,6 @@ export default function AdminReportsPage() {
   const [actioning, setActioning] = useState(false)
 
   useEffect(() => {
-    setLoading(true)
     listReportedComments(supabase).then(({ comments: rows }) => {
       setComments(rows)
       setLoading(false)

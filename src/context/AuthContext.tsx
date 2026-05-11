@@ -28,13 +28,15 @@ export interface AuthContextValue {
   updateProfile: (updates: Partial<Pick<UserProfile, 'name' | 'avatar_url'>>) => void
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [profileLoading, setProfileLoading] = useState(false)
+  const [profileState, setProfileState] = useState<{ userId: string; profile: UserProfile | null } | null>(null)
+  const profile = user && profileState?.userId === user.id ? profileState.profile : null
+  const profileLoading = !!user && (!profileState || profileState.userId !== user.id)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -50,21 +52,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    if (!user) {
-      setProfile(null)
-      setProfileLoading(false)
-      return
-    }
-    setProfileLoading(true)
+    if (!user) return
+    let cancelled = false
     supabase
       .from('users')
       .select('id, email, name, avatar_url, role, account_tier_id, created_at')
       .eq('id', user.id)
       .single()
       .then(({ data }) => {
-        setProfile((data as UserProfile) ?? null)
-        setProfileLoading(false)
+        if (!cancelled) setProfileState({ userId: user.id, profile: (data as UserProfile) ?? null })
       })
+    return () => { cancelled = true }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
   async function signUp(name: string, email: string, password: string, extraData?: Record<string, unknown>) {
@@ -96,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   function updateProfile(updates: Partial<Pick<UserProfile, 'name' | 'avatar_url'>>) {
-    setProfile(prev => prev ? { ...prev, ...updates } : prev)
+    setProfileState(prev => prev ? { ...prev, profile: prev.profile ? { ...prev.profile, ...updates } : prev.profile } : prev)
   }
 
   return (
@@ -106,6 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error('useAuth must be used within AuthProvider')

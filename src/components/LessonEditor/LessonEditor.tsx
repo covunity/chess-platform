@@ -76,7 +76,8 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   const [pgn, setPgn] = useState(lesson.pgn_data);
   const [perspective, setPerspective] = useState<"white" | "black">(lesson.board_perspective);
   const [isFreePreview, setIsFreePreview] = useState(lesson.is_free_preview);
-  const [parseResult, setParseResult] = useState<PgnParseResult | null>(null);
+  const [debouncedParseResult, setDebouncedParseResult] = useState<PgnParseResult | null>(null);
+  const parseResult = pgn.trim() ? debouncedParseResult : null;
   const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<LessonType>(lesson.type ?? 'chess');
   const [videoLesson, setVideoLesson] = useState(() => ({
@@ -94,13 +95,9 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!pgn.trim()) {
-      setParseResult(null);
-      setHighlightedNodeId(null);
-      return;
-    }
+    if (!pgn.trim()) return;
     debounceRef.current = setTimeout(() => {
-      setParseResult(parsePgn(pgn));
+      setDebouncedParseResult(parsePgn(pgn));
       setHighlightedNodeId(null);
     }, 250);
     return () => {

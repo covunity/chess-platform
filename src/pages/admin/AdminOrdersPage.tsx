@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
 import {
@@ -144,31 +144,19 @@ export default function AdminOrdersPage() {
   const [toast, setToast] = useState<'success' | 'error' | null>(null)
   const totalPages = Math.ceil(total / PAGE_SIZE)
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    if (tab === 'pending') {
-      const { orders: rows, total: tot } = await listPendingOrders(supabase, {
-        page,
-        pageSize: PAGE_SIZE,
-      })
-      setOrders(rows)
-      setTotal(tot)
-    } else {
-      const { orders: rows, total: tot } = await listAllOrders(supabase, {
-        status: statusFilter || undefined,
-        search: debouncedSearch || undefined,
-        page,
-        pageSize: PAGE_SIZE,
-      })
-      setOrders(rows)
-      setTotal(tot)
-    }
-    setLoading(false)
-  }, [tab, page, statusFilter, debouncedSearch])
-
   useEffect(() => {
-    void load()
-  }, [load])
+    let cancelled = false
+    if (tab === 'pending') {
+      listPendingOrders(supabase, { page, pageSize: PAGE_SIZE }).then(({ orders: rows, total: tot }) => {
+        if (!cancelled) { setOrders(rows); setTotal(tot); setLoading(false) }
+      })
+    } else {
+      listAllOrders(supabase, { status: statusFilter || undefined, search: debouncedSearch || undefined, page, pageSize: PAGE_SIZE }).then(({ orders: rows, total: tot }) => {
+        if (!cancelled) { setOrders(rows); setTotal(tot); setLoading(false) }
+      })
+    }
+    return () => { cancelled = true }
+  }, [tab, page, statusFilter, debouncedSearch])
 
   // Auto-dismiss toasts
   useEffect(() => {

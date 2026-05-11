@@ -5,8 +5,6 @@ const mockSelect = vi.fn()
 const mockInsert = vi.fn()
 const mockEq = vi.fn()
 const mockSingle = vi.fn()
-const mockHead = vi.fn()
-
 function makeMockClient(overrides: Record<string, unknown> = {}) {
   return {
     from: vi.fn().mockReturnValue({

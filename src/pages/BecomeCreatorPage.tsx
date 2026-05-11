@@ -223,7 +223,7 @@ export default function BecomeCreatorPage() {
   const [tierFields, setTierFields] = useState<TierFields>(EMPTY_TIER_FIELDS)
 
   const [application, setApplication] = useState<AccountApplication | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!!user)
 
   // Application form fields
   const [motivation, setMotivation] = useState('')
@@ -240,10 +240,7 @@ export default function BecomeCreatorPage() {
   const submittingRef = useRef(false)
 
   useEffect(() => {
-    if (!user) {
-      setLoading(false)
-      return
-    }
+    if (!user) return
     let cancelled = false
     getMyLatestAccountApplication(supabase, user.id).then(({ application: app }) => {
       if (cancelled) return

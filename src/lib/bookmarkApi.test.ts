@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   addBookmark,
@@ -60,22 +60,6 @@ function makeParsed(nodes: PgnNode[]): PgnParseResult {
     fen: nodes[nodes.length - 1]?.fen ?? '',
     annotations: [],
   }
-}
-
-function makeClient(overrides: Record<string, unknown> = {}): SupabaseClient {
-  const chain = {
-    select: vi.fn().mockReturnThis(),
-    insert: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    order: vi.fn().mockReturnThis(),
-    delete: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({ data: null, error: null }),
-    maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-    ...overrides,
-  }
-  return {
-    from: vi.fn().mockReturnValue(chain),
-  } as unknown as SupabaseClient
 }
 
 describe('resolveBookmark', () => {

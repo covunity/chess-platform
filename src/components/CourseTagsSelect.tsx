@@ -95,7 +95,6 @@ export default function CourseTagsSelect({
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
     listCreatorTags(supabase, creatorId).then(({ tags }) => {
       if (!cancelled) {
         setCreatorTags(tags)

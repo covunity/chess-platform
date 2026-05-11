@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -48,21 +48,18 @@ export default function AccountOrdersPage() {
     if (!user) navigate('/login', { replace: true })
   }, [user, navigate])
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    const { orders: rows, total: tot } = await listMyOrders(supabase, {
+  useEffect(() => {
+    if (!user) return
+    let cancelled = false
+    listMyOrders(supabase, {
       status: filter === 'all' ? undefined : filter,
       page,
       pageSize: PAGE_SIZE,
+    }).then(({ orders: rows, total: tot }) => {
+      if (!cancelled) { setOrders(rows); setTotal(tot); setLoading(false) }
     })
-    setOrders(rows)
-    setTotal(tot)
-    setLoading(false)
-  }, [filter, page])
-
-  useEffect(() => {
-    if (user) void load()
-  }, [user, load])
+    return () => { cancelled = true }
+  }, [user, filter, page])
 
   const totalPages = Math.ceil(total / PAGE_SIZE)
 

@@ -448,8 +448,13 @@ export default function CourseEditPage() {
   }, [courseId])
 
   useEffect(() => {
-    if (courseStatus === 'draft') refreshReadiness()
-  }, [courseStatus, refreshReadiness])
+    if (courseStatus !== 'draft' || !courseId) return
+    let cancelled = false
+    canPublishCourse(supabase, courseId).then(result => {
+      if (!cancelled) setReadiness(result)
+    })
+    return () => { cancelled = true }
+  }, [courseStatus, courseId])
 
   function showToast(msg: string) {
     setToast(msg)

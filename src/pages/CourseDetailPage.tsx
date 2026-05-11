@@ -1176,7 +1176,6 @@ export default function CourseDetailPage() {
 
   useEffect(() => {
     if (!courseId) return
-    setLoading(true)
     getCourseDetail(supabase, courseId).then(({ course: data }) => {
       setCourse(data)
       if (data && data.chapters.length > 0) {

@@ -52,7 +52,6 @@ export default function ChessBoard({
   perspective = "white",
   lastMove,
   size = 320,
-  showCoords: _showCoords = true,
 }: ChessBoardProps) {
   const board = parseFen(fen);
   const squareSize = size / 8;

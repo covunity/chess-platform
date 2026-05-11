@@ -51,7 +51,7 @@ export default function PaywallSheet({ onClose, course, isLoggedIn, onPurchase }
     if (!isLoggedIn) {
       navigate('/login')
     } else {
-      onPurchase ? onPurchase() : onClose()
+      if (onPurchase) { onPurchase() } else { onClose() }
     }
   }
 

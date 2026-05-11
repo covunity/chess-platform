@@ -21,12 +21,14 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [name, setName] = useState(profile?.name ?? '')
+  const [prevProfileName, setPrevProfileName] = useState(profile?.name)
   const [infoLoading, setInfoLoading] = useState(false)
   const [infoSuccess, setInfoSuccess] = useState(false)
   const [infoError, setInfoError] = useState<string | null>(null)
   const [nameError, setNameError] = useState<string | null>(null)
 
   const [avatarPreview, setAvatarPreview] = useState<string | null>(profile?.avatar_url ?? null)
+  const [prevProfileAvatar, setPrevProfileAvatar] = useState(profile?.avatar_url)
   const [avatarLoading, setAvatarLoading] = useState(false)
   const [avatarError, setAvatarError] = useState<string | null>(null)
 
@@ -37,10 +39,14 @@ export default function ProfilePage() {
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [passwordFieldErrors, setPasswordFieldErrors] = useState<{ password?: string; confirmPassword?: string }>({})
 
-  useEffect(() => {
+  if (profile?.name !== prevProfileName) {
+    setPrevProfileName(profile?.name)
     setName(profile?.name ?? '')
+  }
+  if (profile?.avatar_url !== prevProfileAvatar) {
+    setPrevProfileAvatar(profile?.avatar_url)
     setAvatarPreview(profile?.avatar_url ?? null)
-  }, [profile?.name, profile?.avatar_url])
+  }
 
   if (!user) return null
 

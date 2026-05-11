@@ -52,7 +52,6 @@ export default function HomePage() {
   const q = searchParams.get('q') ?? ''
 
   useEffect(() => {
-    setLoading(true)
     listPublishedCourses(supabase, {
       q: q || undefined,
       level: level !== 'all' ? level : undefined,

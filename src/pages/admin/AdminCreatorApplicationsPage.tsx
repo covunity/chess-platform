@@ -101,7 +101,6 @@ export default function AdminCreatorApplicationsPage() {
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
     listAccountApplications(supabase, {
       status: tab,
       tier: tierFilter || undefined,

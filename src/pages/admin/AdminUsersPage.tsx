@@ -241,7 +241,6 @@ export default function AdminUsersPage() {
   const totalPages = Math.ceil(total / PAGE_SIZE)
 
   useEffect(() => {
-    setLoading(true)
     listUsers(supabase, { page, pageSize: PAGE_SIZE, search: debouncedSearch }).then(
       ({ users: u, total: tot }) => {
         setUsers(u)

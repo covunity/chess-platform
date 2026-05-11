@@ -64,7 +64,7 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
   }, [])
 
   useEffect(() => {
-    if (!user) { setBookmarkCount(0); return }
+    if (!user) return
     getBookmarks(supabase, user.id).then(({ bookmarks }) => {
       setBookmarkCount(bookmarks?.length ?? 0)
     })
