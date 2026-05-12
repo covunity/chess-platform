@@ -9,15 +9,12 @@ import {
   countCourseChildren,
   fetchCreatorKpis,
   fetchCoursesWithStats,
-  listChapters,
-  updateLesson,
-  publishCourse,
 } from '../../lib/creatorApi'
-import type { Course, CourseStatus, Chapter, Lesson, CreatorKpis, CourseStats } from '../../lib/creatorApi'
+import type { Course, CourseStatus, CreatorKpis, CourseStats } from '../../lib/creatorApi'
 import { getMyLatestAccountApplication } from '../../lib/accountApplicationApi'
 import type { AccountApplication } from '../../lib/accountApplicationApi'
+import { Pencil, Copy, Trash2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-import LessonEditor from '../../components/LessonEditor/LessonEditor'
 
 type StatusFilter = CourseStatus | 'all'
 
@@ -25,12 +22,6 @@ const STATUS_PILL: Record<CourseStatus, string> = {
   published: 'pill pill-success',
   pending_review: 'pill pill-warning',
   draft: 'pill',
-}
-
-const LESSON_TYPE_ICON: Record<string, string> = {
-  video: '▶',
-  chess: '♟',
-  puzzle: '📋',
 }
 
 function formatStudents(n: number): string {
@@ -167,201 +158,39 @@ function KebabMenu({ course, onDelete, onDuplicate, t }: KebabMenuProps) {
       {open && (
         <div
           className="card"
-          style={{ position: 'absolute', right: 0, top: '100%', zIndex: 10, minWidth: 140, padding: '4px 0' }}
+          style={{ position: 'absolute', right: 0, top: '100%', zIndex: 10, minWidth: 160, padding: '4px 0' }}
         >
           <Link
             to={`/creator/courses/${course.id}/edit`}
             data-testid={`kebab-edit-${course.id}`}
-            className="block px-4 py-2 text-sm text-(--ink-1) hover:bg-(--surface-2)"
+            className="flex items-center gap-2 w-full px-4 py-2 text-sm text-(--ink-1) hover:bg-(--surface-2)"
             onClick={() => setOpen(false)}
           >
+            <Pencil size={14} />
             {t('creator.studio.table.kebabEdit')}
           </Link>
           <button
             type="button"
             data-testid={`kebab-duplicate-${course.id}`}
-            className="block w-full text-left px-4 py-2 text-sm text-(--ink-1) hover:bg-(--surface-2)"
+            className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-(--ink-1) hover:bg-(--surface-2)"
             onClick={() => { setOpen(false); onDuplicate(course) }}
           >
+            <Copy size={14} />
             {t('creator.studio.table.kebabDuplicate')}
           </button>
           <button
             type="button"
             data-testid={`kebab-delete-${course.id}`}
-            className="block w-full text-left px-4 py-2 text-sm"
+            className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm"
             style={{ color: 'var(--danger)' }}
             onClick={() => { setOpen(false); onDelete(course) }}
           >
+            <Trash2 size={14} />
             {t('creator.studio.table.kebabDelete')}
           </button>
         </div>
       )}
     </div>
-  )
-}
-
-// ── Inline Course Builder ─────────────────────────────────────────────────
-
-interface CourseBuilderInlineProps {
-  courseId: string
-  courseTitle: string
-  initialStatus: CourseStatus
-}
-
-function CourseBuilderInline({ courseId, courseTitle, initialStatus }: CourseBuilderInlineProps) {
-  const { t } = useTranslation()
-  const [chapters, setChapters] = useState<Chapter[]>([])
-  const [loading, setLoading] = useState(true)
-  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null)
-  const [courseStatus, setCourseStatus] = useState<CourseStatus>(initialStatus)
-
-  useEffect(() => {
-    listChapters(supabase, courseId).then(({ chapters: ch }) => {
-      setChapters(ch)
-      const firstLesson = ch.flatMap(c => c.lessons ?? [])[0]
-      if (firstLesson) setSelectedLesson(firstLesson)
-      setLoading(false)
-    })
-  }, [courseId])
-
-  const allLessons = chapters.flatMap(ch =>
-    (ch.lessons ?? []).map(l => ({ id: l.id, title: l.title, type: l.type }))
-  )
-
-  const lessonIndex = selectedLesson
-    ? allLessons.findIndex(l => l.id === selectedLesson.id) + 1
-    : null
-
-  async function handleSaveLesson(data: { pgn_data: string; board_perspective: 'white' | 'black'; is_free_preview: boolean; title: string }) {
-    if (!selectedLesson) return
-    await updateLesson(supabase, selectedLesson.id, {
-      pgn_data: data.pgn_data,
-      board_perspective: data.board_perspective,
-      free_preview: data.is_free_preview,
-      title: data.title,
-    })
-    setChapters(prev => prev.map(ch => ({
-      ...ch,
-      lessons: (ch.lessons ?? []).map(l =>
-        l.id === selectedLesson.id
-          ? { ...l, pgn_data: data.pgn_data, board_perspective: data.board_perspective, free_preview: data.is_free_preview, title: data.title }
-          : l
-      ),
-    })))
-  }
-
-  async function handlePublish() {
-    await publishCourse(supabase, courseId)
-    setCourseStatus('published')
-  }
-
-  return (
-    <>
-      <h2
-        data-testid="builder-heading"
-        style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--ink-1)', marginBottom: 12 }}
-      >
-        {t('creator.studio.builderHeading')}
-        {selectedLesson && lessonIndex != null && (
-          <span style={{ color: 'var(--ink-3)', fontWeight: 400 }}>
-            {' · '}{t('creator.studio.builderEditing', { title: courseTitle })}
-            {' · '}{t('creator.studio.builderLesson', { n: lessonIndex })}
-          </span>
-        )}
-        {!selectedLesson && (
-          <span style={{ color: 'var(--ink-3)', fontWeight: 400 }}>
-            {' · '}{t('creator.studio.builderEditing', { title: courseTitle })}
-          </span>
-        )}
-      </h2>
-
-      <div
-        data-testid="course-builder-block"
-        className="card"
-        style={{ height: 560, overflow: 'hidden', padding: 0, borderRadius: 'var(--r-lg)' }}
-      >
-        {loading ? (
-          <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <p style={{ color: 'var(--ink-3)', fontSize: 13 }}>…</p>
-          </div>
-        ) : selectedLesson ? (
-          <LessonEditor
-            key={selectedLesson.id}
-            lesson={{
-              id: selectedLesson.id,
-              title: selectedLesson.title,
-              pgn_data: selectedLesson.pgn_data ?? '',
-              board_perspective: selectedLesson.board_perspective ?? 'white',
-              is_free_preview: selectedLesson.free_preview,
-              type: selectedLesson.type,
-            }}
-            chapterLessons={allLessons}
-            onSelectLesson={id => {
-              const lesson = chapters.flatMap(ch => ch.lessons ?? []).find(l => l.id === id)
-              if (lesson) setSelectedLesson(lesson)
-            }}
-            onSave={handleSaveLesson}
-            onSubmitForReview={courseStatus === 'draft' ? handlePublish : undefined}
-          />
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr 380px', height: '100%' }}>
-            {/* Curriculum sidebar — list chapters and lessons */}
-            <div style={{ background: 'var(--surface-2)', borderRight: '1px solid var(--border)', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ padding: '16px 16px 8px', borderBottom: '1px solid var(--border)' }}>
-                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                  {t('creator.courseEdit.curriculum')}
-                </span>
-              </div>
-              <div style={{ flex: 1, overflowY: 'auto' }}>
-                {chapters.map(ch => (
-                  <div key={ch.id}>
-                    <div style={{ padding: '8px 12px', fontSize: 12, fontWeight: 600, color: 'var(--ink-2)', background: 'var(--surface-3)' }}>
-                      {ch.title}
-                    </div>
-                    {(ch.lessons ?? []).map(l => (
-                      <button
-                        key={l.id}
-                        type="button"
-                        style={{ width: '100%', textAlign: 'left', padding: '8px 20px', fontSize: 12.5, color: 'var(--ink-2)', background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)', cursor: 'pointer', display: 'flex', gap: 8 }}
-                        onClick={() => setSelectedLesson(l)}
-                      >
-                        <span style={{ color: 'var(--ink-3)', width: 16 }}>{LESSON_TYPE_ICON[l.type]}</span>
-                        {l.title}
-                      </button>
-                    ))}
-                  </div>
-                ))}
-              </div>
-              {/* Footer with submit for review */}
-              <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8 }}>
-                <button type="button" className="btn btn-secondary btn-sm" style={{ flex: 1 }}>
-                  {t('creator.studio.builderSaveDraft')}
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-accent btn-sm"
-                  style={{ flex: 1 }}
-                  disabled={courseStatus !== 'draft'}
-                  onClick={handlePublish}
-                >
-                  {t('creator.studio.builderSubmitReview')}
-                </button>
-              </div>
-            </div>
-
-            {/* Center pane placeholder */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32 }}>
-              <p style={{ color: 'var(--ink-3)', fontSize: 13 }}>
-                {t('creator.studio.builderNoLessons')}
-              </p>
-            </div>
-
-            {/* Right preview pane placeholder */}
-            <div style={{ background: 'var(--surface-2)', borderLeft: '1px solid var(--border)' }} />
-          </div>
-        )}
-      </div>
-    </>
   )
 }
 
@@ -421,11 +250,6 @@ export default function CreatorStudioPage() {
   }, [allCourses])
 
   const statsMap = Object.fromEntries(courseStats.map(s => [s.courseId, s]))
-
-  // Most recently edited course
-  const mostRecentCourse = allCourses.length > 0
-    ? [...allCourses].sort((a, b) => b.updated_at.localeCompare(a.updated_at))[0]
-    : null
 
   async function handleDeleteClick(course: Course) {
     const counts = await countCourseChildren(supabase, course.id)
@@ -725,14 +549,6 @@ export default function CreatorStudioPage() {
             </table>
           </div>
 
-          {/* Inline Course Builder */}
-          {mostRecentCourse && (
-            <CourseBuilderInline
-              courseId={mostRecentCourse.id}
-              courseTitle={mostRecentCourse.title}
-              initialStatus={mostRecentCourse.status}
-            />
-          )}
         </>
       )}
 

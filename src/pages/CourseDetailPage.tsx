@@ -1559,7 +1559,10 @@ export default function CourseDetailPage() {
                 justifyContent: 'center',
               }}
             >
-              <ChessBoard fen={INITIAL_FEN} size={260} showCoords={false} />
+              {course.thumbnail_url
+                ? <img src={course.thumbnail_url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <ChessBoard fen={INITIAL_FEN} size={260} showCoords={false} />
+              }
               <div
                 style={{
                   position: 'absolute',

@@ -11,7 +11,9 @@
       "PowerShell(Get-Command choco -ErrorAction SilentlyContinue)",
       "Bash(supabase *)",
       "PowerShell(supabase *)",
-      "Bash(npx supabase *)"
+      "Bash(npx supabase *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

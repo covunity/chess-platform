@@ -353,7 +353,7 @@
         "empty": "Chưa có khóa học. Tạo khóa học đầu tiên của bạn!",
         "kebabEdit": "Chỉnh sửa",
         "kebabDelete": "Xóa",
-        "kebabDuplicate": "Nhân bản"
+        "kebabDuplicate": "Sao chép"
       },
       "status": {
         "published": "Đã xuất bản",
