@@ -910,7 +910,11 @@
   },
   "guidedPlayer": {
     "eyebrow": "BÀI {{current}} / {{total}}",
-    "helper": "Kéo quân để đi nước của bạn. Nước sai sẽ bật trở lại.",
+    "helperItems": [
+      "Click vào quân để chọn, Click vào ô đích để đi nước",
+      "Nước sai: quân bật trở lại, ô xuất phát sáng đỏ"
+    ],
+    "helperDismiss": "Ẩn hướng dẫn",
     "sideWhite": "Trắng",
     "sideBlack": "Đen",
     "sideToMoveAria": "{{side}} đến lượt",

@@ -38,6 +38,7 @@ interface InteractiveBoardProps {
   lastMove?: { from: string; to: string }
   wrongMoveSquare?: string | null
   hintSquares?: { from: string; to: string } | null
+  selectedSquare?: string | null
   onSquareClick?: (square: string) => void
 }
 
@@ -48,6 +49,7 @@ function InteractiveBoard({
   lastMove,
   wrongMoveSquare,
   hintSquares,
+  selectedSquare,
   onSquareClick,
 }: InteractiveBoardProps) {
   const chess = new Chess(fen)
@@ -82,6 +84,7 @@ function InteractiveBoard({
           const isLastMove = lastMove && (lastMove.from === square || lastMove.to === square)
           const isWrongMove = wrongMoveSquare === square
           const isHint = hintSquares && (hintSquares.from === square || hintSquares.to === square)
+          const isSelected = selectedSquare === square
           return (
             <div
               key={square}
@@ -90,6 +93,7 @@ function InteractiveBoard({
               data-last-move={isLastMove ? 'true' : undefined}
               data-wrong-move={isWrongMove ? 'true' : undefined}
               data-hint={isHint ? 'true' : undefined}
+              data-selected={isSelected ? 'true' : undefined}
               onClick={() => onSquareClick?.(square)}
               style={{
                 background: isLight ? 'var(--board-light)' : 'var(--board-dark)',
@@ -110,6 +114,17 @@ function InteractiveBoard({
                     position: 'absolute',
                     inset: 0,
                     background: 'var(--board-move)',
+                    pointerEvents: 'none',
+                  }}
+                />
+              )}
+              {isSelected && (
+                <div
+                  aria-hidden
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'var(--board-selected)',
                     pointerEvents: 'none',
                   }}
                 />
@@ -164,6 +179,14 @@ export default function GuidedChessPlayer({
   const [viewPerspective, setViewPerspective] = useState<'white' | 'black'>(lesson.board_perspective)
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
   const [promotionCandidates, setPromotionCandidates] = useState<PgnNode[]>([])
+  const [helperVisible, setHelperVisible] = useState(
+    () => localStorage.getItem('guidedPlayer.helperHidden') !== 'true'
+  )
+
+  function dismissHelper() {
+    setHelperVisible(false)
+    localStorage.setItem('guidedPlayer.helperHidden', 'true')
+  }
 
   const completedFiredRef = useRef(false)
   const opponentTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -268,6 +291,14 @@ export default function GuidedChessPlayer({
       return
     }
 
+    // Re-select if clicking another own piece instead of attempting a move
+    const boardState = new Chess(currentFen)
+    const clickedPiece = boardState.get(square as Parameters<Chess['get']>[0])
+    if (clickedPiece && clickedPiece.color === learnerSide) {
+      setSelectedSquare(square)
+      return
+    }
+
     const from = selectedSquare
     const to = square
     setSelectedSquare(null)
@@ -329,156 +360,185 @@ export default function GuidedChessPlayer({
   const depthFromRoot = currentNode?.depthFromRoot ?? 0
 
   return (
-    <div data-testid="guided-player-root">
-      <div data-testid="guided-player-eyebrow">
-        {t('guidedPlayer.eyebrow', { current: lessonNumber, total: totalLessons })}
-      </div>
-      <h2 data-testid="guided-player-title">{lesson.title}</h2>
-      <p data-testid="guided-player-helper">
-        {t('guidedPlayer.helper')}
-      </p>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span
-          data-testid="guided-player-side-to-move"
-          aria-label={t('guidedPlayer.sideToMoveAria', { side: sideToMove })}
-        >
-          {sideToMove}
-        </span>
-        <span data-testid="guided-player-perspective-label">
-          {t('guidedPlayer.perspectiveSubLabel', { color: learnerColorLabel })}
-        </span>
-      </div>
-      <div data-testid="guided-player-move-counter">
-        {t('guidedPlayer.moveCounter', { current: Math.min(depthFromRoot + 1, totalPlies), total: totalPlies })}
-      </div>
-
-      {currentNode && currentNode.children.length > 1 && (
-        <span data-testid="variation-count-pill" style={{ fontSize: 11, color: 'var(--ink-3)' }}>
-          {t('guidedPlayer.variationCountPill', { n: currentNode.children.length - 1 })}
-        </span>
-      )}
-
-      <InteractiveBoard
-        fen={currentFen}
-        perspective={viewPerspective}
-        lastMove={lastMove}
-        wrongMoveSquare={wrongMoveSquare}
-        hintSquares={hintSquares}
-        onSquareClick={handleSquareClick}
-      />
-
-      {promotionCandidates.length > 0 && (
-        <PromotionPicker
-          offered={promotionCandidates.map(c => c.promotion as PromotionPiece)}
-          onPick={(piece) => {
-            const chosen = promotionCandidates.find(c => c.promotion === piece)
-            setPromotionCandidates([])
-            if (chosen) commitNode(chosen)
-          }}
-          onDismiss={() => setPromotionCandidates([])}
-        />
-      )}
-
-      <div style={{ display: 'flex', gap: 8, marginTop: 20, alignItems: 'center' }}>
-        <button
-          type="button"
-          data-testid="guided-player-hint-btn"
-          disabled={awaitingOpponent || upcomingSide !== learnerColor}
-          onClick={() => setHintActive((h) => !h)}
-          style={{
-            opacity: awaitingOpponent || upcomingSide !== learnerColor ? 0.5 : undefined,
-            cursor: awaitingOpponent || upcomingSide !== learnerColor ? 'not-allowed' : undefined,
-          }}
-        >
-          {t('guidedPlayer.hint')}
-        </button>
-        <button
-          type="button"
-          data-testid="guided-player-flip-btn"
-          onClick={() => setViewPerspective((p) => (p === 'white' ? 'black' : 'white'))}
-        >
-          {t('guidedPlayer.flipBoard')}
-        </button>
-        <button
-          type="button"
-          data-testid="guided-player-reset-btn"
-          onClick={() => setResetDialogOpen(true)}
-        >
-          {t('guidedPlayer.resetLesson')}
-        </button>
-      </div>
-
-      {resetDialogOpen && (
-        <div data-testid="guided-player-reset-dialog" role="dialog" aria-modal="true">
-          <p>{t('guidedPlayer.resetDialogBody')}</p>
-          <button
-            type="button"
-            data-testid="guided-player-reset-cancel"
-            onClick={() => setResetDialogOpen(false)}
-          >
-            {t('guidedPlayer.resetCancel')}
-          </button>
-          <button
-            type="button"
-            data-testid="guided-player-reset-confirm"
-            onClick={() => {
-              if (opponentTimer.current) {
-                clearTimeout(opponentTimer.current)
-                opponentTimer.current = null
-              }
-              setCurrentNodeId('root')
-              setSelectedSquare(null)
-              setWrongMoveSquare(null)
-              setHintActive(false)
-              setPromotionCandidates([])
-              setResetDialogOpen(false)
-            }}
-          >
-            {t('guidedPlayer.resetConfirm')}
-          </button>
+    <div data-testid="guided-player-root" className="guided-player-root">
+      {/* Header */}
+      <div className="guided-player-header">
+        <div data-testid="guided-player-eyebrow" className="guided-player-eyebrow">
+          {t('guidedPlayer.eyebrow', { current: lessonNumber, total: totalLessons })}
         </div>
-      )}
-
-      <div data-testid="guided-player-move-log">
-        {playedFullMoves.map((entry) => {
-          const annotation = annotationsByMove.get(entry.moveNumber)
-          return (
-            <div key={entry.moveNumber} data-testid={`move-block-${entry.moveNumber}`}>
-              <span style={{ fontFamily: 'var(--font-mono)' }}>
-                {entry.moveNumber}. {entry.white ?? ''}
-                {entry.black ? ` ${entry.black}` : ''}
-              </span>
-              {annotation && (
-                <p data-testid={`move-log-annotation-${entry.moveNumber}`}>
-                  {annotation}
-                </p>
-              )}
-            </div>
-          )
-        })}
-        {hasPendingMoves && !awaitingOpponent && (
-          <div data-testid="your-turn-prompt">
-            <strong>{t('guidedPlayer.yourTurnHeading')}</strong> {t('guidedPlayer.yourTurnBody')}
-          </div>
-        )}
-        {hasPendingMoves && awaitingOpponent && (
-          <div
-            data-testid="opponent-thinking-indicator"
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 12,
-              color: 'var(--ink-3)',
-            }}
-          >
-            {t('guidedPlayer.opponentThinking')}
+        <h2 data-testid="guided-player-title" className="guided-player-title">{lesson.title}</h2>
+        {helperVisible && (
+          <div className="guided-player-helper-wrap">
+            <ul data-testid="guided-player-helper" className="guided-player-helper">
+              {(t('guidedPlayer.helperItems', { returnObjects: true }) as string[]).map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+            <button
+              type="button"
+              className="guided-player-helper-dismiss"
+              aria-label={t('guidedPlayer.helperDismiss')}
+              onClick={dismissHelper}
+            >
+              ✕
+            </button>
           </div>
         )}
       </div>
 
-      {lesson.coach_note && (
-        <aside data-testid="guided-player-coach-note">
-          <p>{lesson.coach_note}</p>
-        </aside>
+      {/* Board + sidebar */}
+      <div className="guided-player-body">
+        <div className="guided-player-board-col">
+          <InteractiveBoard
+            fen={currentFen}
+            perspective={viewPerspective}
+            size={540}
+            lastMove={lastMove}
+            wrongMoveSquare={wrongMoveSquare}
+            hintSquares={hintSquares}
+            selectedSquare={selectedSquare}
+            onSquareClick={handleSquareClick}
+          />
+          {promotionCandidates.length > 0 && (
+            <PromotionPicker
+              offered={promotionCandidates.map(c => c.promotion as PromotionPiece)}
+              onPick={(piece) => {
+                const chosen = promotionCandidates.find(c => c.promotion === piece)
+                setPromotionCandidates([])
+                if (chosen) commitNode(chosen)
+              }}
+              onDismiss={() => setPromotionCandidates([])}
+            />
+          )}
+        </div>
+
+        <div className="guided-player-sidebar">
+          {/* Status row */}
+          <div className="guided-player-status">
+            <span
+              data-testid="guided-player-side-to-move"
+              className="guided-player-side-badge"
+              aria-label={t('guidedPlayer.sideToMoveAria', { side: sideToMove })}
+            >
+              {sideToMove}
+            </span>
+            <span data-testid="guided-player-perspective-label" className="guided-player-status-label">
+              {t('guidedPlayer.perspectiveSubLabel', { color: learnerColorLabel })}
+            </span>
+            <span data-testid="guided-player-move-counter" className="guided-player-status-label">
+              {t('guidedPlayer.moveCounter', { current: Math.min(depthFromRoot + 1, totalPlies), total: totalPlies })}
+            </span>
+            {currentNode && currentNode.children.length > 1 && (
+              <span data-testid="variation-count-pill" className="guided-player-variation-pill">
+                {t('guidedPlayer.variationCountPill', { n: currentNode.children.length - 1 })}
+              </span>
+            )}
+          </div>
+
+          {/* Action buttons */}
+          <div className="guided-player-actions">
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              data-testid="guided-player-hint-btn"
+              disabled={awaitingOpponent || upcomingSide !== learnerColor}
+              onClick={() => setHintActive((h) => !h)}
+            >
+              {t('guidedPlayer.hint')}
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              data-testid="guided-player-flip-btn"
+              onClick={() => setViewPerspective((p) => (p === 'white' ? 'black' : 'white'))}
+            >
+              {t('guidedPlayer.flipBoard')}
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              data-testid="guided-player-reset-btn"
+              onClick={() => setResetDialogOpen(true)}
+            >
+              {t('guidedPlayer.resetLesson')}
+            </button>
+          </div>
+
+          {/* Move log */}
+          <div data-testid="guided-player-move-log" className="guided-player-move-log">
+            {playedFullMoves.map((entry) => {
+              const annotation = annotationsByMove.get(entry.moveNumber)
+              return (
+                <div key={entry.moveNumber} data-testid={`move-block-${entry.moveNumber}`} className="guided-player-move-block">
+                  <span className="guided-player-move-san">
+                    {entry.moveNumber}. {entry.white ?? ''}
+                    {entry.black ? ` ${entry.black}` : ''}
+                  </span>
+                  {annotation && (
+                    <p data-testid={`move-log-annotation-${entry.moveNumber}`} className="guided-player-annotation">
+                      {annotation}
+                    </p>
+                  )}
+                </div>
+              )
+            })}
+            {hasPendingMoves && !awaitingOpponent && (
+              <div data-testid="your-turn-prompt" className="guided-player-your-turn">
+                <strong>{t('guidedPlayer.yourTurnHeading')}</strong> {t('guidedPlayer.yourTurnBody')}
+              </div>
+            )}
+            {hasPendingMoves && awaitingOpponent && (
+              <div data-testid="opponent-thinking-indicator" className="guided-player-opponent-thinking">
+                {t('guidedPlayer.opponentThinking')}
+              </div>
+            )}
+          </div>
+
+          {/* Coach note */}
+          {lesson.coach_note && (
+            <aside data-testid="guided-player-coach-note" className="guided-player-coach-note">
+              <p>{lesson.coach_note}</p>
+            </aside>
+          )}
+        </div>
+      </div>
+
+      {/* Reset dialog */}
+      {resetDialogOpen && (
+        <div data-testid="guided-player-reset-dialog" className="guided-player-dialog-backdrop" role="dialog" aria-modal="true">
+          <div className="guided-player-dialog-box">
+            <p className="guided-player-dialog-body">{t('guidedPlayer.resetDialogBody')}</p>
+            <div className="guided-player-dialog-actions">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                data-testid="guided-player-reset-cancel"
+                onClick={() => setResetDialogOpen(false)}
+              >
+                {t('guidedPlayer.resetCancel')}
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                data-testid="guided-player-reset-confirm"
+                onClick={() => {
+                  if (opponentTimer.current) {
+                    clearTimeout(opponentTimer.current)
+                    opponentTimer.current = null
+                  }
+                  setCurrentNodeId('root')
+                  setSelectedSquare(null)
+                  setWrongMoveSquare(null)
+                  setHintActive(false)
+                  setPromotionCandidates([])
+                  setResetDialogOpen(false)
+                }}
+              >
+                {t('guidedPlayer.resetConfirm')}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

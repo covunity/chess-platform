@@ -693,14 +693,16 @@ export default function LessonPlayerPage() {
           style={{ flex: 1, overflow: 'auto', display: 'flex', alignItems: 'stretch', justifyContent: 'center' }}
         >
           {currentLesson?.type === 'chess' && playerLesson && playerLesson.id === currentLessonId ? (
-            <GuidedChessPlayer
-              lesson={playerLesson}
-              lessonNumber={lessonIndex + 1}
-              totalLessons={allLessons.length}
-              initialNodeId={initialNodeId}
-              onComplete={handleLessonComplete}
-              onBookmark={handleBookmark}
-            />
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '28px 40px', overflowY: 'auto' }}>
+              <GuidedChessPlayer
+                lesson={playerLesson}
+                lessonNumber={lessonIndex + 1}
+                totalLessons={allLessons.length}
+                initialNodeId={initialNodeId}
+                onComplete={handleLessonComplete}
+                onBookmark={handleBookmark}
+              />
+            </div>
           ) : currentLesson?.type === 'video' ? (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '28px 32px', gap: 16, overflowY: 'auto' }}>
               {videoError ? (
