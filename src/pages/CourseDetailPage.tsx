@@ -1532,7 +1532,6 @@ export default function CourseDetailPage() {
                 { testId: 'stat-lessons', value: totalLessons, label: t('courseDetail.statLessons') },
                 { testId: 'stat-runtime', value: formatHours(course.hours_total), label: t('courseDetail.statRuntime') },
                 { testId: 'stat-annotations', value: course.pgn_annotations_count, label: t('courseDetail.statAnnotations') },
-                { testId: 'stat-puzzles', value: course.puzzle_count, label: t('courseDetail.statPuzzles') },
               ].map(stat => (
                 <div key={stat.testId} data-testid={stat.testId} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <span style={{ fontFamily: 'var(--font-serif)', fontSize: 22, lineHeight: 1, color: 'var(--ink-1)' }}>

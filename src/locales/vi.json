@@ -624,7 +624,7 @@
   "paywallSheet": {
     "title": "Mở khoá toàn bộ khoá học",
     "bodyLoggedOut": "Đăng nhập để mua khoá học và mở khoá {{n}} bài học.",
-    "bodyLoggedIn": "Mua để mở khoá {{n}} bài học, {{a}} annotations, {{p}} puzzles.",
+    "bodyLoggedIn": "Mua để mở khoá {{n}} bài học, {{a}} annotations.",
     "cta": {
       "login": "Đăng nhập",
       "buy": "Mua khoá học — {{price}}₫"

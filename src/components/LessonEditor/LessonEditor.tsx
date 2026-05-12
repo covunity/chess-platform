@@ -42,7 +42,7 @@ const LESSON_TYPE_ICON: Record<LessonType, string> = {
   puzzle: '📋',
 };
 
-const LESSON_TAB_VALUES: LessonType[] = ['video', 'chess', 'puzzle'];
+const LESSON_TAB_VALUES: LessonType[] = ['video', 'chess'];
 
 const MAX_PGN_CHARS = 50000; // V-12, up from 5000
 

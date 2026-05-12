@@ -51,12 +51,11 @@ describe('PaywallSheet', () => {
     expect(body.textContent).toContain('42')
   })
 
-  it('shows logged-in body with lesson, annotation, puzzle counts', () => {
+  it('shows logged-in body with lesson and annotation counts', () => {
     renderSheet({ isLoggedIn: true })
     const body = screen.getByTestId('paywall-sheet-body')
     expect(body.textContent).toContain('42')
     expect(body.textContent).toContain('96')
-    expect(body.textContent).toContain('18')
   })
 
   it('shows login CTA when logged out', () => {

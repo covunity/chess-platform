@@ -133,7 +133,6 @@ export default function PaywallSheet({ onClose, course, isLoggedIn, onPurchase }
             ? t('paywallSheet.bodyLoggedIn', {
                 n: course.lessons_count,
                 a: course.pgn_annotations_count,
-                p: course.puzzle_count,
               })
             : t('paywallSheet.bodyLoggedOut', { n: course.lessons_count })}
         </p>
