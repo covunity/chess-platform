@@ -51,6 +51,17 @@ UI language: **Vietnamese** (i18n-ready via react-i18next; all strings in `vi.js
 
 > **Do not change the tech stack without creating an ADR in `docs/adr/`.**
 
+### State management
+
+Phase 1 uses no state management library — all state is local `useState` + `AuthContext`. This is intentional for MVP scope.
+
+**When to introduce a library (Zustand preferred):**
+- Chess board state needs to be shared across multiple unrelated components (e.g., syncing player position with a move list panel, an annotation sidebar, and a variation tree simultaneously)
+- A feature requires cross-page or cross-route state that is awkward to hoist or pass via context
+- Local state in a single component exceeds ~6–8 `useState` calls and is becoming hard to follow
+
+Do **not** add a state library just to replace simple local state. Add it when the debugging or coordination cost of local state is clearly higher than the migration cost.
+
 ---
 
 ## 3. Design System

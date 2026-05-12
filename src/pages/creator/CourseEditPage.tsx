@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
@@ -315,6 +315,12 @@ const REASON_LABEL: Record<string, string> = {
   no_lessons: 'creator.courseEdit.publish.reasonLessons',
 }
 
+const STATUS_DOT: Partial<Record<CourseStatus, string>> = {
+  draft: 'var(--ink-4)',
+  pending_review: 'var(--warning)',
+  published: 'var(--success)',
+}
+
 interface PublishBarProps {
   courseId: string
   status: CourseStatus
@@ -322,27 +328,37 @@ interface PublishBarProps {
   publishing: boolean
   onPublish: () => void
   onUnpublish: () => void
+  onSaveLesson?: () => void
   t: (k: string) => string
 }
 
-function PublishBar({ status, readiness, publishing, onPublish, onUnpublish, t }: PublishBarProps) {
+function PublishBar({ status, readiness, publishing, onPublish, onUnpublish, onSaveLesson, t }: PublishBarProps) {
+  const barStyle: React.CSSProperties = {
+    padding: '8px 20px',
+    background: 'var(--surface)',
+    borderBottom: '1px solid var(--border)',
+    flexShrink: 0,
+  }
+
+  const statusBadge = (
+    <div className="flex items-center gap-1.5">
+      <span style={{ width: 7, height: 7, borderRadius: '50%', background: STATUS_DOT[status] ?? 'var(--ink-4)', flexShrink: 0 }} />
+      <span style={{ fontSize: 12, color: 'var(--ink-2)', fontWeight: 500 }}>
+        {t('creator.studio.status.' + status)}
+      </span>
+    </div>
+  )
+
   if (status === 'published') {
     return (
-      <div
-        data-testid="publish-bar"
-        className="flex items-center gap-3"
-        style={{ padding: '12px 20px', borderTop: '1px solid var(--border)', background: 'var(--surface)' }}
-      >
-        <span className="pill pill-success" style={{ fontSize: 12 }}>
-          {t('creator.studio.status.published')}
-        </span>
-        <button
-          type="button"
-          data-testid="unpublish-btn"
-          className="btn btn-secondary btn-sm"
-          onClick={onUnpublish}
-          disabled={publishing}
-        >
+      <div data-testid="publish-bar" className="flex items-center justify-end gap-3" style={barStyle}>
+        {statusBadge}
+        {onSaveLesson && (
+          <button type="button" className="btn btn-secondary btn-sm" onClick={onSaveLesson}>
+            {t('creator.courseEdit.saveLesson')}
+          </button>
+        )}
+        <button type="button" data-testid="unpublish-btn" className="btn btn-secondary btn-sm" onClick={onUnpublish} disabled={publishing}>
           {t('creator.courseEdit.publish.unpublish')}
         </button>
       </div>
@@ -350,14 +366,13 @@ function PublishBar({ status, readiness, publishing, onPublish, onUnpublish, t }
   }
 
   return (
-    <div
-      data-testid="publish-bar"
-      className="flex items-center gap-3"
-      style={{ padding: '12px 20px', borderTop: '1px solid var(--border)', background: 'var(--surface)' }}
-    >
-      <span className="pill" style={{ fontSize: 12 }}>
-        {t('creator.studio.status.draft')}
-      </span>
+    <div data-testid="publish-bar" className="flex items-center justify-end gap-3" style={barStyle}>
+      {statusBadge}
+      {onSaveLesson && (
+        <button type="button" className="btn btn-secondary btn-sm" onClick={onSaveLesson}>
+          {t('creator.courseEdit.saveLesson')}
+        </button>
+      )}
       <div className="relative group">
         <button
           type="button"
@@ -370,7 +385,7 @@ function PublishBar({ status, readiness, publishing, onPublish, onUnpublish, t }
         </button>
         {!readiness.ready && readiness.reasons.length > 0 && (
           <div
-            className="card absolute bottom-full mb-2 left-0 hidden group-hover:block"
+            className="card absolute top-full mt-2 right-0 hidden group-hover:block"
             style={{ width: 240, padding: '10px 14px', zIndex: 20 }}
           >
             <p className="text-xs font-semibold text-(--ink-1) mb-2">
@@ -402,6 +417,8 @@ export default function CourseEditPage() {
   const [readiness, setReadiness] = useState<PublishReadiness>({ ready: false, reasons: [] })
   const [publishing, setPublishing] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+
+  const saveLessonRef = useRef<(() => void) | null>(null)
 
   const [confirmDeleteChapter, setConfirmDeleteChapter] = useState<Chapter | null>(null)
   const [confirmDeleteLesson, setConfirmDeleteLesson] = useState<Lesson | null>(null)
@@ -600,7 +617,7 @@ export default function CourseEditPage() {
     : []
 
   return (
-    <div className="flex min-h-screen relative">
+    <div className="flex relative" style={{ height: 'calc(100vh - 4rem)' }}>
       {/* Curriculum Sidebar */}
       <aside
         data-testid="curriculum-sidebar"
@@ -705,7 +722,11 @@ export default function CourseEditPage() {
           })()}
         </div>
 
-        {/* Publish bar */}
+      </aside>
+
+      {/* Main editor pane */}
+      <main className="flex-1 overflow-hidden flex flex-col">
+        {/* Publish bar — top-right */}
         {!loading && courseId && (
           <PublishBar
             courseId={courseId}
@@ -714,13 +735,10 @@ export default function CourseEditPage() {
             publishing={publishing}
             onPublish={handlePublish}
             onUnpublish={handleUnpublish}
+            onSaveLesson={selectedLesson ? () => saveLessonRef.current?.() : undefined}
             t={t}
           />
         )}
-      </aside>
-
-      {/* Main editor pane */}
-      <main className="flex-1 p-8 overflow-y-auto">
         {selectedLesson ? (
           <LessonEditor
             key={selectedLesson.id}
@@ -741,9 +759,10 @@ export default function CourseEditPage() {
             }}
             onSave={handleSaveLesson}
             showSidebar={false}
-            saveLabel={t('creator.courseEdit.saveLesson')}
+            saveRef={saveLessonRef}
           />
         ) : (
+          <div className="flex-1 p-0 overflow-y-auto">
           <div className="card" style={{ maxWidth: 680, padding: '32px 36px', display: 'flex', flexDirection: 'column', gap: 20 }}>
             <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--ink-1)', marginBottom: 4 }}>
               {t('creator.courseEdit.courseInfo.heading')}
@@ -848,6 +867,7 @@ export default function CourseEditPage() {
             >
               {savingCourseInfo ? '…' : t('creator.courseEdit.courseInfo.save')}
             </button>
+          </div>
           </div>
         )}
       </main>

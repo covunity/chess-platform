@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import type { RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import ChessBoard from "../ChessBoard/ChessBoard";
 import { parsePgn } from "../../utils/parsePgn";
@@ -32,6 +33,7 @@ export interface LessonEditorProps {
   onSubmitForReview?: () => void;
   showSidebar?: boolean;
   saveLabel?: string;
+  saveRef?: RefObject<(() => void) | null>;
 }
 
 const LESSON_TYPE_ICON: Record<LessonType, string> = {
@@ -64,9 +66,8 @@ function formatDuration(seconds: number | undefined | null): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectLesson, onSubmitForReview, showSidebar = true, saveLabel }: LessonEditorProps) {
+export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectLesson, showSidebar = true, saveRef }: LessonEditorProps) {
   const { t } = useTranslation();
-  const resolvedSaveLabel = saveLabel ?? t('creator.lessonEditor.saveDraft');
   const tabLabels: Record<LessonType, string> = {
     video: t('creator.lessonEditor.tabVideo'),
     chess: t('creator.lessonEditor.tabChess'),
@@ -108,6 +109,10 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   const handleSave = () => {
     onSave({ pgn_data: pgn, board_perspective: perspective, is_free_preview: isFreePreview, title });
   };
+
+  useEffect(() => {
+    if (saveRef) saveRef.current = handleSave
+  });
 
   // Preview node: highlighted (click in variation list) or last main-line node
   const previewNode = useMemo<PgnNode | null>(() => {
@@ -168,12 +173,11 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
       style={{
         display: "grid",
         gridTemplateColumns: showSidebar ? "260px 1fr 380px" : "1fr 380px",
+        gridTemplateRows: "1fr",
         gap: 0,
         background: "var(--surface)",
-        border: "1px solid var(--border)",
-        borderRadius: "var(--r-md)",
         overflow: "hidden",
-        minHeight: 560,
+        height: "100%",
       }}
     >
       {/* Sidebar: lesson list for current chapter */}
@@ -236,7 +240,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
       )}
 
       {/* Center: Editor form */}
-      <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+      <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16, overflowY: "auto" }}>
         {/* Lesson type tabs */}
         <div style={{ display: "flex", gap: 6 }}>
           {LESSON_TAB_VALUES.map((value) => (
@@ -483,6 +487,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
           flexDirection: "column",
           gap: 16,
           borderLeft: "1px solid var(--border)",
+          overflowY: "auto",
         }}
       >
         {/* Header row */}
@@ -617,26 +622,6 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
           </>
         )}
 
-        {/* Action buttons */}
-        <div style={{ marginTop: "auto", display: "flex", gap: 8 }}>
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={handleSave}
-          >
-            {resolvedSaveLabel}
-          </button>
-          {onSubmitForReview && (
-            <button
-              type="button"
-              data-testid="lesson-editor-submit-review-btn"
-              className="btn btn-accent btn-sm"
-              onClick={onSubmitForReview}
-            >
-              {t('creator.lessonEditor.submitForReview')}
-            </button>
-          )}
-        </div>
       </div>
     </div>
   );
