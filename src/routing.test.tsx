@@ -54,7 +54,7 @@ describe('routing', () => {
 
   it('renders /signup page', () => {
     renderAt('/signup')
-    expect(screen.getByRole('heading', { name: /bắt đầu khai cuộc/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /tạo tài khoản miễn phí/i })).toBeInTheDocument()
   })
 
   it('renders /login page', () => {

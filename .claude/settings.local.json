@@ -15,7 +15,9 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(npx vitest *)",
-      "Bash(git stash *)"
+      "Bash(git stash *)",
+      "Bash(grep -v \"//\")",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('src/locales/vi.json','utf8'\\)\\); console.log\\('valid'\\)\")"
     ]
   }
 }

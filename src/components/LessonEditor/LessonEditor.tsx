@@ -67,7 +67,7 @@ function formatDuration(seconds: number | undefined | null): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectLesson, showSidebar = true, saveRef }: LessonEditorProps) {
+export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectLesson, onSubmitForReview, showSidebar = true, saveRef }: LessonEditorProps) {
   const { t } = useTranslation();
   const tabLabels: Record<LessonType, string> = {
     video: t('creator.lessonEditor.tabVideo'),
@@ -293,6 +293,30 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
               </div>
             </div>
 
+            {/* Free preview toggle */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <button
+                type="button"
+                aria-pressed={isFreePreview}
+                onClick={() => setIsFreePreview(prev => !prev)}
+                style={{
+                  padding: "6px 14px",
+                  borderRadius: 999,
+                  border: "1px solid var(--border)",
+                  background: isFreePreview ? "var(--ink-1)" : "var(--surface)",
+                  color: isFreePreview ? "var(--ink-on-accent)" : "var(--ink-2)",
+                  fontSize: 12.5,
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}
+              >
+                {t('creator.lessonEditor.freePreview')}
+              </button>
+              <span style={{ fontSize: 12, color: "var(--ink-3)" }}>
+                {isFreePreview ? t('creator.lessonEditor.freePreviewOn') : t('creator.lessonEditor.freePreviewOff')}
+              </span>
+            </div>
+
             {/* PGN textarea */}
             <div style={{ flex: 1 }}>
               <label className="label" htmlFor="pgn-textarea">
@@ -452,6 +476,29 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
             }}
           >
             {t('creator.lessonEditor.puzzleComingSoon')}
+          </div>
+        )}
+
+        {/* Action buttons — shown when parent does not supply a saveRef */}
+        {!saveRef && (
+          <div style={{ marginTop: "auto", display: "flex", gap: 8 }}>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={handleSave}
+            >
+              {t('creator.lessonEditor.saveDraft')}
+            </button>
+            {onSubmitForReview && (
+              <button
+                type="button"
+                data-testid="lesson-editor-submit-review-btn"
+                className="btn btn-accent btn-sm"
+                onClick={onSubmitForReview}
+              >
+                {t('creator.lessonEditor.submitForReview')}
+              </button>
+            )}
           </div>
         )}
       </div>

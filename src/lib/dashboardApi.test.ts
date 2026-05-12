@@ -76,18 +76,24 @@ describe('getLearnerStats', () => {
   })
 
   it('counts lessons completed this week (Mon → now) and last week', async () => {
-    // System time: Wed 2026-05-06 12:00 UTC. ISO Mon = 2026-05-04.
-    const completions = [
-      { completed_at: '2026-05-04T08:00:00Z', lessons: { duration_seconds: 600 } }, // Mon — this week
-      { completed_at: '2026-05-05T09:00:00Z', lessons: { duration_seconds: 600 } }, // Tue — this week
-      { completed_at: '2026-05-03T20:00:00Z', lessons: { duration_seconds: 600 } }, // Sun — last week
-      { completed_at: '2026-04-28T20:00:00Z', lessons: { duration_seconds: 600 } }, // last week
-    ]
-    const client = makeStatsClient({ completions, bookmarks: [], enrollments: [] })
+    // Freeze time to Wed 2026-05-06 12:00 UTC so week boundaries are deterministic.
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-05-06T12:00:00Z'))
+    try {
+      const completions = [
+        { completed_at: '2026-05-04T08:00:00Z', lessons: { duration_seconds: 600 } }, // Mon — this week
+        { completed_at: '2026-05-05T09:00:00Z', lessons: { duration_seconds: 600 } }, // Tue — this week
+        { completed_at: '2026-05-03T20:00:00Z', lessons: { duration_seconds: 600 } }, // Sun — last week
+        { completed_at: '2026-04-28T20:00:00Z', lessons: { duration_seconds: 600 } }, // last week
+      ]
+      const client = makeStatsClient({ completions, bookmarks: [], enrollments: [] })
 
-    const { stats } = await getLearnerStats(client, 'u1')
-    expect(stats?.lessonsThisWeek).toBe(2)
-    expect(stats?.lessonsLastWeek).toBe(2)
+      const { stats } = await getLearnerStats(client, 'u1')
+      expect(stats?.lessonsThisWeek).toBe(2)
+      expect(stats?.lessonsLastWeek).toBe(2)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('sums duration_seconds of completed lessons into hoursStudied', async () => {

@@ -412,6 +412,32 @@ export default function CreatorStudioPage() {
         </div>
       )}
 
+      {/* Course builder block — most recently edited course */}
+      {!loading && allCourses.length > 0 && (() => {
+        const recent = [...allCourses].sort((a, b) =>
+          new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+        )[0]
+        return (
+          <div
+            data-testid="course-builder-block"
+            className="card"
+            style={{ padding: '16px 24px', marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+          >
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
+                {t('creator.studio.builderHeading')}
+              </div>
+              <div data-testid="builder-heading" style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink-1)' }}>
+                {recent.title}
+              </div>
+            </div>
+            <Link to={`/creator/courses/${recent.id}`} className="btn btn-secondary btn-sm">
+              {t('creator.studio.builderContinue')}
+            </Link>
+          </div>
+        )
+      })()}
+
       {/* Courses table or empty state */}
       {!loading && allCourses.length === 0 ? (
         <div
@@ -521,7 +547,7 @@ export default function CreatorStudioPage() {
                               style={{ width: 40, height: 40, background: 'var(--surface-3)', borderRadius: 'var(--r-sm)', flexShrink: 0 }}
                               aria-hidden="true"
                             />
-                            <span className="font-medium text-(--ink-1)">{course.title}</span>
+                            <span data-testid={`course-title-${course.id}`} className="font-medium text-(--ink-1)">{course.title}</span>
                           </div>
                         </td>
                         <td style={{ padding: '14px 20px' }}>

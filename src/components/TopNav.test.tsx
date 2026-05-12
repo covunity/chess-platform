@@ -191,7 +191,7 @@ describe('TopNav', () => {
 
   describe('library link', () => {
     it('points to /dashboard (not the dead /library route) when no profile', () => {
-      renderNav()
+      renderNav({ user: { email: 'user@example.com', id: '123', user_metadata: { name: 'John Doe' } }, profile: null })
       expect(screen.getByTestId('nav-library-link')).toHaveAttribute('href', '/dashboard')
     })
   })

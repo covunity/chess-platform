@@ -361,6 +361,7 @@
         "draft": "Nháp"
       },
       "builderHeading": "Course builder",
+      "builderContinue": "Tiếp tục chỉnh sửa",
       "builderEditing": "đang chỉnh sửa \"{{title}}\"",
       "builderLesson": "Bài {{n}}",
       "builderNoLessons": "Thêm bài học để bắt đầu chỉnh sửa.",
@@ -646,7 +647,7 @@
     },
     "signup": {
       "eyebrow": "Tạo tài khoản",
-      "heading": "Bắt đầu khai cuộc đầu tiên của bạn.",
+      "heading": "Tạo tài khoản miễn phí.",
       "helper": "Miễn phí mãi mãi. Không cần thẻ để duyệt hoặc xem trước.",
       "orWithEmail": "hoặc với email",
       "googleBtn": "Đăng nhập bằng Google",

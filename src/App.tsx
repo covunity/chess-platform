@@ -78,6 +78,13 @@ export default function App() {
         <Route path="/learn/:courseId/:lessonId" element={<LessonPlayerPage />} />
         <Route path="/learn/:courseId" element={<LessonPlayerPage />} />
 
+        {/* Auth pages — full-screen, no TopNav/Footer */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/check-email" element={<CheckEmailPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+
         {/* Public section — with TopNav + Footer */}
         <Route element={<PublicShell />}>
           <Route path="/" element={<HomePage />} />
@@ -93,11 +100,6 @@ export default function App() {
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/help" element={<HelpPage />} />
-          <Route path="/signup" element={<SignUpPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/check-email" element={<CheckEmailPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>

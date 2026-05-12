@@ -1,14 +1,24 @@
 import type { ReactNode } from 'react'
+import { useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   const { t } = useTranslation()
 
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
+
   return (
     <div className="auth-split">
       <div className="auth-brand">
         <div className="auth-brand__logo">
-          <span className="logo-mark" aria-hidden="true" />
+          <Link to="/" className="auth-brand__logo-link" aria-label={t('auth.backHome')}>
+            <span className="logo-mark" aria-hidden="true" />
+            <span className="auth-brand__logo-name">{t('nav.title')}</span>
+          </Link>
         </div>
 
         <div className="auth-brand__body">

@@ -181,8 +181,8 @@ describe('CreatorStudioPage', () => {
   it('renders course rows after loading', async () => {
     renderPage()
     await waitFor(() => {
-      expect(screen.getByText('Chess Fundamentals')).toBeInTheDocument()
-      expect(screen.getByText('Advanced Tactics')).toBeInTheDocument()
+      expect(screen.getByTestId('course-title-c1')).toBeInTheDocument()
+      expect(screen.getByTestId('course-title-c2')).toBeInTheDocument()
     })
   })
 
@@ -223,7 +223,7 @@ describe('CreatorStudioPage', () => {
     mockListCourses.mockResolvedValueOnce({ courses: [mockCourses[0]], total: 1, error: null })
 
     renderPage()
-    await waitFor(() => screen.getByText('Chess Fundamentals'))
+    await waitFor(() => screen.getByTestId('course-title-c1'))
 
     fireEvent.click(screen.getByTestId('filter-published'))
 
@@ -238,7 +238,7 @@ describe('CreatorStudioPage', () => {
 
   it('shows delete confirmation dialog on delete kebab', async () => {
     renderPage()
-    await waitFor(() => screen.getByText('Chess Fundamentals'))
+    await waitFor(() => screen.getByTestId('course-title-c1'))
 
     const kebabs = screen.getAllByTestId('kebab-btn')
     await userEvent.click(kebabs[0])
@@ -255,7 +255,7 @@ describe('CreatorStudioPage', () => {
     mockDeleteCourse.mockResolvedValue({ error: null })
 
     renderPage()
-    await waitFor(() => screen.getByText('Chess Fundamentals'))
+    await waitFor(() => screen.getByTestId('course-title-c1'))
 
     const kebabs = screen.getAllByTestId('kebab-btn')
     await userEvent.click(kebabs[0])
@@ -309,7 +309,7 @@ describe('CreatorStudioPage', () => {
 
   it('kebab menu shows Edit, Duplicate, Delete in that order', async () => {
     renderPage()
-    await waitFor(() => screen.getByText('Chess Fundamentals'))
+    await waitFor(() => screen.getByTestId('course-title-c1'))
 
     const kebabs = screen.getAllByTestId('kebab-btn')
     await userEvent.click(kebabs[0])
@@ -340,7 +340,7 @@ describe('CreatorStudioPage', () => {
     mockDuplicateCourse.mockResolvedValue({ course: newCourse, error: null })
 
     renderPage()
-    await waitFor(() => screen.getByText('Chess Fundamentals'))
+    await waitFor(() => screen.getByTestId('course-title-c1'))
 
     const kebabs = screen.getAllByTestId('kebab-btn')
     await userEvent.click(kebabs[0])
@@ -369,13 +369,13 @@ describe('CreatorStudioPage', () => {
     mockDuplicateCourse.mockResolvedValue({ course: newCourse, error: null })
 
     renderPage()
-    await waitFor(() => screen.getByText('Chess Fundamentals'))
+    await waitFor(() => screen.getByTestId('course-title-c1'))
 
     await userEvent.click(screen.getAllByTestId('kebab-btn')[0])
     await userEvent.click(screen.getByTestId('kebab-duplicate-c1'))
 
     await waitFor(() => {
-      expect(screen.getByText('Copy of Chess Fundamentals')).toBeInTheDocument()
+      expect(screen.getByTestId('course-title-c1-copy')).toBeInTheDocument()
     })
   })
 
@@ -397,7 +397,7 @@ describe('CreatorStudioPage', () => {
     mockDuplicateCourse.mockResolvedValue({ course: newCourse, error: null })
 
     renderPage()
-    await waitFor(() => screen.getByText('Chess Fundamentals'))
+    await waitFor(() => screen.getByTestId('course-title-c1'))
 
     await userEvent.click(screen.getAllByTestId('kebab-btn')[0])
     await userEvent.click(screen.getByTestId('kebab-duplicate-c1'))
@@ -411,7 +411,7 @@ describe('CreatorStudioPage', () => {
     mockDuplicateCourse.mockResolvedValue({ course: null, error: new Error('failed') })
 
     renderPage()
-    await waitFor(() => screen.getByText('Chess Fundamentals'))
+    await waitFor(() => screen.getByTestId('course-title-c1'))
 
     await userEvent.click(screen.getAllByTestId('kebab-btn')[0])
     await userEvent.click(screen.getByTestId('kebab-duplicate-c1'))

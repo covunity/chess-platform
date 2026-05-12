@@ -48,21 +48,19 @@ const ZERO_STATS: LearnerStats = {
 // ── stats ───────────────────────────────────────────────────────────────
 
 function startOfDay(d: Date): Date {
-  const out = new Date(d)
-  out.setHours(0, 0, 0, 0)
-  return out
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
 }
 
 function startOfIsoWeek(d: Date): Date {
   const out = startOfDay(d)
-  const dayOfWeek = out.getDay() // 0 = Sun, 1 = Mon, ..., 6 = Sat
+  const dayOfWeek = out.getUTCDay() // 0 = Sun, 1 = Mon, ..., 6 = Sat
   const offset = (dayOfWeek + 6) % 7 // distance to most recent Monday
-  out.setDate(out.getDate() - offset)
+  out.setUTCDate(out.getUTCDate() - offset)
   return out
 }
 
 function dayKey(d: Date): string {
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+  return `${d.getUTCFullYear()}-${d.getUTCMonth()}-${d.getUTCDate()}`
 }
 
 function computeStreaks(

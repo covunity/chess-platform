@@ -196,7 +196,8 @@ body {
 .auth-split {
   display: grid;
   grid-template-columns: 1fr 1.05fr;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 @media (max-width: 768px) {
@@ -224,6 +225,21 @@ body {
 
 .auth-brand__logo {
   margin-bottom: auto;
+}
+
+.auth-brand__logo-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.auth-brand__logo-name {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 400;
+  color: #EFE9D9;
+  letter-spacing: 0.01em;
 }
 
 .auth-brand__body {
@@ -299,15 +315,17 @@ body {
 /* Form panel (right) */
 .auth-form-panel {
   display: flex;
-  align-items: center;
   justify-content: center;
-  padding: 48px 24px;
+  overflow-y: auto;
+  padding: 24px 24px;
   background: var(--surface);
 }
 
 .auth-form-panel__inner {
   width: 100%;
-  max-width: 400px;
+  max-width: 500px;
+  margin-top: auto;
+  margin-bottom: auto;
 }
 
 /* Auth form elements */

@@ -291,17 +291,20 @@ export default function GuidedChessPlayer({
       return
     }
 
-    // Re-select if clicking another own piece instead of attempting a move
-    const boardState = new Chess(currentFen)
-    const clickedPiece = boardState.get(square as Parameters<Chess['get']>[0])
-    if (clickedPiece && clickedPiece.color === learnerSide) {
-      setSelectedSquare(square)
-      return
-    }
-
     const from = selectedSquare
     const to = square
     setSelectedSquare(null)
+
+    // Re-select if clicking another own piece that has moves in the variation tree
+    const boardState = new Chess(currentFen)
+    const clickedPiece = boardState.get(square as Parameters<Chess['get']>[0])
+    if (clickedPiece && clickedPiece.color === learnerSide) {
+      const isValidFromSquare = (currentNode?.children ?? []).some(c => c.from === square)
+      if (isValidFromSquare) {
+        setSelectedSquare(square)
+        return
+      }
+    }
 
     const candidates = (currentNode?.children ?? []).filter(c => c.from === from && c.to === to)
 
@@ -325,6 +328,7 @@ export default function GuidedChessPlayer({
     moveNumber: number
     white?: string
     black?: string
+    annotation?: string | null
   }
   const playedFullMoves: FullMoveEntry[] = []
   for (let i = 0; i < pathFromRoot.length; i++) {
@@ -335,8 +339,10 @@ export default function GuidedChessPlayer({
     }
     if (i % 2 === 0) {
       playedFullMoves[idx].white = node.san
+      if (node.annotation) playedFullMoves[idx].annotation = node.annotation
     } else {
       playedFullMoves[idx].black = node.san
+      if (node.annotation) playedFullMoves[idx].annotation = node.annotation
     }
   }
 
@@ -470,6 +476,11 @@ export default function GuidedChessPlayer({
                   {entry.moveNumber}. {entry.white ?? ''}
                   {entry.black ? ` ${entry.black}` : ''}
                 </span>
+                {entry.annotation && (
+                  <div data-testid={`move-log-annotation-${entry.moveNumber}`} className="guided-player-move-annotation">
+                    {entry.annotation}
+                  </div>
+                )}
               </div>
             ))}
             {hasPendingMoves && !awaitingOpponent && (
