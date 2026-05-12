@@ -495,6 +495,7 @@
       "freePreviewOff": "Tắt",
       "pgnLabel": "PGN (chú thích trong",
       "pgnLabelSuffix": ")",
+      "pgnAnnotationTip": "Đặt {nội dung} trước số nước đầu tiên để hiển thị hướng dẫn lúc bắt đầu bài học. Đặt sau nước đi để hiển thị khi người học vừa đi xong nước đó.",
       "pgnPlaceholderEnter": "Nhập PGN ở trên",
       "pgnParsedMoves": "✓ Đã phân tích PGN · {{count}} nước đi",
       "pgnAnnotationsCount": "· {{count}} chú thích",

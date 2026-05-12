@@ -489,8 +489,7 @@ export default function AdminOrdersPage() {
       {toast === 'success' && (
         <div
           data-testid="orders-success-toast"
-          className="fixed bottom-6 right-6 card"
-          style={{ padding: '12px 20px', background: 'var(--ink-1)', color: '#fff', fontSize: 13, zIndex: 100 }}
+          className="toast toast-success"
         >
           {t('admin.orders.actionSuccess')}
         </div>
@@ -498,8 +497,7 @@ export default function AdminOrdersPage() {
       {toast === 'error' && (
         <div
           data-testid="orders-error-toast"
-          className="fixed bottom-6 right-6 card"
-          style={{ padding: '12px 20px', background: 'var(--danger)', color: '#fff', fontSize: 13, zIndex: 100 }}
+          className="toast toast-error"
         >
           {t('admin.orders.actionError')}
         </div>

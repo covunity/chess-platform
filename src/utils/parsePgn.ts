@@ -258,10 +258,7 @@ function parseVariation(
 
     if (tok.type === "ANNOTATION") {
       idx.val++;
-      // Attach annotation to the last move node (not the root sentinel)
-      if (parent.parentId !== null) {
-        parent.annotation = tok.value;
-      }
+      parent.annotation = tok.value;
       continue;
     }
 

@@ -277,8 +277,7 @@ export default function AdminSettingsPage() {
       {toast === 'success' && (
         <div
           data-testid="save-success-toast"
-          className="fixed bottom-6 right-6 card"
-          style={{ padding: '12px 20px', background: 'var(--ink-1)', color: '#fff', fontSize: 13, zIndex: 100 }}
+          className="toast toast-success"
         >
           {t('admin.settings.payment.saved')}
         </div>
@@ -286,8 +285,7 @@ export default function AdminSettingsPage() {
       {toast === 'error' && (
         <div
           data-testid="save-error-toast"
-          className="fixed bottom-6 right-6 card"
-          style={{ padding: '12px 20px', background: 'var(--danger)', color: '#fff', fontSize: 13, zIndex: 100 }}
+          className="toast toast-error"
         >
           {t('admin.settings.payment.saveError')}
         </div>

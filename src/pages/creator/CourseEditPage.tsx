@@ -79,6 +79,7 @@ function NewLessonDialog({ onCancel, onCreate, t }: NewLessonDialogProps) {
 
         <label className="block text-xs font-medium text-(--ink-2) mb-1">
           {t('creator.courseEdit.newLesson.titleLabel')}
+          <span style={{ color: 'var(--danger)', marginLeft: 2 }}>*</span>
         </label>
         <input
           data-testid="new-lesson-title"
@@ -323,6 +324,7 @@ const STATUS_DOT: Partial<Record<CourseStatus, string>> = {
 
 interface PublishBarProps {
   courseId: string
+  courseTitle: string
   status: CourseStatus
   readiness: PublishReadiness
   publishing: boolean
@@ -332,7 +334,7 @@ interface PublishBarProps {
   t: (k: string) => string
 }
 
-function PublishBar({ status, readiness, publishing, onPublish, onUnpublish, onSaveLesson, t }: PublishBarProps) {
+function PublishBar({ courseTitle, status, readiness, publishing, onPublish, onUnpublish, onSaveLesson, t }: PublishBarProps) {
   const barStyle: React.CSSProperties = {
     padding: '8px 20px',
     background: 'var(--surface)',
@@ -340,19 +342,27 @@ function PublishBar({ status, readiness, publishing, onPublish, onUnpublish, onS
     flexShrink: 0,
   }
 
-  const statusBadge = (
-    <div className="flex items-center gap-1.5">
-      <span style={{ width: 7, height: 7, borderRadius: '50%', background: STATUS_DOT[status] ?? 'var(--ink-4)', flexShrink: 0 }} />
-      <span style={{ fontSize: 12, color: 'var(--ink-2)', fontWeight: 500 }}>
-        {t('creator.studio.status.' + status)}
+  const left = (
+    <div className="flex items-center gap-2 flex-1 min-w-0">
+      <span
+        className="font-medium text-(--ink-1) truncate"
+        style={{ fontSize: 13 }}
+      >
+        {courseTitle}
       </span>
+      <div className="flex items-center gap-1.5 shrink-0">
+        <span style={{ width: 7, height: 7, borderRadius: '50%', background: STATUS_DOT[status] ?? 'var(--ink-4)' }} />
+        <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>
+          {t('creator.studio.status.' + status)}
+        </span>
+      </div>
     </div>
   )
 
   if (status === 'published') {
     return (
-      <div data-testid="publish-bar" className="flex items-center justify-end gap-3" style={barStyle}>
-        {statusBadge}
+      <div data-testid="publish-bar" className="flex items-center gap-3" style={barStyle}>
+        {left}
         {onSaveLesson && (
           <button type="button" className="btn btn-secondary btn-sm" onClick={onSaveLesson}>
             {t('creator.courseEdit.saveLesson')}
@@ -366,8 +376,8 @@ function PublishBar({ status, readiness, publishing, onPublish, onUnpublish, onS
   }
 
   return (
-    <div data-testid="publish-bar" className="flex items-center justify-end gap-3" style={barStyle}>
-      {statusBadge}
+    <div data-testid="publish-bar" className="flex items-center gap-3" style={barStyle}>
+      {left}
       {onSaveLesson && (
         <button type="button" className="btn btn-secondary btn-sm" onClick={onSaveLesson}>
           {t('creator.courseEdit.saveLesson')}
@@ -730,6 +740,7 @@ export default function CourseEditPage() {
         {!loading && courseId && (
           <PublishBar
             courseId={courseId}
+            courseTitle={courseTitle}
             status={courseStatus}
             readiness={readiness}
             publishing={publishing}
@@ -876,8 +887,7 @@ export default function CourseEditPage() {
       {toast && (
         <div
           data-testid="toast"
-          className="fixed bottom-6 right-6 card"
-          style={{ padding: '12px 20px', background: 'var(--ink-1)', color: '#fff', fontSize: 13, zIndex: 100 }}
+          className="toast toast-success"
         >
           {toast}
         </div>

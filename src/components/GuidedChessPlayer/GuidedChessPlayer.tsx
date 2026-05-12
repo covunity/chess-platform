@@ -341,15 +341,6 @@ export default function GuidedChessPlayer({
   }
 
   // Annotations from path (covers main line and variations)
-  const annotationsByMove = useMemo(() => {
-    const map = new Map<number, string>()
-    for (const node of pathFromRoot) {
-      if (node.annotation !== undefined) {
-        map.set(node.moveNumber, node.annotation)
-      }
-    }
-    return map
-  }, [pathFromRoot])
 
   const hintSquares = hintActive && hasPendingMoves && currentNode
     ? { from: currentNode.children[0].from, to: currentNode.children[0].to }
@@ -435,6 +426,13 @@ export default function GuidedChessPlayer({
             )}
           </div>
 
+          {/* Annotation panel */}
+          {currentNode?.annotation && (
+            <div data-testid="guided-player-annotation-panel" className="guided-player-annotation-panel">
+              {currentNode.annotation}
+            </div>
+          )}
+
           {/* Action buttons */}
           <div className="guided-player-actions">
             <button
@@ -466,22 +464,14 @@ export default function GuidedChessPlayer({
 
           {/* Move log */}
           <div data-testid="guided-player-move-log" className="guided-player-move-log">
-            {playedFullMoves.map((entry) => {
-              const annotation = annotationsByMove.get(entry.moveNumber)
-              return (
-                <div key={entry.moveNumber} data-testid={`move-block-${entry.moveNumber}`} className="guided-player-move-block">
-                  <span className="guided-player-move-san">
-                    {entry.moveNumber}. {entry.white ?? ''}
-                    {entry.black ? ` ${entry.black}` : ''}
-                  </span>
-                  {annotation && (
-                    <p data-testid={`move-log-annotation-${entry.moveNumber}`} className="guided-player-annotation">
-                      {annotation}
-                    </p>
-                  )}
-                </div>
-              )
-            })}
+            {playedFullMoves.map((entry) => (
+              <div key={entry.moveNumber} data-testid={`move-block-${entry.moveNumber}`} className="guided-player-move-block">
+                <span className="guided-player-move-san">
+                  {entry.moveNumber}. {entry.white ?? ''}
+                  {entry.black ? ` ${entry.black}` : ''}
+                </span>
+              </div>
+            ))}
             {hasPendingMoves && !awaitingOpponent && (
               <div data-testid="your-turn-prompt" className="guided-player-your-turn">
                 <strong>{t('guidedPlayer.yourTurnHeading')}</strong> {t('guidedPlayer.yourTurnBody')}

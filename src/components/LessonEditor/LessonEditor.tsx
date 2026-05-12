@@ -46,9 +46,10 @@ const LESSON_TAB_VALUES: LessonType[] = ['video', 'chess', 'puzzle'];
 
 const MAX_PGN_CHARS = 50000; // V-12, up from 5000
 
-const PLACEHOLDER_PGN = `1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5
-4. c3 Nf6 {The mainline. Black contests the center immediately.}
-5. d3 d6 {Instead of the classical 5.d4 break, modern theory has shifted toward d3, preparing a slow build with Nbd2, Re1, h3.}
+const PLACEHOLDER_PGN = `{Ghi nội dung hướng dẫn ở đây — hiển thị trước nước đi đầu tiên}
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5
+4. c3 Nf6 {Chú thích sau nước đi — hiển thị khi người học vừa đi xong nước này}
+5. d3 d6
 6. Nbd2 a6
 7. Bb3 O-O
 8. h3 {Prophylactic — preventing ...Bg4.}`;
@@ -283,37 +284,12 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
               />
             </div>
 
-            {/* Perspective + Free preview row */}
-            <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
-              <div style={{ flex: 1 }}>
-                <span className="label">{t('creator.lessonEditor.boardPerspective')}</span>
-                <div style={{ display: "flex", gap: 8 }}>
-                  {perspectiveButton("white", t('creator.lessonEditor.perspectiveWhite'))}
-                  {perspectiveButton("black", t('creator.lessonEditor.perspectiveBlack'))}
-                </div>
-              </div>
-              <div style={{ width: 180 }}>
-                <span className="label">{t('creator.lessonEditor.freePreview')}</span>
-                <button
-                  type="button"
-                  role="button"
-                  aria-label={t('creator.lessonEditor.freePreview')}
-                  aria-pressed={isFreePreview}
-                  onClick={() => setIsFreePreview((v) => !v)}
-                  style={{
-                    width: "100%",
-                    height: 36,
-                    border: "1px solid var(--border)",
-                    borderRadius: "var(--r-sm)",
-                    background: isFreePreview ? "var(--accent)" : "var(--surface)",
-                    color: isFreePreview ? "var(--ink-on-accent)" : "var(--ink-1)",
-                    fontWeight: 500,
-                    fontSize: 13,
-                    cursor: "pointer",
-                  }}
-                >
-                  {isFreePreview ? t('creator.lessonEditor.freePreviewOn') : t('creator.lessonEditor.freePreviewOff')}
-                </button>
+            {/* Perspective */}
+            <div>
+              <span className="label">{t('creator.lessonEditor.boardPerspective')}</span>
+              <div style={{ display: "flex", gap: 8 }}>
+                {perspectiveButton("white", t('creator.lessonEditor.perspectiveWhite'))}
+                {perspectiveButton("black", t('creator.lessonEditor.perspectiveBlack'))}
               </div>
             </div>
 
@@ -322,6 +298,9 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
               <label className="label" htmlFor="pgn-textarea">
                 {t('creator.lessonEditor.pgnLabel')} <code>{"{}"}</code>{t('creator.lessonEditor.pgnLabelSuffix')}
               </label>
+              <p style={{ fontSize: 11.5, color: 'var(--ink-3)', marginBottom: 6, lineHeight: 1.5 }}>
+                {t('creator.lessonEditor.pgnAnnotationTip')}
+              </p>
               <textarea
                 id="pgn-textarea"
                 className="input mono"
