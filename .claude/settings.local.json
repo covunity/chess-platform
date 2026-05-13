@@ -27,7 +27,8 @@
       "Bash(npm test *)",
       "Bash(npm show *)",
       "Bash(node -e ' *)",
-      "Bash(node -e \"const fs = require\\('fs'\\); const src = fs.readFileSync\\('node_modules/react-chessboard/dist/index.esm.js','utf8'\\); const roles = src.match\\(/role:[^,}]+/g\\); console.log\\(roles ? roles.slice\\(0,20\\) : 'none'\\); const aria = src.match\\(/aria-[^:]+:[^,}]+/g\\); console.log\\(aria ? aria.slice\\(0,20\\) : 'none'\\);\")"
+      "Bash(node -e \"const fs = require\\('fs'\\); const src = fs.readFileSync\\('node_modules/react-chessboard/dist/index.esm.js','utf8'\\); const roles = src.match\\(/role:[^,}]+/g\\); console.log\\(roles ? roles.slice\\(0,20\\) : 'none'\\); const aria = src.match\\(/aria-[^:]+:[^,}]+/g\\); console.log\\(aria ? aria.slice\\(0,20\\) : 'none'\\);\")",
+      "Bash(python -c ' *)"
     ]
   }
 }

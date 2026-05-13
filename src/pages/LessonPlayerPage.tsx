@@ -694,10 +694,10 @@ export default function LessonPlayerPage() {
         {/* Content slot */}
         <div
           data-testid="lesson-content-slot"
-          style={{ flex: 1, overflow: 'auto', display: 'flex', alignItems: 'stretch', justifyContent: 'center' }}
+          style={{ flex: 1, overflow: currentLesson?.type === 'chess' ? 'hidden' : 'auto', display: 'flex', alignItems: 'stretch', justifyContent: 'center' }}
         >
           {currentLesson?.type === 'chess' && playerLesson && playerLesson.id === currentLessonId ? (
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '28px 40px', overflowY: 'auto' }}>
+            <div style={{ flex: 1, overflow: 'hidden' }}>
               <GuidedChessPlayer
                 lesson={playerLesson}
                 lessonNumber={lessonIndex + 1}
