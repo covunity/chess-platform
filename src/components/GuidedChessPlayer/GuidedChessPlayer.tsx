@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Chess } from 'chess.js'
+import { Chessboard } from 'react-chessboard'
 import { parsePgn } from '../../utils/parsePgn'
 import type { PgnNode } from '../../utils/parsePgn'
 import PromotionPicker from './PromotionPicker'
@@ -23,11 +24,6 @@ export interface GuidedChessPlayerProps {
   onBookmark?: (nodeId: string, currentFen: string, depth: number, totalDepth: number) => void
 }
 
-const PIECE_UNICODE: Record<string, string> = {
-  K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘', P: '♙',
-  k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟',
-}
-
 const STARTING_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 const OPPONENT_DELAY_MS = 600
 
@@ -40,6 +36,8 @@ interface InteractiveBoardProps {
   hintSquares?: { from: string; to: string } | null
   selectedSquare?: string | null
   onSquareClick?: (square: string) => void
+  onPieceDrop?: (from: string, to: string) => boolean
+  canDrag?: (square: string) => boolean
 }
 
 function InteractiveBoard({
@@ -51,111 +49,53 @@ function InteractiveBoard({
   hintSquares,
   selectedSquare,
   onSquareClick,
+  onPieceDrop,
+  canDrag,
 }: InteractiveBoardProps) {
-  const chess = new Chess(fen)
-  const squareSize = size / 8
+  const squareStyles: Record<string, React.CSSProperties> = {}
 
-  const ranks = perspective === 'white' ? [8, 7, 6, 5, 4, 3, 2, 1] : [1, 2, 3, 4, 5, 6, 7, 8]
-  const files = perspective === 'white' ? ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] : ['h', 'g', 'f', 'e', 'd', 'c', 'b', 'a']
+  if (lastMove) {
+    squareStyles[lastMove.from] = { backgroundColor: 'var(--board-move)' }
+    squareStyles[lastMove.to] = { backgroundColor: 'var(--board-move)' }
+  }
+  if (hintSquares) {
+    squareStyles[hintSquares.from] = { backgroundColor: 'var(--board-highlight)' }
+    squareStyles[hintSquares.to] = { backgroundColor: 'var(--board-highlight)' }
+  }
+  if (selectedSquare) {
+    squareStyles[selectedSquare] = { backgroundColor: 'var(--board-selected)' }
+  }
+  if (wrongMoveSquare) {
+    squareStyles[wrongMoveSquare] = { backgroundColor: 'var(--board-error)' }
+  }
 
   return (
     <div
       data-testid="guided-player-board"
-      role="grid"
       aria-label={`Chess board — ${perspective} perspective`}
-      style={{
-        display: 'grid',
-        gridTemplateColumns: `repeat(8, ${squareSize}px)`,
-        gridTemplateRows: `repeat(8, ${squareSize}px)`,
-        width: size,
-        height: size,
-        userSelect: 'none',
-      }}
+      style={{ width: size, userSelect: 'none' }}
     >
-      {ranks.map((rank) =>
-        files.map((file) => {
-          const square = `${file}${rank}` as const
-          const fileIndex = file.charCodeAt(0) - 97
-          const isLight = (fileIndex + rank) % 2 === 1
-          const piece = chess.get(square as Parameters<Chess['get']>[0])
-          const symbol = piece
-            ? PIECE_UNICODE[piece.color === 'w' ? piece.type.toUpperCase() : piece.type.toLowerCase()]
-            : ''
-          const isLastMove = lastMove && (lastMove.from === square || lastMove.to === square)
-          const isWrongMove = wrongMoveSquare === square
-          const isHint = hintSquares && (hintSquares.from === square || hintSquares.to === square)
-          const isSelected = selectedSquare === square
-          return (
-            <div
-              key={square}
-              role="gridcell"
-              data-square={square}
-              data-last-move={isLastMove ? 'true' : undefined}
-              data-wrong-move={isWrongMove ? 'true' : undefined}
-              data-hint={isHint ? 'true' : undefined}
-              data-selected={isSelected ? 'true' : undefined}
-              onClick={() => onSquareClick?.(square)}
-              style={{
-                background: isLight ? 'var(--board-light)' : 'var(--board-dark)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: squareSize * 0.78,
-                lineHeight: 1,
-                cursor: 'pointer',
-                position: 'relative',
-              }}
-            >
-              {symbol}
-              {isLastMove && (
-                <div
-                  aria-hidden
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: 'var(--board-move)',
-                    pointerEvents: 'none',
-                  }}
-                />
-              )}
-              {isSelected && (
-                <div
-                  aria-hidden
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: 'var(--board-selected)',
-                    pointerEvents: 'none',
-                  }}
-                />
-              )}
-              {isWrongMove && (
-                <div
-                  aria-hidden
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: 'var(--board-error)',
-                    pointerEvents: 'none',
-                  }}
-                />
-              )}
-              {isHint && (
-                <div
-                  aria-hidden
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: 'var(--board-highlight)',
-                    boxShadow: 'inset 0 0 0 3px oklch(0.7 0.18 95)',
-                    pointerEvents: 'none',
-                  }}
-                />
-              )}
-            </div>
-          )
-        })
-      )}
+      <Chessboard
+        options={{
+          position: fen,
+          boardOrientation: perspective,
+          boardStyle: { width: size },
+          darkSquareStyle: { backgroundColor: 'var(--board-dark)' },
+          lightSquareStyle: { backgroundColor: 'var(--board-light)' },
+          squareStyles,
+          allowDragging: true,
+          showNotation: false,
+          onSquareClick: ({ square }) => onSquareClick?.(square),
+          onPieceDrop: ({ sourceSquare, targetSquare }) => {
+            if (!targetSquare) return false
+            return onPieceDrop?.(sourceSquare, targetSquare) ?? false
+          },
+          canDragPiece: ({ square }) => {
+            if (!square) return false
+            return canDrag?.(square) ?? false
+          },
+        }}
+      />
     </div>
   )
 }
@@ -281,6 +221,34 @@ export default function GuidedChessPlayer({
     setCurrentNodeId(next.id)
   }
 
+  function handlePieceDrop(from: string, to: string): boolean {
+    if (atLeaf || awaitingOpponent) return false
+    setSelectedSquare(null)
+
+    const candidates = (currentNode?.children ?? []).filter(c => c.from === from && c.to === to)
+
+    if (candidates.length === 0) {
+      setWrongMoveSquare(from)
+      if (wrongMoveTimer.current) clearTimeout(wrongMoveTimer.current)
+      wrongMoveTimer.current = setTimeout(() => {
+        setWrongMoveSquare(null)
+        wrongMoveTimer.current = null
+      }, 1000)
+      return false
+    } else if (candidates.length === 1) {
+      commitNode(candidates[0])
+      return true
+    } else {
+      setPromotionCandidates(candidates)
+      return false
+    }
+  }
+
+  function canDrag(square: string): boolean {
+    if (atLeaf || awaitingOpponent) return false
+    return (currentNode?.children ?? []).some(c => c.from === square)
+  }
+
   function handleSquareClick(square: string) {
     if (hintActive) setHintActive(false)
     if (atLeaf) return
@@ -395,6 +363,8 @@ export default function GuidedChessPlayer({
             hintSquares={hintSquares}
             selectedSquare={selectedSquare}
             onSquareClick={handleSquareClick}
+            onPieceDrop={handlePieceDrop}
+            canDrag={canDrag}
           />
           {promotionCandidates.length > 0 && (
             <PromotionPicker

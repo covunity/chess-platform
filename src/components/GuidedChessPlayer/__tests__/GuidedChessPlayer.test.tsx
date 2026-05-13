@@ -6,6 +6,8 @@ import i18n from '../../../i18n'
 import GuidedChessPlayer from '../GuidedChessPlayer'
 import PromotionPicker from '../PromotionPicker'
 
+vi.mock('react-chessboard')
+
 function render(ui: Parameters<typeof rtlRender>[0]) {
   return rtlRender(<I18nextProvider i18n={i18n}>{ui}</I18nextProvider>)
 }
