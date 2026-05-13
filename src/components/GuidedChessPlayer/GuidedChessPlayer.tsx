@@ -35,8 +35,10 @@ interface InteractiveBoardProps {
   wrongMoveSquare?: string | null
   hintSquares?: { from: string; to: string } | null
   selectedSquare?: string | null
+  validDestinations?: Set<string>
   onSquareClick?: (square: string) => void
   onPieceDrop?: (from: string, to: string) => boolean
+  onDragStart?: (square: string) => void
   canDrag?: (square: string) => boolean
 }
 
@@ -48,8 +50,10 @@ function InteractiveBoard({
   wrongMoveSquare,
   hintSquares,
   selectedSquare,
+  validDestinations,
   onSquareClick,
   onPieceDrop,
+  onDragStart,
   canDrag,
 }: InteractiveBoardProps) {
   const squareStyles: Record<string, React.CSSProperties> = {}
@@ -57,6 +61,11 @@ function InteractiveBoard({
   if (lastMove) {
     squareStyles[lastMove.from] = { backgroundColor: 'var(--board-move)' }
     squareStyles[lastMove.to] = { backgroundColor: 'var(--board-move)' }
+  }
+  if (validDestinations) {
+    for (const sq of validDestinations) {
+      squareStyles[sq] = { backgroundColor: 'var(--board-highlight)' }
+    }
   }
   if (hintSquares) {
     squareStyles[hintSquares.from] = { backgroundColor: 'var(--board-highlight)' }
@@ -86,6 +95,7 @@ function InteractiveBoard({
           allowDragging: true,
           showNotation: false,
           onSquareClick: ({ square }) => onSquareClick?.(square),
+          onPieceDrag: ({ square }) => { if (square) onDragStart?.(square) },
           onPieceDrop: ({ sourceSquare, targetSquare }) => {
             if (!targetSquare) return false
             return onPieceDrop?.(sourceSquare, targetSquare) ?? false
@@ -119,6 +129,7 @@ export default function GuidedChessPlayer({
   const [viewPerspective, setViewPerspective] = useState<'white' | 'black'>(lesson.board_perspective)
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
   const [promotionCandidates, setPromotionCandidates] = useState<PgnNode[]>([])
+  const [draggingSquare, setDraggingSquare] = useState<string | null>(null)
   const [helperVisible, setHelperVisible] = useState(
     () => localStorage.getItem('guidedPlayer.helperHidden') !== 'true'
   )
@@ -224,6 +235,7 @@ export default function GuidedChessPlayer({
   function handlePieceDrop(from: string, to: string): boolean {
     if (atLeaf || awaitingOpponent) return false
     setSelectedSquare(null)
+    setDraggingSquare(null)
 
     const candidates = (currentNode?.children ?? []).filter(c => c.from === from && c.to === to)
 
@@ -320,6 +332,19 @@ export default function GuidedChessPlayer({
     ? { from: currentNode.children[0].from, to: currentNode.children[0].to }
     : null
 
+  const validDestinations = useMemo<Set<string> | undefined>(() => {
+    const activeSquare = selectedSquare ?? draggingSquare
+    if (!activeSquare || atLeaf || awaitingOpponent) return undefined
+    try {
+      const chess = new Chess(currentFen)
+      const moves = chess.moves({ square: activeSquare as Parameters<Chess['moves']>[0]['square'], verbose: true })
+      const dests = new Set(moves.map(m => m.to))
+      return dests.size > 0 ? dests : undefined
+    } catch {
+      return undefined
+    }
+  }, [selectedSquare, draggingSquare, currentFen, atLeaf, awaitingOpponent])
+
   const sideToMove = upcomingSide === 'white' ? t('guidedPlayer.sideWhite') : t('guidedPlayer.sideBlack')
   const learnerColorLabel = learnerColor === 'white' ? t('guidedPlayer.sideWhite') : t('guidedPlayer.sideBlack')
   const depthFromRoot = currentNode?.depthFromRoot ?? 0
@@ -362,8 +387,10 @@ export default function GuidedChessPlayer({
             wrongMoveSquare={wrongMoveSquare}
             hintSquares={hintSquares}
             selectedSquare={selectedSquare}
+            validDestinations={validDestinations}
             onSquareClick={handleSquareClick}
             onPieceDrop={handlePieceDrop}
+            onDragStart={setDraggingSquare}
             canDrag={canDrag}
           />
           {promotionCandidates.length > 0 && (
