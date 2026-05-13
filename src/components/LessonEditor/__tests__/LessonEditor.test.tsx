@@ -50,11 +50,6 @@ describe("LessonEditor", () => {
       expect(screen.getByRole("button", { name: /^đen$/i })).toBeInTheDocument();
     });
 
-    it("renders free preview toggle", () => {
-      renderEditor({ lesson: DEFAULT_LESSON, onSave: vi.fn() });
-      expect(screen.getByRole("button", { name: /xem thử miễn phí/i })).toBeInTheDocument();
-    });
-
     it("renders Save draft button", () => {
       renderEditor({ lesson: DEFAULT_LESSON, onSave: vi.fn() });
       expect(screen.getByRole("button", { name: /lưu nháp/i })).toBeInTheDocument();
@@ -165,22 +160,6 @@ describe("LessonEditor", () => {
     });
   });
 
-  describe("free preview toggle", () => {
-    it("shows Off state by default", () => {
-      renderEditor({ lesson: DEFAULT_LESSON, onSave: vi.fn() });
-      const toggle = screen.getByRole("button", { name: /xem thử miễn phí/i });
-      expect(toggle).toHaveAttribute("aria-pressed", "false");
-    });
-
-    it("toggles to On when clicked", async () => {
-      const user = userEvent.setup();
-      renderEditor({ lesson: DEFAULT_LESSON, onSave: vi.fn() });
-      const toggle = screen.getByRole("button", { name: /xem thử miễn phí/i });
-      await user.click(toggle);
-      expect(toggle).toHaveAttribute("aria-pressed", "true");
-    });
-  });
-
   describe("restore on reopen", () => {
     it("restores PGN text from lesson data", () => {
       renderEditor({
@@ -198,15 +177,6 @@ describe("LessonEditor", () => {
       });
       const blackBtn = screen.getByRole("button", { name: /^đen$/i });
       expect(blackBtn).toHaveAttribute("aria-pressed", "true");
-    });
-
-    it("restores free-preview state from lesson data", () => {
-      renderEditor({
-        lesson: { ...DEFAULT_LESSON, is_free_preview: true },
-        onSave: vi.fn(),
-      });
-      const toggle = screen.getByRole("button", { name: /xem thử miễn phí/i });
-      expect(toggle).toHaveAttribute("aria-pressed", "true");
     });
 
     it("restores lesson title from lesson data", () => {

@@ -6,6 +6,8 @@ import {
   listAccountApplications,
   rejectAccountApplication,
 } from '../../lib/accountApplicationApi'
+import { findDuplicatePayoutOwners } from '../../lib/creatorPayoutInfoApi'
+import type { DuplicatePayoutOwner } from '../../lib/creatorPayoutInfoApi'
 import { parseViolatingCourses } from '../../lib/adminApi'
 import type {
   AccountApplicationStatus,
@@ -13,6 +15,20 @@ import type {
 } from '../../lib/accountApplicationApi'
 import { useAccountTiers } from '../../lib/accountTiers'
 import type { AccountTierCode } from '../../lib/accountTiers'
+
+interface PayoutInfoSnapshot {
+  bank_code?: string
+  bank_name?: string
+  account_number?: string
+  account_holder?: string
+  bank_branch?: string
+}
+
+function getPayoutSnapshot(metadata: Record<string, unknown>): PayoutInfoSnapshot | null {
+  const raw = metadata?.payout_info
+  if (!raw || typeof raw !== 'object') return null
+  return raw as PayoutInfoSnapshot
+}
 
 const STATUS_TABS: AccountApplicationStatus[] = ['pending', 'approved', 'rejected']
 
@@ -98,6 +114,25 @@ export default function AdminCreatorApplicationsPage() {
   const [rejectReason, setRejectReason] = useState('')
   const [saving, setSaving] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [duplicateOwners, setDuplicateOwners] = useState<DuplicatePayoutOwner[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+    const payout = selected ? getPayoutSnapshot(selected.metadata) : null
+    const lookup =
+      selected && payout?.bank_code && payout?.account_number
+        ? findDuplicatePayoutOwners(supabase, {
+            bank_code: payout.bank_code,
+            account_number: payout.account_number,
+            exclude_user_id: selected.user_id,
+          })
+        : Promise.resolve({ owners: [], error: null })
+    lookup.then(({ owners }) => {
+      if (cancelled) return
+      setDuplicateOwners(owners)
+    })
+    return () => { cancelled = true }
+  }, [selected])
 
   useEffect(() => {
     let cancelled = false
@@ -379,6 +414,12 @@ export default function AdminCreatorApplicationsPage() {
                 t={t}
               />
 
+              <PayoutInfoBlock
+                payout={getPayoutSnapshot(selected.metadata)}
+                duplicates={duplicateOwners}
+                t={t}
+              />
+
               {selected.status === 'rejected' && selected.rejection_reason && (
                 <DetailField
                   label={t('admin.applications.fieldRejectionReason', 'Lý do từ chối')}
@@ -485,6 +526,63 @@ function DetailField({ label, value }: { label: string; value: string }) {
       <p style={{ fontSize: 13.5, color: 'var(--ink-1)', lineHeight: 1.55, margin: 0, whiteSpace: 'pre-wrap' }}>
         {value}
       </p>
+    </div>
+  )
+}
+
+function PayoutInfoBlock({
+  payout,
+  duplicates,
+  t,
+}: {
+  payout: PayoutInfoSnapshot | null
+  duplicates: DuplicatePayoutOwner[]
+  t: (k: string, opts?: Record<string, string | number>) => string
+}) {
+  if (!payout) return null
+  return (
+    <div data-testid="admin-payout-section" style={{ marginTop: 8 }}>
+      <span className="label" style={{ marginBottom: 4 }}>
+        {t('admin.applications.payoutInfo.section')}
+      </span>
+      {duplicates.length > 0 && (
+        <div
+          role="alert"
+          data-testid="admin-payout-duplicate-warning"
+          style={{
+            background: 'var(--warning-soft)',
+            color: 'var(--warning)',
+            borderRadius: 'var(--r-md)',
+            padding: '10px 14px',
+            fontSize: 13,
+            margin: '6px 0 12px',
+          }}
+        >
+          <div style={{ fontWeight: 600, marginBottom: 4 }}>
+            {t('admin.applications.payoutInfo.duplicateWarningHeading', { count: duplicates.length })}
+          </div>
+          <div>{t('admin.applications.payoutInfo.duplicateWarningBody')}</div>
+          <ul style={{ margin: '6px 0 0 16px', padding: 0 }}>
+            {duplicates.map(d => (
+              <li key={d.user_id} data-testid={`duplicate-owner-${d.user_id}`}>
+                {d.name || '—'} ({d.email})
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {payout.bank_name && (
+        <DetailField label={t('admin.applications.payoutInfo.bank')} value={payout.bank_name} />
+      )}
+      {payout.account_number && (
+        <DetailField label={t('admin.applications.payoutInfo.accountNumber')} value={payout.account_number} />
+      )}
+      {payout.account_holder && (
+        <DetailField label={t('admin.applications.payoutInfo.accountHolder')} value={payout.account_holder} />
+      )}
+      {payout.bank_branch && (
+        <DetailField label={t('admin.applications.payoutInfo.bankBranch')} value={payout.bank_branch} />
+      )}
     </div>
   )
 }

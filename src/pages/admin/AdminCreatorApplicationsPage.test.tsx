@@ -10,16 +10,22 @@ const {
   mockListAccountApplications,
   mockApproveAccountApplication,
   mockRejectAccountApplication,
+  mockFindDuplicatePayoutOwners,
 } = vi.hoisted(() => ({
   mockListAccountApplications: vi.fn(),
   mockApproveAccountApplication: vi.fn(),
   mockRejectAccountApplication: vi.fn(),
+  mockFindDuplicatePayoutOwners: vi.fn(),
 }))
 
 vi.mock('../../lib/accountApplicationApi', () => ({
   listAccountApplications: mockListAccountApplications,
   approveAccountApplication: mockApproveAccountApplication,
   rejectAccountApplication: mockRejectAccountApplication,
+}))
+
+vi.mock('../../lib/creatorPayoutInfoApi', () => ({
+  findDuplicatePayoutOwners: mockFindDuplicatePayoutOwners,
 }))
 
 vi.mock('../../lib/adminApi', async (importOriginal) => {
@@ -90,6 +96,7 @@ describe('AdminCreatorApplicationsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockListAccountApplications.mockResolvedValue({ applications: [baseApp, businessApp], error: null })
+    mockFindDuplicatePayoutOwners.mockResolvedValue({ owners: [], error: null })
   })
 
   describe('list rendering + tabs', () => {
@@ -357,6 +364,97 @@ describe('AdminCreatorApplicationsPage', () => {
       expect(screen.getByTestId('application-row-app-1')).toBeInTheDocument()
     })
 
+  })
+
+  describe('payout info (#184)', () => {
+    const payoutApp = {
+      ...baseApp,
+      id: 'app-3',
+      user_id: 'u-3',
+      metadata: {
+        payout_info: {
+          bank_code: 'VCB',
+          bank_name: 'Vietcombank',
+          account_number: '0123456789',
+          account_holder: 'NGUYEN VAN A',
+          bank_branch: 'Chi nhánh TP HCM',
+        },
+      },
+      applicant: { id: 'u-3', name: 'Charlie', email: 'charlie@test.com' },
+    }
+
+    it('renders the payout info section when application has payout_info', async () => {
+      mockListAccountApplications.mockResolvedValue({ applications: [payoutApp], error: null })
+      renderPage()
+      await waitFor(() => screen.getByTestId('application-row-app-3'))
+      await userEvent.click(screen.getByTestId('application-row-app-3'))
+
+      await screen.findByTestId('application-detail')
+      expect(screen.getByTestId('admin-payout-section')).toBeInTheDocument()
+      expect(screen.getByText('0123456789')).toBeInTheDocument()
+      expect(screen.getByText('NGUYEN VAN A')).toBeInTheDocument()
+      expect(screen.getByText('Chi nhánh TP HCM')).toBeInTheDocument()
+    })
+
+    it('does not render the payout section when payout_info is absent', async () => {
+      renderPage()
+      await waitFor(() => screen.getByTestId('application-row-app-1'))
+      await userEvent.click(screen.getByTestId('application-row-app-1'))
+      await screen.findByTestId('application-detail')
+      expect(screen.queryByTestId('admin-payout-section')).not.toBeInTheDocument()
+    })
+
+    it('queries duplicate payout owners on application select', async () => {
+      mockListAccountApplications.mockResolvedValue({ applications: [payoutApp], error: null })
+      renderPage()
+      await waitFor(() => screen.getByTestId('application-row-app-3'))
+      await userEvent.click(screen.getByTestId('application-row-app-3'))
+
+      await waitFor(() => {
+        expect(mockFindDuplicatePayoutOwners).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.objectContaining({
+            bank_code: 'VCB',
+            account_number: '0123456789',
+            exclude_user_id: 'u-3',
+          })
+        )
+      })
+    })
+
+    it('shows a duplicate warning when other users share the same account', async () => {
+      mockListAccountApplications.mockResolvedValue({ applications: [payoutApp], error: null })
+      mockFindDuplicatePayoutOwners.mockResolvedValue({
+        owners: [
+          { user_id: 'u-99', name: 'Bob', email: 'bob@x.io' },
+          { user_id: 'u-100', name: 'Dave', email: 'dave@x.io' },
+        ],
+        error: null,
+      })
+      renderPage()
+      await waitFor(() => screen.getByTestId('application-row-app-3'))
+      await userEvent.click(screen.getByTestId('application-row-app-3'))
+
+      await waitFor(() => {
+        expect(screen.getByTestId('admin-payout-duplicate-warning')).toBeInTheDocument()
+      })
+      expect(screen.getByTestId('duplicate-owner-u-99')).toHaveTextContent('Bob')
+      expect(screen.getByTestId('duplicate-owner-u-100')).toHaveTextContent('Dave')
+      // Warning does not block the approve button.
+      expect(screen.getByTestId('approve-btn')).toBeEnabled()
+    })
+
+    it('does not show duplicate warning when no duplicates exist', async () => {
+      mockListAccountApplications.mockResolvedValue({ applications: [payoutApp], error: null })
+      renderPage()
+      await waitFor(() => screen.getByTestId('application-row-app-3'))
+      await userEvent.click(screen.getByTestId('application-row-app-3'))
+      await screen.findByTestId('admin-payout-section')
+      expect(screen.queryByTestId('admin-payout-duplicate-warning')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('approve downgrade violation (with details)', () => {
     it('shows violating course names when approve raises downgrade violation with details', async () => {
       mockApproveAccountApplication.mockResolvedValue({
         application: null,

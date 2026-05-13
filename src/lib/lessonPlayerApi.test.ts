@@ -35,6 +35,7 @@ describe('getLessonForPlayer', () => {
       pgn_data: '1. e4 e5',
       board_perspective: 'white',
       coach_note: 'Note here',
+      description: null,
       video_provider: null,
       video_provider_id: null,
       video_status: null,

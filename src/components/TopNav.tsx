@@ -316,6 +316,17 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
                 >
                   {t('nav.orders', 'Lịch sử đơn hàng')}
                 </Link>
+                {profile?.role === 'creator' && (
+                  <Link
+                    role="menuitem"
+                    className="nav-dropdown__item"
+                    data-testid="nav-creator-payout-link"
+                    to="/creator/settings/payout"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    {t('nav.creatorPayoutSettings', 'Thông tin thanh toán')}
+                  </Link>
+                )}
                 {profile?.role === 'admin' && (
                   <Link
                     role="menuitem"

@@ -106,6 +106,15 @@ function renderPage(ctx: Partial<AuthContextValue>, initialPath = '/become-creat
   )
 }
 
+// payout_info is required for all tiers (#184). Tests that exercise a
+// happy-path submit must populate this section first.
+async function fillPayoutFields() {
+  await userEvent.selectOptions(screen.getByTestId('payout-field-bank'), 'VCB')
+  await userEvent.type(screen.getByTestId('payout-field-account-number'), '0123456789')
+  await userEvent.type(screen.getByTestId('payout-field-account-holder'), 'NGUYEN VAN A')
+  await userEvent.type(screen.getByTestId('payout-field-bank-branch'), 'Chi nhánh TP HCM')
+}
+
 const sampleApp = {
   id: 'app-1',
   user_id: 'u-1',
@@ -230,13 +239,14 @@ describe('BecomeCreatorPage', () => {
       await userEvent.type(screen.getByTestId('field-name'), 'Alice')
       await userEvent.type(screen.getByTestId('field-email'), 'alice@test.com')
       await userEvent.type(screen.getByTestId('field-password'), 'secret123')
+      await fillPayoutFields()
       await userEvent.click(screen.getByTestId('anon-submit'))
 
       await waitFor(() => {
         expect(savePendingAccountApplication).toHaveBeenCalledWith(
           expect.objectContaining({ requested_tier_code: 'individual' })
         )
-        expect(mockSignUp).toHaveBeenCalledWith('Alice', 'alice@test.com', 'secret123', expect.objectContaining({ pending_application: expect.objectContaining({ requested_tier_code: 'individual' }) }))
+        expect(mockSignUp).toHaveBeenCalledWith('Alice', 'alice@test.com', 'secret123', expect.objectContaining({ pending_application: expect.objectContaining({ requested_tier_code: 'individual' }) }), expect.any(String))
       })
     })
 
@@ -247,6 +257,7 @@ describe('BecomeCreatorPage', () => {
       await userEvent.type(screen.getByTestId('field-name'), 'Alice')
       await userEvent.type(screen.getByTestId('field-email'), 'alice@test.com')
       await userEvent.type(screen.getByTestId('field-password'), 'secret123')
+      await fillPayoutFields()
       await userEvent.click(screen.getByTestId('anon-submit'))
 
       await waitFor(() => {
@@ -261,6 +272,7 @@ describe('BecomeCreatorPage', () => {
       await userEvent.type(screen.getByTestId('field-name'), 'Alice')
       await userEvent.type(screen.getByTestId('field-email'), 'alice@test.com')
       await userEvent.type(screen.getByTestId('field-password'), 'secret123')
+      await fillPayoutFields()
       await userEvent.click(screen.getByTestId('anon-submit'))
 
       await waitFor(() => {
@@ -281,10 +293,11 @@ describe('BecomeCreatorPage', () => {
       await userEvent.type(screen.getByTestId('field-business-registration-no'), 'VN-123')
       await userEvent.type(screen.getByTestId('field-email'), 'corp@test.com')
       await userEvent.type(screen.getByTestId('field-password'), 'secret123')
+      await fillPayoutFields()
       await userEvent.click(screen.getByTestId('anon-submit'))
 
       await waitFor(() => {
-        expect(mockSignUp).toHaveBeenCalledWith('Chess Corp', 'corp@test.com', 'secret123', expect.objectContaining({ pending_application: expect.objectContaining({ requested_tier_code: 'business' }) }))
+        expect(mockSignUp).toHaveBeenCalledWith('Chess Corp', 'corp@test.com', 'secret123', expect.objectContaining({ pending_application: expect.objectContaining({ requested_tier_code: 'business' }) }), expect.any(String))
         expect(savePendingAccountApplication).toHaveBeenCalledWith(
           expect.objectContaining({
             requested_tier_code: 'business',
@@ -343,6 +356,7 @@ describe('BecomeCreatorPage', () => {
       await userEvent.type(screen.getByTestId('field-email'), 'alice@test.com')
       await userEvent.type(screen.getByTestId('field-password'), 'secret123')
       await userEvent.type(screen.getByTestId('field-federation-or-team'), 'FIDE Vietnam')
+      await fillPayoutFields()
       await userEvent.click(screen.getByTestId('anon-submit'))
 
       await waitFor(() => {
@@ -380,6 +394,7 @@ describe('BecomeCreatorPage', () => {
       await userEvent.type(screen.getByTestId('field-password'), 'secret123')
       await userEvent.type(screen.getByTestId('field-center-address'), '123 Chess Street')
       await userEvent.type(screen.getByTestId('field-center-size'), '100')
+      await fillPayoutFields()
       await userEvent.click(screen.getByTestId('anon-submit'))
 
       await waitFor(() => {
@@ -462,6 +477,7 @@ describe('BecomeCreatorPage', () => {
 
       await userEvent.type(screen.getByTestId('field-motivation'), 'I want to share my knowledge of openings with learners worldwide.')
       await userEvent.type(screen.getByTestId('field-experience'), 'I have played chess for over twenty years professionally.')
+      await fillPayoutFields()
       await userEvent.click(screen.getByTestId('submit-application'))
 
       await waitFor(() => {
@@ -502,6 +518,7 @@ describe('BecomeCreatorPage', () => {
       await userEvent.type(screen.getByTestId('field-business-registration-no'), 'VN-123')
       await userEvent.type(screen.getByTestId('field-motivation'), 'I want to share my knowledge of openings with learners worldwide.')
       await userEvent.type(screen.getByTestId('field-experience'), 'I have played chess for over twenty years professionally.')
+      await fillPayoutFields()
       await userEvent.click(screen.getByTestId('submit-application'))
 
       await waitFor(() => {
@@ -553,12 +570,74 @@ describe('BecomeCreatorPage', () => {
 
       await userEvent.type(screen.getByTestId('field-motivation'), 'I want to share my knowledge of openings with learners worldwide.')
       await userEvent.type(screen.getByTestId('field-experience'), 'I have played chess for over twenty years professionally.')
+      await fillPayoutFields()
       await userEvent.click(screen.getByTestId('submit-application'))
 
       await waitFor(() => {
         expect(screen.getByTestId('application-status-pending')).toBeInTheDocument()
       })
       expect(screen.queryByTestId('creator-application-form')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('payout info (#184)', () => {
+    it('blocks learner submit when payout fields are empty', async () => {
+      renderPage({ user: stubUser, profile: profileFor('learner') })
+      await waitFor(() => screen.getByTestId('creator-application-form'))
+
+      await userEvent.type(screen.getByTestId('field-motivation'), 'I want to share my knowledge of openings with learners worldwide.')
+      await userEvent.type(screen.getByTestId('field-experience'), 'I have played chess for over twenty years professionally.')
+      // no payout filled
+      await userEvent.click(screen.getByTestId('submit-application'))
+
+      expect(screen.getByTestId('submit-error')).toHaveTextContent(/ngân hàng/i)
+      expect(mockSubmitAccountApplication).not.toHaveBeenCalled()
+    })
+
+    it('blocks learner submit when account_number has non-digits', async () => {
+      renderPage({ user: stubUser, profile: profileFor('learner') })
+      await waitFor(() => screen.getByTestId('creator-application-form'))
+
+      await userEvent.type(screen.getByTestId('field-motivation'), 'I want to share my knowledge of openings with learners worldwide.')
+      await userEvent.type(screen.getByTestId('field-experience'), 'I have played chess for over twenty years professionally.')
+      await userEvent.selectOptions(screen.getByTestId('payout-field-bank'), 'VCB')
+      await userEvent.type(screen.getByTestId('payout-field-account-number'), 'abc123')
+      await userEvent.type(screen.getByTestId('payout-field-account-holder'), 'NGUYEN VAN A')
+      await userEvent.type(screen.getByTestId('payout-field-bank-branch'), 'TP HCM')
+      await userEvent.click(screen.getByTestId('submit-application'))
+
+      expect(screen.getByTestId('submit-error')).toHaveTextContent(/số tài khoản/i)
+      expect(mockSubmitAccountApplication).not.toHaveBeenCalled()
+    })
+
+    it('includes payout_info inside metadata on learner submit', async () => {
+      mockGetMyLatestAccountApplication
+        .mockResolvedValueOnce({ application: null, error: null })
+        .mockResolvedValueOnce({ application: sampleApp, error: null })
+
+      renderPage({ user: stubUser, profile: profileFor('learner') })
+      await waitFor(() => screen.getByTestId('creator-application-form'))
+
+      await userEvent.type(screen.getByTestId('field-motivation'), 'I want to share my knowledge of openings with learners worldwide.')
+      await userEvent.type(screen.getByTestId('field-experience'), 'I have played chess for over twenty years professionally.')
+      await fillPayoutFields()
+      await userEvent.click(screen.getByTestId('submit-application'))
+
+      await waitFor(() => {
+        expect(mockSubmitAccountApplication).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.objectContaining({
+            metadata: expect.objectContaining({
+              payout_info: expect.objectContaining({
+                bank_code: 'VCB',
+                account_number: '0123456789',
+                account_holder: 'NGUYEN VAN A',
+                bank_branch: 'Chi nhánh TP HCM',
+              }),
+            }),
+          })
+        )
+      })
     })
   })
 
@@ -712,6 +791,7 @@ describe('BecomeCreatorPage', () => {
       await userEvent.type(screen.getByTestId('field-name'), 'Test User')
       await userEvent.type(screen.getByTestId('field-email'), 'test@example.com')
       await userEvent.type(screen.getByTestId('field-password'), 'password123')
+      await fillPayoutFields()
 
       await userEvent.click(screen.getByTestId('anon-submit'))
 
@@ -722,7 +802,8 @@ describe('BecomeCreatorPage', () => {
           'password123',
           expect.objectContaining({
             pending_application: expect.objectContaining({ requested_tier_code: 'individual' }),
-          })
+          }),
+          expect.any(String)
         )
       })
     })

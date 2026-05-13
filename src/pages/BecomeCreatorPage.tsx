@@ -14,9 +14,28 @@ import {
 } from '../lib/pendingAccountApplication'
 import { useAccountTiers } from '../lib/accountTiers'
 import type { AccountTier, AccountTierCode } from '../lib/accountTiers'
+import PayoutInfoForm from '../components/payout/PayoutInfoForm'
+import { EMPTY_PAYOUT_INPUT, validatePayoutInput } from '../lib/creatorPayoutInfoApi'
+import type { PayoutInfoInput, PayoutValidationField } from '../lib/creatorPayoutInfoApi'
 
 const MOTIVATION_MAX = 600
 const EXPERIENCE_MAX = 600
+
+const PAYOUT_ERROR_I18N: Record<PayoutValidationField, string> = {
+  bank_code: 'becomeCreator.payoutInfo.errors.bankCode',
+  bank_name: 'becomeCreator.payoutInfo.errors.bankCode',
+  account_number: 'becomeCreator.payoutInfo.errors.accountNumber',
+  account_holder: 'becomeCreator.payoutInfo.errors.accountHolder',
+  bank_branch: 'becomeCreator.payoutInfo.errors.bankBranch',
+}
+
+function validatePayoutForI18n(
+  payout: PayoutInfoInput,
+  t: (k: string) => string
+): string | null {
+  const field = validatePayoutInput(payout)
+  return field ? t(PAYOUT_ERROR_I18N[field]) : null
+}
 
 // ─── Tier-specific metadata ──────────────────────────────────────────────────
 
@@ -145,7 +164,7 @@ function TierSpecificFields({
   if (tier === 'business') {
     return (
       <>
-        <Field label={t('becomeCreator.fields.businessName')}>
+        <Field label={t('becomeCreator.fields.businessName')} required>
           <input
             data-testid="field-business-name"
             className="input"
@@ -154,7 +173,7 @@ function TierSpecificFields({
             onChange={e => onChange({ businessName: e.target.value })}
           />
         </Field>
-        <Field label={t('becomeCreator.fields.businessRegistrationNo')}>
+        <Field label={t('becomeCreator.fields.businessRegistrationNo')} required>
           <input
             data-testid="field-business-registration-no"
             className="input"
@@ -168,7 +187,7 @@ function TierSpecificFields({
   }
   if (tier === 'athlete') {
     return (
-      <Field label={t('becomeCreator.fields.federationOrTeam')}>
+      <Field label={t('becomeCreator.fields.federationOrTeam')} required>
         <input
           data-testid="field-federation-or-team"
           className="input"
@@ -182,7 +201,7 @@ function TierSpecificFields({
   if (tier === 'training_center') {
     return (
       <>
-        <Field label={t('becomeCreator.fields.centerAddress')}>
+        <Field label={t('becomeCreator.fields.centerAddress')} required>
           <input
             data-testid="field-center-address"
             className="input"
@@ -191,7 +210,7 @@ function TierSpecificFields({
             onChange={e => onChange({ centerAddress: e.target.value })}
           />
         </Field>
-        <Field label={t('becomeCreator.fields.centerSize')}>
+        <Field label={t('becomeCreator.fields.centerSize')} required>
           <input
             data-testid="field-center-size"
             className="input"
@@ -221,6 +240,7 @@ export default function BecomeCreatorPage() {
   const initialTier = (searchParams.get('tier') as AccountTierCode) || 'individual'
   const [requestedTier, setRequestedTier] = useState<AccountTierCode>(initialTier)
   const [tierFields, setTierFields] = useState<TierFields>(EMPTY_TIER_FIELDS)
+  const [payoutFields, setPayoutFields] = useState<PayoutInfoInput>(EMPTY_PAYOUT_INPUT)
 
   const [application, setApplication] = useState<AccountApplication | null>(null)
   const [loading, setLoading] = useState(!!user)
@@ -316,6 +336,8 @@ export default function BecomeCreatorPage() {
         setRequestedTier={setRequestedTier}
         tierFields={tierFields}
         setTierFields={setTierFields}
+        payoutFields={payoutFields}
+        setPayoutFields={setPayoutFields}
         name={name} setName={setName}
         email={email} setEmail={setEmail}
         password={password} setPassword={setPassword}
@@ -380,10 +402,12 @@ export default function BecomeCreatorPage() {
       if (tierError) { setSubmitError(tierError); return }
       if (motivation.trim().length < 20) { setSubmitError(t('becomeCreator.errors.motivation')); return }
       if (experience.trim().length < 20) { setSubmitError(t('becomeCreator.errors.experience')); return }
+      const payoutError = validatePayoutForI18n(payoutFields, t)
+      if (payoutError) { setSubmitError(payoutError); return }
 
       setSubmitError(null)
       setSubmitting(true)
-      const metadata = buildMetadata(requestedTier, tierFields)
+      const metadata = { ...buildMetadata(requestedTier, tierFields), payout_info: payoutFields }
       const { id, error } = await submitAccountApplication(supabase, {
         requested_tier_code: requestedTier,
         motivation,
@@ -401,6 +425,7 @@ export default function BecomeCreatorPage() {
       setExperience('')
       setSampleUrl('')
       setTierFields(EMPTY_TIER_FIELDS)
+      setPayoutFields(EMPTY_PAYOUT_INPUT)
     }
 
     // Use first enterprise tier as default when on upgrade path
@@ -482,7 +507,7 @@ export default function BecomeCreatorPage() {
               t={t}
             />
 
-            <Field label={t('becomeCreator.fieldMotivationLabel')} hint={t('becomeCreator.fieldMotivationHint')}>
+            <Field label={t('becomeCreator.fieldMotivationLabel')} hint={t('becomeCreator.fieldMotivationHint')} required>
               <textarea
                 data-testid="field-motivation"
                 className="input"
@@ -493,7 +518,7 @@ export default function BecomeCreatorPage() {
               />
             </Field>
 
-            <Field label={t('becomeCreator.fieldExperienceLabel')} hint={t('becomeCreator.fieldExperienceHint')}>
+            <Field label={t('becomeCreator.fieldExperienceLabel')} hint={t('becomeCreator.fieldExperienceHint')} required>
               <textarea
                 data-testid="field-experience"
                 className="input"
@@ -514,6 +539,8 @@ export default function BecomeCreatorPage() {
                 placeholder="https://"
               />
             </Field>
+
+            <PayoutInfoForm value={payoutFields} onChange={setPayoutFields} disabled={submitting} />
 
             <div>
               <button
@@ -542,10 +569,12 @@ export default function BecomeCreatorPage() {
     if (tierError) { setSubmitError(tierError); return }
     if (motivation.trim().length < 20) { setSubmitError(t('becomeCreator.errors.motivation')); return }
     if (experience.trim().length < 20) { setSubmitError(t('becomeCreator.errors.experience')); return }
+    const payoutError = validatePayoutForI18n(payoutFields, t)
+    if (payoutError) { setSubmitError(payoutError); return }
 
     setSubmitError(null)
     setSubmitting(true)
-    const metadata = buildMetadata(requestedTier, tierFields)
+    const metadata = { ...buildMetadata(requestedTier, tierFields), payout_info: payoutFields }
     const { id, error } = await submitAccountApplication(supabase, {
       requested_tier_code: requestedTier,
       motivation,
@@ -563,6 +592,7 @@ export default function BecomeCreatorPage() {
     setExperience('')
     setSampleUrl('')
     setTierFields(EMPTY_TIER_FIELDS)
+    setPayoutFields(EMPTY_PAYOUT_INPUT)
   }
 
   return (
@@ -611,17 +641,19 @@ export default function BecomeCreatorPage() {
 
           <TierSpecificFields tier={requestedTier} fields={tierFields} onChange={partial => setTierFields(prev => ({ ...prev, ...partial }))} t={t} />
 
-          <Field label={t('becomeCreator.fieldMotivationLabel')} hint={t('becomeCreator.fieldMotivationHint')}>
+          <Field label={t('becomeCreator.fieldMotivationLabel')} hint={t('becomeCreator.fieldMotivationHint')} required>
             <textarea data-testid="field-motivation" className="input" value={motivation} onChange={e => setMotivation(e.target.value)} maxLength={MOTIVATION_MAX} style={{ minHeight: 120, padding: 12, lineHeight: 1.5 }} />
           </Field>
 
-          <Field label={t('becomeCreator.fieldExperienceLabel')} hint={t('becomeCreator.fieldExperienceHint')}>
+          <Field label={t('becomeCreator.fieldExperienceLabel')} hint={t('becomeCreator.fieldExperienceHint')} required>
             <textarea data-testid="field-experience" className="input" value={experience} onChange={e => setExperience(e.target.value)} maxLength={EXPERIENCE_MAX} style={{ minHeight: 120, padding: 12, lineHeight: 1.5 }} />
           </Field>
 
           <Field label={t('becomeCreator.fieldSampleLabel')} hint={t('becomeCreator.fieldSampleHint')}>
             <input data-testid="field-sample" className="input" type="url" value={sampleUrl} onChange={e => setSampleUrl(e.target.value)} placeholder="https://" />
           </Field>
+
+          <PayoutInfoForm value={payoutFields} onChange={setPayoutFields} disabled={submitting} />
 
           <div>
             <button type="submit" className="btn btn-accent" data-testid="submit-application" disabled={submitting}>
@@ -643,6 +675,8 @@ interface AnonFormProps {
   setRequestedTier: (c: AccountTierCode) => void
   tierFields: TierFields
   setTierFields: (f: TierFields) => void
+  payoutFields: PayoutInfoInput
+  setPayoutFields: (f: PayoutInfoInput) => void
   name: string; setName: (v: string) => void
   email: string; setEmail: (v: string) => void
   password: string; setPassword: (v: string) => void
@@ -659,6 +693,7 @@ function AnonCombinedForm({
   t, tiers,
   requestedTier, setRequestedTier,
   tierFields, setTierFields,
+  payoutFields, setPayoutFields,
   name, setName,
   email, setEmail,
   password, setPassword,
@@ -688,10 +723,13 @@ function AnonCombinedForm({
     const tierError = validateTierFields(requestedTier, tierFields, t)
     if (tierError) { setSubmitError(tierError); return }
 
+    const payoutError = validatePayoutForI18n(payoutFields, t)
+    if (payoutError) { setSubmitError(payoutError); return }
+
     setSubmitError(null)
     setSubmitting(true)
 
-    const metadata = buildMetadata(requestedTier, tierFields)
+    const metadata = { ...buildMetadata(requestedTier, tierFields), payout_info: payoutFields }
 
     const pendingPayload = {
       requested_tier_code: requestedTier,
@@ -755,7 +793,7 @@ function AnonCombinedForm({
         </p>
 
         {requestedTier !== 'business' && (
-          <Field label={t('becomeCreator.combined.fieldNameLabel')}>
+          <Field label={t('becomeCreator.combined.fieldNameLabel')} required>
             <input
               data-testid="field-name"
               className="input"
@@ -767,7 +805,7 @@ function AnonCombinedForm({
           </Field>
         )}
 
-        <Field label={t('becomeCreator.combined.fieldEmailLabel')}>
+        <Field label={t('becomeCreator.combined.fieldEmailLabel')} required>
           <input
             data-testid="field-email"
             className="input"
@@ -778,7 +816,7 @@ function AnonCombinedForm({
           />
         </Field>
 
-        <Field label={t('becomeCreator.combined.fieldPasswordLabel')} hint={t('becomeCreator.combined.fieldPasswordHint')}>
+        <Field label={t('becomeCreator.combined.fieldPasswordLabel')} hint={t('becomeCreator.combined.fieldPasswordHint')} required>
           <input
             data-testid="field-password"
             className="input"
@@ -833,6 +871,8 @@ function AnonCombinedForm({
           />
         </Field>
 
+        <PayoutInfoForm value={payoutFields} onChange={setPayoutFields} disabled={submitting} />
+
         {submitError && (
           <div
             role="alert"
@@ -880,10 +920,13 @@ function Heading({ children, ...props }: { children: React.ReactNode; [k: string
   )
 }
 
-function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+function Field({ label, hint, required, children }: { label: string; hint?: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <span className="label" style={{ marginBottom: 0 }}>{label}</span>
+      <span className="label" style={{ marginBottom: 0 }}>
+        {label}
+        {required && <span aria-hidden="true" style={{ color: 'var(--danger)', marginLeft: 4 }}>*</span>}
+      </span>
       {children}
       {hint && <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>{hint}</span>}
     </div>

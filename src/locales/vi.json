@@ -14,6 +14,7 @@
     "orders": "Lịch sử đơn hàng",
     "dashboard": "Bảng điều khiển",
     "creatorStudio": "Creator Studio",
+    "creatorPayoutSettings": "Thông tin thanh toán",
     "admin": "Quản trị",
     "becomeCreator": "Trở thành creator",
     "registerBusiness": "Đăng ký doanh nghiệp"
@@ -92,6 +93,23 @@
         "name": "Vui lòng nhập tên hiển thị.",
         "email": "Vui lòng nhập email.",
         "password": "Mật khẩu phải có ít nhất 6 ký tự."
+      }
+    },
+    "payoutInfo": {
+      "section": "Thông tin thanh toán",
+      "sectionHint": "Phí creator được chi trả thủ công về tài khoản ngân hàng này. Tất cả trường đều bắt buộc.",
+      "bankLabel": "Ngân hàng",
+      "bankPlaceholder": "Chọn ngân hàng…",
+      "accountNumberLabel": "Số tài khoản",
+      "accountNumberHint": "Chỉ chữ số, 6–19 ký tự.",
+      "accountHolderLabel": "Tên chủ tài khoản",
+      "accountHolderHint": "Viết IN HOA, không dấu, đúng như ngân hàng đăng ký.",
+      "bankBranchLabel": "Chi nhánh ngân hàng",
+      "errors": {
+        "bankCode": "Vui lòng chọn ngân hàng.",
+        "accountNumber": "Số tài khoản phải gồm 6–19 chữ số.",
+        "accountHolder": "Vui lòng nhập tên chủ tài khoản.",
+        "bankBranch": "Vui lòng nhập chi nhánh ngân hàng."
       }
     }
   },
@@ -223,6 +241,15 @@
         "federationOrTeam": "Liên đoàn / Đội",
         "centerAddress": "Địa chỉ trung tâm",
         "centerSize": "Quy mô"
+      },
+      "payoutInfo": {
+        "section": "Thông tin thanh toán",
+        "bank": "Ngân hàng",
+        "accountNumber": "Số tài khoản",
+        "accountHolder": "Tên chủ tài khoản",
+        "bankBranch": "Chi nhánh",
+        "duplicateWarningHeading": "⚠ Tài khoản này đã trùng với {{count}} user khác",
+        "duplicateWarningBody": "Trùng số tài khoản không bị chặn, admin tự quyết khi duyệt:"
       }
     },
     "orders": {
@@ -383,6 +410,20 @@
         "heading": "Đơn nâng cấp đang chờ duyệt",
         "body": "Chúng tôi đang xem xét đơn của bạn. Bạn sẽ nhận được thông báo khi đơn được duyệt.",
         "btn": "Xem đơn"
+      }
+    },
+    "settings": {
+      "payout": {
+        "pageTitle": "Thông tin thanh toán",
+        "eyebrow": "CÀI ĐẶT CREATOR",
+        "heading": "Thông tin thanh toán",
+        "intro": "Cập nhật tài khoản ngân hàng để nhận chi trả phí creator. Thay đổi áp dụng cho các kỳ thanh toán tiếp theo.",
+        "saveBtn": "Lưu thay đổi",
+        "saving": "Đang lưu…",
+        "savedAt": "Cập nhật lần cuối {{date}}",
+        "saveSuccess": "Đã lưu thông tin thanh toán.",
+        "saveError": "Không thể lưu thông tin thanh toán. Vui lòng thử lại.",
+        "loadError": "Không thể tải thông tin thanh toán."
       }
     },
     "newCourse": {

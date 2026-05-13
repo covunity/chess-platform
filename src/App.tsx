@@ -16,6 +16,7 @@ import CreatorLayout from './components/creator/CreatorLayout'
 import CreatorStudioPage from './pages/creator/CreatorStudioPage'
 import NewCoursePage from './pages/creator/NewCoursePage'
 import CourseEditPage from './pages/creator/CourseEditPage'
+import PayoutSettingsPage from './pages/creator/PayoutSettingsPage'
 import HomePage from './pages/HomePage'
 import CourseDetailPage from './pages/CourseDetailPage'
 import LessonPlayerPage from './pages/LessonPlayerPage'
@@ -71,6 +72,7 @@ export default function App() {
             <Route index element={<CreatorStudioPage />} />
             <Route path="courses/new" element={<NewCoursePage />} />
             <Route path="courses/:courseId/edit" element={<CourseEditPage />} />
+            <Route path="settings/payout" element={<PayoutSettingsPage />} />
           </Route>
         </Route>
 
