@@ -328,6 +328,7 @@
       "tabChess": "Chess lesson",
       "tabPuzzle": "Puzzle",
       "lessonTitle": "Lesson title",
+      "lessonDescription": "Lesson description",
       "boardPerspective": "Board perspective",
       "perspectiveWhite": "White",
       "perspectiveBlack": "Black",

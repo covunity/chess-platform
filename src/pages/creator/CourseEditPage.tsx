@@ -600,20 +600,21 @@ export default function CourseEditPage() {
     }
   }
 
-  async function handleSaveLesson(data: { pgn_data: string; board_perspective: 'white' | 'black'; is_free_preview: boolean; title: string }) {
+  async function handleSaveLesson(data: { pgn_data: string; board_perspective: 'white' | 'black'; is_free_preview: boolean; title: string; description?: string | null }) {
     if (!selectedLesson) return
     await updateLesson(supabase, selectedLesson.id, {
       pgn_data: data.pgn_data,
       board_perspective: data.board_perspective,
       free_preview: data.is_free_preview,
       title: data.title,
+      description: data.description ?? null,
     })
     showToast(t('creator.courseEdit.saveLessonToast'))
     setChapters(prev => prev.map(ch => ({
       ...ch,
       lessons: (ch.lessons ?? []).map(l =>
         l.id === selectedLesson.id
-          ? { ...l, pgn_data: data.pgn_data, board_perspective: data.board_perspective, free_preview: data.is_free_preview, title: data.title }
+          ? { ...l, pgn_data: data.pgn_data, board_perspective: data.board_perspective, free_preview: data.is_free_preview, title: data.title, description: data.description ?? null }
           : l
       ),
     })))

@@ -23,11 +23,12 @@ export interface Lesson {
   video_status?: VideoStatus;
   video_filename?: string | null;
   video_size_bytes?: number | null;
+  description?: string | null;
 }
 
 export interface LessonEditorProps {
   lesson: Lesson;
-  onSave: (data: Pick<Lesson, "pgn_data" | "board_perspective" | "is_free_preview" | "title">) => void;
+  onSave: (data: Pick<Lesson, "pgn_data" | "board_perspective" | "is_free_preview" | "title" | "description">) => void;
   chapterLessons?: Array<{ id: string; title: string; type: LessonType }>;
   onSelectLesson?: (id: string) => void;
   onSubmitForReview?: () => void;
@@ -75,6 +76,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
     puzzle: t('creator.lessonEditor.tabPuzzle'),
   };
   const [title, setTitle] = useState(lesson.title);
+  const [description, setDescription] = useState(lesson.description ?? '');
   const [pgn, setPgn] = useState(lesson.pgn_data);
   const [perspective, setPerspective] = useState<"white" | "black">(lesson.board_perspective);
   const [isFreePreview, setIsFreePreview] = useState(lesson.is_free_preview);
@@ -108,7 +110,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   }, [pgn]);
 
   const handleSave = () => {
-    onSave({ pgn_data: pgn, board_perspective: perspective, is_free_preview: isFreePreview, title });
+    onSave({ pgn_data: pgn, board_perspective: perspective, is_free_preview: isFreePreview, title, description: description || null });
   };
 
   useEffect(() => {
@@ -449,6 +451,20 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
                 aria-label={t('creator.lessonEditor.lessonTitle')}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="label" htmlFor="lesson-description">
+                {t('creator.lessonEditor.lessonDescription')}
+              </label>
+              <textarea
+                id="lesson-description"
+                className="input"
+                style={{ resize: 'vertical', minHeight: 80 }}
+                aria-label={t('creator.lessonEditor.lessonDescription')}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
               />
             </div>
 

@@ -277,6 +277,7 @@ export default function LessonPlayerPage() {
   const [isEnrolled, setIsEnrolled] = useState(false)
   const [showSidebarPaywall, setShowSidebarPaywall] = useState(false)
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set())
+  const initializedCourseRef = useRef<string | null>(null)
   const [showToast, setShowToast] = useState(false)
   const [playerState, setPlayerState] = useState<{ lessonId: string; lesson: PlayerLesson; videoUrl: string | null; videoFormat: 'mp4' | 'hls'; videoError: string | null; videoCompleted: boolean } | null>(null)
   const playerLesson = playerState?.lessonId === currentLessonId ? playerState.lesson : null
@@ -319,9 +320,12 @@ export default function LessonPlayerPage() {
       const courseData = courseResult.course
       setCourse(courseData)
 
-      const firstChapter = courseData.chapters[0]
-      if (firstChapter) {
-        setExpandedChapters(new Set([firstChapter.id]))
+      if (initializedCourseRef.current !== courseId) {
+        const firstChapter = courseData.chapters[0]
+        if (firstChapter) {
+          setExpandedChapters(new Set([firstChapter.id]))
+        }
+        initializedCourseRef.current = courseId!
       }
 
       const allLessonsFlat = courseData.chapters.flatMap(ch => ch.lessons)
@@ -735,6 +739,11 @@ export default function LessonPlayerPage() {
                     <h2 style={{ fontSize: 20, fontWeight: 600, color: 'var(--ink-1)', letterSpacing: '-0.015em' }}>
                       {currentLesson.title}
                     </h2>
+                    {playerLesson?.description && (
+                      <p style={{ marginTop: 12, fontSize: 14, lineHeight: 1.65, color: 'var(--ink-2)', whiteSpace: 'pre-wrap' }}>
+                        {playerLesson.description}
+                      </p>
+                    )}
                   </div>
                 </>
               ) : (

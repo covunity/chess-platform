@@ -48,6 +48,7 @@ export interface Lesson {
   video_size_bytes?: number | null
   video_mime?: string | null
   video_error?: string | null
+  description?: string | null
 }
 
 export interface LessonVideoUpdate {
@@ -328,7 +329,7 @@ export async function createLesson(
 export async function updateLesson(
   client: SupabaseClient,
   lessonId: string,
-  patch: Partial<Pick<Lesson, 'title' | 'type' | 'position' | 'free_preview' | 'pgn_data' | 'board_perspective'>>
+  patch: Partial<Pick<Lesson, 'title' | 'type' | 'position' | 'free_preview' | 'pgn_data' | 'board_perspective' | 'description'>>
 ): Promise<{ lesson: Lesson | null; error: Error | null }> {
   const { data, error } = await client
     .from('lessons')
