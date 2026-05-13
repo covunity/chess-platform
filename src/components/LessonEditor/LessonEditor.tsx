@@ -79,7 +79,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   const [description, setDescription] = useState(lesson.description ?? '');
   const [pgn, setPgn] = useState(lesson.pgn_data);
   const [perspective, setPerspective] = useState<"white" | "black">(lesson.board_perspective);
-  const [isFreePreview, setIsFreePreview] = useState(lesson.is_free_preview);
+  const [isFreePreview] = useState(lesson.is_free_preview);
   const [debouncedParseResult, setDebouncedParseResult] = useState<PgnParseResult | null>(null);
   const parseResult = pgn.trim() ? debouncedParseResult : null;
   const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
@@ -295,30 +295,6 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
               </div>
             </div>
 
-            {/* Free preview toggle */}
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <button
-                type="button"
-                aria-pressed={isFreePreview}
-                onClick={() => setIsFreePreview(prev => !prev)}
-                style={{
-                  padding: "6px 14px",
-                  borderRadius: 999,
-                  border: "1px solid var(--border)",
-                  background: isFreePreview ? "var(--ink-1)" : "var(--surface)",
-                  color: isFreePreview ? "var(--ink-on-accent)" : "var(--ink-2)",
-                  fontSize: 12.5,
-                  fontWeight: 500,
-                  cursor: "pointer",
-                }}
-              >
-                {t('creator.lessonEditor.freePreview')}
-              </button>
-              <span style={{ fontSize: 12, color: "var(--ink-3)" }}>
-                {isFreePreview ? t('creator.lessonEditor.freePreviewOn') : t('creator.lessonEditor.freePreviewOff')}
-              </span>
-            </div>
-
             {/* PGN textarea */}
             <div style={{ flex: 1 }}>
               <label className="label" htmlFor="pgn-textarea">
@@ -471,8 +447,6 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
             <VideoLessonEditor
               key={lesson.id}
               lesson={videoLesson}
-              isFreePreview={isFreePreview}
-              onFreePreviewChange={setIsFreePreview}
               onLessonChange={(patch) => setVideoLesson((prev) => ({ ...prev, ...patch }))}
             />
           </>

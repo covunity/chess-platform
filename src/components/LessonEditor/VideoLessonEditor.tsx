@@ -18,8 +18,6 @@ export interface VideoLessonEditorLesson {
 
 export interface VideoLessonEditorProps {
   lesson: VideoLessonEditorLesson
-  isFreePreview: boolean
-  onFreePreviewChange: (next: boolean) => void
   onLessonChange: (next: Partial<VideoLessonEditorLesson>) => void
 }
 
@@ -72,8 +70,6 @@ async function readVideoDuration(file: File): Promise<number | null> {
 
 export default function VideoLessonEditor({
   lesson,
-  isFreePreview,
-  onFreePreviewChange,
   onLessonChange,
 }: VideoLessonEditorProps) {
   const [state, setState] = useState<LocalState>(() =>
@@ -193,38 +189,6 @@ export default function VideoLessonEditor({
         onChange={onPickFile}
         style={{ display: 'none' }}
       />
-
-      {/* Free preview toggle */}
-      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
-        <div style={{ width: 180 }}>
-          <span className="label">Free preview</span>
-          <button
-            type="button"
-            role="button"
-            aria-label="Free preview"
-            aria-pressed={isFreePreview}
-            onClick={() => onFreePreviewChange(!isFreePreview)}
-            style={{
-              width: '100%',
-              height: 36,
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--r-sm)',
-              background: isFreePreview ? 'var(--accent)' : 'var(--surface)',
-              color: isFreePreview ? 'var(--ink-on-accent)' : 'var(--ink-1)',
-              fontWeight: 500,
-              fontSize: 13,
-              cursor: 'pointer',
-            }}
-          >
-            {isFreePreview ? 'On' : 'Off'}
-          </button>
-        </div>
-        {isFreePreview && (
-          <span style={{ fontSize: 12, color: 'var(--ink-3)', paddingBottom: 8 }}>
-            Hiển thị cho mọi người, kể cả chưa mua khóa học.
-          </span>
-        )}
-      </div>
 
       {/* Main video editor area */}
       {state.kind === 'idle' && (
