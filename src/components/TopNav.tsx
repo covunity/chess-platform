@@ -104,12 +104,15 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
         {(user
           ? [
               { to: '/', labelKey: 'nav.browse', end: true },
-              { to: '/practice', labelKey: 'nav.practice', end: false },
               ...(profile?.role === 'admin'
-                ? [{ to: '/admin', labelKey: 'nav.admin', end: false }]
+                ? [
+                    { to: '/admin', labelKey: 'nav.admin', end: false },
+                    { to: '/creator', labelKey: 'nav.creatorStudio', end: false },
+                  ]
                 : profile?.role === 'creator'
                   ? [{ to: '/creator', labelKey: 'nav.creatorStudio', end: false }]
                   : [
+                      { to: '/practice', labelKey: 'nav.practice', end: false },
                       { to: '/dashboard', labelKey: 'nav.library', end: false },
                       { to: '/become-creator', labelKey: 'nav.becomeCreator', end: false },
                     ]),

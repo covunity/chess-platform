@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import type { User } from '@supabase/supabase-js'
+import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import type { UserRole } from '../lib/adminApi'
 import type { AccountTierCode } from '../lib/accountTiers'
@@ -20,7 +20,7 @@ export interface AuthContextValue {
   loading: boolean
   profile: UserProfile | null
   profileLoading: boolean
-  signUp: (name: string, email: string, password: string, extraData?: Record<string, unknown>) => Promise<{ error: Error | null }>
+  signUp: (name: string, email: string, password: string, extraData?: Record<string, unknown>, emailRedirectTo?: string) => Promise<{ error: Error | null; session: Session | null }>
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<{ error: Error | null }>
@@ -66,13 +66,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
-  async function signUp(name: string, email: string, password: string, extraData?: Record<string, unknown>) {
-    const { error } = await supabase.auth.signUp({
+  async function signUp(name: string, email: string, password: string, extraData?: Record<string, unknown>, emailRedirectTo?: string) {
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name, ...extraData } },
+      options: { data: { name, ...extraData }, emailRedirectTo },
     })
-    return { error }
+    return { error, session: data?.session ?? null }
   }
 
   async function signIn(email: string, password: string) {

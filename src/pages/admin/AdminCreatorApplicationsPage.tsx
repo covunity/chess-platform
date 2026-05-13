@@ -101,18 +101,22 @@ export default function AdminCreatorApplicationsPage() {
 
   useEffect(() => {
     let cancelled = false
+    setLoading(true)
     listAccountApplications(supabase, {
       status: tab,
       tier: tierFilter || undefined,
-    }).then(({ applications }) => {
+    }).then(({ applications, error }) => {
       if (cancelled) return
+      if (error) {
+        setErrorMsg(t('admin.applications.loadError', 'Không thể tải danh sách đơn. Vui lòng thử lại.'))
+      }
       setApplications(applications)
       setLoading(false)
     })
     return () => {
       cancelled = true
     }
-  }, [tab, tierFilter])
+  }, [tab, tierFilter, t])
 
   async function handleApprove(app: AccountApplicationWithApplicant) {
     setSaving(true)
@@ -196,8 +200,18 @@ export default function AdminCreatorApplicationsPage() {
             ))}
           </select>
 
-          {/* Status tabs */}
-          <div role="tablist" className="flex items-center gap-1">
+          {/* Status filter — segmented control */}
+          <div
+            role="tablist"
+            style={{
+              display: 'inline-flex',
+              gap: 2,
+              padding: 3,
+              borderRadius: 'var(--r-md)',
+              border: '1px solid var(--border)',
+              background: 'var(--bg)',
+            }}
+          >
             {STATUS_TABS.map(s => (
               <button
                 key={s}
@@ -205,12 +219,18 @@ export default function AdminCreatorApplicationsPage() {
                 type="button"
                 data-testid={`status-tab-${s}`}
                 aria-selected={tab === s}
-                onClick={() => setTab(s)}
-                className="btn btn-sm"
+                onClick={() => { setTab(s); setSelected(null) }}
                 style={{
+                  whiteSpace: 'nowrap',
+                  padding: '4px 12px',
+                  borderRadius: 'calc(var(--r-md) - 2px)',
+                  border: 'none',
+                  fontSize: 13,
+                  fontWeight: tab === s ? 600 : 400,
                   background: tab === s ? 'var(--ink-1)' : 'transparent',
                   color: tab === s ? 'var(--ink-on-accent)' : 'var(--ink-2)',
-                  border: '1px solid var(--border)',
+                  cursor: 'pointer',
+                  transition: 'background 0.12s, color 0.12s',
                 }}
               >
                 {t(`admin.applications.tab.${s}`, s)}

@@ -651,7 +651,7 @@ interface AnonFormProps {
   sampleUrl: string; setSampleUrl: (v: string) => void
   submitting: boolean; setSubmitting: (v: boolean) => void
   submitError: string | null; setSubmitError: (v: string | null) => void
-  signUp: (name: string, email: string, password: string, extraData?: Record<string, unknown>) => Promise<{ error: Error | null }>
+  signUp: (name: string, email: string, password: string, extraData?: Record<string, unknown>, emailRedirectTo?: string) => Promise<{ error: Error | null; session: import('@supabase/supabase-js').Session | null }>
   navigate: (path: string) => void
 }
 
@@ -702,15 +702,26 @@ function AnonCombinedForm({
     }
     savePendingAccountApplication(pendingPayload)
 
-    const { error } = await signUp(displayName, email.trim(), password, {
-      pending_application: pendingPayload,
-    })
+    const { error, session } = await signUp(
+      displayName,
+      email.trim(),
+      password,
+      { pending_application: pendingPayload },
+      `${window.location.origin}/become-creator`,
+    )
     setSubmitting(false)
     if (error) {
       setSubmitError((error as { message?: string }).message ?? t('becomeCreator.errors.generic'))
       return
     }
-    navigate('/check-email')
+    // If Supabase returned a session immediately (email confirmations disabled),
+    // go straight to /become-creator so the auto-submit effect runs.
+    // Otherwise the emailRedirectTo link in the confirmation email will bring them back.
+    if (session) {
+      navigate('/become-creator')
+    } else {
+      navigate('/check-email')
+    }
   }
 
   return (
