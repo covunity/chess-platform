@@ -532,6 +532,7 @@
       "cancel": "Hủy",
       "saveLesson": "Lưu bài học",
       "saveLessonToast": "Đã lưu bài học!",
+      "viewPublicPage": "Xem trang công khai",
       "courseInfo": {
         "heading": "Thông tin khóa học",
         "link": "Thông tin khóa học",
@@ -728,7 +729,10 @@
     "pendingOrderBanner": "Đơn của bạn đang chờ admin xác minh. Khoá học sẽ mở khoá ngay sau khi xác nhận.",
     "viewOrder": "Xem đơn hàng",
     "continuePaying": "Tiếp tục thanh toán",
-    "paywallBanner": "Bài học này yêu cầu mua khoá học để truy cập."
+    "paywallBanner": "Bài học này yêu cầu mua khoá học để truy cập.",
+    "previewAsLearner": "Xem trước như học viên",
+    "creatorBannerTitle": "Bạn là tác giả của khóa học này.",
+    "creatorBannerDesc": "Đây là chế độ xem dành cho học viên. Để chỉnh sửa, vào Creator Studio."
   },
   "paywallSheet": {
     "title": "Mở khoá toàn bộ khoá học",

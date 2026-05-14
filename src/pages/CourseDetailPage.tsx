@@ -1174,6 +1174,8 @@ export default function CourseDetailPage() {
   const [reviewPage, setReviewPage] = useState(1)
   const [reviewsLoadingMore, setReviewsLoadingMore] = useState(false)
 
+  const isCourseCreator = !!(course && user && course.creator_id === user.id)
+
   useEffect(() => {
     if (!courseId) return
     getCourseDetail(supabase, courseId).then(({ course: data }) => {
@@ -1190,7 +1192,8 @@ export default function CourseDetailPage() {
   }, [courseId])
 
   useEffect(() => {
-    if (!user || !courseId) return
+    if (!user || !courseId || !course) return
+    if (course.creator_id === user.id) return
     checkUserEnrollment(supabase, courseId, user.id).then(enrolled => {
       setIsEnrolled(enrolled)
     })
@@ -1200,7 +1203,7 @@ export default function CourseDetailPage() {
     getPendingOrderForCourse(supabase, courseId, user.id).then(({ order }) => {
       setPendingOrder(order)
     })
-  }, [user, courseId])
+  }, [user, courseId, course])
 
   async function handleLoadMoreReviews() {
     if (!courseId) return
@@ -1223,6 +1226,12 @@ export default function CourseDetailPage() {
 
   async function handleCTAClick() {
     if (!course) return
+
+    if (isCourseCreator) {
+      const firstLesson = course.chapters[0]?.lessons[0]
+      if (firstLesson) navigate(`/learn/${courseId}/${firstLesson.id}`)
+      return
+    }
 
     if (isEnrolled) {
       const firstLesson = course.chapters[0]?.lessons[0]
@@ -1320,21 +1329,43 @@ export default function CourseDetailPage() {
     )
   }
 
-  const ctaLabel = isEnrolled
-    ? t('courseDetail.continueLearning')
-    : pendingOrder
-      ? t('courseDetail.continuePaying')
-      : course.price === 0
-        ? t('courseDetail.enrollFree')
-        : t('courseDetail.purchase')
+  const ctaLabel = isCourseCreator
+    ? t('courseDetail.previewAsLearner')
+    : isEnrolled
+      ? t('courseDetail.continueLearning')
+      : pendingOrder
+        ? t('courseDetail.continuePaying')
+        : course.price === 0
+          ? t('courseDetail.enrollFree')
+          : t('courseDetail.purchase')
 
   const totalChapters = course.chapters.length
   const totalLessons = course.lessons_count
 
   return (
     <main>
+      {/* ── Creator-of-course banner (informational only) ──────────────────── */}
+      {isCourseCreator && (
+        <div
+          data-testid="creator-view-banner"
+          style={{
+            background: 'var(--accent-soft)',
+            borderBottom: '1px solid var(--accent-border)',
+            padding: '14px 56px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
+          <span style={{ fontSize: 14, color: 'var(--accent-ink)', lineHeight: 1.55, flex: 1 }}>
+            <strong style={{ marginRight: 6 }}>{t('courseDetail.creatorBannerTitle')}</strong>
+            {t('courseDetail.creatorBannerDesc')}
+          </span>
+        </div>
+      )}
+
       {/* ── Pending order banner ───────────────────────────────────────────── */}
-      {pendingOrder && !isEnrolled && (
+      {pendingOrder && !isEnrolled && !isCourseCreator && (
         <div
           data-testid="pending-order-banner"
           style={{
@@ -1359,7 +1390,7 @@ export default function CourseDetailPage() {
       )}
 
       {/* ── Paywall banner ─────────────────────────────────────────────────── */}
-      {showPaywallBanner && !paywallBannerDismissed && (
+      {showPaywallBanner && !paywallBannerDismissed && !isCourseCreator && (
         <div
           data-testid="paywall-banner"
           style={{
@@ -1627,10 +1658,11 @@ export default function CourseDetailPage() {
               {/* CTA */}
               <button
                 type="button"
+                data-testid={isCourseCreator ? 'creator-cta-preview' : undefined}
                 className="btn btn-accent btn-lg"
                 style={{ width: '100%' }}
                 onClick={handleCTAClick}
-                disabled={enrolling}
+                disabled={enrolling || (isCourseCreator && !course.chapters[0]?.lessons[0])}
               >
                 {enrolling
                   ? <span data-testid="cta-loading" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
@@ -1640,12 +1672,14 @@ export default function CourseDetailPage() {
               </button>
 
               {/* Wishlist */}
-              <button type="button" className="btn btn-secondary" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-                </svg>
-                {t('courseDetail.addWishlist')}
-              </button>
+              {!isCourseCreator && (
+                <button type="button" className="btn btn-secondary" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                  </svg>
+                  {t('courseDetail.addWishlist')}
+                </button>
+              )}
 
               {/* Divider */}
               <div style={{ height: 1, background: 'var(--border)' }} />
@@ -1713,7 +1747,7 @@ export default function CourseDetailPage() {
                   index={idx}
                   expanded={expandedChapters.has(chapter.id)}
                   onToggle={() => toggleChapter(chapter.id)}
-                  isEnrolled={isEnrolled}
+                  isEnrolled={isEnrolled || isCourseCreator}
                   onPreview={setPreviewLesson}
                   onLock={() => setLockPromptOpen(true)}
                 />
@@ -1735,7 +1769,7 @@ export default function CourseDetailPage() {
               <RatingsHistogram course={course} />
 
               {/* Write review block — visible only to enrolled learners */}
-              {isEnrolled && user && (
+              {isEnrolled && user && !isCourseCreator && (
                 <div style={{ marginTop: 20 }}>
                   <WriteReviewBlock
                     courseId={course.id}
@@ -1814,7 +1848,7 @@ export default function CourseDetailPage() {
       {previewLesson && (
         <PreviewModal lesson={previewLesson} onClose={() => setPreviewLesson(null)} />
       )}
-      {lockPromptOpen && course && (
+      {lockPromptOpen && course && !isCourseCreator && (
         <PaywallSheet
           onClose={() => setLockPromptOpen(false)}
           course={course}

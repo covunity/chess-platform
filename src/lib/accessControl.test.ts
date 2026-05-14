@@ -30,4 +30,14 @@ describe('canAccessLesson', () => {
     expect(canAccessLesson('learner', false, paidLesson, false)).toBe('paywall')
     expect(canAccessLesson(null, false, paidLesson, false)).toBe('paywall')
   })
+
+  it('returns "allow-creator" for the course creator on a paid lesson regardless of enrollment', () => {
+    expect(canAccessLesson('creator', false, paidLesson, false, true)).toBe('allow-creator')
+    expect(canAccessLesson('creator', true, paidLesson, false, true)).toBe('allow-creator')
+    expect(canAccessLesson('creator', false, paidLesson, true, true)).toBe('allow-creator')
+  })
+
+  it('returns "allow" (not "allow-creator") when free_preview is true even for the creator', () => {
+    expect(canAccessLesson('creator', false, freePrev, false, true)).toBe('allow')
+  })
 })
