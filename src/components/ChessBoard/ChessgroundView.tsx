@@ -118,6 +118,7 @@ function toConfig(
 export default function ChessgroundView(props: ChessgroundViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const apiRef = useRef<Api | null>(null)
+  const prevFenRef = useRef(props.fen)
 
   const handleMove = (from: string, to: string) => {
     props.onMove?.(from, to)
@@ -143,10 +144,23 @@ export default function ChessgroundView(props: ChessgroundViewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Sync config on every render
+  // Sync config on every render.
+  // When onShapesChange is provided (authoring mode), api.set() must never reset
+  // drawable.shapes to [] — Chessground does this whenever drawable is in the config
+  // but shapes is omitted. Fix: pass the current user-drawn shapes back explicitly.
+  // On FEN change (node navigation), reinitialise shapes from the stored autoShapes.
   useEffect(() => {
     if (!apiRef.current) return
-    apiRef.current.set(toConfig(props, handleMove, handleSelect, handleShapes))
+    const config = toConfig(props, handleMove, handleSelect, handleShapes)
+    if (props.onShapesChange && config.drawable) {
+      const fenChanged = props.fen !== prevFenRef.current
+      config.drawable.shapes = fenChanged
+        ? (props.drawable?.autoShapes ?? [])        // new node: init from stored shapes
+        : apiRef.current.state.drawable.shapes       // same node: preserve user-drawn shapes
+      config.drawable.autoShapes = []               // avoid double-rendering with shapes
+    }
+    prevFenRef.current = props.fen
+    apiRef.current.set(config)
   })
 
   return (
