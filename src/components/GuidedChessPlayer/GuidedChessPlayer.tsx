@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Chess } from 'chess.js'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import ChessgroundView from '../ChessBoard/ChessgroundView'
 import { parsePgn } from '../../utils/parsePgn'
 import type { PgnNode, Shape, RichTextDoc } from '../../utils/parsePgn'
@@ -8,6 +9,8 @@ import PromotionPicker from './PromotionPicker'
 import type { PromotionPiece } from './PromotionPicker'
 import type { DrawShape } from 'chessground/draw'
 import NoteView from './NoteView'
+import { recordPuzzleAttempt, getBestPuzzleAttempt } from '../../lib/puzzleAttemptApi'
+import type { BestPuzzleAttempt } from '../../lib/puzzleAttemptApi'
 
 export interface GuidedLesson {
   id: string
@@ -36,6 +39,8 @@ export interface GuidedChessPlayerProps {
   onBookmark?: (nodeId: string, currentFen: string, depth: number, totalDepth: number) => void
   /** Called (debounced 2 s) when the current node changes — used to persist resume position. */
   onResumeNodeChange?: (nodeId: string) => void
+  /** Supabase client — required in puzzle mode to record attempts and read best attempts. */
+  supabaseClient?: SupabaseClient
 }
 
 const MISTAKE_REVERT_MS = 1500
@@ -121,6 +126,7 @@ export default function GuidedChessPlayer({
   onComplete,
   onBookmark,
   onResumeNodeChange,
+  supabaseClient,
 }: GuidedChessPlayerProps) {
   const { t } = useTranslation()
   const parsed = useMemo(() => parsePgn(lesson.pgn_data), [lesson.pgn_data])
@@ -143,11 +149,31 @@ export default function GuidedChessPlayer({
   const [mistakeBannerNode, setMistakeBannerNode] = useState<PgnNode | null>(null)
   // Puzzle mode: wrong attempts per node
   const wrongAttemptsAt = useRef<Record<string, number>>({})
+  // Puzzle mode: best attempt from previous sessions
+  const [bestPuzzleAttempt, setBestPuzzleAttempt] = useState<BestPuzzleAttempt | null>(null)
+  // Puzzle mode: completion state
+  const [puzzleCompletionInfo, setPuzzleCompletionInfo] = useState<{ wrongAttempts: number; prevBest: BestPuzzleAttempt | null } | null>(null)
+  // Puzzle mode: session start time for duration_seconds
+  const puzzleStartTime = useRef<number>(Date.now())
 
   function dismissHelper() {
     setHelperVisible(false)
     localStorage.setItem('guidedPlayer.helperHidden', 'true')
   }
+
+  // Load best puzzle attempt on mount (puzzle mode only)
+  useEffect(() => {
+    if (!isPuzzleMode || !supabaseClient) return
+    puzzleStartTime.current = Date.now()
+    getBestPuzzleAttempt(supabaseClient, lesson.id)
+      .then((best) => {
+        setBestPuzzleAttempt(best)
+      })
+      .catch(() => {
+        // silently ignore — no badge shown
+      })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const completedFiredRef = useRef(false)
   const opponentTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -209,6 +235,28 @@ export default function GuidedChessPlayer({
     // Fire onComplete when at a non-root leaf
     if (atLeaf && currentNode && currentNode.parentId !== null && !completedFiredRef.current) {
       completedFiredRef.current = true
+
+      if (isPuzzleMode) {
+        // Compute aggregated wrong attempts (sum across all nodes)
+        const totalWrong = Object.values(wrongAttemptsAt.current).reduce((sum, n) => sum + n, 0)
+        const durationSeconds = Math.round((Date.now() - puzzleStartTime.current) / 1000)
+        const prevBest = bestPuzzleAttempt
+
+        // Show completion screen
+        setPuzzleCompletionInfo({ wrongAttempts: totalWrong, prevBest })
+
+        // Record attempt — errors logged but do not block completion UI
+        if (supabaseClient) {
+          recordPuzzleAttempt(supabaseClient, {
+            lesson_id: lesson.id,
+            wrong_attempts: totalWrong,
+            duration_seconds: durationSeconds,
+          }).catch((err: unknown) => {
+            console.error('[GuidedChessPlayer] recordPuzzleAttempt failed:', err)
+          })
+        }
+      }
+
       onComplete?.()
     }
     if (!atLeaf) {
@@ -594,6 +642,24 @@ export default function GuidedChessPlayer({
             {t('guidedPlayer.eyebrow', { current: lessonNumber, total: totalLessons })}
           </div>
           <h2 data-testid="guided-player-title" className="guided-player-title">{lesson.title}</h2>
+          {isPuzzleMode && bestPuzzleAttempt !== null && (
+            <span
+              data-testid="puzzle-best-badge"
+              className="guided-player-puzzle-best-badge"
+              style={{
+                display: 'inline-block',
+                fontSize: 12,
+                color: 'var(--green-9)',
+                background: 'var(--green-2)',
+                border: '1px solid var(--green-6)',
+                borderRadius: 'var(--r-sm)',
+                padding: '2px 8px',
+                marginBottom: 4,
+              }}
+            >
+              {t('guidedPlayer.puzzleBestBadge', { count: bestPuzzleAttempt.wrong_attempts })}
+            </span>
+          )}
           {helperVisible && (
             <div className="guided-player-helper-wrap">
               <ul data-testid="guided-player-helper" className="guided-player-helper">
@@ -684,6 +750,35 @@ export default function GuidedChessPlayer({
             <aside data-testid="guided-player-coach-note" className="guided-player-coach-note">
               <p>{lesson.coach_note}</p>
             </aside>
+          )}
+
+          {/* Puzzle completion screen */}
+          {isPuzzleMode && puzzleCompletionInfo !== null && (
+            <div
+              data-testid="puzzle-completion-screen"
+              role="status"
+              style={{
+                marginTop: 16,
+                padding: '12px 16px',
+                background: 'var(--green-2)',
+                border: '1px solid var(--green-6)',
+                borderRadius: 'var(--r-sm)',
+                fontSize: 14,
+                color: 'var(--green-9)',
+              }}
+            >
+              <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                {t('guidedPlayer.puzzleCompleteTitle')}
+              </div>
+              <div data-testid="puzzle-completion-wrong-attempts">
+                {t('guidedPlayer.puzzleCompleteWrongAttempts', { count: puzzleCompletionInfo.wrongAttempts })}
+              </div>
+              {puzzleCompletionInfo.prevBest !== null && (
+                <div data-testid="puzzle-completion-best">
+                  {t('guidedPlayer.puzzleCompleteBest', { count: puzzleCompletionInfo.prevBest.wrong_attempts })}
+                </div>
+              )}
+            </div>
           )}
         </div>
 

@@ -1048,6 +1048,9 @@
     "puzzleYourTurn": "Lượt của bạn — hãy tìm nước đi tốt nhất!",
     "puzzleMistakeBanner": "Nước đó không tốt. Thử lại!",
     "puzzleCompleteTitle": "Bài tập hoàn thành!",
+    "puzzleCompleteWrongAttempts": "Bạn sai {{count}} lần",
+    "puzzleCompleteBest": "Lần tốt nhất: {{count}} sai",
+    "puzzleBestBadge": "Lần tốt nhất: {{count}}",
     "viewerNextMove": "Nước sau",
     "viewerPrevMove": "Nước trước"
   },
