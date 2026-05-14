@@ -13,8 +13,9 @@ import ChessgroundView from '../../ChessBoard/ChessgroundView'
 import PromotionPicker from '../../GuidedChessPlayer/PromotionPicker'
 import type { PromotionPiece } from '../../GuidedChessPlayer/PromotionPicker'
 import BoardEditor from '../BoardEditor/BoardEditor'
+import RichNoteEditor from '../../RichNoteEditor/RichNoteEditor'
 import type { TreeStore } from '../treeStore'
-import type { PgnNode, Shape } from '../../../utils/parsePgn'
+import type { PgnNode, Shape, RichTextDoc } from '../../../utils/parsePgn'
 import type { DrawShape } from 'chessground/draw'
 
 function shapesToDrawShapes(shapes: Shape[]): DrawShape[] {
@@ -316,6 +317,74 @@ export default function BoardAuthoringSurface({
           {tree.children.flatMap((child) => renderVariationNode(child, 1))}
         </div>
       )}
+
+      {/* Note panel — below variation list, bound to currentNodeId */}
+      {(() => {
+        const isRoot = currentNodeId === 'root'
+        const currentNote = isRoot ? null : (currentNode.note ?? null)
+
+        /** Returns true if the doc has no actual text content (empty paragraph). */
+        function isEmptyDoc(doc: RichTextDoc): boolean {
+          for (const para of doc.content) {
+            for (const span of para.content ?? []) {
+              if (span.text && span.text.length > 0) return false
+            }
+          }
+          return true
+        }
+
+        const handleNoteChange = (doc: RichTextDoc) => {
+          if (!isRoot) {
+            store.getState().setNote(currentNodeId, isEmptyDoc(doc) ? null : doc)
+          }
+        }
+
+        return (
+          <div
+            data-testid="note-panel"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+            }}
+          >
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: 'var(--ink-3)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+              }}
+            >
+              {t('creator.lessonEditor.notePanelLabel', { defaultValue: 'Ghi chú' })}
+            </div>
+            {isRoot && (
+              <div
+                style={{
+                  fontSize: 12,
+                  color: 'var(--ink-3)',
+                  fontStyle: 'italic',
+                  padding: '6px 0',
+                }}
+              >
+                {t('creator.lessonEditor.notePanelRootHint', {
+                  defaultValue: 'Chọn một nước để thêm ghi chú',
+                })}
+              </div>
+            )}
+            <RichNoteEditor
+              key={currentNodeId}
+              value={currentNote}
+              onChange={handleNoteChange}
+              disabled={isRoot}
+              placeholder={t('creator.lessonEditor.notePanelPlaceholder', {
+                defaultValue: 'Nhập ghi chú cho nước này...',
+              })}
+            />
+          </div>
+        )
+      })()}
     </div>
   )
 }

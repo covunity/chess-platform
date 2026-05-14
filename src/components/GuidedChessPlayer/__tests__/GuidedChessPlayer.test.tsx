@@ -429,6 +429,35 @@ describe('GuidedChessPlayer', () => {
       vi.useRealTimers()
     })
 
+    it('renders rich note with bold text for a played move (Slice 7)', () => {
+      vi.useFakeTimers()
+      // Use a PGN with a gambitly:v1 structured comment containing bold text
+      const richNotePgn =
+        '1. e4 {[gambitly:v1]{"n":{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Key move: "},{"type":"text","text":"e4","marks":[{"type":"bold"}]}]}]}}} 1...e5'
+      const richLesson = {
+        ...baseLesson,
+        pgn_data: richNotePgn,
+      }
+      render(
+        <GuidedChessPlayer lesson={richLesson} lessonNumber={1} totalLessons={2} />
+      )
+      const board = screen.getByTestId('guided-player-board')
+      // Learner (white) plays e4
+      fireEvent.click(board.querySelector('[data-square="e2"]')!)
+      fireEvent.click(board.querySelector('[data-square="e4"]')!)
+
+      // The rich note should be rendered via NoteView
+      const annotation = screen.getByTestId('move-log-annotation-1')
+      expect(annotation).toBeInTheDocument()
+      expect(annotation).toHaveTextContent('Key move:')
+      expect(annotation).toHaveTextContent('e4')
+      // Bold text should be in a <strong> element
+      const strong = annotation.querySelector('strong')
+      expect(strong).toBeInTheDocument()
+      expect(strong?.textContent).toBe('e4')
+      vi.useRealTimers()
+    })
+
     it('renders a "Your turn" prompt when there are still pending moves', () => {
       render(
         <GuidedChessPlayer lesson={baseLesson} lessonNumber={1} totalLessons={5} />

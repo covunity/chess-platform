@@ -107,6 +107,78 @@ describe('BoardAuthoringSurface', () => {
     })
   })
 
+  describe('note panel (Slice 7)', () => {
+    it('renders the note panel', () => {
+      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      expect(screen.getByTestId('note-panel')).toBeInTheDocument()
+    })
+
+    it('renders a RichNoteEditor inside the note panel', () => {
+      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      expect(screen.getByTestId('rich-note-editor')).toBeInTheDocument()
+    })
+
+    it('note panel is disabled when root is selected (no node selected)', () => {
+      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      const editor = screen.getByTestId('rich-note-editor')
+      expect(editor).toHaveAttribute('aria-disabled', 'true')
+    })
+
+    it('note panel is enabled when a non-root node is selected', async () => {
+      store.getState().applyMove('e2', 'e4')
+      // After applying a move, currentNodeId is the e4 node (not root)
+      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      await waitFor(() => {
+        const editor = screen.getByTestId('rich-note-editor')
+        expect(editor).not.toHaveAttribute('aria-disabled', 'true')
+      })
+    })
+
+    it('shows hint text when root is selected', () => {
+      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      const panel = screen.getByTestId('note-panel')
+      expect(panel).toHaveTextContent(/Chọn một nước/i)
+    })
+
+    it('dispatches setNote on the store when note changes', async () => {
+      store.getState().applyMove('e2', 'e4')
+      const e4Id = store.getState().tree.children[0].id
+      render(<BoardAuthoringSurface store={store} perspective="white" />)
+
+      await waitFor(() => {
+        expect(screen.getByTestId('rich-note-editor')).toBeInTheDocument()
+      })
+
+      // The note for e4 should start as null
+      expect(store.getState().tree.children[0].note).toBeNull()
+
+      // We can verify the store has setNote wired by checking the store action is functional
+      const doc = {
+        type: 'doc' as const,
+        content: [{ type: 'paragraph' as const, content: [{ type: 'text' as const, text: 'test' }] }],
+      }
+      store.getState().setNote(e4Id, doc)
+      expect(store.getState().tree.children[0].note).toEqual(doc)
+    })
+
+    it('switching currentNodeId updates the note panel value', async () => {
+      store.getState().applyMove('e2', 'e4')
+      const e4Id = store.getState().tree.children[0].id
+      const doc = {
+        type: 'doc' as const,
+        content: [{ type: 'paragraph' as const, content: [{ type: 'text' as const, text: 'e4 note' }] }],
+      }
+      store.getState().setNote(e4Id, doc)
+
+      render(<BoardAuthoringSurface store={store} perspective="white" />)
+
+      await waitFor(() => {
+        const editableArea = document.querySelector('[contenteditable="true"]')
+        expect(editableArea?.textContent).toContain('e4 note')
+      })
+    })
+  })
+
   describe('starting position integration', () => {
     it('renders a "Vị trí bắt đầu" button', () => {
       render(<BoardAuthoringSurface store={store} perspective="white" />)

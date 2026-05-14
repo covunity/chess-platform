@@ -360,7 +360,12 @@
       "startingPositionFromFen": "Paste FEN",
       "startingPositionFromEditor": "Edit board",
       "startingPositionApply": "Apply",
-      "shapeToolbarHint": "Right-click: circle · Drag right-click: arrow · Shift/Alt/Ctrl changes colour"
+      "shapeToolbarHint": "Right-click: circle · Drag right-click: arrow · Shift/Alt/Ctrl changes colour",
+      "notePanelLabel": "Notes",
+      "notePanelRootHint": "Select a move to add a note",
+      "notePanelPlaceholder": "Enter a note for this move...",
+      "richNoteEditorBoldTooltip": "Bold",
+      "richNoteEditorItalicTooltip": "Italic"
     },
     "deleteConfirm": {
       "title": "Delete course?",

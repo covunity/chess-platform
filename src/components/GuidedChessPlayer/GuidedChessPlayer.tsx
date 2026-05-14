@@ -3,10 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { Chess } from 'chess.js'
 import ChessgroundView from '../ChessBoard/ChessgroundView'
 import { parsePgn } from '../../utils/parsePgn'
-import type { PgnNode, Shape } from '../../utils/parsePgn'
+import type { PgnNode, Shape, RichTextDoc } from '../../utils/parsePgn'
 import PromotionPicker from './PromotionPicker'
 import type { PromotionPiece } from './PromotionPicker'
 import type { DrawShape } from 'chessground/draw'
+import NoteView from './NoteView'
 
 export interface GuidedLesson {
   id: string
@@ -294,7 +295,7 @@ export default function GuidedChessPlayer({
     moveNumber: number
     white?: string
     black?: string
-    annotation?: string | null
+    note?: RichTextDoc | null
   }
   const playedFullMoves: FullMoveEntry[] = []
   for (let i = 0; i < pathFromRoot.length; i++) {
@@ -305,10 +306,10 @@ export default function GuidedChessPlayer({
     }
     if (i % 2 === 0) {
       playedFullMoves[idx].white = node.san
-      if (node.annotation) playedFullMoves[idx].annotation = node.annotation
+      if (node.note) playedFullMoves[idx].note = node.note
     } else {
       playedFullMoves[idx].black = node.san
-      if (node.annotation) playedFullMoves[idx].annotation = node.annotation
+      if (node.note) playedFullMoves[idx].note = node.note
     }
   }
 
@@ -464,13 +465,13 @@ export default function GuidedChessPlayer({
                   <span className="guided-player-move-san">{entry.white ?? ''}</span>
                   {entry.black && <span className="guided-player-move-san">{entry.black}</span>}
                 </div>
-                {entry.annotation && (
-                  <p
+                {entry.note && (
+                  <div
                     data-testid={`move-log-annotation-${entry.moveNumber}`}
                     className="guided-player-move-annotation"
                   >
-                    {entry.annotation}
-                  </p>
+                    <NoteView note={entry.note} />
+                  </div>
                 )}
               </div>
             )

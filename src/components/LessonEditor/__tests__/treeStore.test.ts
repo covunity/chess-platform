@@ -250,20 +250,64 @@ describe('treeStore', () => {
     })
   })
 
+  describe('setNote', () => {
+    it('stores a rich note on a node', () => {
+      const store = freshStore()
+      store.getState().applyMove('e2', 'e4')
+      const e4Id = store.getState().tree.children[0].id
+      const doc = {
+        type: 'doc' as const,
+        content: [{ type: 'paragraph' as const, content: [{ type: 'text' as const, text: 'hello' }] }],
+      }
+      store.getState().setNote(e4Id, doc)
+      const updatedNode = store.getState().tree.children[0]
+      expect(updatedNode.note).toEqual(doc)
+    })
+
+    it('can set note to null to clear it', () => {
+      const store = freshStore()
+      store.getState().applyMove('e2', 'e4')
+      const e4Id = store.getState().tree.children[0].id
+      const doc = {
+        type: 'doc' as const,
+        content: [{ type: 'paragraph' as const, content: [{ type: 'text' as const, text: 'text' }] }],
+      }
+      store.getState().setNote(e4Id, doc)
+      store.getState().setNote(e4Id, null)
+      expect(store.getState().tree.children[0].note).toBeNull()
+    })
+
+    it('marks store dirty after setNote', () => {
+      const store = freshStore()
+      store.getState().applyMove('e2', 'e4')
+      const e4Id = store.getState().tree.children[0].id
+      // Reset dirty to false for a clean test
+      store.getState().replaceTree(store.getState().tree)
+      store.getState().setNote(e4Id, null)
+      expect(store.getState().dirty).toBe(true)
+    })
+
+    it('does not mutate other nodes when setting note', () => {
+      const store = freshStore()
+      store.getState().applyMove('e2', 'e4')
+      store.getState().applyMove('e7', 'e5')
+      const e4Id = store.getState().tree.children[0].id
+      const e5Id = store.getState().tree.children[0].children[0].id
+      const doc = {
+        type: 'doc' as const,
+        content: [{ type: 'paragraph' as const, content: [{ type: 'text' as const, text: 'note on e4' }] }],
+      }
+      store.getState().setNote(e4Id, doc)
+      // e5 note should be unchanged
+      expect(store.getState().tree.children[0].children[0].note).toBeNull()
+      expect(store.getState().tree.children[0].children[0].id).toBe(e5Id)
+    })
+  })
+
   describe('placeholder no-op actions', () => {
     it('setShapes is callable without throwing', () => {
       const store = freshStore()
       expect(() => store.getState().setShapes('root', [])).not.toThrow()
-    })
-
-    it('setNote is callable without throwing', () => {
-      const store = freshStore()
-      expect(() =>
-        store.getState().setNote('root', {
-          type: 'doc',
-          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'hello' }] }],
-        })
-      ).not.toThrow()
     })
 
     it('setPurpose is callable without throwing', () => {

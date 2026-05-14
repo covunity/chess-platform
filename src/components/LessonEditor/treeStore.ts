@@ -177,8 +177,13 @@ export function createTreeStore() {
       set({ tree: { ...state.tree }, dirty: true })
     },
 
-    setNote(_nodeId: string, _note: RichTextDoc | null) {
-      // No-op placeholder — wired in slice 7 (#194)
+    setNote(nodeId: string, note: RichTextDoc | null) {
+      const state = get()
+      const nodeMap = buildNodeMap(state.tree)
+      const target = nodeMap.get(nodeId)
+      if (!target) return
+      target.note = note
+      set({ tree: { ...state.tree }, dirty: true })
     },
 
     setPurpose(_nodeId: string, _purpose: 'correct' | 'mistake' | null) {

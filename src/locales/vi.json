@@ -601,7 +601,12 @@
       "startingPositionFromFen": "Dán FEN",
       "startingPositionFromEditor": "Chỉnh bàn cờ",
       "startingPositionApply": "Áp dụng",
-      "shapeToolbarHint": "Chuột phải: vòng tròn · Kéo chuột phải: mũi tên · Shift/Alt/Ctrl đổi màu"
+      "shapeToolbarHint": "Chuột phải: vòng tròn · Kéo chuột phải: mũi tên · Shift/Alt/Ctrl đổi màu",
+      "notePanelLabel": "Ghi chú",
+      "notePanelRootHint": "Chọn một nước để thêm ghi chú",
+      "notePanelPlaceholder": "Nhập ghi chú cho nước này...",
+      "richNoteEditorBoldTooltip": "In đậm",
+      "richNoteEditorItalicTooltip": "In nghiêng"
     },
     "deleteConfirm": {
       "title": "Xóa khóa học?",
