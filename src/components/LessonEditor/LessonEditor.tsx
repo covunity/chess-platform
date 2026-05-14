@@ -4,6 +4,9 @@ import { useTranslation } from "react-i18next";
 import ChessBoard from "../ChessBoard/ChessBoard";
 import { parsePgn } from "../../utils/parsePgn";
 import type { PgnParseResult, PgnNode } from "../../utils/parsePgn";
+import { serializePgn } from "../../utils/serializePgn";
+import { createTreeStore } from "./treeStore";
+import BoardAuthoringSurface from "./BoardAuthoring/BoardAuthoringSurface";
 import VideoLessonEditor from "./VideoLessonEditor";
 import type { VideoStatus } from "../../lib/creatorApi";
 import type { VideoProviderName } from "../../lib/video/types";
@@ -45,21 +48,7 @@ const LESSON_TYPE_ICON: Record<LessonType, string> = {
 
 const LESSON_TAB_VALUES: LessonType[] = ['video', 'chess'];
 
-const MAX_PGN_CHARS = 50000; // V-12, up from 5000
-
-const PLACEHOLDER_PGN = `{Ghi nội dung hướng dẫn ở đây — hiển thị trước nước đi đầu tiên}
-1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5
-4. c3 Nf6 {Chú thích sau nước đi — hiển thị khi người học vừa đi xong nước này}
-5. d3 d6
-6. Nbd2 a6
-7. Bb3 O-O
-8. h3 {Prophylactic — preventing ...Bg4.}`;
-
 const STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-
-function formatNumber(n: number): string {
-  return n.toLocaleString("en-US");
-}
 
 function formatDuration(seconds: number | undefined | null): string {
   if (!seconds || seconds <= 0) return "—:—";
@@ -77,11 +66,24 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   };
   const [title, setTitle] = useState(lesson.title);
   const [description, setDescription] = useState(lesson.description ?? '');
-  const [pgn, setPgn] = useState(lesson.pgn_data);
+  const [pgn] = useState(lesson.pgn_data);
   const [perspective, setPerspective] = useState<"white" | "black">(lesson.board_perspective);
   const [isFreePreview] = useState(lesson.is_free_preview);
   const [debouncedParseResult, setDebouncedParseResult] = useState<PgnParseResult | null>(null);
   const parseResult = pgn.trim() ? debouncedParseResult : null;
+
+  // ── treeStore for board-direct authoring (chess lessons) ─────────────────
+  const treeStoreRef = useRef(createTreeStore());
+  // Initialize on mount: load pgn_data into treeStore if present
+  useEffect(() => {
+    if (lesson.pgn_data && lesson.pgn_data.trim()) {
+      const parsed = parsePgn(lesson.pgn_data);
+      if (parsed.valid && parsed.root) {
+        treeStoreRef.current.getState().replaceTree(parsed.root);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lesson.id]);
   const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<LessonType>(lesson.type ?? 'chess');
   const [videoLesson, setVideoLesson] = useState(() => ({
@@ -110,7 +112,12 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   }, [pgn]);
 
   const handleSave = () => {
-    onSave({ pgn_data: pgn, board_perspective: perspective, is_free_preview: isFreePreview, title, description: description || null });
+    // For chess lessons, serialize the treeStore back to PGN; for others use the pgn state
+    const isChessLesson = (activeTab === 'chess');
+    const pgnToSave = isChessLesson
+      ? serializePgn(treeStoreRef.current.getState().tree)
+      : pgn;
+    onSave({ pgn_data: pgnToSave, board_perspective: perspective, is_free_preview: isFreePreview, title, description: description || null });
   };
 
   useEffect(() => {
@@ -142,12 +149,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   const currentAnnotation = lastMoveInfo?.annotation ?? null;
 
   const moveCount = parseResult?.moveCount ?? 0;
-  const annotationCount = parseResult?.annotationCount ?? 0;
-  const variationCount = parseResult?.variationCount ?? 0;
-  const maxDepth = parseResult?.maxDepth ?? 0;
   const totalMoveNumber = previewNode?.depthFromRoot ?? 0;
-  const mainLineSet = useMemo(() => new Set(parseResult?.mainLine?.map(n => n.id) ?? []), [parseResult]);
-  const learnerSide: "w" | "b" = perspective === 'white' ? 'w' : 'b';
 
   const perspectiveButton = (val: "white" | "black", label: string) => (
     <button
@@ -295,123 +297,12 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
               </div>
             </div>
 
-            {/* PGN textarea */}
-            <div style={{ flex: 1 }}>
-              <label className="label" htmlFor="pgn-textarea">
-                {t('creator.lessonEditor.pgnLabel')} <code>{"{}"}</code>{t('creator.lessonEditor.pgnLabelSuffix')}
-              </label>
-              <p style={{ fontSize: 11.5, color: 'var(--ink-3)', marginBottom: 6, lineHeight: 1.5 }}>
-                {t('creator.lessonEditor.pgnAnnotationTip')}
-              </p>
-              <textarea
-                id="pgn-textarea"
-                className="input mono"
-                aria-label="PGN"
-                placeholder={PLACEHOLDER_PGN}
-                value={pgn}
-                onChange={(e) => setPgn(e.target.value)}
-                style={{ height: 180, display: "block" }}
-                maxLength={MAX_PGN_CHARS}
-              />
-
-              {/* Status row */}
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, alignItems: "center" }}>
-                <div>
-                  {parseResult === null ? (
-                    <span style={{ fontSize: 12, color: "var(--ink-3)" }}>
-                      {t('creator.lessonEditor.pgnPlaceholderEnter')}
-                    </span>
-                  ) : parseResult.valid ? (
-                    <span style={{ fontSize: 12, color: "var(--success)" }}>
-                      {t('creator.lessonEditor.pgnParsedMoves', { count: moveCount })}{" "}
-                      {t('creator.lessonEditor.pgnAnnotationsCount', { count: annotationCount })}
-                      {variationCount > 0 && (
-                        <span data-testid="variation-summary" style={{ color: "var(--ink-2)" }}>
-                          {" "}{t('creator.lessonEditor.pgnVariationSummary', { variations: variationCount, depth: maxDepth })}
-                        </span>
-                      )}
-                    </span>
-                  ) : (
-                    <span role="alert" style={{ fontSize: 12, color: "var(--danger)" }}>
-                      {parseResult.error ?? t('creator.lessonEditor.pgnInvalid')}
-                    </span>
-                  )}
-                </div>
-                <span style={{ fontSize: 12, color: "var(--ink-3)" }}>
-                  {t('creator.lessonEditor.pgnCharCount', { used: formatNumber(pgn.length), max: formatNumber(MAX_PGN_CHARS) })}
-                </span>
-              </div>
-            </div>
-
-            {/* Variation tree panel — only shown when PGN has branching */}
-            {variationCount > 0 && parseResult?.root && (() => {
-              function renderVarNode(node: PgnNode): React.ReactNode[] {
-                const rows: React.ReactNode[] = [];
-                const isMain = mainLineSet.has(node.id);
-                rows.push(
-                  <div
-                    key={node.id}
-                    data-testid={`variation-node-${node.id}`}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setHighlightedNodeId(node.id)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setHighlightedNodeId(node.id); }}
-                    style={{
-                      paddingLeft: node.depthFromRoot * 16,
-                      paddingTop: 2,
-                      paddingBottom: 2,
-                      cursor: 'pointer',
-                      color: isMain ? 'var(--ink-1)' : 'var(--ink-2)',
-                      fontSize: 12,
-                      background: highlightedNodeId === node.id ? 'var(--surface-3)' : 'transparent',
-                      borderRadius: 'var(--r-sm)',
-                    }}
-                  >
-                    {!isMain && '( '}
-                    {node.moveNumber}{node.side === 'w' ? '.' : '...'}{node.san}
-                    {!isMain && ' )'}
-                    {node.annotation && (
-                      <span style={{ color: 'var(--ink-3)', fontStyle: 'italic', marginLeft: 4 }}>
-                        {node.annotation}
-                      </span>
-                    )}
-                  </div>
-                );
-                if (node.children.length > 1 && node.children[0].side !== learnerSide) {
-                  rows.push(
-                    <div
-                      key={`warn-${node.id}`}
-                      data-testid="opponent-branch-warning"
-                      style={{ paddingLeft: (node.depthFromRoot + 1) * 16, fontSize: 11, color: 'var(--warn)', paddingTop: 1 }}
-                    >
-                      {t('creator.lessonEditor.opponentBranchWarning', { san: node.children[0].san })}
-                    </div>
-                  );
-                }
-                for (const child of node.children) {
-                  rows.push(...renderVarNode(child));
-                }
-                return rows;
-              }
-              return (
-                <div
-                  data-testid="variation-list"
-                  style={{
-                    marginTop: 8,
-                    border: '1px solid var(--border)',
-                    borderRadius: 'var(--r-sm)',
-                    padding: 8,
-                    maxHeight: 200,
-                    overflowY: 'auto',
-                  }}
-                >
-                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-2)', marginBottom: 4 }}>
-                    {t('creator.lessonEditor.variationListHeading')} · {t('creator.lessonEditor.variationListClickHint')}
-                  </div>
-                  {parseResult.root.children.flatMap(child => renderVarNode(child))}
-                </div>
-              );
-            })()}
+            {/* Board authoring surface — replaces PGN textarea */}
+            <BoardAuthoringSurface
+              store={treeStoreRef.current}
+              perspective={perspective}
+              size={340}
+            />
           </>
         ) : activeTab === "video" ? (
           <>

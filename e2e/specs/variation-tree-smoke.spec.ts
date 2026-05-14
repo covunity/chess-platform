@@ -174,7 +174,7 @@ async function mountEditorMocks(page: Page) {
   })
 
   // chapters with embedded lessons — listChapters uses select('*, lessons(*)')
-  // Auto-selects firstLesson from the first chapter's lessons array
+  // Pre-load the Italian Game PGN so BoardAuthoringSurface renders the variation tree immediately.
   const chapterWithLesson = [{
     id: CHAPTER_ID,
     course_id: COURSE_ID,
@@ -187,7 +187,7 @@ async function mountEditorMocks(page: Page) {
       type: 'chess',
       position: 1,
       free_preview: false,
-      pgn_data: '',
+      pgn_data: italianPgn,
       board_perspective: 'white',
       coach_note: null,
       duration_seconds: null,
@@ -202,7 +202,7 @@ async function mountEditorMocks(page: Page) {
     if (method === 'PATCH') {
       await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' })
     } else {
-      const lessonRow = { id: CREATOR_LESSON_ID, title: 'Italian Game', type: 'chess', position: 1, free_preview: false, pgn_data: '', board_perspective: 'white', is_free_preview: false, coach_note: null }
+      const lessonRow = { id: CREATOR_LESSON_ID, title: 'Italian Game', type: 'chess', position: 1, free_preview: false, pgn_data: italianPgn, board_perspective: 'white', is_free_preview: false, coach_note: null }
       const accept = route.request().headers()['accept'] ?? ''
       const isSingle = accept.includes('application/vnd.pgrst.object+json')
       await route.fulfill({ status: 200, contentType: 'application/json', body: isSingle ? JSON.stringify(lessonRow) : JSON.stringify([lessonRow]) })
@@ -214,36 +214,33 @@ async function mountEditorMocks(page: Page) {
   })
 }
 
-// ── Test 1: Parse smoke — editor reads variation summary ──────────────────────
+// ── Test 1: Editor loads Italian Game — board-direct UI renders variation summary ──
 
-test('Editor: pasting Italian Game PGN renders variation summary with correct counts', async ({ page }) => {
+test('Editor: Italian Game lesson loads and BoardAuthoringSurface renders variation summary', async ({ page }) => {
   await mountEditorMocks(page)
   await page.goto(`/creator/courses/${COURSE_ID}/edit`)
 
-  // Wait for the course editor to load and show a chess lesson panel
-  await expect(page.getByRole('textbox', { name: /pgn/i })).toBeVisible({ timeout: 15_000 })
+  // Wait for the board-direct authoring surface to appear (PGN textarea removed in #192)
+  await expect(page.getByTestId('board-authoring-surface')).toBeVisible({ timeout: 15_000 })
 
-  const pgnTextarea = page.getByRole('textbox', { name: /pgn/i })
-  await pgnTextarea.fill(italianPgn)
+  // Italian Game has variations — variation list should appear automatically
+  await expect(page.getByTestId('variation-list')).toBeVisible({ timeout: 3_000 })
 
-  // Variation summary should appear after debounce (≤ 500 ms)
-  await expect(page.getByTestId('variation-summary')).toBeVisible({ timeout: 3_000 })
-
-  // Verify variation summary mentions at least one variation branch
+  // Variation summary heading should mention branch count
+  await expect(page.getByTestId('variation-summary')).toBeVisible()
   const summaryText = await page.getByTestId('variation-summary').textContent()
   expect(summaryText).toMatch(/nhánh|biến/i)
 })
 
-// ── Test 2: Variation list — clicking a variation node updates preview ─────────
+// ── Test 2: Variation list — clicking a variation node does not crash ──────────
 
 test('Editor: variation list renders and clicking a node does not crash', async ({ page }) => {
   await mountEditorMocks(page)
   await page.goto(`/creator/courses/${COURSE_ID}/edit`)
 
-  await expect(page.getByRole('textbox', { name: /pgn/i })).toBeVisible({ timeout: 15_000 })
-  await page.getByRole('textbox', { name: /pgn/i }).fill(italianPgn)
+  await expect(page.getByTestId('board-authoring-surface')).toBeVisible({ timeout: 15_000 })
 
-  // Variation list should appear
+  // Variation list should be visible (Italian Game has branches)
   await expect(page.getByTestId('variation-list')).toBeVisible({ timeout: 3_000 })
 
   // Click the first variation node
@@ -251,22 +248,20 @@ test('Editor: variation list renders and clicking a node does not crash', async 
   await expect(varNodes.first()).toBeVisible()
   await varNodes.first().click()
 
-  // Preview pane should still be rendered (no crash)
-  await expect(page.getByTestId('lesson-preview-pane')).toBeVisible()
+  // Board authoring surface should still be rendered (no crash)
+  await expect(page.getByTestId('board-authoring-surface')).toBeVisible()
 })
 
-// ── Test 3: Opponent-branch warning fires for multiple Black responses ─────────
+// ── Test 3: Opponent-branch warning fires for nodes with multiple responses ────
 
-test('Editor: opponent-branch warning fires at 3.Bc4 node with 5 Black responses', async ({ page }) => {
+test('Editor: opponent-branch warning badge appears on nodes with multiple child branches', async ({ page }) => {
   await mountEditorMocks(page)
   await page.goto(`/creator/courses/${COURSE_ID}/edit`)
 
-  await expect(page.getByRole('textbox', { name: /pgn/i })).toBeVisible({ timeout: 15_000 })
-  await page.getByRole('textbox', { name: /pgn/i }).fill(italianPgn)
-
+  await expect(page.getByTestId('board-authoring-surface')).toBeVisible({ timeout: 15_000 })
   await expect(page.getByTestId('variation-list')).toBeVisible({ timeout: 3_000 })
 
-  // At least one opponent-branch warning should appear (Black has 5 responses to 3.Bc4)
+  // Italian Game has nodes with multiple Black responses — at least one warning badge should appear
   await expect(page.getByTestId('opponent-branch-warning').first()).toBeVisible()
 })
 

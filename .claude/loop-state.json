@@ -2,9 +2,9 @@
   "active": false,
   "workflow_instructions": "At the START of each new issue cycle (when LOOP_TICK fires): 1) invoke /clear to reset context window. 2) Read this file. 3) Check open PRs ready to merge. 4) Pick lowest eligible issue (ID>5, no blocked/human-in-the-loop/in-progress labels). 5) TDD workflow per .claude/skills/tdd.md. 6) QA per .agents/skills/qa/SKILL.md. 7) Open PR, monitor CI (poll every 2 min with mcp__github__pull_request_read get_check_runs), merge when green, close issue. 8) Set active:false, update this file.",
   "last_completed": {
-    "issue": 191,
-    "pr": 205,
-    "merged_at": "2026-05-14T06:01:00Z"
+    "issue": 190,
+    "pr": 206,
+    "merged_at": "2026-05-14T07:15:00Z"
   },
   "next_action": "Pick next eligible issue (ID > 5, not blocked, not HITL, not in-progress). Pull main first."
 }
