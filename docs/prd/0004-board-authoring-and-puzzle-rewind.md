@@ -1,6 +1,6 @@
 # PRD-0004: Board-Direct Authoring, Visual Annotations & Puzzle Rewind
 
-> Status: **Draft** · Owner: TBD · Created: 2026-05-14 · Branch: `claude/write-project-prd-vHXxe`
+> Status: **Shipped** · Owner: TBD · Created: 2026-05-14 · Branch: `claude/write-project-prd-vHXxe`
 > Phase: **Phase 2.1** — activates `lesson_type = 'puzzle'` (still placeholder per `LessonEditor.tsx:468`)
 > Builds on: PRD-0003 (variation tree, shipped 2026-05-10) · ADR-0004 (V-01..V-18)
 > Likely ADRs spun out: board-library migration · state-management adoption · shape & rich-note storage
