@@ -7,6 +7,8 @@ import type { PgnParseResult, PgnNode } from "../../utils/parsePgn";
 import { serializePgn } from "../../utils/serializePgn";
 import { createTreeStore } from "./treeStore";
 import BoardAuthoringSurface from "./BoardAuthoring/BoardAuthoringSurface";
+import AdvancedPgnPanel from "./AdvancedPgnPanel/AdvancedPgnPanel";
+import ImportFromPgnModal from "./AdvancedPgnPanel/ImportFromPgnModal";
 import PuzzleEditorPanel from "./PuzzleEditorPanel";
 import VideoLessonEditor from "./VideoLessonEditor";
 import type { VideoStatus } from "../../lib/creatorApi";
@@ -38,13 +40,15 @@ export interface Lesson {
 
 export interface LessonEditorProps {
   lesson: Lesson;
-  onSave: (data: Pick<Lesson, "pgn_data" | "board_perspective" | "is_free_preview" | "title" | "description">) => void;
+  onSave: (data: Pick<Lesson, "pgn_data" | "board_perspective" | "is_free_preview" | "title" | "description" | "is_view_only">) => void;
   chapterLessons?: Array<{ id: string; title: string; type: LessonType }>;
   onSelectLesson?: (id: string) => void;
   onSubmitForReview?: () => void;
   showSidebar?: boolean;
   saveLabel?: string;
   saveRef?: RefObject<(() => void) | null>;
+  /** When true, shows the PGN (advanced) tab alongside the board surface. */
+  editorAdvanced?: boolean;
 }
 
 const LESSON_TYPE_ICON: Record<LessonType, string> = {
@@ -64,7 +68,7 @@ function formatDuration(seconds: number | undefined | null): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectLesson, onSubmitForReview, showSidebar = true, saveRef }: LessonEditorProps) {
+export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectLesson, onSubmitForReview, showSidebar = true, saveRef, editorAdvanced = false }: LessonEditorProps) {
   const { t } = useTranslation();
   const tabLabels: Record<LessonType, string> = {
     video: t('creator.lessonEditor.tabVideo'),
@@ -79,6 +83,11 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   const [isViewOnly, setIsViewOnly] = useState(lesson.is_view_only ?? false);
   const [debouncedParseResult, setDebouncedParseResult] = useState<PgnParseResult | null>(null);
   const parseResult = pgn.trim() ? debouncedParseResult : null;
+
+  // Sub-tab for chess lesson: 'board' | 'pgn' (pgn only when editorAdvanced)
+  const [chessSubTab, setChessSubTab] = useState<'board' | 'pgn'>('board');
+  // Import-from-PGN modal open state
+  const [importModalOpen, setImportModalOpen] = useState(false);
 
   // ── treeStore for board-direct authoring (chess lessons) ─────────────────
   const treeStoreRef = useRef(createTreeStore());
@@ -137,7 +146,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
       const startingFen = rootFen !== STANDARD_FEN ? rootFen : undefined;
       pgnToSave = serializePgn(treeState.tree, startingFen);
     }
-    onSave({ pgn_data: pgnToSave, board_perspective: perspective, is_free_preview: isFreePreview, title, description: description || null });
+    onSave({ pgn_data: pgnToSave, board_perspective: perspective, is_free_preview: isFreePreview, title, description: description || null, is_view_only: isViewOnly });
   };
 
   useEffect(() => {
@@ -331,12 +340,94 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
               </label>
             </div>
 
-            {/* Board authoring surface — replaces PGN textarea */}
-            <BoardAuthoringSurface
-              store={treeStoreRef.current}
-              perspective={perspective}
-              size={340}
-            />
+            {/* Authoring sub-tabs: Board | PGN (advanced) + Import-from-PGN button */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {/* Board sub-tab — always present */}
+              <button
+                type="button"
+                data-testid="board-tab"
+                aria-pressed={chessSubTab === 'board'}
+                onClick={() => setChessSubTab('board')}
+                style={{
+                  padding: '4px 12px',
+                  borderRadius: 999,
+                  border: '1px solid var(--border)',
+                  background: chessSubTab === 'board' ? 'var(--ink-1)' : 'var(--surface)',
+                  color: chessSubTab === 'board' ? 'var(--ink-on-accent)' : 'var(--ink-2)',
+                  fontSize: 12,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                }}
+              >
+                {t('creator.lessonEditor.tabBoardAuthoring')}
+              </button>
+
+              {/* PGN (advanced) sub-tab — only when editorAdvanced */}
+              {editorAdvanced && (
+                <button
+                  type="button"
+                  data-testid="pgn-advanced-tab"
+                  aria-pressed={chessSubTab === 'pgn'}
+                  onClick={() => setChessSubTab('pgn')}
+                  style={{
+                    padding: '4px 12px',
+                    borderRadius: 999,
+                    border: '1px solid var(--border)',
+                    background: chessSubTab === 'pgn' ? 'var(--ink-1)' : 'var(--surface)',
+                    color: chessSubTab === 'pgn' ? 'var(--ink-on-accent)' : 'var(--ink-2)',
+                    fontSize: 12,
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {t('creator.lessonEditor.tabPgnAdvanced')}
+                </button>
+              )}
+
+              {/* Import-from-PGN button — available to ALL creators */}
+              <button
+                type="button"
+                data-testid="import-from-pgn-btn"
+                onClick={() => setImportModalOpen(true)}
+                style={{
+                  marginLeft: 'auto',
+                  padding: '4px 12px',
+                  borderRadius: 999,
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface)',
+                  color: 'var(--ink-2)',
+                  fontSize: 12,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                }}
+              >
+                {t('creator.lessonEditor.importFromPgn')}
+              </button>
+            </div>
+
+            {/* Board authoring surface (default sub-tab) */}
+            {chessSubTab === 'board' && (
+              <BoardAuthoringSurface
+                store={treeStoreRef.current}
+                perspective={perspective}
+                size={340}
+              />
+            )}
+
+            {/* Advanced PGN panel (shown only when editorAdvanced + pgn sub-tab active) */}
+            {editorAdvanced && chessSubTab === 'pgn' && (
+              <AdvancedPgnPanel
+                store={treeStoreRef.current}
+              />
+            )}
+
+            {/* Import-from-PGN modal */}
+            {importModalOpen && (
+              <ImportFromPgnModal
+                store={treeStoreRef.current}
+                onClose={() => setImportModalOpen(false)}
+              />
+            )}
           </>
         ) : activeTab === "video" ? (
           <>

@@ -612,7 +612,13 @@
       "notePanelPlaceholder": "Nhập ghi chú cho nước này...",
       "richNoteEditorBoldTooltip": "In đậm",
       "richNoteEditorItalicTooltip": "In nghiêng",
-      "isViewOnlyLabel": "Bài học chỉ xem (không tương tác)"
+      "isViewOnlyLabel": "Bài học chỉ xem (không tương tác)",
+      "tabPgnAdvanced": "PGN (nâng cao)",
+      "advancedTabHint": "Tab này dành cho người dùng nâng cao — sửa trực tiếp PGN.",
+      "importFromPgn": "Nhập từ PGN",
+      "importFromPgnModalTitle": "Nhập từ PGN",
+      "importFromPgnAnalyse": "Phân tích",
+      "importFromPgnCancel": "Hủy"
     },
     "deleteConfirm": {
       "title": "Xóa khóa học?",
@@ -891,6 +897,9 @@
     "passwordHint": "Ít nhất 8 ký tự với một chữ hoa và một chữ số.",
     "savePassword": "Cập nhật mật khẩu",
     "savedPassword": "Mật khẩu đã được cập nhật!",
+    "editorAdvancedSection": "Trình soạn nâng cao",
+    "editorAdvancedToggleLabel": "Hiển thị tab PGN bên cạnh bàn cờ khi soạn bài học. Tắt nếu bạn chỉ muốn soạn trên bàn cờ.",
+    "editorAdvancedToggleHelp": "Hiển thị tab PGN bên cạnh bàn cờ khi soạn bài học. Tắt nếu bạn chỉ muốn soạn trên bàn cờ.",
     "errors": {
       "nameRequired": "Tên không được để trống.",
       "avatarType": "Chỉ chấp nhận JPG, PNG hoặc WebP.",

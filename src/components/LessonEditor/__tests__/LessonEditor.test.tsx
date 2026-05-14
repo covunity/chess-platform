@@ -206,4 +206,57 @@ describe("LessonEditor", () => {
       );
     });
   });
+
+  describe("is_view_only toggle (issue #197)", () => {
+    it("renders is_view_only checkbox for chess lessons", () => {
+      renderEditor({ lesson: { ...DEFAULT_LESSON, type: "chess" }, onSave: vi.fn() });
+      expect(screen.getByTestId("lesson-is-view-only-checkbox")).toBeInTheDocument();
+    });
+
+    it("does not render is_view_only checkbox for puzzle lessons", () => {
+      renderEditor({ lesson: { ...DEFAULT_LESSON, type: "puzzle" }, onSave: vi.fn() });
+      // Switch to puzzle tab
+      fireEvent.click(screen.getByTestId("lesson-type-tab-puzzle"));
+      expect(screen.queryByTestId("lesson-is-view-only-checkbox")).not.toBeInTheDocument();
+    });
+
+    it("is_view_only defaults to false (unchecked)", () => {
+      renderEditor({ lesson: { ...DEFAULT_LESSON, type: "chess" }, onSave: vi.fn() });
+      const checkbox = screen.getByTestId("lesson-is-view-only-checkbox");
+      expect(checkbox).not.toBeChecked();
+    });
+
+    it("is_view_only initialized from lesson.is_view_only=true", () => {
+      renderEditor({
+        lesson: { ...DEFAULT_LESSON, type: "chess", is_view_only: true },
+        onSave: vi.fn(),
+      });
+      const checkbox = screen.getByTestId("lesson-is-view-only-checkbox");
+      expect(checkbox).toBeChecked();
+    });
+
+    it("onSave includes is_view_only: true when checkbox is checked", async () => {
+      const user = userEvent.setup();
+      const onSave = vi.fn();
+      renderEditor({ lesson: { ...DEFAULT_LESSON, type: "chess" }, onSave });
+      const checkbox = screen.getByTestId("lesson-is-view-only-checkbox");
+      await user.click(checkbox);
+      const saveBtn = screen.getByRole("button", { name: /lưu nháp/i });
+      await user.click(saveBtn);
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({ is_view_only: true })
+      );
+    });
+
+    it("onSave includes is_view_only: false when checkbox is unchecked", async () => {
+      const user = userEvent.setup();
+      const onSave = vi.fn();
+      renderEditor({ lesson: { ...DEFAULT_LESSON, type: "chess" }, onSave });
+      const saveBtn = screen.getByRole("button", { name: /lưu nháp/i });
+      await user.click(saveBtn);
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({ is_view_only: false })
+      );
+    });
+  });
 });

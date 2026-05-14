@@ -1399,6 +1399,8 @@ describe('GuidedChessPlayer — starting_fen support', () => {
   })
 })
 
+// ── Viewer mode tests (issue #197) — see 'PRD-0004 Slice 10' describe block below ──
+
 describe('PromotionPicker component', () => {
   function renderPicker(props?: Partial<React.ComponentProps<typeof PromotionPicker>>) {
     return rtlRender(

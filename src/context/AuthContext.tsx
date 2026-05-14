@@ -13,6 +13,7 @@ export interface UserProfile {
   role: UserRole
   account_tier_id: AccountTierCode
   created_at: string
+  editor_advanced: boolean
 }
 
 export interface AuthContextValue {
@@ -25,7 +26,7 @@ export interface AuthContextValue {
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<{ error: Error | null }>
   updatePassword: (password: string) => Promise<{ error: Error | null }>
-  updateProfile: (updates: Partial<Pick<UserProfile, 'name' | 'avatar_url'>>) => void
+  updateProfile: (updates: Partial<Pick<UserProfile, 'name' | 'avatar_url' | 'editor_advanced'>>) => void
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -56,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false
     supabase
       .from('users')
-      .select('id, email, name, avatar_url, role, account_tier_id, created_at')
+      .select('id, email, name, avatar_url, role, account_tier_id, created_at, editor_advanced')
       .eq('id', user.id)
       .single()
       .then(({ data }) => {
@@ -94,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error }
   }
 
-  function updateProfile(updates: Partial<Pick<UserProfile, 'name' | 'avatar_url'>>) {
+  function updateProfile(updates: Partial<Pick<UserProfile, 'name' | 'avatar_url' | 'editor_advanced'>>) {
     setProfileState(prev => prev ? { ...prev, profile: prev.profile ? { ...prev.profile, ...updates } : prev.profile } : prev)
   }
 

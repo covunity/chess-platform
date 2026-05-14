@@ -371,7 +371,13 @@
       "notePanelPlaceholder": "Enter a note for this move...",
       "richNoteEditorBoldTooltip": "Bold",
       "richNoteEditorItalicTooltip": "Italic",
-      "isViewOnlyLabel": "View-only lesson (no interaction)"
+      "isViewOnlyLabel": "View-only lesson (no interaction)",
+      "tabPgnAdvanced": "PGN (advanced)",
+      "advancedTabHint": "This tab is for advanced users — edit PGN directly.",
+      "importFromPgn": "Import from PGN",
+      "importFromPgnModalTitle": "Import from PGN",
+      "importFromPgnAnalyse": "Analyse",
+      "importFromPgnCancel": "Cancel"
     },
     "deleteConfirm": {
       "title": "Delete course?",
@@ -650,6 +656,9 @@
     "passwordHint": "At least 8 characters with one uppercase letter and one digit.",
     "savePassword": "Update password",
     "savedPassword": "Password has been updated!",
+    "editorAdvancedSection": "Advanced editor",
+    "editorAdvancedToggleLabel": "Show PGN tab alongside the board when authoring lessons. Disable if you only want to author on the board.",
+    "editorAdvancedToggleHelp": "Show PGN tab alongside the board when authoring lessons. Disable if you only want to author on the board.",
     "errors": {
       "nameRequired": "Name cannot be empty.",
       "avatarType": "Only JPG, PNG, or WebP files are accepted.",

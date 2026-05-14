@@ -65,3 +65,15 @@ export async function removeAvatar(
 
   return { error: dbError }
 }
+
+export async function updateEditorAdvanced(
+  supabase: SupabaseClient,
+  userId: string,
+  editorAdvanced: boolean
+): Promise<{ error: Error | null }> {
+  const { error } = await supabase
+    .from('users')
+    .update({ editor_advanced: editorAdvanced })
+    .eq('id', userId)
+  return { error }
+}
