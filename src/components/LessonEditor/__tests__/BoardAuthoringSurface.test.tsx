@@ -98,11 +98,10 @@ describe('BoardAuthoringSurface', () => {
   })
 
   describe('right-click on variation list rows', () => {
-    it('does not crash on right-click (no context menu in this slice)', () => {
+    it('does not crash on right-click', () => {
       store.getState().applyMove('e2', 'e4')
       render(<BoardAuthoringSurface store={store} perspective="white" />)
       const varList = screen.getByTestId('variation-list')
-      // Should not throw
       expect(() => fireEvent.contextMenu(varList)).not.toThrow()
     })
   })
@@ -176,6 +175,148 @@ describe('BoardAuthoringSurface', () => {
         const editableArea = document.querySelector('[contenteditable="true"]')
         expect(editableArea?.textContent).toContain('e4 note')
       })
+    })
+  })
+
+  describe('variation list context menu — Slice 5b (#200)', () => {
+    it('right-click on a variation node opens the context menu', () => {
+      store.getState().applyMove('e2', 'e4')
+      store.getState().setCurrentNode('root')
+      store.getState().applyMove('d2', 'd4')
+      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      const d4Node = screen.getAllByTestId(/variation-node-/).find(
+        (el) => el.textContent?.includes('d4')
+      )!
+      fireEvent.contextMenu(d4Node)
+      expect(screen.getByTestId('variation-context-menu')).toBeInTheDocument()
+    })
+
+    it('context menu contains a promote action', () => {
+      store.getState().applyMove('e2', 'e4')
+      store.getState().setCurrentNode('root')
+      store.getState().applyMove('d2', 'd4')
+      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      const d4Node = screen.getAllByTestId(/variation-node-/).find(
+        (el) => el.textContent?.includes('d4')
+      )!
+      fireEvent.contextMenu(d4Node)
+      expect(screen.getByTestId('ctx-promote-btn')).toBeInTheDocument()
+    })
+
+    it('context menu contains a delete action', () => {
+      store.getState().applyMove('e2', 'e4')
+      store.getState().setCurrentNode('root')
+      store.getState().applyMove('d2', 'd4')
+      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      const d4Node = screen.getAllByTestId(/variation-node-/).find(
+        (el) => el.textContent?.includes('d4')
+      )!
+      fireEvent.contextMenu(d4Node)
+      expect(screen.getByTestId('ctx-delete-btn')).toBeInTheDocument()
+    })
+
+    it('promote button is disabled when the node is already children[0] of its parent', () => {
+      store.getState().applyMove('e2', 'e4')
+      store.getState().setCurrentNode('root')
+      store.getState().applyMove('d2', 'd4')
+      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      // e4 is children[0] — promote should be disabled for it
+      const e4Node = screen.getAllByTestId(/variation-node-/).find(
+        (el) => el.textContent?.includes('e4')
+      )!
+      fireEvent.contextMenu(e4Node)
+      expect(screen.getByTestId('ctx-promote-btn')).toBeDisabled()
+    })
+
+    it('promote button is enabled for a non-main-line sibling', () => {
+      store.getState().applyMove('e2', 'e4')
+      store.getState().setCurrentNode('root')
+      store.getState().applyMove('d2', 'd4')
+      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      const d4Node = screen.getAllByTestId(/variation-node-/).find(
+        (el) => el.textContent?.includes('d4')
+      )!
+      fireEvent.contextMenu(d4Node)
+      expect(screen.getByTestId('ctx-promote-btn')).not.toBeDisabled()
+    })
+
+    it('clicking promote calls promoteVariation on the store', () => {
+      store.getState().applyMove('e2', 'e4')
+      store.getState().setCurrentNode('root')
+      store.getState().applyMove('d2', 'd4')
+      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      const d4Node = screen.getAllByTestId(/variation-node-/).find(
+        (el) => el.textContent?.includes('d4')
+      )!
+      fireEvent.contextMenu(d4Node)
+      fireEvent.click(screen.getByTestId('ctx-promote-btn'))
+      // d4 should now be children[0]
+      expect(store.getState().tree.children[0].san).toBe('d4')
+    })
+
+    it('clicking delete opens a confirm dialog', () => {
+      store.getState().applyMove('e2', 'e4')
+      store.getState().setCurrentNode('root')
+      store.getState().applyMove('d2', 'd4')
+      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      const e4Node = screen.getAllByTestId(/variation-node-/).find(
+        (el) => el.textContent?.includes('e4')
+      )!
+      fireEvent.contextMenu(e4Node)
+      fireEvent.click(screen.getByTestId('ctx-delete-btn'))
+      expect(screen.getByTestId('delete-confirm-dialog')).toBeInTheDocument()
+    })
+
+    it('confirming delete removes the node from the tree', () => {
+      store.getState().applyMove('e2', 'e4')
+      store.getState().setCurrentNode('root')
+      store.getState().applyMove('d2', 'd4')
+      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      const e4Node = screen.getAllByTestId(/variation-node-/).find(
+        (el) => el.textContent?.includes('e4')
+      )!
+      fireEvent.contextMenu(e4Node)
+      fireEvent.click(screen.getByTestId('ctx-delete-btn'))
+      fireEvent.click(screen.getByTestId('delete-confirm-ok'))
+      expect(store.getState().tree.children).toHaveLength(1)
+      expect(store.getState().tree.children[0].san).toBe('d4')
+    })
+
+    it('cancelling the confirm dialog does not remove the node', () => {
+      store.getState().applyMove('e2', 'e4')
+      store.getState().setCurrentNode('root')
+      store.getState().applyMove('d2', 'd4')
+      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      const e4Node = screen.getAllByTestId(/variation-node-/).find(
+        (el) => el.textContent?.includes('e4')
+      )!
+      fireEvent.contextMenu(e4Node)
+      fireEvent.click(screen.getByTestId('ctx-delete-btn'))
+      fireEvent.click(screen.getByTestId('delete-confirm-cancel'))
+      expect(store.getState().tree.children).toHaveLength(2)
+    })
+
+    it('Delete key on a focused variation node opens the confirm dialog', () => {
+      store.getState().applyMove('e2', 'e4')
+      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      const e4Node = screen.getAllByTestId(/variation-node-/)[0]
+      e4Node.focus()
+      fireEvent.keyDown(e4Node, { key: 'Delete' })
+      expect(screen.getByTestId('delete-confirm-dialog')).toBeInTheDocument()
+    })
+
+    it('context menu closes when clicking outside', () => {
+      store.getState().applyMove('e2', 'e4')
+      store.getState().setCurrentNode('root')
+      store.getState().applyMove('d2', 'd4')
+      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      const d4Node = screen.getAllByTestId(/variation-node-/).find(
+        (el) => el.textContent?.includes('d4')
+      )!
+      fireEvent.contextMenu(d4Node)
+      expect(screen.getByTestId('variation-context-menu')).toBeInTheDocument()
+      fireEvent.mouseDown(document.body)
+      expect(screen.queryByTestId('variation-context-menu')).not.toBeInTheDocument()
     })
   })
 

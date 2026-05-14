@@ -377,7 +377,11 @@
       "importFromPgn": "Import from PGN",
       "importFromPgnModalTitle": "Import from PGN",
       "importFromPgnAnalyse": "Analyse",
-      "importFromPgnCancel": "Cancel"
+      "importFromPgnCancel": "Cancel",
+      "promoteVariation": "Make this the main line",
+      "deleteSubtree": "Delete this move and its branches",
+      "deleteSubtreeConfirm": "Delete this branch?",
+      "deleteSubtreeConfirmBody": "This will delete {{count}} move(s)."
     },
     "deleteConfirm": {
       "title": "Delete course?",

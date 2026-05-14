@@ -618,7 +618,11 @@
       "importFromPgn": "Nhập từ PGN",
       "importFromPgnModalTitle": "Nhập từ PGN",
       "importFromPgnAnalyse": "Phân tích",
-      "importFromPgnCancel": "Hủy"
+      "importFromPgnCancel": "Hủy",
+      "promoteVariation": "Đưa nhánh này thành chính",
+      "deleteSubtree": "Xóa nước này và các nhánh con",
+      "deleteSubtreeConfirm": "Xóa nhánh này?",
+      "deleteSubtreeConfirmBody": "Sẽ xóa {{count}} nước."
     },
     "deleteConfirm": {
       "title": "Xóa khóa học?",

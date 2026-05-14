@@ -6,7 +6,7 @@
  * to build the variation tree; the tree is serialised to pgn_data on save.
  */
 
-import { useSyncExternalStore, useCallback, useState, useMemo } from 'react'
+import { useSyncExternalStore, useCallback, useState, useMemo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Chess } from 'chess.js'
 import ChessgroundView from '../../ChessBoard/ChessgroundView'
@@ -90,6 +90,28 @@ export default function BoardAuthoringSurface({
   // Board editor open/close state
   const [boardEditorOpen, setBoardEditorOpen] = useState(false)
 
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<{
+    nodeId: string
+    x: number
+    y: number
+    isMain: boolean
+  } | null>(null)
+
+  // Confirm delete dialog state
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    nodeId: string
+    subtreeSize: number
+  } | null>(null)
+
+  // Close context menu on outside mousedown
+  useEffect(() => {
+    if (!contextMenu) return
+    function handleOutside() { setContextMenu(null) }
+    document.addEventListener('mousedown', handleOutside)
+    return () => document.removeEventListener('mousedown', handleOutside)
+  }, [contextMenu])
+
   // Build nodeMap from tree for O(1) lookup
   function buildNodeMap(root: PgnNode): Map<string, PgnNode> {
     const map = new Map<string, PgnNode>()
@@ -161,10 +183,17 @@ export default function BoardAuthoringSurface({
 
   const hasAnyMoves = tree.children.length > 0
 
-  function renderVariationNode(node: PgnNode, depth: number): React.ReactNode[] {
+  function countSubtreeNodes(node: PgnNode): number {
+    let n = 1
+    for (const c of node.children) n += countSubtreeNodes(c)
+    return n
+  }
+
+  function renderVariationNode(node: PgnNode, depth: number, siblingIndex: number): React.ReactNode[] {
     const rows: React.ReactNode[] = []
     const isCurrentNode = node.id === currentNodeId
     const hasMultipleResponses = node.children.length > 1
+    const isMain = siblingIndex === 0
 
     rows.push(
       <div
@@ -173,9 +202,16 @@ export default function BoardAuthoringSurface({
         role="button"
         tabIndex={0}
         onClick={() => store.getState().setCurrentNode(node.id)}
+        onContextMenu={(e) => {
+          e.preventDefault()
+          setContextMenu({ nodeId: node.id, x: e.clientX, y: e.clientY, isMain })
+        }}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             store.getState().setCurrentNode(node.id)
+          } else if (e.key === 'Delete') {
+            e.preventDefault()
+            setDeleteConfirm({ nodeId: node.id, subtreeSize: countSubtreeNodes(node) })
           }
         }}
         style={{
@@ -198,7 +234,7 @@ export default function BoardAuthoringSurface({
         </span>
         <span style={{ fontWeight: isCurrentNode ? 600 : 400 }}>{node.san}</span>
         {depth > 1 && <span style={{ color: 'var(--ink-3)' }}>{' )'}</span>}
-        {allowVariations && hasMultipleResponses && (
+        {hasMultipleResponses && (
           <span
             data-testid="opponent-branch-warning"
             title={`${node.children.length} nhánh phụ`}
@@ -217,8 +253,8 @@ export default function BoardAuthoringSurface({
       </div>
     )
 
-    for (const child of node.children) {
-      rows.push(...renderVariationNode(child, depth + 1))
+    for (let i = 0; i < node.children.length; i++) {
+      rows.push(...renderVariationNode(node.children[i], depth + 1, i))
     }
 
     return rows
@@ -353,7 +389,131 @@ export default function BoardAuthoringSurface({
               </span>
             )}
           </div>
-          {tree.children.flatMap((child) => renderVariationNode(child, 1))}
+          {tree.children.flatMap((child, idx) => renderVariationNode(child, 1, idx))}
+        </div>
+      )}
+
+      {/* Context menu — right-click on variation nodes */}
+      {contextMenu && (
+        <div
+          data-testid="variation-context-menu"
+          onMouseDown={(e) => e.stopPropagation()}
+          style={{
+            position: 'fixed',
+            top: contextMenu.y,
+            left: contextMenu.x,
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--r-sm)',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+            zIndex: 1000,
+            minWidth: 200,
+            padding: '4px 0',
+          }}
+        >
+          <button
+            type="button"
+            data-testid="ctx-promote-btn"
+            disabled={contextMenu.isMain}
+            onClick={() => {
+              store.getState().promoteVariation(contextMenu.nodeId)
+              setContextMenu(null)
+            }}
+            style={{
+              display: 'block',
+              width: '100%',
+              textAlign: 'left',
+              padding: '7px 14px',
+              fontSize: 13,
+              border: 'none',
+              background: 'transparent',
+              cursor: contextMenu.isMain ? 'not-allowed' : 'pointer',
+              color: contextMenu.isMain ? 'var(--ink-3)' : 'var(--ink-1)',
+            }}
+          >
+            {t('creator.lessonEditor.promoteVariation')}
+          </button>
+          <button
+            type="button"
+            data-testid="ctx-delete-btn"
+            onClick={() => {
+              const node = nodeMap.get(contextMenu.nodeId)
+              if (!node) return
+              setDeleteConfirm({ nodeId: contextMenu.nodeId, subtreeSize: countSubtreeNodes(node) })
+              setContextMenu(null)
+            }}
+            style={{
+              display: 'block',
+              width: '100%',
+              textAlign: 'left',
+              padding: '7px 14px',
+              fontSize: 13,
+              border: 'none',
+              background: 'transparent',
+              cursor: 'pointer',
+              color: 'var(--danger)',
+            }}
+          >
+            {t('creator.lessonEditor.deleteSubtree')}
+          </button>
+        </div>
+      )}
+
+      {/* Confirm delete dialog */}
+      {deleteConfirm && (
+        <div
+          data-testid="delete-confirm-dialog"
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0,0,0,0.3)',
+            zIndex: 1100,
+          }}
+        >
+          <div
+            style={{
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--r-md)',
+              padding: '24px 28px',
+              minWidth: 280,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+            }}
+          >
+            <p style={{ fontWeight: 600, fontSize: 15, marginBottom: 8 }}>
+              {t('creator.lessonEditor.deleteSubtreeConfirm')}
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 20 }}>
+              {t('creator.lessonEditor.deleteSubtreeConfirmBody', { count: deleteConfirm.subtreeSize })}
+            </p>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                data-testid="delete-confirm-cancel"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setDeleteConfirm(null)}
+              >
+                {t('common.cancel', { defaultValue: 'Hủy' })}
+              </button>
+              <button
+                type="button"
+                data-testid="delete-confirm-ok"
+                className="btn btn-sm"
+                style={{ background: 'var(--danger)', color: '#fff', border: 'none' }}
+                onClick={() => {
+                  store.getState().deleteSubtree(deleteConfirm.nodeId)
+                  setDeleteConfirm(null)
+                }}
+              >
+                {t('common.delete', { defaultValue: 'Xóa' })}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
