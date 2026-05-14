@@ -183,7 +183,7 @@ export default function ChessgroundView(props: ChessgroundViewProps) {
       }
       config.drawable.shapes = fenChanged
         ? (props.drawable?.autoShapes ?? [])        // new node: init from stored shapes
-        : apiRef.current.state.drawable.shapes       // same node: preserve user-drawn shapes
+        : (apiRef.current.state as { drawable?: { shapes?: DrawShape[] } }).drawable?.shapes ?? []  // same node: preserve user-drawn shapes
       config.drawable.autoShapes = []               // avoid double-rendering with shapes
     }
     prevFenRef.current = props.fen

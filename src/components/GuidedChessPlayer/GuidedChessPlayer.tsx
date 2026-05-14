@@ -35,7 +35,11 @@ export interface GuidedChessPlayerProps {
   initialNodeId?: string
   /** Controls play mode. Defaults to 'lesson'. */
   mode?: 'lesson' | 'puzzle' | 'viewer'
-  onComplete?: () => void
+  /**
+   * Called when the learner reaches any leaf node.
+   * In puzzle mode: `gaveUp` is true when the learner used "Xem đáp án".
+   */
+  onComplete?: (gaveUp?: boolean) => void
   onBookmark?: (nodeId: string, currentFen: string, depth: number, totalDepth: number) => void
   /** Called (debounced 2 s) when the current node changes — used to persist resume position. */
   onResumeNodeChange?: (nodeId: string) => void
@@ -155,6 +159,11 @@ export default function GuidedChessPlayer({
   const [puzzleCompletionInfo, setPuzzleCompletionInfo] = useState<{ wrongAttempts: number; prevBest: BestPuzzleAttempt | null } | null>(null)
   // Puzzle mode: session start time for duration_seconds
   const puzzleStartTime = useRef<number>(Date.now())
+  // Puzzle mode: gaveUp flag (set when "Xem đáp án" is clicked)
+  const gaveUpRef = useRef(false)
+  const [gaveUp, setGaveUp] = useState(false)
+  // Timers for show-answer animation
+  const showAnswerTimers = useRef<ReturnType<typeof setTimeout>[]>([])
 
   function dismissHelper() {
     setHelperVisible(false)
@@ -242,22 +251,25 @@ export default function GuidedChessPlayer({
         const durationSeconds = Math.round((Date.now() - puzzleStartTime.current) / 1000)
         const prevBest = bestPuzzleAttempt
 
-        // Show completion screen
-        setPuzzleCompletionInfo({ wrongAttempts: totalWrong, prevBest })
+        // Show completion screen only for genuine solves (not give-ups — banner shows instead)
+        if (!gaveUpRef.current) {
+          setPuzzleCompletionInfo({ wrongAttempts: totalWrong, prevBest })
+        }
 
-        // Record attempt — errors logged but do not block completion UI
+        // Record attempt with gave_up flag — errors logged but do not block completion UI
         if (supabaseClient) {
           recordPuzzleAttempt(supabaseClient, {
             lesson_id: lesson.id,
             wrong_attempts: totalWrong,
             duration_seconds: durationSeconds,
+            gave_up: gaveUpRef.current,
           }).catch((err: unknown) => {
             console.error('[GuidedChessPlayer] recordPuzzleAttempt failed:', err)
           })
         }
       }
 
-      onComplete?.()
+      onComplete?.(gaveUpRef.current)
     }
     if (!atLeaf) {
       completedFiredRef.current = false
@@ -298,11 +310,12 @@ export default function GuidedChessPlayer({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isViewer, currentNodeId, currentNode])
 
-  // Clear wrong-move and mistake-banner timers on unmount
+  // Clear wrong-move, mistake-banner, and show-answer timers on unmount
   useEffect(() => {
     return () => {
       if (wrongMoveTimer.current) clearTimeout(wrongMoveTimer.current)
       if (mistakeBannerTimer.current) clearTimeout(mistakeBannerTimer.current)
+      for (const t of showAnswerTimers.current) clearTimeout(t)
     }
   }, [])
 
@@ -310,6 +323,8 @@ export default function GuidedChessPlayer({
   useEffect(() => {
     // In puzzle mode with an active mistake banner, skip auto-play until banner clears
     if (isPuzzleMode && mistakeBannerNode) return
+    // During "Xem đáp án" animation, we step all nodes manually — skip auto-play
+    if (gaveUpRef.current) return
     if (!awaitingOpponent || !currentNode) return
     const next = currentNode.children[0]
     opponentTimer.current = setTimeout(() => {
@@ -412,6 +427,59 @@ export default function GuidedChessPlayer({
     if (atLeaf || awaitingOpponent) return false
     if (mistakeBannerNode) return false
     return (currentNode?.children ?? []).some(c => c.from === square)
+  }
+
+  // ── Puzzle hint escalation ────────────────────────────────────────────────
+
+  const currentWrongAttempts = isPuzzleMode ? (wrongAttemptsAt.current[currentNodeId] ?? 0) : 0
+  const hintLevel = currentWrongAttempts >= 3 ? 2 : currentWrongAttempts >= 2 ? 1 : 0
+
+  const puzzleHintShapes: DrawShape[] = isPuzzleMode && hintLevel > 0 && currentNode && currentNode.children.length > 0
+    ? (() => {
+        const mainMove = currentNode.children[0]
+        const orig = mainMove.from as import('chessground/types').Key
+        const dest = mainMove.to as import('chessground/types').Key
+        const shapes: DrawShape[] = [{ orig, brush: 'paleGrey' }]
+        if (hintLevel >= 2) shapes.push({ orig, dest, brush: 'paleGrey' })
+        return shapes
+      })()
+    : []
+
+  // ── "Xem đáp án" — play main line to leaf ────────────────────────────────
+
+  function playAnswer() {
+    // Suppress further interaction
+    gaveUpRef.current = true
+    setGaveUp(true)
+    // Clear any pending opponent timer
+    if (opponentTimer.current) {
+      clearTimeout(opponentTimer.current)
+      opponentTimer.current = null
+    }
+    // Clear any active mistake banner
+    if (mistakeBannerTimer.current) {
+      clearTimeout(mistakeBannerTimer.current)
+      mistakeBannerTimer.current = null
+    }
+    setMistakeBannerNode(null)
+
+    // Build main-line path from currentNodeId to leaf
+    const nodesToPlay: string[] = []
+    let node = parsed.nodeMap.get(currentNodeId)
+    while (node && node.children.length > 0) {
+      node = node.children[0]
+      nodesToPlay.push(node.id)
+    }
+
+    // Schedule each step with OPPONENT_DELAY_MS gap
+    for (const t of showAnswerTimers.current) clearTimeout(t)
+    showAnswerTimers.current = []
+    nodesToPlay.forEach((nodeId, i) => {
+      const timer = setTimeout(() => {
+        setCurrentNodeId(nodeId)
+      }, (i + 1) * OPPONENT_DELAY_MS)
+      showAnswerTimers.current.push(timer)
+    })
   }
 
   function handleSquareClick(square: string) {
@@ -546,7 +614,7 @@ export default function GuidedChessPlayer({
           hintSquares={hintSquares}
           selectedSquare={selectedSquare}
           validDestinations={validDestinations}
-          autoShapes={shapesToDrawShapes(currentNode?.shapes ?? [])}
+          autoShapes={[...shapesToDrawShapes(currentNode?.shapes ?? []), ...puzzleHintShapes]}
           viewOnly={isViewer}
           onSquareClick={isViewer ? undefined : handleSquareClick}
           onPieceDrop={isViewer ? undefined : handlePieceDrop}
@@ -612,6 +680,16 @@ export default function GuidedChessPlayer({
               >
                 {t('guidedPlayer.hint')}
               </button>
+              {isPuzzleMode && hintLevel >= 2 && !gaveUp && (
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  data-testid="puzzle-show-answer-btn"
+                  onClick={playAnswer}
+                >
+                  {t('guidedPlayer.puzzleShowAnswer')}
+                </button>
+              )}
               <button
                 type="button"
                 className="btn btn-secondary btn-sm"
@@ -705,6 +783,25 @@ export default function GuidedChessPlayer({
               </div>
             )
           })}
+
+          {/* Puzzle gave-up completion message */}
+          {isPuzzleMode && gaveUp && atLeaf && (
+            <div
+              data-testid="puzzle-gave-up-complete"
+              role="alert"
+              style={{
+                background: 'var(--amber-2, #fef3c7)',
+                border: '1px solid var(--amber-6, #d97706)',
+                borderRadius: 'var(--r-sm)',
+                padding: '10px 14px',
+                fontSize: 13,
+                color: 'var(--amber-9, #92400e)',
+                marginBottom: 8,
+              }}
+            >
+              {t('guidedPlayer.puzzleGaveUpComplete')}
+            </div>
+          )}
 
           {/* Puzzle mistake banner */}
           {isPuzzleMode && mistakeBannerNode && (
@@ -817,6 +914,13 @@ export default function GuidedChessPlayer({
                   setHintActive(false)
                   setPromotionCandidates([])
                   setMistakeBannerNode(null)
+                  wrongAttemptsAt.current = {}
+                  gaveUpRef.current = false
+                  setGaveUp(false)
+                  for (const t of showAnswerTimers.current) clearTimeout(t)
+                  showAnswerTimers.current = []
+                  setPuzzleCompletionInfo(null)
+                  puzzleStartTime.current = Date.now()
                   setResetDialogOpen(false)
                 }}
               >

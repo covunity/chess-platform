@@ -195,12 +195,51 @@ export function createTreeStore() {
       set({ tree: { ...state.tree }, dirty: true })
     },
 
-    deleteSubtree(_nodeId: string) {
-      // No-op placeholder — wired in slice 5b (#200)
+    deleteSubtree(nodeId: string) {
+      if (nodeId === 'root') return
+      const state = get()
+      const nodeMap = buildNodeMap(state.tree)
+      const node = nodeMap.get(nodeId)
+      if (!node || !node.parentId) return
+      const parent = nodeMap.get(node.parentId)
+      if (!parent) return
+
+      // Collect all IDs in the subtree being deleted
+      const deletedIds = new Set<string>()
+      function collectIds(n: PgnNode) {
+        deletedIds.add(n.id)
+        for (const c of n.children) collectIds(c)
+      }
+      collectIds(node)
+
+      // Remove node from parent
+      parent.children = parent.children.filter((c) => c.id !== nodeId)
+
+      // Walk currentNodeId up to parent if it is inside the deleted subtree
+      const newCurrentNodeId = deletedIds.has(state.currentNodeId)
+        ? node.parentId
+        : state.currentNodeId
+
+      set({ tree: { ...state.tree }, currentNodeId: newCurrentNodeId, dirty: true })
     },
 
-    promoteVariation(_nodeId: string) {
-      // No-op placeholder — wired in slice 5b (#200)
+    promoteVariation(nodeId: string) {
+      if (nodeId === 'root') return
+      const state = get()
+      const nodeMap = buildNodeMap(state.tree)
+      const node = nodeMap.get(nodeId)
+      if (!node || !node.parentId) return
+      const parent = nodeMap.get(node.parentId)
+      if (!parent) return
+      const idx = parent.children.findIndex((c) => c.id === nodeId)
+      if (idx <= 0) return  // Already main line or not found
+
+      // Swap with children[0]
+      const first = parent.children[0]
+      parent.children[0] = parent.children[idx]
+      parent.children[idx] = first
+
+      set({ tree: { ...state.tree }, dirty: true })
     },
   }))
 }

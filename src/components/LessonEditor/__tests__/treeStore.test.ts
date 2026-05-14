@@ -325,4 +325,172 @@ describe('treeStore', () => {
       expect(() => store.getState().promoteVariation('root')).not.toThrow()
     })
   })
+
+  describe('deleteSubtree — Slice 5b (#200)', () => {
+    it('removes the node and all descendants from the tree', () => {
+      const store = freshStore()
+      store.getState().applyMove('e2', 'e4')
+      store.getState().setCurrentNode('root')
+      store.getState().applyMove('d2', 'd4')
+      // Tree: root → [e4, d4]; delete e4
+      const e4Id = store.getState().tree.children.find(c => c.san === 'e4')!.id
+      store.getState().deleteSubtree(e4Id)
+      expect(store.getState().tree.children).toHaveLength(1)
+      expect(store.getState().tree.children[0].san).toBe('d4')
+    })
+
+    it('removes a leaf node when it has no children', () => {
+      const store = freshStore()
+      store.getState().applyMove('e2', 'e4')
+      const e4Id = store.getState().tree.children[0].id
+      store.getState().deleteSubtree(e4Id)
+      expect(store.getState().tree.children).toHaveLength(0)
+    })
+
+    it('also removes all descendants recursively', () => {
+      const store = freshStore()
+      store.getState().applyMove('e2', 'e4')
+      store.getState().applyMove('e7', 'e5')
+      // Tree: root → e4 → e5; delete e4 — e5 goes with it
+      const e4Id = store.getState().tree.children[0].id
+      store.getState().deleteSubtree(e4Id)
+      expect(store.getState().tree.children).toHaveLength(0)
+    })
+
+    it('walks currentNodeId up to the deleted node\'s parent when currentNodeId is a descendant', () => {
+      const store = freshStore()
+      store.getState().applyMove('e2', 'e4')
+      store.getState().applyMove('e7', 'e5')
+      // currentNodeId is now e5 (child of e4)
+      const e4Id = store.getState().tree.children[0].id
+      store.getState().deleteSubtree(e4Id)
+      // currentNodeId should now be 'root' (parent of deleted e4)
+      expect(store.getState().currentNodeId).toBe('root')
+    })
+
+    it('walks currentNodeId to parent when the deleted node itself is current', () => {
+      const store = freshStore()
+      store.getState().applyMove('e2', 'e4')
+      const e4Id = store.getState().tree.children[0].id
+      store.getState().setCurrentNode(e4Id)
+      store.getState().deleteSubtree(e4Id)
+      expect(store.getState().currentNodeId).toBe('root')
+    })
+
+    it('does not change currentNodeId when it is not a descendant of the deleted node', () => {
+      const store = freshStore()
+      store.getState().applyMove('e2', 'e4')
+      store.getState().setCurrentNode('root')
+      store.getState().applyMove('d2', 'd4')
+      const d4Id = store.getState().tree.children.find(c => c.san === 'd4')!.id
+      store.getState().setCurrentNode('root')
+      const e4Id = store.getState().tree.children.find(c => c.san === 'e4')!.id
+      store.getState().deleteSubtree(e4Id)
+      // currentNodeId was 'root', not a descendant of e4
+      expect(store.getState().currentNodeId).toBe('root')
+      // d4 is still in the tree
+      expect(store.getState().tree.children[0].id).toBe(d4Id)
+    })
+
+    it('marks the store dirty after delete', () => {
+      const store = freshStore()
+      store.getState().applyMove('e2', 'e4')
+      const e4Id = store.getState().tree.children[0].id
+      const parsed = parsePgn('1. e4')
+      store.getState().replaceTree(parsed.root!)
+      expect(store.getState().dirty).toBe(false)
+      store.getState().deleteSubtree(e4Id)
+      expect(store.getState().dirty).toBe(true)
+    })
+
+    it('is a no-op when called with root', () => {
+      const store = freshStore()
+      store.getState().applyMove('e2', 'e4')
+      store.getState().deleteSubtree('root')
+      // root and its children are intact
+      expect(store.getState().tree.children).toHaveLength(1)
+    })
+
+    it('is a no-op when the nodeId does not exist', () => {
+      const store = freshStore()
+      store.getState().applyMove('e2', 'e4')
+      expect(() => store.getState().deleteSubtree('nonexistent')).not.toThrow()
+      expect(store.getState().tree.children).toHaveLength(1)
+    })
+  })
+
+  describe('promoteVariation — Slice 5b (#200)', () => {
+    it('swaps the node with children[0] of its parent', () => {
+      const store = freshStore()
+      store.getState().applyMove('e2', 'e4')
+      store.getState().setCurrentNode('root')
+      store.getState().applyMove('d2', 'd4')
+      // children[0] = e4, children[1] = d4
+      const d4Id = store.getState().tree.children.find(c => c.san === 'd4')!.id
+      store.getState().promoteVariation(d4Id)
+      expect(store.getState().tree.children[0].san).toBe('d4')
+      expect(store.getState().tree.children[1].san).toBe('e4')
+    })
+
+    it('is a no-op when the node is already children[0] of its parent', () => {
+      const store = freshStore()
+      store.getState().applyMove('e2', 'e4')
+      store.getState().setCurrentNode('root')
+      store.getState().applyMove('d2', 'd4')
+      const e4Id = store.getState().tree.children.find(c => c.san === 'e4')!.id
+      store.getState().promoteVariation(e4Id)
+      // e4 was already children[0] — order unchanged
+      expect(store.getState().tree.children[0].san).toBe('e4')
+    })
+
+    it('does not change the number of children after promote', () => {
+      const store = freshStore()
+      store.getState().applyMove('e2', 'e4')
+      store.getState().setCurrentNode('root')
+      store.getState().applyMove('d2', 'd4')
+      store.getState().setCurrentNode('root')
+      store.getState().applyMove('c2', 'c4')
+      expect(store.getState().tree.children).toHaveLength(3)
+      const d4Id = store.getState().tree.children.find(c => c.san === 'd4')!.id
+      store.getState().promoteVariation(d4Id)
+      expect(store.getState().tree.children).toHaveLength(3)
+    })
+
+    it('marks the store dirty after promote', () => {
+      const store = freshStore()
+      store.getState().applyMove('e2', 'e4')
+      store.getState().setCurrentNode('root')
+      store.getState().applyMove('d2', 'd4')
+      const parsed = parsePgn('1. e4 (1. d4)')
+      store.getState().replaceTree(parsed.root!)
+      expect(store.getState().dirty).toBe(false)
+      const d4Id = store.getState().tree.children.find(c => c.san === 'd4')!.id
+      store.getState().promoteVariation(d4Id)
+      expect(store.getState().dirty).toBe(true)
+    })
+
+    it('is a no-op when called with root', () => {
+      const store = freshStore()
+      expect(() => store.getState().promoteVariation('root')).not.toThrow()
+    })
+
+    it('is a no-op when the nodeId does not exist', () => {
+      const store = freshStore()
+      expect(() => store.getState().promoteVariation('nonexistent')).not.toThrow()
+    })
+
+    it('preserves all node data after promote (children arrays intact)', () => {
+      const store = freshStore()
+      store.getState().applyMove('e2', 'e4')
+      store.getState().applyMove('e7', 'e5')  // e4 has a child e5
+      store.getState().setCurrentNode('root')
+      store.getState().applyMove('d2', 'd4')
+      const d4Id = store.getState().tree.children.find(c => c.san === 'd4')!.id
+      store.getState().promoteVariation(d4Id)
+      // d4 is now children[0]; e4 (with its child e5) is children[1]
+      const e4Node = store.getState().tree.children.find(c => c.san === 'e4')!
+      expect(e4Node.children).toHaveLength(1)
+      expect(e4Node.children[0].san).toBe('e5')
+    })
+  })
 })

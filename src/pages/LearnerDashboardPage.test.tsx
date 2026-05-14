@@ -160,19 +160,17 @@ describe('LearnerDashboardPage', () => {
   it('renders Bookmarks(N) and Browse buttons in the action row', async () => {
     renderPage()
     await waitFor(() => {
-      expect(screen.getByTestId('dashboard-bookmarks-btn')).toBeInTheDocument()
+      expect(screen.getByTestId('dashboard-bookmarks-btn').textContent ?? '').toMatch(/23/)
     })
     expect(screen.getByTestId('dashboard-bookmarks-btn')).toHaveAttribute('href', '/practice')
-    expect(screen.getByTestId('dashboard-bookmarks-btn').textContent ?? '').toMatch(/23/)
     expect(screen.getByTestId('dashboard-browse-btn')).toHaveAttribute('href', '/')
   })
 
   it('renders the 4 stat cards with computed values', async () => {
     renderPage()
     await waitFor(() => {
-      expect(screen.getByTestId('stat-streak')).toBeInTheDocument()
+      expect(screen.getByTestId('stat-streak').textContent ?? '').toMatch(/4/)
     })
-    expect(screen.getByTestId('stat-streak').textContent ?? '').toMatch(/4/)
     expect(screen.getByTestId('stat-lessons-week').textContent ?? '').toMatch(/6/)
     expect(screen.getByTestId('stat-bookmarks').textContent ?? '').toMatch(/23/)
     expect(screen.getByTestId('stat-hours').textContent ?? '').toMatch(/12/)
@@ -202,9 +200,8 @@ describe('LearnerDashboardPage', () => {
   it('renders the Practice shortcut card with bookmark count and Start practice CTA', async () => {
     renderPage()
     await waitFor(() => {
-      expect(screen.getByTestId('practice-shortcut')).toBeInTheDocument()
+      expect(screen.getByTestId('practice-shortcut').textContent ?? '').toMatch(/23/)
     })
-    expect(screen.getByTestId('practice-shortcut').textContent ?? '').toMatch(/23/)
     expect(screen.getByTestId('practice-shortcut-cta')).toHaveAttribute('href', '/practice')
   })
 

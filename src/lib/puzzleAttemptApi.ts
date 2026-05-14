@@ -6,6 +6,8 @@ export interface RecordPuzzleAttemptArgs {
   lesson_id: string
   wrong_attempts: number
   duration_seconds: number
+  /** True when the learner clicked "Xem đáp án" — excluded from best-attempt view. */
+  gave_up?: boolean
 }
 
 export interface RecordPuzzleAttemptResult {
@@ -18,11 +20,11 @@ export interface RecordPuzzleAttemptResult {
  */
 export async function recordPuzzleAttempt(
   client: SupabaseClient,
-  { lesson_id, wrong_attempts, duration_seconds }: RecordPuzzleAttemptArgs
+  { lesson_id, wrong_attempts, duration_seconds, gave_up = false }: RecordPuzzleAttemptArgs
 ): Promise<RecordPuzzleAttemptResult> {
   const { data, error } = await client
     .from('puzzle_attempts')
-    .insert({ lesson_id, wrong_attempts, duration_seconds })
+    .insert({ lesson_id, wrong_attempts, duration_seconds, gave_up })
     .select()
     .single()
 
