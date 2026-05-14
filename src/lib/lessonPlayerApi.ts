@@ -148,6 +148,7 @@ export async function getResumeNode(
 
 // ── Lesson completion ─────────────────────────────────────────────────────────
 
+
 export interface MarkLessonCompletedArgs {
   courseId: string
   lessonId: string

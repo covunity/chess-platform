@@ -663,7 +663,7 @@ export default function GuidedChessPlayer({
             </div>
           )}
 
-          {hasPendingMoves && !awaitingOpponent && !mistakeBannerNode && (
+          {hasPendingMoves && !awaitingOpponent && !mistakeBannerNode && !isViewer && (
             <div data-testid="your-turn-prompt" className="guided-player-your-turn">
               <svg className="guided-player-your-turn-icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
                 <path d="M8 1L9.8 6.2H15.5L10.9 9.5L12.7 14.6L8 11.3L3.3 14.6L5.1 9.5L0.5 6.2H6.2L8 1Z" />
