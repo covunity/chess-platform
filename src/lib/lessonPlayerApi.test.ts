@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { getLessonForPlayer, getVideoPlaybackInfo, markLessonCompleted } from './lessonPlayerApi'
+import { getLessonForPlayer, getVideoPlaybackInfo, markLessonCompleted, saveResumeNode, getResumeNode } from './lessonPlayerApi'
 
 describe('getLessonForPlayer', () => {
   beforeEach(() => {
@@ -36,11 +36,61 @@ describe('getLessonForPlayer', () => {
       board_perspective: 'white',
       coach_note: 'Note here',
       description: null,
+      is_view_only: false,
       video_provider: null,
       video_provider_id: null,
       video_status: null,
     })
     expect(result.error).toBeNull()
+  })
+
+  it('returns is_view_only from lesson data', async () => {
+    const single = vi.fn().mockResolvedValue({
+      data: {
+        id: 'l1',
+        title: 'Viewer Lesson',
+        type: 'chess',
+        pgn_data: '1. e4',
+        board_perspective: 'white',
+        coach_note: null,
+        is_view_only: true,
+      },
+      error: null,
+    })
+    const client = {
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single,
+      }),
+    }
+
+    const result = await getLessonForPlayer(client as never, 'l1')
+    expect(result.lesson?.is_view_only).toBe(true)
+  })
+
+  it('defaults is_view_only to false when not present in row', async () => {
+    const single = vi.fn().mockResolvedValue({
+      data: {
+        id: 'l1',
+        title: 'Normal Lesson',
+        type: 'chess',
+        pgn_data: '',
+        board_perspective: 'white',
+        coach_note: null,
+      },
+      error: null,
+    })
+    const client = {
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single,
+      }),
+    }
+
+    const result = await getLessonForPlayer(client as never, 'l1')
+    expect(result.lesson?.is_view_only).toBe(false)
   })
 
   it('returns lesson: null and error when not found', async () => {
@@ -165,5 +215,103 @@ describe('markLessonCompleted', () => {
 
     expect(result.error).not.toBeNull()
     expect(result.error?.message).toMatch(/rls denied/)
+  })
+})
+
+describe('saveResumeNode', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+
+  it('upserts lesson_progress with last_viewed_node_id', async () => {
+    const upsert = vi.fn().mockResolvedValue({ error: null })
+    const client = { from: vi.fn().mockReturnValue({ upsert }) }
+
+    const result = await saveResumeNode(client as never, {
+      lessonId: 'l1',
+      userId: 'u1',
+      nodeId: 'abc123',
+    })
+
+    expect(client.from).toHaveBeenCalledWith('lesson_progress')
+    const payload = upsert.mock.calls[0][0] as Record<string, unknown>
+    expect(payload.lesson_id).toBe('l1')
+    expect(payload.user_id).toBe('u1')
+    expect(payload.last_viewed_node_id).toBe('abc123')
+    expect(result.error).toBeNull()
+  })
+
+  it('returns error when upsert fails', async () => {
+    const upsert = vi.fn().mockResolvedValue({ error: { message: 'rls denied' } })
+    const client = { from: vi.fn().mockReturnValue({ upsert }) }
+
+    const result = await saveResumeNode(client as never, { lessonId: 'l1', userId: 'u1', nodeId: 'n1' })
+    expect(result.error).not.toBeNull()
+  })
+})
+
+describe('getResumeNode', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+
+  it('returns nodeId when last_viewed_node_id is set', async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: { last_viewed_node_id: 'abc123' },
+      error: null,
+    })
+    const client = {
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle,
+      }),
+    }
+
+    const result = await getResumeNode(client as never, { lessonId: 'l1', userId: 'u1' })
+    expect(result.nodeId).toBe('abc123')
+    expect(result.error).toBeNull()
+  })
+
+  it('returns nodeId=null when no row exists', async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null })
+    const client = {
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle,
+      }),
+    }
+
+    const result = await getResumeNode(client as never, { lessonId: 'l1', userId: 'u1' })
+    expect(result.nodeId).toBeNull()
+    expect(result.error).toBeNull()
+  })
+
+  it('returns nodeId=null when last_viewed_node_id is null in the row', async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: { last_viewed_node_id: null },
+      error: null,
+    })
+    const client = {
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle,
+      }),
+    }
+
+    const result = await getResumeNode(client as never, { lessonId: 'l1', userId: 'u1' })
+    expect(result.nodeId).toBeNull()
+  })
+
+  it('returns error when query fails', async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: { message: 'db error' } })
+    const client = {
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle,
+      }),
+    }
+
+    const result = await getResumeNode(client as never, { lessonId: 'l1', userId: 'u1' })
+    expect(result.error).not.toBeNull()
   })
 })

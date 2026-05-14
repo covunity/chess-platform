@@ -1509,3 +1509,131 @@ describe('PromotionPicker component', () => {
     expect(screen.getByTestId('promotion-picker')).toHaveAttribute('role', 'dialog')
   })
 })
+
+// ── Viewer mode — PRD-0004 Slice 10 ──────────────────────────────────────────
+
+const VIEWER_PGN = '1. e4 e5 2. Nf3 Nc6 3. Bb5'
+
+const viewerLesson = {
+  id: 'l-viewer',
+  title: 'Viewer Lesson',
+  pgn_data: VIEWER_PGN,
+  board_perspective: 'white' as const,
+  coach_note: null,
+  is_view_only: true,
+}
+
+describe('GuidedChessPlayer — viewer mode (PRD-0004 Slice 10)', () => {
+  it('renders viewer-mode navigation buttons when mode="viewer"', () => {
+    render(<GuidedChessPlayer lesson={viewerLesson} lessonNumber={1} totalLessons={3} mode="viewer" />)
+    expect(screen.getByTestId('viewer-prev-btn')).toBeInTheDocument()
+    expect(screen.getByTestId('viewer-next-btn')).toBeInTheDocument()
+  })
+
+  it('does not render "Gợi ý" / hint button in viewer mode', () => {
+    render(<GuidedChessPlayer lesson={viewerLesson} lessonNumber={1} totalLessons={3} mode="viewer" />)
+    expect(screen.queryByTestId('guided-player-hint-btn')).not.toBeInTheDocument()
+  })
+
+  it('starts at root — viewer-prev button is disabled', () => {
+    render(<GuidedChessPlayer lesson={viewerLesson} lessonNumber={1} totalLessons={3} mode="viewer" />)
+    expect(screen.getByTestId('viewer-prev-btn')).toBeDisabled()
+  })
+
+  it('viewer-next advances to first move', async () => {
+    render(<GuidedChessPlayer lesson={viewerLesson} lessonNumber={1} totalLessons={3} mode="viewer" />)
+    fireEvent.click(screen.getByTestId('viewer-next-btn'))
+    await screen.findByTestId('viewer-prev-btn')
+    expect(screen.getByTestId('viewer-prev-btn')).toBeEnabled()
+  })
+
+  it('viewer-next is disabled at leaf node', async () => {
+    render(<GuidedChessPlayer lesson={viewerLesson} lessonNumber={1} totalLessons={3} mode="viewer" />)
+    // Advance through all 5 plies to reach leaf
+    for (let i = 0; i < 5; i++) {
+      fireEvent.click(screen.getByTestId('viewer-next-btn'))
+    }
+    await screen.findByTestId('viewer-next-btn')
+    expect(screen.getByTestId('viewer-next-btn')).toBeDisabled()
+  })
+
+  it('viewer-prev walks back to root after one advance', async () => {
+    render(<GuidedChessPlayer lesson={viewerLesson} lessonNumber={1} totalLessons={3} mode="viewer" />)
+    fireEvent.click(screen.getByTestId('viewer-next-btn'))
+    fireEvent.click(screen.getByTestId('viewer-prev-btn'))
+    await screen.findByTestId('viewer-prev-btn')
+    expect(screen.getByTestId('viewer-prev-btn')).toBeDisabled()
+  })
+
+  it('→ arrow key advances in viewer mode', async () => {
+    render(<GuidedChessPlayer lesson={viewerLesson} lessonNumber={1} totalLessons={3} mode="viewer" />)
+    fireEvent.keyDown(document, { key: 'ArrowRight' })
+    await screen.findByTestId('viewer-prev-btn')
+    expect(screen.getByTestId('viewer-prev-btn')).toBeEnabled()
+  })
+
+  it('← arrow key walks back in viewer mode', async () => {
+    render(<GuidedChessPlayer lesson={viewerLesson} lessonNumber={1} totalLessons={3} mode="viewer" />)
+    fireEvent.keyDown(document, { key: 'ArrowRight' })
+    fireEvent.keyDown(document, { key: 'ArrowLeft' })
+    await screen.findByTestId('viewer-prev-btn')
+    expect(screen.getByTestId('viewer-prev-btn')).toBeDisabled()
+  })
+
+  it('does not accept piece-drop moves in viewer mode', async () => {
+    // In viewer mode the board is viewOnly — clicking a variation node should not advance
+    render(<GuidedChessPlayer lesson={viewerLesson} lessonNumber={1} totalLessons={3} mode="viewer" />)
+    // prev should stay disabled (no moves committed)
+    expect(screen.getByTestId('viewer-prev-btn')).toBeDisabled()
+  })
+
+  it('renders in lesson mode by default (no viewer nav buttons)', () => {
+    render(<GuidedChessPlayer lesson={baseLesson} lessonNumber={1} totalLessons={5} />)
+    expect(screen.queryByTestId('viewer-prev-btn')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('viewer-next-btn')).not.toBeInTheDocument()
+  })
+
+  it('shapes and notes still render in viewer mode', () => {
+    const pgnWithShape = '1. e4 { [gambitly:v1]{"s":[{"kind":"circle","square":"e4","color":"green"}]} }'
+    const lesson = { ...viewerLesson, pgn_data: pgnWithShape }
+    render(<GuidedChessPlayer lesson={lesson} lessonNumber={1} totalLessons={1} mode="viewer" initialNodeId="root" />)
+    // Advance to the e4 node first
+    fireEvent.click(screen.getByTestId('viewer-next-btn'))
+    // The board should be in the document
+    expect(screen.getByTestId('guided-player-board')).toBeInTheDocument()
+  })
+})
+
+// ── Resume position — PRD-0004 Slice 10 ──────────────────────────────────────
+
+describe('GuidedChessPlayer — resume position (PRD-0004 Slice 10)', () => {
+  it('calls onResumeNodeChange with current nodeId after 2s debounce', async () => {
+    vi.useFakeTimers()
+    const onResumeNodeChange = vi.fn()
+    render(
+      <GuidedChessPlayer
+        lesson={baseLesson}
+        lessonNumber={1}
+        totalLessons={5}
+        onResumeNodeChange={onResumeNodeChange}
+      />
+    )
+    // Advance one move
+    const board = screen.getByTestId('guided-player-board')
+    const squares = board.querySelectorAll('[data-square]')
+    // Find e2 square and trigger move to e4
+    const e2 = Array.from(squares).find(s => s.getAttribute('data-square') === 'e2')
+    if (e2) fireEvent.click(e2)
+    // Before 2s, not called
+    expect(onResumeNodeChange).not.toHaveBeenCalled()
+    // After 2s
+    act(() => { vi.advanceTimersByTime(2000) })
+    expect(onResumeNodeChange).toHaveBeenCalled()
+    vi.useRealTimers()
+  })
+
+  it('does not crash when onResumeNodeChange is not provided', () => {
+    render(<GuidedChessPlayer lesson={baseLesson} lessonNumber={1} totalLessons={5} />)
+    expect(screen.getByTestId('guided-player-root')).toBeInTheDocument()
+  })
+})

@@ -370,7 +370,8 @@
       "notePanelRootHint": "Select a move to add a note",
       "notePanelPlaceholder": "Enter a note for this move...",
       "richNoteEditorBoldTooltip": "Bold",
-      "richNoteEditorItalicTooltip": "Italic"
+      "richNoteEditorItalicTooltip": "Italic",
+      "isViewOnlyLabel": "View-only lesson (no interaction)"
     },
     "deleteConfirm": {
       "title": "Delete course?",
@@ -792,7 +793,9 @@
     "promotionPieceKnight": "Knight",
     "puzzleYourTurn": "Your turn — find the best move!",
     "puzzleMistakeBanner": "That's not the best move. Try again!",
-    "puzzleCompleteTitle": "Puzzle complete!"
+    "puzzleCompleteTitle": "Puzzle complete!",
+    "viewerNextMove": "Next move",
+    "viewerPrevMove": "Previous move"
   },
   "errors": {
     "chapterLimitReached": "You have reached the chapter limit for your current account tier."

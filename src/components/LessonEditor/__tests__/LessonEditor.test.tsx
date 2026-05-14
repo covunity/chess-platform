@@ -152,6 +152,41 @@ describe("LessonEditor", () => {
     });
   });
 
+  describe("is_view_only toggle (Slice 10)", () => {
+    it("renders a view-only checkbox for chess lessons", () => {
+      renderEditor({ lesson: DEFAULT_LESSON, onSave: vi.fn() });
+      expect(screen.getByTestId("lesson-is-view-only-checkbox")).toBeInTheDocument();
+    });
+
+    it("checkbox is unchecked by default", () => {
+      renderEditor({ lesson: DEFAULT_LESSON, onSave: vi.fn() });
+      expect(screen.getByTestId("lesson-is-view-only-checkbox")).not.toBeChecked();
+    });
+
+    it("checkbox reflects is_view_only=true from lesson data", () => {
+      renderEditor({ lesson: { ...DEFAULT_LESSON, is_view_only: true }, onSave: vi.fn() });
+      expect(screen.getByTestId("lesson-is-view-only-checkbox")).toBeChecked();
+    });
+
+    it("does not render the view-only checkbox for puzzle lessons", () => {
+      renderEditor({ lesson: { ...DEFAULT_LESSON, type: "puzzle" as const }, onSave: vi.fn() });
+      expect(screen.queryByTestId("lesson-is-view-only-checkbox")).not.toBeInTheDocument();
+    });
+
+    it("does not render the view-only checkbox for video lessons", () => {
+      renderEditor({ lesson: { ...DEFAULT_LESSON, type: "video" as const }, onSave: vi.fn() });
+      expect(screen.queryByTestId("lesson-is-view-only-checkbox")).not.toBeInTheDocument();
+    });
+
+    it("toggling the checkbox changes its checked state", async () => {
+      const user = userEvent.setup();
+      renderEditor({ lesson: DEFAULT_LESSON, onSave: vi.fn() });
+      const checkbox = screen.getByTestId("lesson-is-view-only-checkbox");
+      await user.click(checkbox);
+      expect(checkbox).toBeChecked();
+    });
+  });
+
   describe("save", () => {
     it("calls onSave with pgn_data serialized from tree, board_perspective, is_free_preview when Save draft is clicked", async () => {
       const user = userEvent.setup();

@@ -32,6 +32,8 @@ export interface Lesson {
   starting_fen?: string | null;
   /** Puzzle lessons: which side the learner plays. */
   puzzle_player_side?: 'white' | 'black' | null;
+  /** When true the lesson is view-only (no piece interaction) for learners. Chess type only. */
+  is_view_only?: boolean;
 }
 
 export interface LessonEditorProps {
@@ -74,6 +76,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   const [pgn] = useState(lesson.pgn_data);
   const [perspective, setPerspective] = useState<"white" | "black">(lesson.board_perspective);
   const [isFreePreview] = useState(lesson.is_free_preview);
+  const [isViewOnly, setIsViewOnly] = useState(lesson.is_view_only ?? false);
   const [debouncedParseResult, setDebouncedParseResult] = useState<PgnParseResult | null>(null);
   const parseResult = pgn.trim() ? debouncedParseResult : null;
 
@@ -312,6 +315,20 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
                 {perspectiveButton("white", t('creator.lessonEditor.perspectiveWhite'))}
                 {perspectiveButton("black", t('creator.lessonEditor.perspectiveBlack'))}
               </div>
+            </div>
+
+            {/* View-only toggle — chess lessons only */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <input
+                id="lesson-is-view-only"
+                data-testid="lesson-is-view-only-checkbox"
+                type="checkbox"
+                checked={isViewOnly}
+                onChange={(e) => setIsViewOnly(e.target.checked)}
+              />
+              <label htmlFor="lesson-is-view-only" style={{ fontSize: 13, color: "var(--ink-2)", cursor: "pointer" }}>
+                {t('creator.lessonEditor.isViewOnlyLabel')}
+              </label>
             </div>
 
             {/* Board authoring surface — replaces PGN textarea */}

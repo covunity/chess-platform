@@ -611,7 +611,8 @@
       "notePanelRootHint": "Chọn một nước để thêm ghi chú",
       "notePanelPlaceholder": "Nhập ghi chú cho nước này...",
       "richNoteEditorBoldTooltip": "In đậm",
-      "richNoteEditorItalicTooltip": "In nghiêng"
+      "richNoteEditorItalicTooltip": "In nghiêng",
+      "isViewOnlyLabel": "Bài học chỉ xem (không tương tác)"
     },
     "deleteConfirm": {
       "title": "Xóa khóa học?",
@@ -1037,7 +1038,9 @@
     "promotionPieceKnight": "Mã",
     "puzzleYourTurn": "Lượt của bạn — hãy tìm nước đi tốt nhất!",
     "puzzleMistakeBanner": "Nước đó không tốt. Thử lại!",
-    "puzzleCompleteTitle": "Bài tập hoàn thành!"
+    "puzzleCompleteTitle": "Bài tập hoàn thành!",
+    "viewerNextMove": "Nước sau",
+    "viewerPrevMove": "Nước trước"
   },
   "errors": {
     "chapterLimitReached": "Bạn đã đạt giới hạn số chương cho gói tài khoản hiện tại.",

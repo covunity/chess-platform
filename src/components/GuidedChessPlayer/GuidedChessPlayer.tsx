@@ -21,6 +21,8 @@ export interface GuidedLesson {
   puzzle_player_side?: 'white' | 'black' | null
   /** Lesson type — 'puzzle' activates puzzle mode logic. */
   type?: 'chess' | 'video' | 'puzzle'
+  /** When true the lesson renders in viewer mode (no interaction). */
+  is_view_only?: boolean
 }
 
 export interface GuidedChessPlayerProps {
@@ -28,10 +30,12 @@ export interface GuidedChessPlayerProps {
   lessonNumber: number
   totalLessons: number
   initialNodeId?: string
+  /** Controls play mode. Defaults to 'lesson'. */
+  mode?: 'lesson' | 'puzzle' | 'viewer'
   onComplete?: () => void
   onBookmark?: (nodeId: string, currentFen: string, depth: number, totalDepth: number) => void
-  /** 'lesson' = default guided lesson mode; 'puzzle' = puzzle rewind mode. Defaults to 'lesson'. */
-  mode?: 'lesson' | 'puzzle'
+  /** Called (debounced 2 s) when the current node changes — used to persist resume position. */
+  onResumeNodeChange?: (nodeId: string) => void
 }
 
 const MISTAKE_REVERT_MS = 1500
@@ -57,6 +61,7 @@ interface InteractiveBoardProps {
   selectedSquare?: string | null
   validDestinations?: Set<string>
   autoShapes?: DrawShape[]
+  viewOnly?: boolean
   onSquareClick?: (square: string) => void
   onPieceDrop?: (from: string, to: string) => boolean
   onDragStart?: (square: string) => void
@@ -72,6 +77,7 @@ function InteractiveBoard({
   hintSquares,
   selectedSquare,
   autoShapes,
+  viewOnly = false,
   onSquareClick,
   onPieceDrop,
 }: InteractiveBoardProps) {
@@ -96,10 +102,11 @@ function InteractiveBoard({
         hintSquares={hintSquarePair}
         selectedSquare={selectedSquare}
         wrongMoveSquare={wrongMoveSquare}
-        movable={perspective}
+        movable={viewOnly ? null : perspective}
+        viewOnly={viewOnly}
         drawable={{ enabled: false, autoShapes: autoShapes ?? [] }}
-        onSquareSelect={(square) => onSquareClick?.(square)}
-        onMove={(from, to) => onPieceDrop?.(from, to) ?? false}
+        onSquareSelect={viewOnly ? undefined : (square) => onSquareClick?.(square)}
+        onMove={viewOnly ? undefined : (from, to) => onPieceDrop?.(from, to) ?? false}
       />
     </div>
   )
@@ -110,9 +117,10 @@ export default function GuidedChessPlayer({
   lessonNumber,
   totalLessons,
   initialNodeId,
+  mode = 'lesson',
   onComplete,
   onBookmark,
-  mode = 'lesson',
+  onResumeNodeChange,
 }: GuidedChessPlayerProps) {
   const { t } = useTranslation()
   const parsed = useMemo(() => parsePgn(lesson.pgn_data), [lesson.pgn_data])
@@ -145,6 +153,23 @@ export default function GuidedChessPlayer({
   const opponentTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const wrongMoveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const mistakeBannerTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const isViewer = mode === 'viewer'
+
+  // Resume debounce — save currentNodeId 2 s after last change
+  useEffect(() => {
+    if (!onResumeNodeChange) return
+    if (resumeTimer.current) clearTimeout(resumeTimer.current)
+    resumeTimer.current = setTimeout(() => {
+      onResumeNodeChange(currentNodeId)
+      resumeTimer.current = null
+    }, 2000)
+    return () => {
+      if (resumeTimer.current) clearTimeout(resumeTimer.current)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentNodeId])
 
   const learnerColor = lesson.board_perspective
   const learnerSide: 'w' | 'b' = learnerColor === 'white' ? 'w' : 'b'
@@ -208,6 +233,22 @@ export default function GuidedChessPlayer({
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [onBookmark, currentNodeId, currentFen, currentNode, totalPlies])
+
+  // Viewer keyboard navigation (←/→)
+  useEffect(() => {
+    if (!isViewer) return
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'ArrowRight') {
+        const next = currentNode?.children[0]
+        if (next) setCurrentNodeId(next.id)
+      } else if (e.key === 'ArrowLeft') {
+        if (currentNode?.parentId) setCurrentNodeId(currentNode.parentId)
+      }
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isViewer, currentNodeId, currentNode])
 
   // Clear wrong-move and mistake-banner timers on unmount
   useEffect(() => {
@@ -458,12 +499,13 @@ export default function GuidedChessPlayer({
           selectedSquare={selectedSquare}
           validDestinations={validDestinations}
           autoShapes={shapesToDrawShapes(currentNode?.shapes ?? [])}
-          onSquareClick={handleSquareClick}
-          onPieceDrop={handlePieceDrop}
-          onDragStart={setDraggingSquare}
-          canDrag={canDrag}
+          viewOnly={isViewer}
+          onSquareClick={isViewer ? undefined : handleSquareClick}
+          onPieceDrop={isViewer ? undefined : handlePieceDrop}
+          onDragStart={isViewer ? undefined : setDraggingSquare}
+          canDrag={isViewer ? undefined : canDrag}
         />
-        {promotionCandidates.length > 0 && (
+        {!isViewer && promotionCandidates.length > 0 && (
           <PromotionPicker
             offered={promotionCandidates.map(c => c.promotion as PromotionPiece)}
             onPick={(piece) => {
@@ -477,32 +519,70 @@ export default function GuidedChessPlayer({
 
         {/* Action buttons below board */}
         <div className="guided-player-actions">
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            data-testid="guided-player-hint-btn"
-            disabled={awaitingOpponent || upcomingSide !== learnerColor}
-            onClick={() => setHintActive((h) => !h)}
-          >
-            {t('guidedPlayer.hint')}
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            data-testid="guided-player-flip-btn"
-            onClick={() => setViewPerspective((p) => (p === 'white' ? 'black' : 'white'))}
-          >
-            {t('guidedPlayer.flipBoard')}
-          </button>
-          <div className="guided-player-actions-divider" aria-hidden="true" />
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm"
-            data-testid="guided-player-reset-btn"
-            onClick={() => setResetDialogOpen(true)}
-          >
-            {t('guidedPlayer.resetLesson')}
-          </button>
+          {isViewer ? (
+            <>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                data-testid="viewer-prev-btn"
+                disabled={!currentNode?.parentId}
+                onClick={() => {
+                  if (currentNode?.parentId) setCurrentNodeId(currentNode.parentId)
+                }}
+              >
+                {t('guidedPlayer.viewerPrevMove')}
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                data-testid="viewer-next-btn"
+                disabled={atLeaf}
+                onClick={() => {
+                  const next = currentNode?.children[0]
+                  if (next) setCurrentNodeId(next.id)
+                }}
+              >
+                {t('guidedPlayer.viewerNextMove')}
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                data-testid="guided-player-flip-btn"
+                onClick={() => setViewPerspective((p) => (p === 'white' ? 'black' : 'white'))}
+              >
+                {t('guidedPlayer.flipBoard')}
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                data-testid="guided-player-hint-btn"
+                disabled={awaitingOpponent || upcomingSide !== learnerColor}
+                onClick={() => setHintActive((h) => !h)}
+              >
+                {t('guidedPlayer.hint')}
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                data-testid="guided-player-flip-btn"
+                onClick={() => setViewPerspective((p) => (p === 'white' ? 'black' : 'white'))}
+              >
+                {t('guidedPlayer.flipBoard')}
+              </button>
+              <div className="guided-player-actions-divider" aria-hidden="true" />
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                data-testid="guided-player-reset-btn"
+                onClick={() => setResetDialogOpen(true)}
+              >
+                {t('guidedPlayer.resetLesson')}
+              </button>
+            </>
+          )}
         </div>
       </div>
 
