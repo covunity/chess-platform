@@ -6,7 +6,7 @@
  * to build the variation tree; the tree is serialised to pgn_data on save.
  */
 
-import { useSyncExternalStore, useCallback, useState } from 'react'
+import { useSyncExternalStore, useCallback, useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Chess } from 'chess.js'
 import ChessgroundView from '../../ChessBoard/ChessgroundView'
@@ -30,6 +30,25 @@ export interface BoardAuthoringSurfaceProps {
   store: TreeStore
   perspective?: 'white' | 'black'
   size?: number
+}
+
+/** Compute legal destinations for each piece from a FEN (for Chessground dests prop). */
+function computeDests(fen: string): Map<string, string[]> {
+  try {
+    const chess = new Chess(fen)
+    const dests = new Map<string, string[]>()
+    for (const move of chess.moves({ verbose: true })) {
+      const existing = dests.get(move.from)
+      if (existing) {
+        existing.push(move.to)
+      } else {
+        dests.set(move.from, [move.to])
+      }
+    }
+    return dests
+  } catch {
+    return new Map()
+  }
 }
 
 /** Check if a pawn move is a promotion (pawn reaching rank 1 or 8). */
@@ -88,12 +107,17 @@ export default function BoardAuthoringSurface({
   // Current FEN from the currently selected node
   const currentFen = currentNode.fen
 
+  // Legal destinations for the current position — drives Chessground piece drag
+  const dests = useMemo(() => computeDests(currentFen), [currentFen])
+
   // Last move squares
   const lastMove = currentNode.parentId !== null
     ? ([currentNode.from, currentNode.to] as [string, string])
     : null
 
   // ── Move handler ──────────────────────────────────────────────────────────
+
+  const allowVariations = import.meta.env.VITE_ALLOW_VARIATIONS === 'true'
 
   const handleMove = useCallback((from: string, to: string): boolean => {
     const fen = store.getState().tree
@@ -109,9 +133,23 @@ export default function BoardAuthoringSurface({
       setPendingPromotion({ from, to })
       return false
     }
+
+    // Phase 1 flag: block moves that would create a second branch
+    if (!allowVariations) {
+      const node = (() => {
+        const nm = new Map<string, PgnNode>()
+        function w(n: PgnNode) { nm.set(n.id, n); for (const c of n.children) w(c) }
+        w(store.getState().tree)
+        return nm.get(store.getState().currentNodeId)
+      })()
+      const wouldBranch = node && node.children.length > 0 &&
+        !node.children.some((c) => c.from === from && c.to === to)
+      if (wouldBranch) return false
+    }
+
     store.getState().applyMove(from, to)
     return true
-  }, [store])
+  }, [store, allowVariations])
 
   const handlePromotionPick = (piece: PromotionPiece) => {
     if (!pendingPromotion) return
@@ -160,7 +198,7 @@ export default function BoardAuthoringSurface({
         </span>
         <span style={{ fontWeight: isCurrentNode ? 600 : 400 }}>{node.san}</span>
         {depth > 1 && <span style={{ color: 'var(--ink-3)' }}>{' )'}</span>}
-        {hasMultipleResponses && (
+        {allowVariations && hasMultipleResponses && (
           <span
             data-testid="opponent-branch-warning"
             title={`${node.children.length} nhánh phụ`}
@@ -231,6 +269,7 @@ export default function BoardAuthoringSurface({
           size={size}
           lastMove={lastMove}
           movable="both"
+          dests={dests}
           viewOnly={false}
           drawable={{ enabled: true, autoShapes: shapesToDrawShapes(currentNode.shapes) }}
           onMove={handleMove}
@@ -270,7 +309,7 @@ export default function BoardAuthoringSurface({
         />
       )}
 
-      {/* Variation list — only shown when there are moves */}
+      {/* Variation list — navigation + (when enabled) branch display */}
       {hasAnyMoves && (
         <div
           data-testid="variation-list"
