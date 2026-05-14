@@ -121,7 +121,8 @@ published → draft  (Creator withdraws)
 |------|-------------|
 | `video` | MP4 (H.264 + AAC) upload via Supabase Storage in Phase 1. Max 50 MB. Phase 2 will switch to Cloudflare Stream for HLS adaptive — see `docs/adr/0001-video-storage-supabase.md`. |
 | `chess` | PGN guided mode with inline `{ }` annotations and `(...)` variation trees per ADR-0004. |
-| `puzzle` | Bookmark-based review — replays a chess lesson from beginning. |
+| `puzzle` | Puzzle Rewind — interactive puzzle with correct/mistake-branch variations, per-node shapes, rich-text notes; activates `lesson_type='puzzle'`. Learner side set via `puzzle_player_side`. |
+| `practice` | Bookmark-based review — replays a chess lesson from the beginning. Powered by `PracticePage`; no separate lesson type row (uses the bookmarked `chess` lesson). |
 
 ### Order status flow
 
@@ -172,6 +173,11 @@ Platform fee stored per tier in `account_tiers.platform_fee_pct`. The global `co
 | D-18 | Refund handling not in Phase 1. |
 | D-19 | Search uses PostgreSQL `ILIKE`. No Elasticsearch. |
 | D-20 | ToS and Privacy Policy are static pages. |
+| D-21 | Board-direct authoring co-exists with PGN; PGN is hidden behind a per-user `users.editor_advanced` toggle in Profile settings. Default is board-only. |
+| D-22 | Shapes attach to **nodes** in the variation tree, not to board positions; stored and round-tripped via structured PGN comments (`[gambitly:v1]{...}`). |
+| D-23 | Puzzle `purpose='mistake'` variations animate, show a 1 500 ms note banner, then auto-undo — they are **not** counted as wrong attempts for the hint counter. |
+| D-24 | Viewer mode (`is_view_only`) is a per-lesson opt-in for `type='chess'` only; D-12 forward-only still holds for interactive lesson and puzzle modes. |
+| D-25 | Zustand introduced for editor state only (`treeStore`); player, viewer, and puzzle modes remain on local `useState`. |
 
 #### Enterprise account tier decisions (ADR-0002, PRD-0001)
 
@@ -248,12 +254,13 @@ The following are explicitly **deferred to Phase 2**:
 
 ## 8. Chess Board — Critical Implementation Notes
 
-- Use **chess.js** for PGN parsing, move validation, and annotation extraction.
-- Use **chessboard.js** (CDN) for board rendering.
+- Use **chess.js** for move validation and per-node FEN computation by replaying the path from root.
+- Use **Chessground** (npm `chessground`) for board rendering — replaces the old `chessboard.js` CDN import per ADR-0005. Do **not** add any `chessboard.js` CDN tags.
+- Chessground renders shapes natively via `drawable.autoShapes` — no separate SVG overlay needed. Shapes are tied to nodes in the tree, not board positions.
+- Right-click + Shift/Alt/Ctrl on Chessground draws arrows and circles using the standard chess-client vocabulary. Do **not** capture right-click for a context menu on or inside the board element — this will break the shape drawing UX.
 - Wrap all `chess.js` calls in `try/catch`. Invalid PGN → show error to Creator, do not crash.
 - Test with: castling, en passant, promotion, and complex PGN files.
-- Guided mode state machine: forward-only. No “previous move” button.
-- Live board preview in Creator authoring updates as PGN textarea changes.
+- Guided mode state machine: forward-only. No “previous move” button (D-12). Viewer mode (`is_view_only`) is the only backward-navigation surface (←/→ arrows, nav buttons).
 - Variation parsing uses a custom recursive-descent tokenizer (V-17), not `chess.js loadPgn`. `chess.js` is the chess engine for FEN/move validation only.
 
 ---
