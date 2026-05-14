@@ -10,7 +10,7 @@
  * the tree to a new root at that FEN. "Hủy" discards changes and calls onClose.
  */
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Chess } from 'chess.js'
 import { useTranslation } from 'react-i18next'
 import type { TreeStore } from '../treeStore'
@@ -27,23 +27,39 @@ type Side = 'w' | 'b'
 interface PieceDefinition {
   type: PieceType
   side: Side
-  symbol: string
 }
 
 const PIECES: PieceDefinition[] = [
-  { type: 'p', side: 'w', symbol: '♙' },
-  { type: 'n', side: 'w', symbol: '♘' },
-  { type: 'b', side: 'w', symbol: '♗' },
-  { type: 'r', side: 'w', symbol: '♖' },
-  { type: 'q', side: 'w', symbol: '♕' },
-  { type: 'k', side: 'w', symbol: '♔' },
-  { type: 'p', side: 'b', symbol: '♟' },
-  { type: 'n', side: 'b', symbol: '♞' },
-  { type: 'b', side: 'b', symbol: '♝' },
-  { type: 'r', side: 'b', symbol: '♜' },
-  { type: 'q', side: 'b', symbol: '♛' },
-  { type: 'k', side: 'b', symbol: '♚' },
+  { type: 'p', side: 'w' },
+  { type: 'n', side: 'w' },
+  { type: 'b', side: 'w' },
+  { type: 'r', side: 'w' },
+  { type: 'q', side: 'w' },
+  { type: 'k', side: 'w' },
+  { type: 'p', side: 'b' },
+  { type: 'n', side: 'b' },
+  { type: 'b', side: 'b' },
+  { type: 'r', side: 'b' },
+  { type: 'q', side: 'b' },
+  { type: 'k', side: 'b' },
 ]
+
+const PIECE_CLASS: Record<PieceType, string> = {
+  p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king',
+}
+const SIDE_CLASS: Record<Side, string> = { w: 'white', b: 'black' }
+
+/** Renders a piece using the same Chessground Cburnett SVG images as the main board. */
+function CgPieceIcon({ type, side, size }: { type: PieceType; side: Side; size: number }) {
+  return (
+    <div className="cg-wrap" style={{ position: 'relative', width: size, height: size, pointerEvents: 'none' }}>
+      {React.createElement('piece', {
+        className: `${PIECE_CLASS[type]} ${SIDE_CLASS[side]}`,
+        style: { position: 'absolute', width: '100%', height: '100%', top: 0, left: 0 },
+      })}
+    </div>
+  )
+}
 
 // ── FEN validation ────────────────────────────────────────────────────────────
 
@@ -268,14 +284,13 @@ export default function BoardEditor({ store, onClose }: BoardEditorProps) {
               background: isLight ? 'var(--amber-2, #f7f0d8)' : 'var(--amber-9, #b45309)',
               border: 'none',
               cursor: 'pointer',
-              fontSize: 24,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               padding: 0,
             }}
           >
-            {piece && PIECES.find((p) => p.type === piece.type && p.side === piece.side)?.symbol}
+            {piece && <CgPieceIcon type={piece.type} side={piece.side} size={36} />}
           </button>
         )
       }
@@ -398,7 +413,6 @@ export default function BoardEditor({ store, onClose }: BoardEditorProps) {
                 style={{
                   width: 36,
                   height: 36,
-                  fontSize: 22,
                   border: `2px solid ${selectedPiece?.type === p.type && selectedPiece?.side === p.side ? 'var(--accent)' : 'var(--border)'}`,
                   borderRadius: 'var(--r-sm)',
                   background: selectedPiece?.type === p.type && selectedPiece?.side === p.side ? 'var(--surface-3)' : 'var(--surface)',
@@ -409,7 +423,7 @@ export default function BoardEditor({ store, onClose }: BoardEditorProps) {
                   padding: 0,
                 }}
               >
-                {p.symbol}
+                <CgPieceIcon type={p.type} side={p.side} size={28} />
               </button>
             ))}
           </div>
