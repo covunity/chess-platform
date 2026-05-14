@@ -1,0 +1,7 @@
+; PRD-0004 Slice 4 fixture: puzzle with mistake and correct variations
+; Scholar's mate pattern: main line is correct, Ke7 variation is a mistake
+[Event "PRD-0004 Puzzle Fixture"]
+[White "Puzzle"]
+[Black "Learner"]
+
+1. e4 e5 2. Bc4 Nc6 3. Qh5 Nf6 {[gambitly:v1]{"p":"mistake","n":{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Nước sai! Bỏ qua mối đe dọa chiếu hết."}]}]}}} (3... Ke7 {[gambitly:v1]{"p":"mistake","n":{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Vua đi vào trung tâm — cực kỳ nguy hiểm."}]}]}}} 4. Qxf7# {[gambitly:v1]{"p":"correct"}}) 4. Qxf7#

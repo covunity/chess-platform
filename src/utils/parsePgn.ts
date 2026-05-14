@@ -17,6 +17,24 @@ export interface PgnMove {
   moveNumber: number;
 }
 
+/** Shape drawn on the board — attached to a node (PRD-0004 Slice 4). */
+export type Shape =
+  | { kind: "circle"; square: string; color: "green" | "red" | "yellow" | "blue" }
+  | { kind: "arrow"; from: string; to: string; color: "green" | "red" | "yellow" | "blue" };
+
+/** Rich-text document (minimal ProseMirror-shaped JSON). */
+export interface RichTextDoc {
+  type: "doc";
+  content: Array<{
+    type: "paragraph";
+    content?: Array<{
+      type: "text";
+      text: string;
+      marks?: Array<{ type: "bold" | "italic" }>;
+    }>;
+  }>;
+}
+
 /** Tree node representing a single move. root is a virtual sentinel node. */
 export interface PgnNode {
   id: string;
@@ -27,10 +45,15 @@ export interface PgnNode {
   fen: string;
   moveNumber: number;
   side: "w" | "b";
+  /** @deprecated Use node.note instead. Shim: flattens note to plain text. */
   annotation: string | undefined;
   parentId: string | null;
   children: PgnNode[];
   depthFromRoot: number;
+  // ── PRD-0004 Slice 4 fields ────────────────────────────────────────────────
+  note: RichTextDoc | null;
+  shapes: Shape[];
+  purpose: "correct" | "mistake" | null;
 }
 
 export interface PgnParseResult {
@@ -47,7 +70,15 @@ export interface PgnParseResult {
   fen: string;
   annotations: PgnAnnotation[];
   error?: string;
+  // ── PRD-0004 Slice 4 aggregates ───────────────────────────────────────────
+  hasShapes: boolean;
+  mistakeNodes: PgnNode[];
+  /** Non-null when a [FEN "..."] tag pair was present in the PGN. */
+  startingFen: string | null;
 }
+
+/** Maximum PGN characters allowed (V-12). */
+export const MAX_PGN_CHARS = 50000;
 
 // ── Node ID hashing ───────────────────────────────────────────────────────────
 
@@ -116,10 +147,17 @@ function tokenize(pgn: string): Token[] {
       continue;
     }
 
-    // Annotation { text }
+    // Annotation { text } — supports nested braces for [gambitly:v1] JSON payloads
     if (ch === "{") {
-      const end = pgn.indexOf("}", i);
-      if (end === -1) { i++; continue; }
+      let depth = 1;
+      let j = i + 1;
+      while (j < pgn.length && depth > 0) {
+        if (pgn[j] === "{") depth++;
+        else if (pgn[j] === "}") depth--;
+        if (depth > 0) j++;
+        else break;
+      }
+      const end = j; // index of closing '}'
       tokens.push({ type: "ANNOTATION", value: pgn.slice(i + 1, end).trim() });
       i = end + 1;
       continue;
@@ -186,21 +224,76 @@ function tokenize(pgn: string): Token[] {
 
 // ── Tree builder ──────────────────────────────────────────────────────────────
 
-function createRootNode(): PgnNode {
+function createRootNode(startFen: string = START_FEN): PgnNode {
   return {
     id: "root",
     san: "",
     from: "",
     to: "",
     promotion: undefined,
-    fen: START_FEN,
+    fen: startFen,
     moveNumber: 0,
     side: "w",
     annotation: undefined,
     parentId: null,
     children: [],
     depthFromRoot: 0,
+    note: null,
+    shapes: [],
+    purpose: null,
   };
+}
+
+// ── Structured comment parsing ────────────────────────────────────────────────
+
+const GAMBITLY_PREFIX = "[gambitly:v1]";
+
+/** Flatten a RichTextDoc to plain text (for the annotation shim). */
+function flattenNote(note: RichTextDoc): string {
+  return note.content
+    .map((para) => (para.content ?? []).map((span) => span.text).join(""))
+    .join("\n");
+}
+
+/**
+ * Parse a raw annotation string (text inside `{ … }`) into note/shapes/purpose.
+ * Returns { note, shapes, purpose, annotationShim }.
+ */
+function parseAnnotationBody(raw: string): {
+  note: RichTextDoc | null;
+  shapes: Shape[];
+  purpose: "correct" | "mistake" | null;
+  annotationShim: string | undefined;
+} {
+  if (raw.startsWith(GAMBITLY_PREFIX)) {
+    const jsonStr = raw.slice(GAMBITLY_PREFIX.length).trim();
+    try {
+      const payload = JSON.parse(jsonStr) as {
+        n?: RichTextDoc;
+        s?: Shape[];
+        p?: "correct" | "mistake";
+      };
+      const note = payload.n ?? null;
+      const shapes = payload.s ?? [];
+      const purpose = payload.p ?? null;
+      const annotationShim = note ? flattenNote(note) : undefined;
+      return { note, shapes, purpose, annotationShim };
+    } catch {
+      // Malformed structured comment — treat as legacy plain text
+    }
+  }
+
+  // Legacy plain text → wrap in RichTextDoc
+  const note: RichTextDoc = {
+    type: "doc",
+    content: [
+      {
+        type: "paragraph",
+        content: [{ type: "text", text: raw }],
+      },
+    ],
+  };
+  return { note, shapes: [], purpose: null, annotationShim: raw };
 }
 
 interface ParseStats {
@@ -258,7 +351,11 @@ function parseVariation(
 
     if (tok.type === "ANNOTATION") {
       idx.val++;
-      parent.annotation = tok.value;
+      const parsed = parseAnnotationBody(tok.value);
+      parent.note = parsed.note;
+      parent.shapes = parsed.shapes;
+      parent.purpose = parsed.purpose;
+      parent.annotation = parsed.annotationShim;
       continue;
     }
 
@@ -271,7 +368,8 @@ function parseVariation(
         continue;
       }
       const varParent = nodeMap.get(parent.parentId)!;
-      const varFen = varParent.id === "root" ? START_FEN : varParent.fen;
+      // varParent.fen is always set (root node carries rootFen, not START_FEN necessarily)
+      const varFen = varParent.fen;
       const varChess = new Chess(varFen);
       parseVariation(tokens, idx, varParent, varChess, nodeMap, stats);
       continue;
@@ -313,6 +411,9 @@ function parseVariation(
         parentId: parent.id,
         children: [],
         depthFromRoot: depth,
+        note: null,
+        shapes: [],
+        purpose: null,
       };
 
       parent.children.push(node);
@@ -354,6 +455,36 @@ function countAnnotationsInTree(nodeMap: Map<string, PgnNode>): number {
   return count;
 }
 
+// ── Tag extraction helpers ────────────────────────────────────────────────────
+
+/** Extract the value from a [TagName "value"] token, if present. */
+function extractTagValue(tokens: Token[], tagName: string): string | null {
+  for (const tok of tokens) {
+    if (tok.type === "TAG") {
+      const m = tok.value.match(/^\[(\w+)\s+"(.*)"\]$/);
+      if (m && m[1] === tagName) return m[2];
+    }
+  }
+  return null;
+}
+
+// ── Aggregate helpers ─────────────────────────────────────────────────────────
+
+function computeHasShapes(nodeMap: Map<string, PgnNode>): boolean {
+  for (const node of nodeMap.values()) {
+    if (node.shapes.length > 0) return true;
+  }
+  return false;
+}
+
+function computeMistakeNodes(nodeMap: Map<string, PgnNode>): PgnNode[] {
+  const result: PgnNode[] = [];
+  for (const node of nodeMap.values()) {
+    if (node.purpose === "mistake") result.push(node);
+  }
+  return result;
+}
+
 // ── Main export ───────────────────────────────────────────────────────────────
 
 export function parsePgn(pgn: string): PgnParseResult {
@@ -369,6 +500,9 @@ export function parsePgn(pgn: string): PgnParseResult {
     annotationCount: 0,
     fen: "",
     annotations: [],
+    hasShapes: false,
+    mistakeNodes: [],
+    startingFen: null,
   };
 
   if (!pgn || !pgn.trim()) {
@@ -382,13 +516,18 @@ export function parsePgn(pgn: string): PgnParseResult {
     return { ...empty, error: e instanceof Error ? e.message : String(e) };
   }
 
-  const root = createRootNode();
+  // Extract [FEN "..."] tag if present
+  const fenTag = extractTagValue(tokens, "FEN");
+  const startingFen = fenTag ?? null;
+  const rootFen = startingFen ?? START_FEN;
+
+  const root = createRootNode(rootFen);
   const nodeMap = new Map<string, PgnNode>([["root", root]]);
   const stats: ParseStats = { totalNodes: 1, maxDepth: 0 }; // 1 for root
 
   try {
     const idx = { val: 0 };
-    parseVariation(tokens, idx, root, new Chess(), nodeMap, stats);
+    parseVariation(tokens, idx, root, new Chess(rootFen), nodeMap, stats);
   } catch (e) {
     return {
       ...empty,
@@ -405,6 +544,8 @@ export function parsePgn(pgn: string): PgnParseResult {
   const annotations = computeAnnotations(mainLine);
   const annotationCount = countAnnotationsInTree(nodeMap);
   const lastFen = mainLine.length > 0 ? mainLine[mainLine.length - 1].fen : "";
+  const hasShapes = computeHasShapes(nodeMap);
+  const mistakeNodes = computeMistakeNodes(nodeMap);
 
   return {
     valid: true,
@@ -418,5 +559,8 @@ export function parsePgn(pgn: string): PgnParseResult {
     annotationCount,
     fen: lastFen,
     annotations,
+    hasShapes,
+    mistakeNodes,
+    startingFen,
   };
 }

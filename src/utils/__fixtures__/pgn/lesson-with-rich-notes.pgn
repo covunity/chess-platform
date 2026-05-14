@@ -1,0 +1,6 @@
+; PRD-0004 Slice 4 fixture: lesson with rich-text notes (bold + italic marks)
+[Event "PRD-0004 Rich Notes Lesson"]
+[White "Creator"]
+[Black "Learner"]
+
+1. e4 {[gambitly:v1]{"n":{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Nước mở đầu ","marks":[]},{"type":"text","text":"tốt nhất","marks":[{"type":"bold"}]},{"type":"text","text":" theo lý thuyết hiện đại."}]}]}}} e5 2. Nf3 {[gambitly:v1]{"n":{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Phát triển quân "},{"type":"text","text":"đúng nguyên tắc","marks":[{"type":"italic"}]},{"type":"text","text":" — kiểm soát trung tâm."}]}]}}} Nc6 3. Bc4 {[gambitly:v1]{"n":{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Tấn công "},{"type":"text","text":"điểm yếu f7","marks":[{"type":"bold"},{"type":"italic"}]},{"type":"text","text":" — nước cờ của Italian Game."}]}]}}} Bc5

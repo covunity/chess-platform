@@ -1,0 +1,6 @@
+; PRD-0004 Slice 4 fixture: lesson with board shapes (arrows and circles)
+[Event "PRD-0004 Lesson with Shapes"]
+[White "Creator"]
+[Black "Learner"]
+
+1. e4 {[gambitly:v1]{"s":[{"kind":"arrow","from":"e2","to":"e4","color":"green"}],"n":{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Kiểm soát trung tâm với mũi tên xanh lá."}]}]}}} e5 {[gambitly:v1]{"s":[{"kind":"circle","square":"e5","color":"red"}]}} 2. Nf3 {[gambitly:v1]{"s":[{"kind":"arrow","from":"g1","to":"f3","color":"blue"},{"kind":"circle","square":"e5","color":"yellow"}]}} Nc6 3. Bc4 Bc5 4. O-O

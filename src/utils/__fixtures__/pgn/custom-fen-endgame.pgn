@@ -1,0 +1,9 @@
+; PRD-0004 Slice 4 fixture: custom starting FEN (K+Q vs K endgame)
+; Tests that [FEN "..."] tag is parsed and stored in startingFen
+; Position: White K on c6, White Q on a1, Black K on a8
+; Back-rank mate in one
+[Event "PRD-0004 Custom FEN Endgame"]
+[FEN "k7/8/2K5/8/8/8/8/Q7 w - - 0 1"]
+[SetUp "1"]
+
+1. Qa7#
