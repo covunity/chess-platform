@@ -185,6 +185,7 @@
       "orders": "Đơn hàng",
       "users": "Người dùng",
       "creatorApplications": "Đơn đăng ký creator",
+      "creatorFees": "Phí creator",
       "reports": "Báo cáo",
       "settings": "Cài đặt"
     },
@@ -209,6 +210,44 @@
       "cancel": "Hủy",
       "approveError": "Không thể duyệt đơn. Vui lòng thử lại.",
       "rejectError": "Không thể từ chối đơn. Vui lòng thử lại."
+    },
+    "creatorFees": {
+      "pageTitle": "Phí creator",
+      "intro": "Quản lý mức phí nền tảng áp dụng cho từng creator. Mặc định dùng phí theo tier; override để áp riêng cho creator cụ thể (vd. KOL ký hợp đồng đặc biệt).",
+      "searchPlaceholder": "Tìm theo tên hoặc email…",
+      "filterAll": "Tất cả creator",
+      "filterOverridesOnly": "Chỉ creator có override",
+      "colCreator": "Creator",
+      "colTier": "Tier",
+      "colTierFee": "Phí theo tier",
+      "colOverride": "Override",
+      "colEffectiveFee": "Phí thực tế",
+      "colActions": "",
+      "overrideBadge": "Override",
+      "noOverride": "—",
+      "setOverride": "Đặt override",
+      "clearOverride": "Xoá override",
+      "empty": "Không có creator nào phù hợp.",
+      "loadError": "Không thể tải danh sách phí creator.",
+      "modal": {
+        "setHeading": "Đặt override cho {{name}}",
+        "clearHeading": "Xoá override cho {{name}}",
+        "tierFeeNote": "Mức phí theo tier hiện tại: {{pct}}%",
+        "inputLabel": "Phí nền tảng (%)",
+        "inputHint": "Từ 0 đến 100, tối đa 2 chữ số thập phân (vd. 12.5).",
+        "clearConfirm": "Sau khi xoá, creator sẽ áp dụng lại phí theo tier ({{pct}}%). Đơn hàng đã tạo trước đó không thay đổi.",
+        "save": "Lưu override",
+        "confirmClear": "Xoá override",
+        "cancel": "Huỷ",
+        "saving": "Đang lưu…"
+      },
+      "errors": {
+        "required": "Vui lòng nhập % phí.",
+        "numeric": "Giá trị phải là số (vd. 12.5).",
+        "range": "Giá trị phải nằm trong khoảng 0–100.",
+        "saveFailed": "Không thể lưu override. Vui lòng thử lại.",
+        "clearFailed": "Không thể xoá override. Vui lòng thử lại."
+      }
     },
     "applications": {
       "pageTitle": "Đơn đăng ký tài khoản",

@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { key: 'orders', to: '/admin/orders' },
   { key: 'users', to: '/admin/users' },
   { key: 'creatorApplications', to: '/admin/creator-applications' },
+  { key: 'creatorFees', to: '/admin/creators/fees' },
   { key: 'reports', to: '/admin/reports' },
   { key: 'settings', to: '/admin/settings' },
 ] as const
