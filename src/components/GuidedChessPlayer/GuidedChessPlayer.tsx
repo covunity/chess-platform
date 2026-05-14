@@ -13,6 +13,8 @@ export interface GuidedLesson {
   pgn_data: string
   board_perspective: 'white' | 'black'
   coach_note?: string | null
+  /** Custom starting FEN — when set, the board starts from this position (also encoded in pgn_data [FEN "..."] tag). */
+  starting_fen?: string | null
 }
 
 export interface GuidedChessPlayerProps {

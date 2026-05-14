@@ -596,7 +596,11 @@
       "pgnVariationSummary": "({{variations}} nhánh phụ, độ sâu tối đa {{depth}})",
       "variationListHeading": "Cây nước đi",
       "variationListClickHint": "Bấm vào nước đi để xem trước trên bàn cờ",
-      "opponentBranchWarning": "⚠ Đối thủ sẽ chỉ đi {{san}} — các nhánh phụ sẽ không hiển thị cho học viên"
+      "opponentBranchWarning": "⚠ Đối thủ sẽ chỉ đi {{san}} — các nhánh phụ sẽ không hiển thị cho học viên",
+      "startingPositionLabel": "Vị trí bắt đầu",
+      "startingPositionFromFen": "Dán FEN",
+      "startingPositionFromEditor": "Chỉnh bàn cờ",
+      "startingPositionApply": "Áp dụng"
     },
     "deleteConfirm": {
       "title": "Xóa khóa học?",

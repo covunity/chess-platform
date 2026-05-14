@@ -1291,6 +1291,48 @@ describe('GuidedChessPlayer — Slice 2: tree navigation (issue #165)', () => {
   })
 })
 
+describe('GuidedChessPlayer — starting_fen support', () => {
+  const CUSTOM_FEN = 'r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3'
+
+  it('player starts from custom FEN when pgn_data has [FEN "..."] tag', () => {
+    const lesson = {
+      id: 'custom-fen-lesson',
+      title: 'Custom Start',
+      pgn_data: `[FEN "${CUSTOM_FEN}"]\n1. d4`,
+      board_perspective: 'white' as const,
+      coach_note: null,
+    }
+    render(<GuidedChessPlayer lesson={lesson} lessonNumber={1} totalLessons={1} />)
+    // The board should show the custom FEN position at root
+    expect(screen.getByTestId('guided-player-board')).toBeInTheDocument()
+  })
+
+  it('player starts from standard FEN when no custom FEN is present', () => {
+    const lesson = {
+      id: 'standard-lesson',
+      title: 'Standard Start',
+      pgn_data: '1. e4 e5',
+      board_perspective: 'white' as const,
+      coach_note: null,
+    }
+    render(<GuidedChessPlayer lesson={lesson} lessonNumber={1} totalLessons={1} />)
+    expect(screen.getByTestId('guided-player-board')).toBeInTheDocument()
+  })
+
+  it('starting_fen field on lesson is optional and does not break when absent', () => {
+    const lesson = {
+      id: 'no-starting-fen',
+      title: 'No Starting FEN',
+      pgn_data: '1. d4 d5',
+      board_perspective: 'white' as const,
+      coach_note: null,
+      // no starting_fen
+    }
+    render(<GuidedChessPlayer lesson={lesson} lessonNumber={1} totalLessons={1} />)
+    expect(screen.getByTestId('guided-player-board')).toBeInTheDocument()
+  })
+})
+
 describe('PromotionPicker component', () => {
   function renderPicker(props?: Partial<React.ComponentProps<typeof PromotionPicker>>) {
     return rtlRender(

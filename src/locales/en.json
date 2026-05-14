@@ -355,7 +355,11 @@
       "pgnVariationSummary": "({{variations}} variation(s), max depth {{depth}})",
       "variationListHeading": "Move tree",
       "variationListClickHint": "Click a move to preview on the board",
-      "opponentBranchWarning": "⚠ Opponent will only play {{san}} — side variations will not be shown to learners"
+      "opponentBranchWarning": "⚠ Opponent will only play {{san}} — side variations will not be shown to learners",
+      "startingPositionLabel": "Starting position",
+      "startingPositionFromFen": "Paste FEN",
+      "startingPositionFromEditor": "Edit board",
+      "startingPositionApply": "Apply"
     },
     "deleteConfirm": {
       "title": "Delete course?",

@@ -108,6 +108,40 @@ describe('LessonEditor rewire for chess type', () => {
     })
   })
 
+  describe('starting FEN integration', () => {
+    it('loads a lesson with a [FEN "..."] tag in pgn_data and shows moves relative to that position', async () => {
+      // Italian game position after 1. e4 e5 2. Nf3 Nc6 3. Bc4
+      const CUSTOM_FEN = 'r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3'
+      const lessonWithFen = {
+        ...DEFAULT_CHESS_LESSON,
+        pgn_data: `[FEN "${CUSTOM_FEN}"]\n3...Bc5`,
+      }
+      render(<LessonEditor lesson={lessonWithFen} onSave={vi.fn()} />)
+      await waitFor(() => {
+        expect(screen.getByTestId('variation-list')).toBeInTheDocument()
+      })
+      // Should show Bc5 as the move in the variation list
+      expect(screen.getByTestId('variation-list')).toHaveTextContent('Bc5')
+    })
+
+    it('saves a PGN with [FEN "..."] tag when the tree has a custom starting FEN', async () => {
+      const user = userEvent.setup()
+      const onSave = vi.fn()
+      const CUSTOM_FEN = 'r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3'
+      const lessonWithFen = {
+        ...DEFAULT_CHESS_LESSON,
+        pgn_data: `[FEN "${CUSTOM_FEN}"]\n1. d4`,
+      }
+      render(<LessonEditor lesson={lessonWithFen} onSave={onSave} />)
+      await waitFor(() => {
+        expect(screen.getByTestId('variation-list')).toBeInTheDocument()
+      })
+      await user.click(screen.getByRole('button', { name: /lưu nháp/i }))
+      const { pgn_data } = onSave.mock.calls[0][0] as { pgn_data: string }
+      expect(pgn_data).toContain('[FEN "')
+    })
+  })
+
   describe('no regression — video type', () => {
     it('video type lessons still render the video editor (no board authoring surface)', () => {
       render(

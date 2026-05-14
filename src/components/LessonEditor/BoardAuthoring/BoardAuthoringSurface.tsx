@@ -12,6 +12,7 @@ import { Chess } from 'chess.js'
 import ChessgroundView from '../../ChessBoard/ChessgroundView'
 import PromotionPicker from '../../GuidedChessPlayer/PromotionPicker'
 import type { PromotionPiece } from '../../GuidedChessPlayer/PromotionPicker'
+import BoardEditor from '../BoardEditor/BoardEditor'
 import type { TreeStore } from '../treeStore'
 import type { PgnNode } from '../../../utils/parsePgn'
 
@@ -50,8 +51,15 @@ export default function BoardAuthoringSurface({
 
   const { tree, currentNodeId } = state
 
+  // Detect non-standard starting FEN
+  const STANDARD_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+  const hasCustomStartingFen = tree.fen !== STANDARD_FEN
+
   // Promotion state: pending promotion from/to squares
   const [pendingPromotion, setPendingPromotion] = useState<{ from: string; to: string } | null>(null)
+
+  // Board editor open/close state
+  const [boardEditorOpen, setBoardEditorOpen] = useState(false)
 
   // Build nodeMap from tree for O(1) lookup
   function buildNodeMap(root: PgnNode): Map<string, PgnNode> {
@@ -177,6 +185,34 @@ export default function BoardAuthoringSurface({
         gap: 12,
       }}
     >
+      {/* Starting position button */}
+      <div>
+        <button
+          type="button"
+          data-testid="board-authoring-starting-position-btn"
+          onClick={() => setBoardEditorOpen(true)}
+          style={{
+            padding: '5px 12px',
+            fontSize: 12,
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--r-sm)',
+            background: 'var(--surface)',
+            color: 'var(--ink-2)',
+            cursor: 'pointer',
+          }}
+        >
+          {t('creator.lessonEditor.startingPositionLabel', { defaultValue: 'Vị trí bắt đầu' })}
+        </button>
+      </div>
+
+      {/* Board editor — shown when open */}
+      {boardEditorOpen && (
+        <BoardEditor
+          store={store}
+          onClose={() => setBoardEditorOpen(false)}
+        />
+      )}
+
       {/* Board */}
       <div data-testid="board-authoring-board">
         <ChessgroundView
@@ -229,6 +265,22 @@ export default function BoardAuthoringSurface({
             }}
           >
             {t('creator.lessonEditor.variationListHeading')} · {nodeMap.size - 1} nhánh
+            {hasCustomStartingFen && (
+              <span
+                data-testid="variation-list-custom-fen"
+                style={{
+                  marginLeft: 8,
+                  fontFamily: 'var(--font-mono, monospace)',
+                  fontSize: 9,
+                  color: 'var(--ink-3)',
+                  fontWeight: 400,
+                  textTransform: 'none',
+                  letterSpacing: 0,
+                }}
+              >
+                FEN: {tree.fen.slice(0, 30)}…
+              </span>
+            )}
           </div>
           {tree.children.flatMap((child) => renderVariationNode(child, 1))}
         </div>

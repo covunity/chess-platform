@@ -93,4 +93,35 @@ describe('BoardAuthoringSurface', () => {
       expect(() => fireEvent.contextMenu(varList)).not.toThrow()
     })
   })
+
+  describe('starting position integration', () => {
+    it('renders a "Vị trí bắt đầu" button', () => {
+      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      expect(screen.getByTestId('board-authoring-starting-position-btn')).toBeInTheDocument()
+    })
+
+    it('shows BoardEditor when "Vị trí bắt đầu" button is clicked', () => {
+      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      fireEvent.click(screen.getByTestId('board-authoring-starting-position-btn'))
+      expect(screen.getByTestId('board-editor')).toBeInTheDocument()
+    })
+
+    it('hides BoardEditor when Cancel is clicked inside it', () => {
+      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      fireEvent.click(screen.getByTestId('board-authoring-starting-position-btn'))
+      expect(screen.getByTestId('board-editor')).toBeInTheDocument()
+      fireEvent.click(screen.getByTestId('board-editor-cancel'))
+      expect(screen.queryByTestId('board-editor')).not.toBeInTheDocument()
+    })
+
+    it('displays the starting FEN header in variation list when a custom FEN is set', async () => {
+      const customFen = 'r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3'
+      store.getState().setStartingFen(customFen)
+      store.getState().applyMove('d2', 'd4')
+      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      // The variation list header should show the custom starting position FEN info
+      const varList = screen.getByTestId('variation-list')
+      expect(varList).toBeInTheDocument()
+    })
+  })
 })

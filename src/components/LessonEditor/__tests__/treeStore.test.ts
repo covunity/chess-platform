@@ -172,6 +172,40 @@ describe('treeStore', () => {
     })
   })
 
+  describe('setStartingFen', () => {
+    it('updates the tree root fen to the given starting FEN', () => {
+      const store = freshStore()
+      const customFen = 'r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3'
+      store.getState().setStartingFen(customFen)
+      expect(store.getState().tree.fen).toBe(customFen)
+    })
+
+    it('clears existing children when starting FEN changes', () => {
+      const store = freshStore()
+      store.getState().applyMove('e2', 'e4')
+      const customFen = 'r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3'
+      store.getState().setStartingFen(customFen)
+      expect(store.getState().tree.children).toHaveLength(0)
+    })
+
+    it('resets currentNodeId to root when starting FEN changes', () => {
+      const store = freshStore()
+      store.getState().applyMove('e2', 'e4')
+      const e4Id = store.getState().tree.children[0].id
+      store.getState().setCurrentNode(e4Id)
+      const customFen = 'r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3'
+      store.getState().setStartingFen(customFen)
+      expect(store.getState().currentNodeId).toBe('root')
+    })
+
+    it('marks store dirty after setStartingFen', () => {
+      const store = freshStore()
+      const customFen = 'r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3'
+      store.getState().setStartingFen(customFen)
+      expect(store.getState().dirty).toBe(true)
+    })
+  })
+
   describe('placeholder no-op actions', () => {
     it('setShapes is callable without throwing', () => {
       const store = freshStore()

@@ -59,6 +59,8 @@ export interface TreeState {
   applyMove: (from: string, to: string, promotion?: string) => void
   setCurrentNode: (nodeId: string) => void
   replaceTree: (root: PgnNode) => void
+  /** Set a custom starting FEN — resets the tree to a new root at that position. */
+  setStartingFen: (fen: string) => void
 
   // Placeholder actions (wired in later slices)
   setShapes: (nodeId: string, shapes: Shape[]) => void
@@ -158,6 +160,10 @@ export function createTreeStore() {
 
     replaceTree(root: PgnNode) {
       set({ tree: root, currentNodeId: 'root', dirty: false })
+    },
+
+    setStartingFen(fen: string) {
+      set({ tree: createRootNode(fen), currentNodeId: 'root', dirty: true })
     },
 
     // ── Placeholder actions ───────────────────────────────────────────────────

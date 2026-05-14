@@ -27,6 +27,8 @@ export interface Lesson {
   video_filename?: string | null;
   video_size_bytes?: number | null;
   description?: string | null;
+  /** Custom starting FEN for chess/puzzle lessons. When set, the board starts from this position. */
+  starting_fen?: string | null;
 }
 
 export interface LessonEditorProps {
@@ -81,6 +83,9 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
       if (parsed.valid && parsed.root) {
         treeStoreRef.current.getState().replaceTree(parsed.root);
       }
+    } else if (lesson.starting_fen) {
+      // No pgn_data but a custom starting_fen is set — seed the tree from it
+      treeStoreRef.current.getState().setStartingFen(lesson.starting_fen);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lesson.id]);
@@ -114,9 +119,15 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   const handleSave = () => {
     // For chess lessons, serialize the treeStore back to PGN; for others use the pgn state
     const isChessLesson = (activeTab === 'chess');
-    const pgnToSave = isChessLesson
-      ? serializePgn(treeStoreRef.current.getState().tree)
-      : pgn;
+    let pgnToSave = pgn;
+    if (isChessLesson) {
+      const treeState = treeStoreRef.current.getState();
+      const rootFen = treeState.tree.fen;
+      const STANDARD_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+      // Pass startingFen only when it differs from the standard starting position
+      const startingFen = rootFen !== STANDARD_FEN ? rootFen : undefined;
+      pgnToSave = serializePgn(treeState.tree, startingFen);
+    }
     onSave({ pgn_data: pgnToSave, board_perspective: perspective, is_free_preview: isFreePreview, title, description: description || null });
   };
 
