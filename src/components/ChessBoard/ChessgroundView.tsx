@@ -120,7 +120,19 @@ export default function ChessgroundView(props: ChessgroundViewProps) {
   const apiRef = useRef<Api | null>(null)
   const prevFenRef = useRef(props.fen)
 
+  // Track the last non-empty shapes reported by Chessground's onChange.
+  // When left-clicking a piece to move, Chessground fires onChange([]) before the
+  // move completes (via drawable.cancel). We save the shapes here so handleMove
+  // can restore them to the store for the node being left.
+  const prevUserShapesRef = useRef<DrawShape[]>(props.drawable?.autoShapes ?? [])
+  const shapesBeforeMoveRef = useRef<DrawShape[] | null>(null)
+
   const handleMove = (from: string, to: string) => {
+    // Restore shapes cleared by the left-click that initiated this move
+    if (shapesBeforeMoveRef.current !== null) {
+      props.onShapesChange?.(shapesBeforeMoveRef.current)
+      shapesBeforeMoveRef.current = null
+    }
     props.onMove?.(from, to)
   }
 
@@ -129,6 +141,16 @@ export default function ChessgroundView(props: ChessgroundViewProps) {
   }
 
   const handleShapes = (shapes: DrawShape[]) => {
+    if (props.onShapesChange) {
+      if (shapes.length > 0) {
+        prevUserShapesRef.current = shapes
+        shapesBeforeMoveRef.current = null
+      } else if (prevUserShapesRef.current.length > 0) {
+        // Shapes just cleared — save them; handleMove will decide whether to restore
+        shapesBeforeMoveRef.current = prevUserShapesRef.current
+        prevUserShapesRef.current = []
+      }
+    }
     props.onShapesChange?.(shapes)
   }
 
@@ -148,12 +170,17 @@ export default function ChessgroundView(props: ChessgroundViewProps) {
   // When onShapesChange is provided (authoring mode), api.set() must never reset
   // drawable.shapes to [] — Chessground does this whenever drawable is in the config
   // but shapes is omitted. Fix: pass the current user-drawn shapes back explicitly.
-  // On FEN change (node navigation), reinitialise shapes from the stored autoShapes.
+  // On FEN change (node navigation), reinitialise shapes from the stored autoShapes
+  // and reset the shape-tracking refs for the new node.
   useEffect(() => {
     if (!apiRef.current) return
     const config = toConfig(props, handleMove, handleSelect, handleShapes)
     if (props.onShapesChange && config.drawable) {
       const fenChanged = props.fen !== prevFenRef.current
+      if (fenChanged) {
+        prevUserShapesRef.current = props.drawable?.autoShapes ?? []
+        shapesBeforeMoveRef.current = null
+      }
       config.drawable.shapes = fenChanged
         ? (props.drawable?.autoShapes ?? [])        // new node: init from stored shapes
         : apiRef.current.state.drawable.shapes       // same node: preserve user-drawn shapes

@@ -1,13 +1,12 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { RefObject } from "react";
 import { useTranslation } from "react-i18next";
-import ChessBoard from "../ChessBoard/ChessBoard";
 import { parsePgn } from "../../utils/parsePgn";
-import type { PgnParseResult, PgnNode } from "../../utils/parsePgn";
 import { serializePgn } from "../../utils/serializePgn";
 import { createTreeStore } from "./treeStore";
 import BoardAuthoringSurface from "./BoardAuthoring/BoardAuthoringSurface";
 import AdvancedPgnPanel from "./AdvancedPgnPanel/AdvancedPgnPanel";
+import VariationPanel from "./VariationPanel";
 import ImportFromPgnModal from "./AdvancedPgnPanel/ImportFromPgnModal";
 import PuzzleEditorPanel from "./PuzzleEditorPanel";
 import VideoLessonEditor from "./VideoLessonEditor";
@@ -59,8 +58,6 @@ const LESSON_TYPE_ICON: Record<LessonType, string> = {
 
 const LESSON_TAB_VALUES: LessonType[] = ['video', 'chess', 'puzzle'];
 
-const STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-
 function formatDuration(seconds: number | undefined | null): string {
   if (!seconds || seconds <= 0) return "—:—";
   const m = Math.floor(seconds / 60);
@@ -81,9 +78,6 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   const [perspective, setPerspective] = useState<"white" | "black">(lesson.board_perspective);
   const [isFreePreview] = useState(lesson.is_free_preview);
   const [isViewOnly, setIsViewOnly] = useState(lesson.is_view_only ?? false);
-  const [debouncedParseResult, setDebouncedParseResult] = useState<PgnParseResult | null>(null);
-  const parseResult = pgn.trim() ? debouncedParseResult : null;
-
   // Sub-tab for chess lesson: 'board' | 'pgn' (pgn only when editorAdvanced)
   const [chessSubTab, setChessSubTab] = useState<'board' | 'pgn'>('board');
   // Import-from-PGN modal open state
@@ -104,7 +98,6 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lesson.id]);
-  const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<LessonType>(lesson.type ?? 'chess');
   const [puzzlePlayerSide, setPuzzlePlayerSide] = useState<'white' | 'black' | null>(
     lesson.puzzle_player_side ?? null
@@ -119,20 +112,6 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
     video_filename: lesson.video_filename ?? null,
     video_size_bytes: lesson.video_size_bytes ?? null,
   }));
-
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!pgn.trim()) return;
-    debounceRef.current = setTimeout(() => {
-      setDebouncedParseResult(parsePgn(pgn));
-      setHighlightedNodeId(null);
-    }, 250);
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, [pgn]);
 
   const handleSave = () => {
     // For chess lessons, serialize the treeStore back to PGN; for others use the pgn state
@@ -152,55 +131,6 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   useEffect(() => {
     if (saveRef) saveRef.current = handleSave
   });
-
-  // Preview node: highlighted (click in variation list) or last main-line node
-  const previewNode = useMemo<PgnNode | null>(() => {
-    if (!parseResult?.valid) return null;
-    if (highlightedNodeId) return parseResult.nodeMap.get(highlightedNodeId) ?? null;
-    return parseResult.mainLine.length > 0
-      ? parseResult.mainLine[parseResult.mainLine.length - 1]
-      : null;
-  }, [parseResult, highlightedNodeId]);
-
-  function sqToRowCol(sq: string): [number, number] {
-    const col = sq.charCodeAt(0) - 97;
-    const row = 8 - parseInt(sq[1], 10);
-    return [row, col];
-  }
-
-  const currentFen = previewNode?.fen ?? STARTING_FEN;
-  const lastMoveInfo = previewNode;
-
-  const lastMove = lastMoveInfo
-    ? { from: sqToRowCol(lastMoveInfo.from), to: sqToRowCol(lastMoveInfo.to) }
-    : undefined;
-
-  const currentAnnotation = lastMoveInfo?.annotation ?? null;
-
-  const moveCount = parseResult?.moveCount ?? 0;
-  const totalMoveNumber = previewNode?.depthFromRoot ?? 0;
-
-  const perspectiveButton = (val: "white" | "black", label: string) => (
-    <button
-      type="button"
-      role="button"
-      aria-pressed={perspective === val}
-      onClick={() => setPerspective(val)}
-      style={{
-        flex: 1,
-        height: 36,
-        border: `1px solid var(--border)`,
-        borderRadius: "var(--r-sm)",
-        background: perspective === val ? "var(--ink-1)" : "var(--surface)",
-        color: perspective === val ? "var(--ink-on-accent)" : "var(--ink-1)",
-        fontWeight: 500,
-        fontSize: 13,
-        cursor: "pointer",
-      }}
-    >
-      {label}
-    </button>
-  );
 
   return (
     <div
@@ -274,7 +204,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
       )}
 
       {/* Center: Editor form */}
-      <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16, overflowY: "auto" }}>
+      <div style={{ padding: "12px 16px 16px", display: "flex", flexDirection: "column", gap: 10, overflowY: "auto" }}>
         {/* Lesson type tabs */}
         <div style={{ display: "flex", gap: 6 }}>
           {LESSON_TAB_VALUES.map((value) => (
@@ -302,40 +232,65 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
 
         {activeTab === "chess" ? (
           <>
-            {/* Lesson title */}
-            <div>
-              <label className="label" htmlFor="lesson-title">
-                {t('creator.lessonEditor.lessonTitle')}
-              </label>
+            {/* Compact metadata bar: title + perspective toggle + view-only in one row */}
+            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
               <input
                 id="lesson-title"
                 className="input"
                 type="text"
+                style={{ flex: 1, height: 34 }}
+                placeholder={t('creator.lessonEditor.lessonTitle')}
                 aria-label={t('creator.lessonEditor.lessonTitle')}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
               />
-            </div>
-
-            {/* Perspective */}
-            <div>
-              <span className="label">{t('creator.lessonEditor.boardPerspective')}</span>
-              <div style={{ display: "flex", gap: 8 }}>
-                {perspectiveButton("white", t('creator.lessonEditor.perspectiveWhite'))}
-                {perspectiveButton("black", t('creator.lessonEditor.perspectiveBlack'))}
-              </div>
-            </div>
-
-            {/* View-only toggle — chess lessons only */}
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <input
-                id="lesson-is-view-only"
-                data-testid="lesson-is-view-only-checkbox"
-                type="checkbox"
-                checked={isViewOnly}
-                onChange={(e) => setIsViewOnly(e.target.checked)}
-              />
-              <label htmlFor="lesson-is-view-only" style={{ fontSize: 13, color: "var(--ink-2)", cursor: "pointer" }}>
+              {/* Perspective segmented control */}
+              {(["white", "black"] as const).map((val, i) => (
+                <button
+                  key={val}
+                  type="button"
+                  aria-pressed={perspective === val}
+                  onClick={() => setPerspective(val)}
+                  style={{
+                    height: 34,
+                    padding: "0 10px",
+                    border: "1px solid var(--border)",
+                    borderRadius: i === 0 ? "var(--r-sm) 0 0 var(--r-sm)" : "0 var(--r-sm) var(--r-sm) 0",
+                    marginLeft: i === 1 ? -1 : 0,
+                    background: perspective === val ? "var(--ink-1)" : "var(--surface)",
+                    color: perspective === val ? "var(--ink-on-accent)" : "var(--ink-1)",
+                    fontWeight: 500,
+                    fontSize: 12.5,
+                    cursor: "pointer",
+                    position: "relative" as const,
+                    zIndex: perspective === val ? 1 : 0,
+                    flexShrink: 0,
+                  }}
+                >
+                  {val === "white" ? t('creator.lessonEditor.perspectiveWhite') : t('creator.lessonEditor.perspectiveBlack')}
+                </button>
+              ))}
+              {/* View-only toggle */}
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  fontSize: 12.5,
+                  color: "var(--ink-2)",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                  whiteSpace: "nowrap" as const,
+                  paddingLeft: 4,
+                }}
+              >
+                <input
+                  data-testid="lesson-is-view-only-checkbox"
+                  type="checkbox"
+                  checked={isViewOnly}
+                  onChange={(e) => setIsViewOnly(e.target.checked)}
+                  style={{ cursor: "pointer" }}
+                />
                 {t('creator.lessonEditor.isViewOnlyLabel')}
               </label>
             </div>
@@ -410,7 +365,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
               <BoardAuthoringSurface
                 store={treeStoreRef.current}
                 perspective={perspective}
-                size={340}
+                size={460}
               />
             )}
 
@@ -468,19 +423,43 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
           </>
         ) : activeTab === "puzzle" ? (
           <>
-            {/* Lesson title */}
-            <div>
-              <label className="label" htmlFor="lesson-title">
-                {t('creator.lessonEditor.lessonTitle')}
-              </label>
+            {/* Compact metadata bar: title + perspective */}
+            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
               <input
                 id="lesson-title"
                 className="input"
                 type="text"
+                style={{ flex: 1, height: 34 }}
+                placeholder={t('creator.lessonEditor.lessonTitle')}
                 aria-label={t('creator.lessonEditor.lessonTitle')}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
               />
+              {(["white", "black"] as const).map((val, i) => (
+                <button
+                  key={val}
+                  type="button"
+                  aria-pressed={perspective === val}
+                  onClick={() => setPerspective(val)}
+                  style={{
+                    height: 34,
+                    padding: "0 10px",
+                    border: "1px solid var(--border)",
+                    borderRadius: i === 0 ? "var(--r-sm) 0 0 var(--r-sm)" : "0 var(--r-sm) var(--r-sm) 0",
+                    marginLeft: i === 1 ? -1 : 0,
+                    background: perspective === val ? "var(--ink-1)" : "var(--surface)",
+                    color: perspective === val ? "var(--ink-on-accent)" : "var(--ink-1)",
+                    fontWeight: 500,
+                    fontSize: 12.5,
+                    cursor: "pointer",
+                    position: "relative" as const,
+                    zIndex: perspective === val ? 1 : 0,
+                    flexShrink: 0,
+                  }}
+                >
+                  {val === "white" ? t('creator.lessonEditor.perspectiveWhite') : t('creator.lessonEditor.perspectiveBlack')}
+                </button>
+              ))}
             </div>
 
             <PuzzleEditorPanel
@@ -488,7 +467,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
               playerSide={puzzlePlayerSide}
               onPlayerSideChange={(side) => setPuzzlePlayerSide(side)}
               perspective={perspective}
-              size={340}
+              size={460}
             />
           </>
         ) : null}
@@ -517,151 +496,104 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
         )}
       </div>
 
-      {/* Right: Live preview pane */}
+      {/* Right: Variation & Notes panel (chess/puzzle) or video preview */}
       <div
         data-testid="lesson-preview-pane"
         style={{
           background: "var(--surface-2)",
-          padding: 24,
+          borderLeft: "1px solid var(--border)",
           display: "flex",
           flexDirection: "column",
-          gap: 16,
-          borderLeft: "1px solid var(--border)",
-          overflowY: "auto",
+          overflow: "hidden",
         }}
       >
-        {/* Header row */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-1)" }}>
-            {t('creator.lessonEditor.previewHeading')}
-          </span>
-          {activeTab === "video" ? (
-            <span
-              style={{
-                fontSize: 12,
-                color: "var(--ink-3)",
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                borderRadius: 99,
-                padding: "2px 10px",
-                fontFamily: "var(--font-mono)",
-              }}
-            >
-              {t('creator.lessonEditor.previewRuntime', { duration: formatDuration(videoLesson.duration_seconds) })}
-            </span>
-          ) : parseResult?.valid && moveCount > 0 ? (
-            <span
-              style={{
-                fontSize: 12,
-                color: "var(--ink-3)",
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                borderRadius: 99,
-                padding: "2px 10px",
-              }}
-            >
-              {t('creator.lessonEditor.previewMoveCounter', { current: totalMoveNumber, total: moveCount })}
-            </span>
-          ) : null}
-        </div>
-
         {activeTab === "video" ? (
-          /* Video mock player frame */
+          /* Video preview */
           <div
-            data-testid="video-preview-frame"
             style={{
-              position: "relative",
-              width: "100%",
-              aspectRatio: "16 / 9",
-              borderRadius: "var(--r-md)",
-              overflow: "hidden",
-              background: videoLesson.video_status === "ready" ? "#0F1114" : "var(--surface-3)",
-              border: "1px solid var(--border)",
+              padding: 24,
               display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              flexDirection: "column",
+              gap: 16,
+              overflowY: "auto",
+              height: "100%",
             }}
           >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 10, fontWeight: 600, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                {t('creator.lessonEditor.previewHeading')}
+              </span>
+              <span
+                style={{
+                  fontSize: 11,
+                  color: "var(--ink-3)",
+                  background: "var(--surface)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 99,
+                  padding: "1px 8px",
+                  fontFamily: "var(--font-mono)",
+                }}
+              >
+                {t('creator.lessonEditor.previewRuntime', { duration: formatDuration(videoLesson.duration_seconds) })}
+              </span>
+            </div>
             <div
+              data-testid="video-preview-frame"
               style={{
-                width: 56,
-                height: 56,
-                borderRadius: "50%",
-                background:
-                  videoLesson.video_status === "ready"
-                    ? "rgba(255,255,255,0.95)"
-                    : "var(--surface-2)",
-                color: "var(--ink-1)",
+                position: "relative",
+                width: "100%",
+                aspectRatio: "16 / 9",
+                borderRadius: "var(--r-md)",
+                overflow: "hidden",
+                background: videoLesson.video_status === "ready" ? "#0F1114" : "var(--surface-3)",
+                border: "1px solid var(--border)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: 20,
-                opacity: videoLesson.video_status === "ready" ? 1 : 0.6,
               }}
-              aria-hidden
             >
-              ▶
-            </div>
-            {videoLesson.video_status !== "ready" && (
               <div
                 style={{
-                  position: "absolute",
-                  bottom: 12,
-                  left: 12,
-                  right: 12,
-                  fontSize: 12,
-                  color: "var(--ink-3)",
-                  textAlign: "center",
+                  width: 56,
+                  height: 56,
+                  borderRadius: "50%",
+                  background: videoLesson.video_status === "ready" ? "rgba(255,255,255,0.95)" : "var(--surface-2)",
+                  color: "var(--ink-1)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 20,
+                  opacity: videoLesson.video_status === "ready" ? 1 : 0.6,
                 }}
+                aria-hidden
               >
-                {videoLesson.video_status === "uploading"
-                  ? t('creator.lessonEditor.videoUploading')
-                  : videoLesson.video_status === "processing"
-                    ? t('creator.lessonEditor.videoProcessing')
-                    : t('creator.lessonEditor.videoEmpty')}
+                ▶
               </div>
-            )}
-          </div>
-        ) : (
-          <>
-            {/* Chess board */}
-            <div style={{ display: "flex", justifyContent: "center" }}>
-              <ChessBoard
-                fen={currentFen}
-                perspective={perspective}
-                lastMove={lastMove}
-                size={300}
-              />
-            </div>
-
-            {/* Annotation card */}
-            {currentAnnotation && lastMoveInfo && (
-              <div
-                style={{
-                  background: "var(--surface)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "var(--r-md)",
-                  padding: 12,
-                }}
-              >
+              {videoLesson.video_status !== "ready" && (
                 <div
                   style={{
-                    fontFamily: "monospace",
-                    fontSize: 11.5,
+                    position: "absolute",
+                    bottom: 12,
+                    left: 12,
+                    right: 12,
+                    fontSize: 12,
                     color: "var(--ink-3)",
-                    marginBottom: 4,
+                    textAlign: "center",
                   }}
                 >
-                  {lastMoveInfo.moveNumber}. {lastMoveInfo.san}
+                  {videoLesson.video_status === "uploading"
+                    ? t('creator.lessonEditor.videoUploading')
+                    : videoLesson.video_status === "processing"
+                      ? t('creator.lessonEditor.videoProcessing')
+                      : t('creator.lessonEditor.videoEmpty')}
                 </div>
-                <div style={{ fontSize: 12, color: "var(--ink-2)", lineHeight: 1.5 }}>
-                  {currentAnnotation}
-                </div>
-              </div>
-            )}
-          </>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* Chess / Puzzle: Variation list + Note panel */
+          <VariationPanel store={treeStoreRef.current} />
         )}
-
       </div>
     </div>
   );

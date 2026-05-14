@@ -13,9 +13,8 @@ import ChessgroundView from '../../ChessBoard/ChessgroundView'
 import PromotionPicker from '../../GuidedChessPlayer/PromotionPicker'
 import type { PromotionPiece } from '../../GuidedChessPlayer/PromotionPicker'
 import BoardEditor from '../BoardEditor/BoardEditor'
-import RichNoteEditor from '../../RichNoteEditor/RichNoteEditor'
 import type { TreeStore } from '../treeStore'
-import type { PgnNode, Shape, RichTextDoc } from '../../../utils/parsePgn'
+import type { PgnNode, Shape } from '../../../utils/parsePgn'
 import type { DrawShape } from 'chessground/draw'
 
 function shapesToDrawShapes(shapes: Shape[]): DrawShape[] {
@@ -79,10 +78,6 @@ export default function BoardAuthoringSurface({
   )
 
   const { tree, currentNodeId } = state
-
-  // Detect non-standard starting FEN
-  const STANDARD_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
-  const hasCustomStartingFen = tree.fen !== STANDARD_FEN
 
   // Promotion state: pending promotion from/to squares
   const [pendingPromotion, setPendingPromotion] = useState<{ from: string; to: string } | null>(null)
@@ -155,73 +150,6 @@ export default function BoardAuthoringSurface({
     if (!pendingPromotion) return
     store.getState().applyMove(pendingPromotion.from, pendingPromotion.to, piece)
     setPendingPromotion(null)
-  }
-
-  // ── Variation list rendering ──────────────────────────────────────────────
-
-  const hasAnyMoves = tree.children.length > 0
-
-  function renderVariationNode(node: PgnNode, depth: number): React.ReactNode[] {
-    const rows: React.ReactNode[] = []
-    const isCurrentNode = node.id === currentNodeId
-    const hasMultipleResponses = node.children.length > 1
-
-    rows.push(
-      <div
-        key={node.id}
-        data-testid={`variation-node-${node.id}`}
-        role="button"
-        tabIndex={0}
-        onClick={() => store.getState().setCurrentNode(node.id)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            store.getState().setCurrentNode(node.id)
-          }
-        }}
-        style={{
-          paddingLeft: depth * 16 + 8,
-          paddingTop: 3,
-          paddingBottom: 3,
-          cursor: 'pointer',
-          fontSize: 12.5,
-          background: isCurrentNode ? 'var(--surface-3)' : 'transparent',
-          color: depth === 1 ? 'var(--ink-1)' : 'var(--ink-2)',
-          borderRadius: 'var(--r-sm)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 4,
-        }}
-      >
-        {depth > 1 && <span style={{ color: 'var(--ink-3)' }}>{'( '}</span>}
-        <span style={{ color: 'var(--ink-3)', minWidth: 28, fontSize: 11 }}>
-          {node.moveNumber}{node.side === 'w' ? '.' : '...'}
-        </span>
-        <span style={{ fontWeight: isCurrentNode ? 600 : 400 }}>{node.san}</span>
-        {depth > 1 && <span style={{ color: 'var(--ink-3)' }}>{' )'}</span>}
-        {allowVariations && hasMultipleResponses && (
-          <span
-            data-testid="opponent-branch-warning"
-            title={`${node.children.length} nhánh phụ`}
-            style={{
-              marginLeft: 'auto',
-              fontSize: 10,
-              color: 'var(--amber-9, #b45309)',
-              background: 'var(--amber-2, #fef3c7)',
-              borderRadius: 'var(--r-sm)',
-              padding: '1px 5px',
-            }}
-          >
-            +{node.children.length - 1} nhánh
-          </span>
-        )}
-      </div>
-    )
-
-    for (const child of node.children) {
-      rows.push(...renderVariationNode(child, depth + 1))
-    }
-
-    return rows
   }
 
   return (
@@ -309,121 +237,6 @@ export default function BoardAuthoringSurface({
         />
       )}
 
-      {/* Variation list — navigation + (when enabled) branch display */}
-      {hasAnyMoves && (
-        <div
-          data-testid="variation-list"
-          style={{
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--r-sm)',
-            padding: '8px 0',
-            maxHeight: 240,
-            overflowY: 'auto',
-            background: 'var(--surface)',
-          }}
-        >
-          <div
-            data-testid="variation-summary"
-            style={{
-              fontSize: 10,
-              fontWeight: 600,
-              color: 'var(--ink-3)',
-              textTransform: 'uppercase' as const,
-              letterSpacing: '0.1em',
-              padding: '0 8px 6px',
-              borderBottom: '1px solid var(--border)',
-              marginBottom: 4,
-            }}
-          >
-            {t('creator.lessonEditor.variationListHeading')} · {nodeMap.size - 1} nhánh
-            {hasCustomStartingFen && (
-              <span
-                data-testid="variation-list-custom-fen"
-                style={{
-                  marginLeft: 8,
-                  fontFamily: 'var(--font-mono, monospace)',
-                  fontSize: 9,
-                  color: 'var(--ink-3)',
-                  fontWeight: 400,
-                  textTransform: 'none',
-                  letterSpacing: 0,
-                }}
-              >
-                FEN: {tree.fen.slice(0, 30)}…
-              </span>
-            )}
-          </div>
-          {tree.children.flatMap((child) => renderVariationNode(child, 1))}
-        </div>
-      )}
-
-      {/* Note panel — below variation list, bound to currentNodeId */}
-      {(() => {
-        const isRoot = currentNodeId === 'root'
-        const currentNote = isRoot ? null : (currentNode.note ?? null)
-
-        /** Returns true if the doc has no actual text content (empty paragraph). */
-        function isEmptyDoc(doc: RichTextDoc): boolean {
-          for (const para of doc.content) {
-            for (const span of para.content ?? []) {
-              if (span.text && span.text.length > 0) return false
-            }
-          }
-          return true
-        }
-
-        const handleNoteChange = (doc: RichTextDoc) => {
-          if (!isRoot) {
-            store.getState().setNote(currentNodeId, isEmptyDoc(doc) ? null : doc)
-          }
-        }
-
-        return (
-          <div
-            data-testid="note-panel"
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 4,
-            }}
-          >
-            <div
-              style={{
-                fontSize: 11,
-                fontWeight: 600,
-                color: 'var(--ink-3)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-              }}
-            >
-              {t('creator.lessonEditor.notePanelLabel', { defaultValue: 'Ghi chú' })}
-            </div>
-            {isRoot && (
-              <div
-                style={{
-                  fontSize: 12,
-                  color: 'var(--ink-3)',
-                  fontStyle: 'italic',
-                  padding: '6px 0',
-                }}
-              >
-                {t('creator.lessonEditor.notePanelRootHint', {
-                  defaultValue: 'Chọn một nước để thêm ghi chú',
-                })}
-              </div>
-            )}
-            <RichNoteEditor
-              key={currentNodeId}
-              value={currentNote}
-              onChange={handleNoteChange}
-              disabled={isRoot}
-              placeholder={t('creator.lessonEditor.notePanelPlaceholder', {
-                defaultValue: 'Nhập ghi chú cho nước này...',
-              })}
-            />
-          </div>
-        )
-      })()}
     </div>
   )
 }
