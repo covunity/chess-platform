@@ -221,6 +221,13 @@ Platform fee stored per tier in `account_tiers.platform_fee_pct`. The global `co
 | V-17 | PGN-to-tree parser is a **custom recursive-descent tokenizer** tracking `(...)` depth — not `chess.js loadPgn` (which discards parenthesised content). `chess.js` is used only for per-node FEN computation by replaying the path from root. |
 | V-18 | Leaf-completion fires regardless of which side is to move at the leaf. UI omits “your turn” prompt at a leaf. |
 
+#### Board authoring + puzzle rewind decisions (PRD-0004 — in flight)
+
+PRD-0004 design decisions (D-21 through D-25) land with slice 12 (issue #199). Architectural decisions are recorded ahead of code:
+
+- **ADR-0005** — Migrate board library from `react-chessboard` to `chessground` for native arrow/marker support and the chess-standard right-click + Shift/Alt/Ctrl drawing vocabulary.
+- **ADR-0006** — Introduce Zustand for editor state only (`treeStore`); player + viewer + puzzle modes stay on local `useState`.
+
 ---
 
 ## 7. Phase 1 Constraints — Do NOT scope-creep these
