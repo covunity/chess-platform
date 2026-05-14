@@ -5,6 +5,7 @@ import { I18nextProvider } from 'react-i18next'
 import i18n from '../../../i18n'
 import GuidedChessPlayer from '../GuidedChessPlayer'
 import PromotionPicker from '../PromotionPicker'
+import { parsePgn } from '../../../utils/parsePgn'
 
 vi.mock('chessground')
 
@@ -1288,6 +1289,42 @@ describe('GuidedChessPlayer — Slice 2: tree navigation (issue #165)', () => {
       fireEvent.click(screen.getByTestId('promotion-piece-q'))
       expect(onComplete).toHaveBeenCalledTimes(1)
     })
+  })
+})
+
+describe('GuidedChessPlayer — node shapes (PRD-0004 Slice 8)', () => {
+  it('board shows data-autoshape on squares with shapes from the current node', () => {
+    // PGN with a structured comment carrying a circle shape on e4 (comment after the move)
+    const PGN_WITH_SHAPES = '1. e4 { [gambitly:v1]{"s":[{"kind":"circle","square":"e4","color":"green"}]} }'
+    const lesson = {
+      id: 'shapes-lesson',
+      title: 'Shape test',
+      pgn_data: PGN_WITH_SHAPES,
+      board_perspective: 'white' as const,
+      coach_note: null,
+    }
+    // Parse to find the e4 node id so we can start there
+    const parsed = parsePgn(PGN_WITH_SHAPES)
+    const e4Node = parsed.root!.children[0]
+
+    render(
+      <GuidedChessPlayer lesson={lesson} lessonNumber={1} totalLessons={1} initialNodeId={e4Node.id} />
+    )
+    const board = screen.getByTestId('guided-player-board')
+    expect(board.querySelector('[data-square="e4"][data-autoshape="true"]')).toBeInTheDocument()
+  })
+
+  it('board shows no data-autoshape when current node has no shapes', () => {
+    const lesson = {
+      id: 'no-shapes-lesson',
+      title: 'No shapes',
+      pgn_data: '1. e4 e5',
+      board_perspective: 'white' as const,
+      coach_note: null,
+    }
+    render(<GuidedChessPlayer lesson={lesson} lessonNumber={1} totalLessons={1} />)
+    const board = screen.getByTestId('guided-player-board')
+    expect(board.querySelector('[data-autoshape="true"]')).not.toBeInTheDocument()
   })
 })
 

@@ -3,6 +3,14 @@ import { Chessground } from 'chessground'
 import type { Api } from 'chessground/api'
 import type { Config } from 'chessground/config'
 import type { Key, Dests } from 'chessground/types'
+import type { DrawShape } from 'chessground/draw'
+
+export type { DrawShape }
+
+export interface DrawableConfig {
+  enabled?: boolean
+  autoShapes?: DrawShape[]
+}
 
 export interface ChessgroundViewProps {
   fen: string
@@ -23,6 +31,10 @@ export interface ChessgroundViewProps {
   movable?: 'white' | 'black' | 'both' | null
   /** Valid destinations map for drag/click validation */
   dests?: Map<string, string[]>
+  /** Drawable config: { enabled, autoShapes } */
+  drawable?: DrawableConfig
+  /** Called when user draws/removes shapes (editor mode) */
+  onShapesChange?: (shapes: DrawShape[]) => void
   onMove?: (from: string, to: string) => boolean
   onSquareSelect?: (square: string) => void
   size?: number
@@ -58,12 +70,18 @@ function buildDests(props: ChessgroundViewProps): Dests | undefined {
   return undefined
 }
 
-function toConfig(props: ChessgroundViewProps, onMove: (from: string, to: string) => void, onSelect: (sq: string) => void): Config {
+function toConfig(
+  props: ChessgroundViewProps,
+  onMove: (from: string, to: string) => void,
+  onSelect: (sq: string) => void,
+  onShapes: (shapes: DrawShape[]) => void,
+): Config {
   const squareClasses = buildSquareClasses(props)
   const color = props.orientation ?? 'white'
   const movableColor: 'white' | 'black' | 'both' | undefined =
     props.viewOnly ? undefined :
     props.movable ?? undefined
+  const drawableEnabled = props.drawable?.enabled ?? false
 
   return {
     fen: props.fen,
@@ -88,6 +106,12 @@ function toConfig(props: ChessgroundViewProps, onMove: (from: string, to: string
       select: (key) => onSelect(key),
     },
     draggable: { enabled: !props.viewOnly },
+    drawable: {
+      enabled: drawableEnabled,
+      visible: true,
+      autoShapes: props.drawable?.autoShapes ?? [],
+      onChange: drawableEnabled ? onShapes : undefined,
+    },
   }
 }
 
@@ -103,10 +127,14 @@ export default function ChessgroundView(props: ChessgroundViewProps) {
     props.onSquareSelect?.(sq)
   }
 
+  const handleShapes = (shapes: DrawShape[]) => {
+    props.onShapesChange?.(shapes)
+  }
+
   // Mount chessground
   useEffect(() => {
     if (!containerRef.current) return
-    const config = toConfig(props, handleMove, handleSelect)
+    const config = toConfig(props, handleMove, handleSelect, handleShapes)
     apiRef.current = Chessground(containerRef.current, config)
     return () => {
       apiRef.current?.destroy()
@@ -118,7 +146,7 @@ export default function ChessgroundView(props: ChessgroundViewProps) {
   // Sync config on every render
   useEffect(() => {
     if (!apiRef.current) return
-    apiRef.current.set(toConfig(props, handleMove, handleSelect))
+    apiRef.current.set(toConfig(props, handleMove, handleSelect, handleShapes))
   })
 
   return (

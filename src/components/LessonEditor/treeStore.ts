@@ -168,8 +168,13 @@ export function createTreeStore() {
 
     // ── Placeholder actions ───────────────────────────────────────────────────
 
-    setShapes(_nodeId: string, _shapes: Shape[]) {
-      // No-op placeholder — wired in slice 8 (#195)
+    setShapes(nodeId: string, shapes: Shape[]) {
+      const state = get()
+      const nodeMap = buildNodeMap(state.tree)
+      const node = nodeMap.get(nodeId)
+      if (!node) return
+      node.shapes = shapes
+      set({ tree: { ...state.tree }, dirty: true })
     },
 
     setNote(_nodeId: string, _note: RichTextDoc | null) {

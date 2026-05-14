@@ -206,6 +206,50 @@ describe('treeStore', () => {
     })
   })
 
+  describe('setShapes', () => {
+    it('persists shapes on the specified node', () => {
+      const store = freshStore()
+      store.getState().applyMove('e2', 'e4')
+      const e4Id = store.getState().tree.children[0].id
+      const shapes = [{ kind: 'circle' as const, square: 'e4', color: 'green' as const }]
+      store.getState().setShapes(e4Id, shapes)
+      expect(store.getState().tree.children[0].shapes).toEqual(shapes)
+    })
+
+    it('marks store dirty after setShapes', () => {
+      const store = freshStore()
+      store.getState().applyMove('e2', 'e4')
+      const e4Id = store.getState().tree.children[0].id
+      const parsed = parsePgn('1. e4')
+      store.getState().replaceTree(parsed.root!)
+      expect(store.getState().dirty).toBe(false)
+      store.getState().setShapes(e4Id, [{ kind: 'circle', square: 'e4', color: 'red' }])
+      expect(store.getState().dirty).toBe(true)
+    })
+
+    it('replaces shapes on a node when called again', () => {
+      const store = freshStore()
+      store.getState().applyMove('e2', 'e4')
+      const e4Id = store.getState().tree.children[0].id
+      store.getState().setShapes(e4Id, [{ kind: 'circle', square: 'e4', color: 'green' }])
+      store.getState().setShapes(e4Id, [{ kind: 'arrow', from: 'e4', to: 'e5', color: 'red' }])
+      expect(store.getState().tree.children[0].shapes).toHaveLength(1)
+      expect(store.getState().tree.children[0].shapes[0]).toMatchObject({ kind: 'arrow', color: 'red' })
+    })
+
+    it('round-trips shapes through serializePgn + parsePgn', () => {
+      const store = freshStore()
+      store.getState().applyMove('e2', 'e4')
+      const e4Id = store.getState().tree.children[0].id
+      const shapes = [{ kind: 'arrow' as const, from: 'e2', to: 'e4', color: 'green' as const }]
+      store.getState().setShapes(e4Id, shapes)
+      const pgn = serializePgn(store.getState().tree)
+      const parsed = parsePgn(pgn)
+      const e4Node = parsed.root!.children[0]
+      expect(e4Node.shapes).toEqual(shapes)
+    })
+  })
+
   describe('placeholder no-op actions', () => {
     it('setShapes is callable without throwing', () => {
       const store = freshStore()

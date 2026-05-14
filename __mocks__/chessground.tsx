@@ -39,6 +39,20 @@ const CLASS_TO_ATTR: Record<string, string> = {
   'wrong-move': 'data-wrong-move',
 }
 
+interface MockDrawShape {
+  orig: string
+  dest?: string
+  brush?: string
+}
+
+interface MockDrawable {
+  enabled?: boolean
+  visible?: boolean
+  autoShapes?: MockDrawShape[]
+  shapes?: MockDrawShape[]
+  onChange?: (shapes: MockDrawShape[]) => void
+}
+
 interface MockConfig {
   fen?: string
   orientation?: 'white' | 'black'
@@ -54,6 +68,7 @@ interface MockConfig {
       after?: (orig: string, dest: string) => void
     }
   }
+  drawable?: MockDrawable
   [key: string]: unknown
 }
 
@@ -69,6 +84,14 @@ function render(el: HTMLElement, config: MockConfig) {
   const ranks: number[] = orientation === 'white'
     ? [8, 7, 6, 5, 4, 3, 2, 1]
     : [1, 2, 3, 4, 5, 6, 7, 8]
+
+  // Build set of squares with autoShapes for quick lookup
+  const autoShapeOrigins = new Set<string>()
+  const autoShapeDests = new Set<string>()
+  for (const s of config.drawable?.autoShapes ?? []) {
+    autoShapeOrigins.add(s.orig)
+    if (s.dest) autoShapeDests.add(s.dest)
+  }
 
   // Remove previous children
   while (el.firstChild) el.removeChild(el.firstChild)
@@ -86,6 +109,10 @@ function render(el: HTMLElement, config: MockConfig) {
         const attr = CLASS_TO_ATTR[cls]
         if (attr) div.setAttribute(attr, 'true')
       }
+
+      // Mark squares that have autoShapes (circles on orig, arrows from orig to dest)
+      if (autoShapeOrigins.has(square)) div.setAttribute('data-autoshape', 'true')
+      if (autoShapeDests.has(square)) div.setAttribute('data-autoshape-dest', 'true')
 
       div.textContent = piece ? (PIECE_UNICODE[piece] ?? '') : ''
 
@@ -115,6 +142,9 @@ export function Chessground(element: HTMLElement, config?: MockConfig) {
       }
       if (newConfig.movable !== undefined) {
         currentConfig.movable = newConfig.movable
+      }
+      if (newConfig.drawable !== undefined) {
+        currentConfig.drawable = { ...currentConfig.drawable, ...newConfig.drawable }
       }
       render(element, currentConfig)
     },

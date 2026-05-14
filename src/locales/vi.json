@@ -600,7 +600,8 @@
       "startingPositionLabel": "Vị trí bắt đầu",
       "startingPositionFromFen": "Dán FEN",
       "startingPositionFromEditor": "Chỉnh bàn cờ",
-      "startingPositionApply": "Áp dụng"
+      "startingPositionApply": "Áp dụng",
+      "shapeToolbarHint": "Chuột phải: vòng tròn · Kéo chuột phải: mũi tên · Shift/Alt/Ctrl đổi màu"
     },
     "deleteConfirm": {
       "title": "Xóa khóa học?",

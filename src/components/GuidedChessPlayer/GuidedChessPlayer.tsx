@@ -3,9 +3,10 @@ import { useTranslation } from 'react-i18next'
 import { Chess } from 'chess.js'
 import ChessgroundView from '../ChessBoard/ChessgroundView'
 import { parsePgn } from '../../utils/parsePgn'
-import type { PgnNode } from '../../utils/parsePgn'
+import type { PgnNode, Shape } from '../../utils/parsePgn'
 import PromotionPicker from './PromotionPicker'
 import type { PromotionPiece } from './PromotionPicker'
+import type { DrawShape } from 'chessground/draw'
 
 export interface GuidedLesson {
   id: string
@@ -29,6 +30,14 @@ export interface GuidedChessPlayerProps {
 const STARTING_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 const OPPONENT_DELAY_MS = 600
 
+function shapesToDrawShapes(shapes: Shape[]): DrawShape[] {
+  return shapes.map((s) =>
+    s.kind === 'arrow'
+      ? { orig: s.from as import('chessground/types').Key, dest: s.to as import('chessground/types').Key, brush: s.color }
+      : { orig: s.square as import('chessground/types').Key, brush: s.color }
+  )
+}
+
 interface InteractiveBoardProps {
   fen: string
   perspective: 'white' | 'black'
@@ -38,6 +47,7 @@ interface InteractiveBoardProps {
   hintSquares?: { from: string; to: string } | null
   selectedSquare?: string | null
   validDestinations?: Set<string>
+  autoShapes?: DrawShape[]
   onSquareClick?: (square: string) => void
   onPieceDrop?: (from: string, to: string) => boolean
   onDragStart?: (square: string) => void
@@ -52,6 +62,7 @@ function InteractiveBoard({
   wrongMoveSquare,
   hintSquares,
   selectedSquare,
+  autoShapes,
   onSquareClick,
   onPieceDrop,
 }: InteractiveBoardProps) {
@@ -77,6 +88,7 @@ function InteractiveBoard({
         selectedSquare={selectedSquare}
         wrongMoveSquare={wrongMoveSquare}
         movable={perspective}
+        drawable={{ enabled: false, autoShapes: autoShapes ?? [] }}
         onSquareSelect={(square) => onSquareClick?.(square)}
         onMove={(from, to) => onPieceDrop?.(from, to) ?? false}
       />
@@ -361,6 +373,7 @@ export default function GuidedChessPlayer({
           hintSquares={hintSquares}
           selectedSquare={selectedSquare}
           validDestinations={validDestinations}
+          autoShapes={shapesToDrawShapes(currentNode?.shapes ?? [])}
           onSquareClick={handleSquareClick}
           onPieceDrop={handlePieceDrop}
           onDragStart={setDraggingSquare}

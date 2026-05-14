@@ -14,7 +14,16 @@ import PromotionPicker from '../../GuidedChessPlayer/PromotionPicker'
 import type { PromotionPiece } from '../../GuidedChessPlayer/PromotionPicker'
 import BoardEditor from '../BoardEditor/BoardEditor'
 import type { TreeStore } from '../treeStore'
-import type { PgnNode } from '../../../utils/parsePgn'
+import type { PgnNode, Shape } from '../../../utils/parsePgn'
+import type { DrawShape } from 'chessground/draw'
+
+function shapesToDrawShapes(shapes: Shape[]): DrawShape[] {
+  return shapes.map((s) =>
+    s.kind === 'arrow'
+      ? { orig: s.from as DrawShape['orig'], dest: s.to as DrawShape['orig'], brush: s.color }
+      : { orig: s.square as DrawShape['orig'], brush: s.color }
+  )
+}
 
 export interface BoardAuthoringSurfaceProps {
   store: TreeStore
@@ -222,11 +231,33 @@ export default function BoardAuthoringSurface({
           lastMove={lastMove}
           movable="both"
           viewOnly={false}
+          drawable={{ enabled: true, autoShapes: shapesToDrawShapes(currentNode.shapes) }}
           onMove={handleMove}
+          onShapesChange={(cgShapes) => {
+            const shapes = cgShapes.map((s) =>
+              s.dest
+                ? { kind: 'arrow' as const, from: s.orig, to: s.dest, color: (s.brush ?? 'green') as 'green' | 'red' | 'yellow' | 'blue' }
+                : { kind: 'circle' as const, square: s.orig, color: (s.brush ?? 'green') as 'green' | 'red' | 'yellow' | 'blue' }
+            )
+            store.getState().setShapes(currentNodeId, shapes)
+          }}
           ariaLabel={t('creator.lessonEditor.boardAuthoringAriaLabel', {
             defaultValue: 'Chess board — edit mode',
           })}
         />
+      </div>
+
+      {/* Shape toolbar hint */}
+      <div
+        data-testid="shape-toolbar-hint"
+        style={{
+          fontSize: 11,
+          color: 'var(--ink-3)',
+          textAlign: 'center' as const,
+          padding: '2px 0',
+        }}
+      >
+        {t('creator.lessonEditor.shapeToolbarHint')}
       </div>
 
       {/* Promotion picker dialog */}

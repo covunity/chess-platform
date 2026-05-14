@@ -84,6 +84,19 @@ describe('BoardAuthoringSurface', () => {
     })
   })
 
+  describe('shape toolbar hint', () => {
+    it('renders the shape toolbar hint row', () => {
+      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      expect(screen.getByTestId('shape-toolbar-hint')).toBeInTheDocument()
+    })
+
+    it('shape toolbar hint contains expected text about right-click drawing', () => {
+      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      const hint = screen.getByTestId('shape-toolbar-hint')
+      expect(hint.textContent).toMatch(/Chuột phải/)
+    })
+  })
+
   describe('right-click on variation list rows', () => {
     it('does not crash on right-click (no context menu in this slice)', () => {
       store.getState().applyMove('e2', 'e4')
