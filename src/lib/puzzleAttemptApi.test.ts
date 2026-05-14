@@ -24,6 +24,7 @@ describe('recordPuzzleAttempt', () => {
       lesson_id: 'lesson-1',
       wrong_attempts: 3,
       duration_seconds: 45,
+      gave_up: false,
     })
     expect(result.error).toBeNull()
   })

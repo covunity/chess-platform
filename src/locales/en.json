@@ -807,6 +807,10 @@
     "puzzleYourTurn": "Your turn — find the best move!",
     "puzzleMistakeBanner": "That's not the best move. Try again!",
     "puzzleCompleteTitle": "Puzzle complete!",
+    "puzzleHintLevel1": "Hint: starting square highlighted",
+    "puzzleHintLevel2": "Hint: arrow shows the move direction",
+    "puzzleShowAnswer": "Show answer",
+    "puzzleGaveUpComplete": "You viewed the answer — this won't count as your personal best",
     "viewerNextMove": "Next move",
     "viewerPrevMove": "Previous move"
   },
