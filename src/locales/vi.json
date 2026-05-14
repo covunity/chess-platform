@@ -589,7 +589,12 @@
       "previewHeading": "Xem trước",
       "previewMoveCounter": "Nước {{current}} / {{total}}",
       "previewRuntime": "{{duration}} thời lượng",
-      "puzzleComingSoon": "Trình soạn bài tập sắp ra mắt",
+      "puzzlePlayerSideLabel": "Người chơi",
+      "puzzlePurposeNone": "Không có",
+      "puzzlePurposeCorrect": "Đúng",
+      "puzzlePurposeMistake": "Sai",
+      "mistakeMissingNoteWarning": "Nước đi sai cần có ghi chú giải thích.",
+      "puzzleMissingPlayerSide": "Bài tập cần chọn màu quân cho người chơi.",
       "videoUploading": "Đang tải video lên…",
       "videoProcessing": "Đang xử lý video…",
       "videoEmpty": "Chưa có video",
@@ -1029,7 +1034,10 @@
     "promotionPieceQueen": "Hậu",
     "promotionPieceRook": "Xe",
     "promotionPieceBishop": "Tượng",
-    "promotionPieceKnight": "Mã"
+    "promotionPieceKnight": "Mã",
+    "puzzleYourTurn": "Lượt của bạn — hãy tìm nước đi tốt nhất!",
+    "puzzleMistakeBanner": "Nước đó không tốt. Thử lại!",
+    "puzzleCompleteTitle": "Bài tập hoàn thành!"
   },
   "errors": {
     "chapterLimitReached": "Bạn đã đạt giới hạn số chương cho gói tài khoản hiện tại.",

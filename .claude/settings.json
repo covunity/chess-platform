@@ -1,4 +1,10 @@
 {
+  "permissions": {
+    "allow": [
+      "Edit(.claude/loop-state.json)",
+      "Write(.claude/loop-state.json)"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {

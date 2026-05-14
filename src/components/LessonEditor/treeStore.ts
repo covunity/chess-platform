@@ -186,8 +186,13 @@ export function createTreeStore() {
       set({ tree: { ...state.tree }, dirty: true })
     },
 
-    setPurpose(_nodeId: string, _purpose: 'correct' | 'mistake' | null) {
-      // No-op placeholder — wired in slice 9a (#196)
+    setPurpose(nodeId: string, purpose: 'correct' | 'mistake' | null) {
+      const state = get()
+      const nodeMap = buildNodeMap(state.tree)
+      const node = nodeMap.get(nodeId)
+      if (!node) return
+      node.purpose = purpose
+      set({ tree: { ...state.tree }, dirty: true })
     },
 
     deleteSubtree(_nodeId: string) {

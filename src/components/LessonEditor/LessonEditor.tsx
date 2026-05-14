@@ -7,6 +7,7 @@ import type { PgnParseResult, PgnNode } from "../../utils/parsePgn";
 import { serializePgn } from "../../utils/serializePgn";
 import { createTreeStore } from "./treeStore";
 import BoardAuthoringSurface from "./BoardAuthoring/BoardAuthoringSurface";
+import PuzzleEditorPanel from "./PuzzleEditorPanel";
 import VideoLessonEditor from "./VideoLessonEditor";
 import type { VideoStatus } from "../../lib/creatorApi";
 import type { VideoProviderName } from "../../lib/video/types";
@@ -29,6 +30,8 @@ export interface Lesson {
   description?: string | null;
   /** Custom starting FEN for chess/puzzle lessons. When set, the board starts from this position. */
   starting_fen?: string | null;
+  /** Puzzle lessons: which side the learner plays. */
+  puzzle_player_side?: 'white' | 'black' | null;
 }
 
 export interface LessonEditorProps {
@@ -48,7 +51,7 @@ const LESSON_TYPE_ICON: Record<LessonType, string> = {
   puzzle: '📋',
 };
 
-const LESSON_TAB_VALUES: LessonType[] = ['video', 'chess'];
+const LESSON_TAB_VALUES: LessonType[] = ['video', 'chess', 'puzzle'];
 
 const STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
@@ -91,6 +94,9 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   }, [lesson.id]);
   const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<LessonType>(lesson.type ?? 'chess');
+  const [puzzlePlayerSide, setPuzzlePlayerSide] = useState<'white' | 'black' | null>(
+    lesson.puzzle_player_side ?? null
+  );
   const [videoLesson, setVideoLesson] = useState(() => ({
     id: lesson.id,
     is_free_preview: lesson.is_free_preview,
@@ -352,24 +358,32 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
               onLessonChange={(patch) => setVideoLesson((prev) => ({ ...prev, ...patch }))}
             />
           </>
-        ) : (
-          <div
-            data-testid={`lesson-type-placeholder-${activeTab}`}
-            style={{
-              flex: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "var(--ink-3)",
-              fontSize: 13,
-              border: "1px dashed var(--border)",
-              borderRadius: "var(--r-sm)",
-              padding: 32,
-            }}
-          >
-            {t('creator.lessonEditor.puzzleComingSoon')}
-          </div>
-        )}
+        ) : activeTab === "puzzle" ? (
+          <>
+            {/* Lesson title */}
+            <div>
+              <label className="label" htmlFor="lesson-title">
+                {t('creator.lessonEditor.lessonTitle')}
+              </label>
+              <input
+                id="lesson-title"
+                className="input"
+                type="text"
+                aria-label={t('creator.lessonEditor.lessonTitle')}
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </div>
+
+            <PuzzleEditorPanel
+              store={treeStoreRef.current}
+              playerSide={puzzlePlayerSide}
+              onPlayerSideChange={(side) => setPuzzlePlayerSide(side)}
+              perspective={perspective}
+              size={340}
+            />
+          </>
+        ) : null}
 
         {/* Action buttons — shown when parent does not supply a saveRef */}
         {!saveRef && (

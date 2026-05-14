@@ -17,6 +17,10 @@ export interface GuidedLesson {
   coach_note?: string | null
   /** Custom starting FEN — when set, the board starts from this position (also encoded in pgn_data [FEN "..."] tag). */
   starting_fen?: string | null
+  /** Puzzle mode: which side the learner plays. */
+  puzzle_player_side?: 'white' | 'black' | null
+  /** Lesson type — 'puzzle' activates puzzle mode logic. */
+  type?: 'chess' | 'video' | 'puzzle'
 }
 
 export interface GuidedChessPlayerProps {
@@ -26,7 +30,11 @@ export interface GuidedChessPlayerProps {
   initialNodeId?: string
   onComplete?: () => void
   onBookmark?: (nodeId: string, currentFen: string, depth: number, totalDepth: number) => void
+  /** 'lesson' = default guided lesson mode; 'puzzle' = puzzle rewind mode. Defaults to 'lesson'. */
+  mode?: 'lesson' | 'puzzle'
 }
+
+const MISTAKE_REVERT_MS = 1500
 
 const STARTING_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 const OPPONENT_DELAY_MS = 600
@@ -104,10 +112,13 @@ export default function GuidedChessPlayer({
   initialNodeId,
   onComplete,
   onBookmark,
+  mode = 'lesson',
 }: GuidedChessPlayerProps) {
   const { t } = useTranslation()
   const parsed = useMemo(() => parsePgn(lesson.pgn_data), [lesson.pgn_data])
   const totalPlies = parsed.mainLine.length
+
+  const isPuzzleMode = mode === 'puzzle'
 
   const [currentNodeId, setCurrentNodeId] = useState<string>(initialNodeId ?? 'root')
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null)
@@ -120,6 +131,10 @@ export default function GuidedChessPlayer({
   const [helperVisible, setHelperVisible] = useState(
     () => localStorage.getItem('guidedPlayer.helperHidden') !== 'true'
   )
+  // Puzzle mode: mistake banner state
+  const [mistakeBannerNode, setMistakeBannerNode] = useState<PgnNode | null>(null)
+  // Puzzle mode: wrong attempts per node
+  const wrongAttemptsAt = useRef<Record<string, number>>({})
 
   function dismissHelper() {
     setHelperVisible(false)
@@ -129,6 +144,7 @@ export default function GuidedChessPlayer({
   const completedFiredRef = useRef(false)
   const opponentTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const wrongMoveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const mistakeBannerTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const learnerColor = lesson.board_perspective
   const learnerSide: 'w' | 'b' = learnerColor === 'white' ? 'w' : 'b'
@@ -163,6 +179,8 @@ export default function GuidedChessPlayer({
 
   // onComplete when leaf reached
   useEffect(() => {
+    // In puzzle mode with mistake banner active, don't fire complete on the mistake leaf
+    if (isPuzzleMode && mistakeBannerNode) return
     // Fire onComplete when at a non-root leaf
     if (atLeaf && currentNode && currentNode.parentId !== null && !completedFiredRef.current) {
       completedFiredRef.current = true
@@ -172,7 +190,7 @@ export default function GuidedChessPlayer({
       completedFiredRef.current = false
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [atLeaf, currentNodeId])
+  }, [atLeaf, currentNodeId, mistakeBannerNode])
 
   // Keyboard bookmark
   useEffect(() => {
@@ -191,15 +209,18 @@ export default function GuidedChessPlayer({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [onBookmark, currentNodeId, currentFen, currentNode, totalPlies])
 
-  // Clear wrong-move timer on unmount
+  // Clear wrong-move and mistake-banner timers on unmount
   useEffect(() => {
     return () => {
       if (wrongMoveTimer.current) clearTimeout(wrongMoveTimer.current)
+      if (mistakeBannerTimer.current) clearTimeout(mistakeBannerTimer.current)
     }
   }, [])
 
   // Opponent auto-play
   useEffect(() => {
+    // In puzzle mode with an active mistake banner, skip auto-play until banner clears
+    if (isPuzzleMode && mistakeBannerNode) return
     if (!awaitingOpponent || !currentNode) return
     const next = currentNode.children[0]
     opponentTimer.current = setTimeout(() => {
@@ -213,16 +234,71 @@ export default function GuidedChessPlayer({
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [awaitingOpponent, currentNodeId])
+  }, [awaitingOpponent, currentNodeId, mistakeBannerNode])
 
   function commitNode(next: PgnNode) {
     setCurrentNodeId(next.id)
   }
 
+  /**
+   * Puzzle mode: handle a move attempt.
+   * Returns true if the move was accepted, false otherwise.
+   */
+  function handlePuzzleMove(from: string, to: string): boolean {
+    const candidates = (currentNode?.children ?? []).filter(c => c.from === from && c.to === to)
+
+    if (candidates.length === 0) {
+      // No match at all — snap-back + red square + increment wrongAttempts
+      const nodeId = currentNodeId
+      wrongAttemptsAt.current[nodeId] = (wrongAttemptsAt.current[nodeId] ?? 0) + 1
+      setWrongMoveSquare(from)
+      if (wrongMoveTimer.current) clearTimeout(wrongMoveTimer.current)
+      wrongMoveTimer.current = setTimeout(() => {
+        setWrongMoveSquare(null)
+        wrongMoveTimer.current = null
+      }, 1000)
+      return false
+    }
+
+    // Check if it's a mistake candidate
+    const mistakeCandidate = candidates.find(c => c.purpose === 'mistake')
+    if (mistakeCandidate && candidates.length === 1) {
+      // Show banner with note text for MISTAKE_REVERT_MS, then revert
+      // Do NOT increment wrongAttemptsAt, do NOT mark wrong-move square
+      setMistakeBannerNode(mistakeCandidate)
+      // Temporarily advance to show the move
+      setCurrentNodeId(mistakeCandidate.id)
+      if (mistakeBannerTimer.current) clearTimeout(mistakeBannerTimer.current)
+      const parentId = currentNodeId
+      mistakeBannerTimer.current = setTimeout(() => {
+        mistakeBannerTimer.current = null
+        setMistakeBannerNode(null)
+        // Revert to parent
+        setCurrentNodeId(parentId)
+      }, MISTAKE_REVERT_MS)
+      return true
+    }
+
+    // Accepted: main line OR purpose='correct' candidate
+    if (candidates.length === 1) {
+      commitNode(candidates[0])
+      return true
+    }
+
+    // Multiple candidates (e.g. promotions) — show picker
+    setPromotionCandidates(candidates)
+    return false
+  }
+
   function handlePieceDrop(from: string, to: string): boolean {
     if (atLeaf || awaitingOpponent) return false
+    if (mistakeBannerNode) return false
     setSelectedSquare(null)
     setDraggingSquare(null)
+
+    if (isPuzzleMode) {
+      return handlePuzzleMove(from, to)
+    }
 
     const candidates = (currentNode?.children ?? []).filter(c => c.from === from && c.to === to)
 
@@ -245,6 +321,7 @@ export default function GuidedChessPlayer({
 
   function canDrag(square: string): boolean {
     if (atLeaf || awaitingOpponent) return false
+    if (mistakeBannerNode) return false
     return (currentNode?.children ?? []).some(c => c.from === square)
   }
 
@@ -252,6 +329,7 @@ export default function GuidedChessPlayer({
     if (hintActive) setHintActive(false)
     if (atLeaf) return
     if (awaitingOpponent) return
+    if (mistakeBannerNode) return
 
     if (selectedSquare === null) {
       setSelectedSquare(square)
@@ -261,6 +339,11 @@ export default function GuidedChessPlayer({
     const from = selectedSquare
     const to = square
     setSelectedSquare(null)
+
+    if (isPuzzleMode) {
+      handlePuzzleMove(from, to)
+      return
+    }
 
     // Re-select if clicking another own piece that has moves in the variation tree
     const boardState = new Chess(currentFen)
@@ -477,7 +560,30 @@ export default function GuidedChessPlayer({
             )
           })}
 
-          {hasPendingMoves && !awaitingOpponent && (
+          {/* Puzzle mistake banner */}
+          {isPuzzleMode && mistakeBannerNode && (
+            <div
+              data-testid="puzzle-mistake-banner"
+              role="alert"
+              style={{
+                background: 'var(--red-2, #fee2e2)',
+                border: '1px solid var(--red-6, #f87171)',
+                borderRadius: 'var(--r-sm)',
+                padding: '10px 14px',
+                fontSize: 13,
+                color: 'var(--red-9, #991b1b)',
+                marginBottom: 8,
+              }}
+            >
+              {mistakeBannerNode.note ? (
+                <NoteView note={mistakeBannerNode.note} />
+              ) : (
+                t('guidedPlayer.puzzleMistakeBanner')
+              )}
+            </div>
+          )}
+
+          {hasPendingMoves && !awaitingOpponent && !mistakeBannerNode && (
             <div data-testid="your-turn-prompt" className="guided-player-your-turn">
               <svg className="guided-player-your-turn-icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
                 <path d="M8 1L9.8 6.2H15.5L10.9 9.5L12.7 14.6L8 11.3L3.3 14.6L5.1 9.5L0.5 6.2H6.2L8 1Z" />
@@ -526,11 +632,16 @@ export default function GuidedChessPlayer({
                     clearTimeout(opponentTimer.current)
                     opponentTimer.current = null
                   }
+                  if (mistakeBannerTimer.current) {
+                    clearTimeout(mistakeBannerTimer.current)
+                    mistakeBannerTimer.current = null
+                  }
                   setCurrentNodeId('root')
                   setSelectedSquare(null)
                   setWrongMoveSquare(null)
                   setHintActive(false)
                   setPromotionCandidates([])
+                  setMistakeBannerNode(null)
                   setResetDialogOpen(false)
                 }}
               >

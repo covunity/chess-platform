@@ -348,7 +348,12 @@
       "previewHeading": "Preview",
       "previewMoveCounter": "Move {{current}} of {{total}}",
       "previewRuntime": "{{duration}} runtime",
-      "puzzleComingSoon": "Puzzle editor coming soon",
+      "puzzlePlayerSideLabel": "Player side",
+      "puzzlePurposeNone": "None",
+      "puzzlePurposeCorrect": "Correct",
+      "puzzlePurposeMistake": "Mistake",
+      "mistakeMissingNoteWarning": "Mistake moves require an explanatory note.",
+      "puzzleMissingPlayerSide": "Puzzle requires a player side to be selected.",
       "videoUploading": "Uploading video…",
       "videoProcessing": "Processing video…",
       "videoEmpty": "No video",
@@ -784,7 +789,10 @@
     "promotionPieceQueen": "Queen",
     "promotionPieceRook": "Rook",
     "promotionPieceBishop": "Bishop",
-    "promotionPieceKnight": "Knight"
+    "promotionPieceKnight": "Knight",
+    "puzzleYourTurn": "Your turn — find the best move!",
+    "puzzleMistakeBanner": "That's not the best move. Try again!",
+    "puzzleCompleteTitle": "Puzzle complete!"
   },
   "errors": {
     "chapterLimitReached": "You have reached the chapter limit for your current account tier."
