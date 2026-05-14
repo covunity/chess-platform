@@ -1,4 +1,4 @@
-import { Chessboard } from 'react-chessboard'
+import ChessgroundView from './ChessgroundView'
 
 export interface LastMove {
   from: [number, number]; // [row, col] 0-indexed from top in white perspective
@@ -22,16 +22,10 @@ export default function ChessBoard({
   perspective = "white",
   lastMove,
   size = 320,
-  showCoords = false,
 }: ChessBoardProps) {
-  const squareStyles: Record<string, React.CSSProperties> = {}
-
-  if (lastMove) {
-    const from = rowColToSquare(lastMove.from[0], lastMove.from[1])
-    const to = rowColToSquare(lastMove.to[0], lastMove.to[1])
-    squareStyles[from] = { backgroundColor: 'var(--board-move)' }
-    squareStyles[to] = { backgroundColor: 'var(--board-move)' }
-  }
+  const lastMoveSquares: [string, string] | null = lastMove
+    ? [rowColToSquare(lastMove.from[0], lastMove.from[1]), rowColToSquare(lastMove.to[0], lastMove.to[1])]
+    : null
 
   return (
     <div
@@ -39,17 +33,12 @@ export default function ChessBoard({
       aria-label={`Chess board — ${perspective} perspective`}
       style={{ width: size, userSelect: 'none', border: '2px solid var(--ink-1)' }}
     >
-      <Chessboard
-        options={{
-          position: fen,
-          boardOrientation: perspective,
-          boardStyle: { width: size },
-          darkSquareStyle: { backgroundColor: 'var(--board-dark)' },
-          lightSquareStyle: { backgroundColor: 'var(--board-light)' },
-          squareStyles,
-          allowDragging: false,
-          showNotation: showCoords,
-        }}
+      <ChessgroundView
+        fen={fen}
+        orientation={perspective}
+        lastMove={lastMoveSquares}
+        viewOnly
+        size={size}
       />
     </div>
   )

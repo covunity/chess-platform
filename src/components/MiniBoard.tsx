@@ -1,4 +1,4 @@
-import { Chessboard } from 'react-chessboard'
+import ChessgroundView from './ChessBoard/ChessgroundView'
 
 const STARTING_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
@@ -22,16 +22,11 @@ export default function MiniBoard({ fen = STARTING_FEN, size = 120, perspective 
         flexShrink: 0,
       }}
     >
-      <Chessboard
-        options={{
-          position: fen,
-          boardOrientation: perspective,
-          boardStyle: { width: size },
-          darkSquareStyle: { backgroundColor: 'var(--board-dark)' },
-          lightSquareStyle: { backgroundColor: 'var(--board-light)' },
-          allowDragging: false,
-          showNotation: false,
-        }}
+      <ChessgroundView
+        fen={fen}
+        orientation={perspective}
+        viewOnly
+        size={size}
       />
     </div>
   )

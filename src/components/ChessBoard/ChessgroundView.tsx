@@ -1,0 +1,131 @@
+import { useEffect, useRef } from 'react'
+import { Chessground } from 'chessground'
+import type { Api } from 'chessground/api'
+import type { Config } from 'chessground/config'
+import type { Key, Dests } from 'chessground/types'
+
+export interface ChessgroundViewProps {
+  fen: string
+  orientation?: 'white' | 'black'
+  /** Last move squares for highlighting [from, to] */
+  lastMove?: [string, string] | null
+  /** Squares to highlight with hint colour */
+  hintSquares?: [string, string] | null
+  /** Square to highlight with selected colour */
+  selectedSquare?: string | null
+  /** Valid destination squares to show dots on */
+  validDestinations?: Set<string>
+  /** Square to mark with error colour */
+  wrongMoveSquare?: string | null
+  /** If true, no interaction allowed */
+  viewOnly?: boolean
+  /** Which side can move */
+  movable?: 'white' | 'black' | 'both' | null
+  /** Valid destinations map for drag/click validation */
+  dests?: Map<string, string[]>
+  onMove?: (from: string, to: string) => boolean
+  onSquareSelect?: (square: string) => void
+  size?: number
+  /** aria-label for the wrapper div */
+  ariaLabel?: string
+}
+
+function buildSquareClasses(props: ChessgroundViewProps): Map<Key, string> {
+  const m = new Map<Key, string>()
+  if (props.lastMove) {
+    const [from, to] = props.lastMove
+    if (from) m.set(from as Key, 'last-move')
+    if (to) m.set(to as Key, 'last-move')
+  }
+  if (props.hintSquares) {
+    const [from, to] = props.hintSquares
+    if (from) m.set(from as Key, 'hint')
+    if (to) m.set(to as Key, 'hint')
+  }
+  if (props.selectedSquare) {
+    m.set(props.selectedSquare as Key, 'selected')
+  }
+  if (props.wrongMoveSquare) {
+    m.set(props.wrongMoveSquare as Key, 'wrong-move')
+  }
+  return m
+}
+
+function buildDests(props: ChessgroundViewProps): Dests | undefined {
+  if (props.dests) return props.dests as unknown as Dests
+  // validDestinations are valid squares for the selected piece;
+  // chessground needs dests from origin — pass undefined and use free movement.
+  return undefined
+}
+
+function toConfig(props: ChessgroundViewProps, onMove: (from: string, to: string) => void, onSelect: (sq: string) => void): Config {
+  const squareClasses = buildSquareClasses(props)
+  const color = props.orientation ?? 'white'
+  const movableColor: 'white' | 'black' | 'both' | undefined =
+    props.viewOnly ? undefined :
+    props.movable ?? undefined
+
+  return {
+    fen: props.fen,
+    orientation: color,
+    viewOnly: props.viewOnly ?? false,
+    highlight: {
+      lastMove: false, // we manage highlights manually via squareClasses
+      check: false,
+      custom: squareClasses,
+    },
+    animation: { enabled: false },
+    movable: {
+      free: false,
+      color: movableColor,
+      dests: buildDests(props),
+      events: {
+        after: (orig, dest) => onMove(orig, dest),
+      },
+    },
+    selectable: { enabled: true },
+    events: {
+      select: (key) => onSelect(key),
+    },
+    draggable: { enabled: !props.viewOnly },
+  }
+}
+
+export default function ChessgroundView(props: ChessgroundViewProps) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const apiRef = useRef<Api | null>(null)
+
+  const handleMove = (from: string, to: string) => {
+    props.onMove?.(from, to)
+  }
+
+  const handleSelect = (sq: string) => {
+    props.onSquareSelect?.(sq)
+  }
+
+  // Mount chessground
+  useEffect(() => {
+    if (!containerRef.current) return
+    const config = toConfig(props, handleMove, handleSelect)
+    apiRef.current = Chessground(containerRef.current, config)
+    return () => {
+      apiRef.current?.destroy()
+      apiRef.current = null
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Sync config on every render
+  useEffect(() => {
+    if (!apiRef.current) return
+    apiRef.current.set(toConfig(props, handleMove, handleSelect))
+  })
+
+  return (
+    <div
+      ref={containerRef}
+      aria-label={props.ariaLabel}
+      style={{ width: props.size, height: props.size }}
+    />
+  )
+}

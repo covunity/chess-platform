@@ -291,8 +291,19 @@ test('Player: enrolled learner plays e4 and opponent responds e5 automatically',
   await expect(page.getByTestId('guided-player-board')).toBeVisible({ timeout: 15_000 })
 
   // Play White's first move: e2 → e4
-  await page.click('[data-square="e2"]')
-  await page.click('[data-square="e4"]')
+  // Chessground renders squares as custom <square> elements with .cgKey JS property
+  // (not a DOM attribute), so we click by position within the cg-board element.
+  // White at bottom: file e = index 4, rank 2 = index 1, rank 4 = index 3
+  // x = (fileIndex + 0.5) / 8, y = (7 - rankIndex + 0.5) / 8
+  const board = page.getByTestId('guided-player-board').locator('cg-board')
+  const box = await board.boundingBox()
+  if (!box) throw new Error('cg-board not found')
+  const squareW = box.width / 8
+  const squareH = box.height / 8
+  // e2: file 'e' = index 4, rank 2 = index 1
+  await page.mouse.click(box.x + squareW * 4.5, box.y + squareH * (7 - 1 + 0.5))
+  // e4: file 'e' = index 4, rank 4 = index 3
+  await page.mouse.click(box.x + squareW * 4.5, box.y + squareH * (7 - 3 + 0.5))
 
   // After playing e4, opponent (Black) should auto-play e5 within ~1s
   // Verify: the move log should now show both moves

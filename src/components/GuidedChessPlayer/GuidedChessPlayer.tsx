@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Chess } from 'chess.js'
-import { Chessboard } from 'react-chessboard'
+import ChessgroundView from '../ChessBoard/ChessgroundView'
 import { parsePgn } from '../../utils/parsePgn'
 import type { PgnNode } from '../../utils/parsePgn'
 import PromotionPicker from './PromotionPicker'
@@ -50,33 +50,15 @@ function InteractiveBoard({
   wrongMoveSquare,
   hintSquares,
   selectedSquare,
-  validDestinations,
   onSquareClick,
   onPieceDrop,
-  onDragStart,
-  canDrag,
 }: InteractiveBoardProps) {
-  const squareStyles: Record<string, React.CSSProperties> = {}
-
-  if (lastMove) {
-    squareStyles[lastMove.from] = { backgroundColor: 'var(--board-move)' }
-    squareStyles[lastMove.to] = { backgroundColor: 'var(--board-move)' }
-  }
-  if (validDestinations) {
-    for (const sq of validDestinations) {
-      squareStyles[sq] = { backgroundColor: 'var(--board-highlight)' }
-    }
-  }
-  if (hintSquares) {
-    squareStyles[hintSquares.from] = { backgroundColor: 'var(--board-highlight)' }
-    squareStyles[hintSquares.to] = { backgroundColor: 'var(--board-highlight)' }
-  }
-  if (selectedSquare) {
-    squareStyles[selectedSquare] = { backgroundColor: 'var(--board-selected)' }
-  }
-  if (wrongMoveSquare) {
-    squareStyles[wrongMoveSquare] = { backgroundColor: 'var(--board-error)' }
-  }
+  const lastMoveSquares: [string, string] | null = lastMove
+    ? [lastMove.from, lastMove.to]
+    : null
+  const hintSquarePair: [string, string] | null = hintSquares
+    ? [hintSquares.from, hintSquares.to]
+    : null
 
   return (
     <div
@@ -84,27 +66,17 @@ function InteractiveBoard({
       aria-label={`Chess board — ${perspective} perspective`}
       style={{ width: size, userSelect: 'none' }}
     >
-      <Chessboard
-        options={{
-          position: fen,
-          boardOrientation: perspective,
-          boardStyle: { width: size },
-          darkSquareStyle: { backgroundColor: 'var(--board-dark)' },
-          lightSquareStyle: { backgroundColor: 'var(--board-light)' },
-          squareStyles,
-          allowDragging: true,
-          showNotation: false,
-          onSquareClick: ({ square }) => onSquareClick?.(square),
-          onPieceDrag: ({ square }) => { if (square) onDragStart?.(square) },
-          onPieceDrop: ({ sourceSquare, targetSquare }) => {
-            if (!targetSquare) return false
-            return onPieceDrop?.(sourceSquare, targetSquare) ?? false
-          },
-          canDragPiece: ({ square }) => {
-            if (!square) return false
-            return canDrag?.(square) ?? false
-          },
-        }}
+      <ChessgroundView
+        fen={fen}
+        orientation={perspective}
+        size={size}
+        lastMove={lastMoveSquares}
+        hintSquares={hintSquarePair}
+        selectedSquare={selectedSquare}
+        wrongMoveSquare={wrongMoveSquare}
+        movable={perspective}
+        onSquareSelect={(square) => onSquareClick?.(square)}
+        onMove={(from, to) => onPieceDrop?.(from, to) ?? false}
       />
     </div>
   )
