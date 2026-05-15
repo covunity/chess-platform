@@ -630,6 +630,38 @@ export default function GuidedChessPlayer({
     <div data-testid="guided-player-root" className="guided-player-root">
       {/* Board column */}
       <div className="guided-player-board-col">
+        {/* Study ↔ Rewind switcher — only for two-mode lessons. Placed above
+            the board so the active mode is immediately obvious. */}
+        {onToggleMode && (
+          <div
+            data-testid="mode-switcher"
+            role="group"
+            aria-label={t('guidedPlayer.modeSwitcherAria')}
+            className="guided-player-mode-switcher"
+          >
+            <button
+              type="button"
+              data-testid="mode-switch-study"
+              aria-pressed={isViewer}
+              className={`guided-player-mode-switch-btn${isViewer ? ' guided-player-mode-switch-btn-active' : ''}`}
+              onClick={() => { if (!isViewer) onToggleMode() }}
+            >
+              <span className="guided-player-mode-switch-title">{t('guidedPlayer.modeStudyTitle')}</span>
+              <span className="guided-player-mode-switch-subtitle">{t('guidedPlayer.modeStudySubtitle')}</span>
+            </button>
+            <button
+              type="button"
+              data-testid="mode-switch-rewind"
+              aria-pressed={!isViewer}
+              className={`guided-player-mode-switch-btn${!isViewer ? ' guided-player-mode-switch-btn-active' : ''}`}
+              onClick={() => { if (isViewer) onToggleMode() }}
+            >
+              <span className="guided-player-mode-switch-title">{t('guidedPlayer.modeRewindTitle')}</span>
+              <span className="guided-player-mode-switch-subtitle">{t('guidedPlayer.modeRewindSubtitle')}</span>
+            </button>
+          </div>
+        )}
+
         {/* Meta row: side badge + move counter */}
         <div className="guided-player-board-meta">
           <div className="guided-player-board-meta-left">
@@ -684,6 +716,19 @@ export default function GuidedChessPlayer({
           />
         )}
 
+        {/* Wrong-move banner — louder feedback for Rewind mode where the note
+            panel + hint are hidden. The board square is already red (D-10);
+            this gives a short textual cue so the learner knows what happened. */}
+        {!isViewer && !isPuzzleMode && wrongMoveSquare && (
+          <div
+            data-testid="wrong-move-banner"
+            role="alert"
+            className="guided-player-wrong-move-banner"
+          >
+            {t('guidedPlayer.wrongMoveBanner')}
+          </div>
+        )}
+
         {/* Action buttons below board */}
         <div className="guided-player-actions">
           {isViewer ? (
@@ -723,16 +768,6 @@ export default function GuidedChessPlayer({
               >
                 {t('guidedPlayer.flipBoard')}
               </button>
-              {onToggleMode && (
-                <button
-                  type="button"
-                  className="btn btn-accent btn-sm"
-                  data-testid="mode-toggle-btn"
-                  onClick={onToggleMode}
-                >
-                  {t('guidedPlayer.modeToggleToRewind')}
-                </button>
-              )}
             </>
           ) : (
             <>
@@ -774,16 +809,6 @@ export default function GuidedChessPlayer({
               >
                 {t('guidedPlayer.resetLesson')}
               </button>
-              {onToggleMode && (
-                <button
-                  type="button"
-                  className="btn btn-accent btn-sm"
-                  data-testid="mode-toggle-btn"
-                  onClick={onToggleMode}
-                >
-                  {t('guidedPlayer.modeToggleToStudy')}
-                </button>
-              )}
             </>
           )}
         </div>

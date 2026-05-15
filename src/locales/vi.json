@@ -1066,7 +1066,13 @@
     "viewerNextMove": "Nước sau",
     "viewerPrevMove": "Nước trước",
     "modeToggleToRewind": "Tự đi",
-    "modeToggleToStudy": "Quay lại học"
+    "modeToggleToStudy": "Quay lại học",
+    "modeSwitcherAria": "Chế độ học bài",
+    "modeStudyTitle": "Học",
+    "modeStudySubtitle": "Xem hướng dẫn từng nước",
+    "modeRewindTitle": "Tự đi",
+    "modeRewindSubtitle": "Tự kéo quân để ghi nhớ",
+    "wrongMoveBanner": "Nước sai. Hãy thử lại."
   },
   "errors": {
     "chapterLimitReached": "Bạn đã đạt giới hạn số chương cho gói tài khoản hiện tại.",

@@ -745,6 +745,79 @@ body {
   flex-shrink: 0;
 }
 
+.guided-player-mode-switcher {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 4px;
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+
+.guided-player-mode-switch-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+  color: var(--ink-2);
+}
+
+.guided-player-mode-switch-btn:hover {
+  background: var(--surface);
+}
+
+.guided-player-mode-switch-btn-active {
+  background: var(--surface);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: var(--sh-1);
+}
+
+.guided-player-mode-switch-title {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.guided-player-mode-switch-subtitle {
+  font-size: 11.5px;
+  color: var(--ink-3);
+  line-height: 1.2;
+}
+
+.guided-player-mode-switch-btn-active .guided-player-mode-switch-subtitle {
+  color: var(--ink-2);
+}
+
+.guided-player-wrong-move-banner {
+  margin-top: 10px;
+  padding: 8px 14px;
+  border-radius: var(--r-md);
+  background: var(--danger-soft, oklch(0.95 0.05 25));
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  animation: guided-wrong-flash 1s ease-out forwards;
+}
+
+@keyframes guided-wrong-flash {
+  0% { opacity: 0; transform: translateY(-4px); }
+  10% { opacity: 1; transform: translateY(0); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-2px); }
+}
+
 .guided-player-move-san {
   font-weight: 600;
   color: var(--ink-1);
