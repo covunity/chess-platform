@@ -738,118 +738,6 @@ export default function GuidedChessPlayer({
           />
         )}
 
-        {/* Action buttons below board */}
-        <div className="guided-player-actions">
-          {isViewer ? (() => {
-            const mainLineEndId = parsed.mainLine[parsed.mainLine.length - 1]?.id
-            const atMainLineEnd = mainLineEndId !== undefined && currentNodeId === mainLineEndId
-            const atRoot = currentNodeId === 'root' || !currentNode?.parentId
-            return (
-            <>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                data-testid="viewer-begin-btn"
-                aria-label={t('guidedPlayer.viewerBeginMove')}
-                title={t('guidedPlayer.viewerBeginMove')}
-                disabled={atRoot}
-                onClick={() => setCurrentNodeId('root')}
-              >
-                <ChevronsLeft size={16} aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                data-testid="viewer-prev-btn"
-                aria-label={t('guidedPlayer.viewerPrevMove')}
-                title={t('guidedPlayer.viewerPrevMove')}
-                disabled={atRoot}
-                onClick={() => {
-                  if (currentNode?.parentId) setCurrentNodeId(currentNode.parentId)
-                }}
-              >
-                <ChevronLeft size={16} aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                data-testid="viewer-next-btn"
-                aria-label={t('guidedPlayer.viewerNextMove')}
-                title={t('guidedPlayer.viewerNextMove')}
-                disabled={atMainLineEnd || atLeaf}
-                onClick={() => {
-                  const next = currentNode?.children[0]
-                  if (next) setCurrentNodeId(next.id)
-                }}
-              >
-                <ChevronRight size={16} aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                data-testid="viewer-end-btn"
-                aria-label={t('guidedPlayer.viewerEndMove')}
-                title={t('guidedPlayer.viewerEndMove')}
-                disabled={atMainLineEnd || !mainLineEndId}
-                onClick={() => {
-                  if (mainLineEndId) setCurrentNodeId(mainLineEndId)
-                }}
-              >
-                <ChevronsRight size={16} aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                data-testid="guided-player-flip-btn"
-                onClick={() => setViewPerspective((p) => (p === 'white' ? 'black' : 'white'))}
-              >
-                {t('guidedPlayer.flipBoard')}
-              </button>
-            </>
-            )
-          })() : (
-            <>
-              {!isRewindMode && (
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
-                  data-testid="guided-player-hint-btn"
-                  disabled={awaitingOpponent || upcomingSide !== learnerColor}
-                  onClick={() => setHintActive((h) => !h)}
-                >
-                  {t('guidedPlayer.hint')}
-                </button>
-              )}
-              {isPuzzleMode && hintLevel >= 2 && !gaveUp && (
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  data-testid="puzzle-show-answer-btn"
-                  onClick={playAnswer}
-                >
-                  {t('guidedPlayer.puzzleShowAnswer')}
-                </button>
-              )}
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                data-testid="guided-player-flip-btn"
-                onClick={() => setViewPerspective((p) => (p === 'white' ? 'black' : 'white'))}
-              >
-                {t('guidedPlayer.flipBoard')}
-              </button>
-              <div className="guided-player-actions-divider" aria-hidden="true" />
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                data-testid="guided-player-reset-btn"
-                onClick={() => setResetDialogOpen(true)}
-              >
-                {t('guidedPlayer.resetLesson')}
-              </button>
-            </>
-          )}
-        </div>
       </div>
 
       {/* Annotation column */}
@@ -1052,6 +940,121 @@ export default function GuidedChessPlayer({
                 </div>
               )}
             </div>
+          )}
+        </div>
+
+        {/* Action footer — pinned to the bottom of the annotation column so it
+            never gets pushed off-screen by a long move log. The move-log body
+            above is the scrollable region. */}
+        <div className="guided-player-actions">
+          {isViewer ? (() => {
+            const mainLineEndId = parsed.mainLine[parsed.mainLine.length - 1]?.id
+            const atMainLineEnd = mainLineEndId !== undefined && currentNodeId === mainLineEndId
+            const atRoot = currentNodeId === 'root' || !currentNode?.parentId
+            return (
+            <>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                data-testid="viewer-begin-btn"
+                aria-label={t('guidedPlayer.viewerBeginMove')}
+                title={t('guidedPlayer.viewerBeginMove')}
+                disabled={atRoot}
+                onClick={() => setCurrentNodeId('root')}
+              >
+                <ChevronsLeft size={16} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                data-testid="viewer-prev-btn"
+                aria-label={t('guidedPlayer.viewerPrevMove')}
+                title={t('guidedPlayer.viewerPrevMove')}
+                disabled={atRoot}
+                onClick={() => {
+                  if (currentNode?.parentId) setCurrentNodeId(currentNode.parentId)
+                }}
+              >
+                <ChevronLeft size={16} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                data-testid="viewer-next-btn"
+                aria-label={t('guidedPlayer.viewerNextMove')}
+                title={t('guidedPlayer.viewerNextMove')}
+                disabled={atMainLineEnd || atLeaf}
+                onClick={() => {
+                  const next = currentNode?.children[0]
+                  if (next) setCurrentNodeId(next.id)
+                }}
+              >
+                <ChevronRight size={16} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                data-testid="viewer-end-btn"
+                aria-label={t('guidedPlayer.viewerEndMove')}
+                title={t('guidedPlayer.viewerEndMove')}
+                disabled={atMainLineEnd || !mainLineEndId}
+                onClick={() => {
+                  if (mainLineEndId) setCurrentNodeId(mainLineEndId)
+                }}
+              >
+                <ChevronsRight size={16} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                data-testid="guided-player-flip-btn"
+                onClick={() => setViewPerspective((p) => (p === 'white' ? 'black' : 'white'))}
+              >
+                {t('guidedPlayer.flipBoard')}
+              </button>
+            </>
+            )
+          })() : (
+            <>
+              {!isRewindMode && (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  data-testid="guided-player-hint-btn"
+                  disabled={awaitingOpponent || upcomingSide !== learnerColor}
+                  onClick={() => setHintActive((h) => !h)}
+                >
+                  {t('guidedPlayer.hint')}
+                </button>
+              )}
+              {isPuzzleMode && hintLevel >= 2 && !gaveUp && (
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  data-testid="puzzle-show-answer-btn"
+                  onClick={playAnswer}
+                >
+                  {t('guidedPlayer.puzzleShowAnswer')}
+                </button>
+              )}
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                data-testid="guided-player-flip-btn"
+                onClick={() => setViewPerspective((p) => (p === 'white' ? 'black' : 'white'))}
+              >
+                {t('guidedPlayer.flipBoard')}
+              </button>
+              <div className="guided-player-actions-divider" aria-hidden="true" />
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                data-testid="guided-player-reset-btn"
+                onClick={() => setResetDialogOpen(true)}
+              >
+                {t('guidedPlayer.resetLesson')}
+              </button>
+            </>
           )}
         </div>
 

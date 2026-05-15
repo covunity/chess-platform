@@ -618,6 +618,10 @@ body {
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
+  padding: 12px 28px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
 }
 
 .guided-player-actions-divider {
