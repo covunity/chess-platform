@@ -78,6 +78,8 @@ interface InteractiveBoardProps {
   validDestinations?: Set<string>
   autoShapes?: DrawShape[]
   viewOnly?: boolean
+  /** When true, the learner can draw their own arrows/circles via right-click. */
+  drawableEnabled?: boolean
   /** Map from origin square to list of destination squares — drives Chessground drag/click. */
   dests?: Map<string, string[]>
   onSquareClick?: (square: string) => void
@@ -96,6 +98,7 @@ function InteractiveBoard({
   selectedSquare,
   autoShapes,
   viewOnly = false,
+  drawableEnabled = false,
   dests,
   onSquareClick,
   onPieceDrop,
@@ -124,7 +127,7 @@ function InteractiveBoard({
         movable={viewOnly ? null : perspective}
         dests={viewOnly ? undefined : dests}
         viewOnly={viewOnly}
-        drawable={{ enabled: false, autoShapes: autoShapes ?? [] }}
+        drawable={{ enabled: drawableEnabled, autoShapes: autoShapes ?? [] }}
         onSquareSelect={viewOnly ? undefined : (square) => onSquareClick?.(square)}
         onMove={viewOnly ? undefined : (from, to) => onPieceDrop?.(from, to) ?? false}
       />
@@ -707,6 +710,10 @@ export default function GuidedChessPlayer({
             validDestinations={validDestinations}
             autoShapes={[...shapesToDrawShapes(currentNode?.shapes ?? []), ...puzzleHintShapes]}
             viewOnly={isViewer}
+            // Let learners draw their own arrows/circles for reasoning while
+            // they're actually playing (Rewind, regular lesson, puzzle). The
+            // Study/viewer half is read-only so we keep it off there.
+            drawableEnabled={!isViewer}
             dests={legalDests}
             onSquareClick={isViewer ? undefined : handleSquareClick}
             onPieceDrop={isViewer ? undefined : handlePieceDrop}
