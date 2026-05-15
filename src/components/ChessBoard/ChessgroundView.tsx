@@ -82,10 +82,17 @@ function toConfig(
     props.viewOnly ? undefined :
     props.movable ?? undefined
   const drawableEnabled = props.drawable?.enabled ?? false
+  // Chessground's isMovable() requires state.turnColor === piece.color, but its
+  // configure() never derives turnColor from a fen — we must pass it explicitly,
+  // otherwise drag-and-drop is rejected after the side-to-move flips between
+  // renders (click-to-move bypasses the check, hence the inconsistency).
+  const fenTurnField = props.fen.split(/\s+/)[1]
+  const turnColor: 'white' | 'black' = fenTurnField === 'b' ? 'black' : 'white'
 
   return {
     fen: props.fen,
     orientation: color,
+    turnColor,
     viewOnly: props.viewOnly ?? false,
     highlight: {
       lastMove: false, // we manage highlights manually via squareClasses
