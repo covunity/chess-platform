@@ -69,14 +69,19 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
     return () => document.removeEventListener('mousedown', handleOutside)
   }, [contextMenu])
 
-  function renderVariationNode(node: PgnNode, depth: number, siblingIndex: number): ReactNode[] {
-    const rows: ReactNode[] = []
-    const isCurrentNode = node.id === currentNodeId
-    const hasMultipleResponses = node.children.length > 1
-    const hasNote = !!node.note
-    const isMain = siblingIndex === 0
+  function isMainMove(node: PgnNode): boolean {
+    if (!node.parentId) return true
+    const parent = nodeMap.get(node.parentId)
+    if (!parent) return true
+    return parent.children[0]?.id === node.id
+  }
 
-    rows.push(
+  function renderMoveCell(node: PgnNode): ReactNode {
+    const isCurrentNode = node.id === currentNodeId
+    const hasNote = !!node.note
+    const isMain = isMainMove(node)
+
+    return (
       <div
         key={node.id}
         data-testid={`variation-node-${node.id}`}
@@ -96,62 +101,140 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
           }
         }}
         style={{
-          paddingLeft: depth * 16 + 8,
-          paddingTop: 4,
-          paddingBottom: 4,
-          paddingRight: 8,
-          cursor: 'pointer',
-          fontSize: 12.5,
+          padding: '3px 6px',
           background: isCurrentNode ? 'var(--surface-3)' : 'transparent',
-          color: depth === 1 ? 'var(--ink-1)' : 'var(--ink-2)',
           borderRadius: 'var(--r-sm)',
+          cursor: 'pointer',
+          fontWeight: isCurrentNode ? 600 : 400,
+          fontSize: 12.5,
           display: 'flex',
           alignItems: 'center',
-          gap: 4,
+          gap: 3,
           userSelect: 'none' as const,
+          color: 'var(--ink-1)',
+          minWidth: 0,
         }}
       >
-        {depth > 1 && (
-          <span style={{ color: 'var(--ink-3)', fontSize: 11, flexShrink: 0 }}>{'('}</span>
-        )}
-        <span style={{ color: 'var(--ink-3)', minWidth: 30, fontSize: 11, flexShrink: 0 }}>
-          {node.moveNumber}{node.side === 'w' ? '.' : '...'}
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {node.san}
         </span>
-        <span style={{ fontWeight: isCurrentNode ? 600 : 400 }}>{node.san}</span>
         {hasNote && (
-          <span
-            aria-label="Có ghi chú"
-            style={{ fontSize: 10, color: 'var(--ink-3)', flexShrink: 0 }}
-          >
+          <span aria-label="Có ghi chú" style={{ fontSize: 10, color: 'var(--ink-3)', flexShrink: 0 }}>
             ✎
-          </span>
-        )}
-        {depth > 1 && (
-          <span style={{ color: 'var(--ink-3)', fontSize: 11, flexShrink: 0 }}>{')'}</span>
-        )}
-        {hasMultipleResponses && (
-          <span
-            data-testid="opponent-branch-warning"
-            title={`${node.children.length} nhánh phụ`}
-            style={{
-              marginLeft: 'auto',
-              fontSize: 10,
-              color: 'var(--amber-9, #b45309)',
-              background: 'var(--amber-2, #fef3c7)',
-              borderRadius: 'var(--r-sm)',
-              padding: '1px 5px',
-              flexShrink: 0,
-            }}
-          >
-            +{node.children.length - 1} nhánh
           </span>
         )}
       </div>
     )
+  }
 
-    for (let i = 0; i < node.children.length; i++) {
-      rows.push(...renderVariationNode(node.children[i], depth + 1, i))
+  function renderVariationBlock(startNode: PgnNode): ReactNode {
+    return (
+      <div
+        key={`varblock-${startNode.id}`}
+        style={{
+          borderLeft: '2px solid var(--border)',
+          marginLeft: 10,
+          paddingLeft: 6,
+          marginTop: 1,
+          marginBottom: 1,
+        }}
+      >
+        {renderLine(startNode)}
+      </div>
+    )
+  }
+
+  function renderLine(startNode: PgnNode | null): ReactNode[] {
+    const rows: ReactNode[] = []
+    let cursor: PgnNode | null = startNode
+
+    while (cursor !== null) {
+      const node = cursor
+
+      if (node.side === 'w') {
+        const wNode = node
+        const bNode =
+          wNode.children.length > 0 && wNode.children[0].side === 'b'
+            ? wNode.children[0]
+            : null
+
+        rows.push(
+          <div
+            key={`row-${wNode.id}`}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '30px 1fr 1fr',
+              alignItems: 'center',
+              paddingInline: 8,
+              paddingBlock: 1,
+              gap: 2,
+            }}
+          >
+            <span
+              style={{
+                color: 'var(--ink-3)',
+                fontSize: 11,
+                userSelect: 'none' as const,
+                paddingLeft: 2,
+              }}
+            >
+              {wNode.moveNumber}.
+            </span>
+            {renderMoveCell(wNode)}
+            {bNode ? renderMoveCell(bNode) : <div />}
+          </div>
+        )
+
+        for (let i = 1; i < wNode.children.length; i++) {
+          rows.push(renderVariationBlock(wNode.children[i]))
+        }
+
+        if (bNode) {
+          for (let i = 1; i < bNode.children.length; i++) {
+            rows.push(renderVariationBlock(bNode.children[i]))
+          }
+          cursor = bNode.children[0] ?? null
+        } else {
+          cursor = null
+        }
+      } else {
+        const bNode = node
+
+        rows.push(
+          <div
+            key={`row-b-${bNode.id}`}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '30px 1fr 1fr',
+              alignItems: 'center',
+              paddingInline: 8,
+              paddingBlock: 1,
+              gap: 2,
+            }}
+          >
+            <span
+              style={{
+                color: 'var(--ink-3)',
+                fontSize: 11,
+                userSelect: 'none' as const,
+                paddingLeft: 2,
+              }}
+            >
+              {bNode.moveNumber}...
+            </span>
+            <div />
+            {renderMoveCell(bNode)}
+          </div>
+        )
+
+        for (let i = 1; i < bNode.children.length; i++) {
+          rows.push(renderVariationBlock(bNode.children[i]))
+        }
+
+        cursor = bNode.children[0] ?? null
+      }
     }
+
     return rows
   }
 
@@ -239,7 +322,11 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
         }}
       >
         {hasAnyMoves ? (
-          tree.children.flatMap((child, idx) => renderVariationNode(child, 1, idx))
+          <>
+            {renderLine(tree.children[0])}
+            {tree.children.slice(1).map(alt => renderVariationBlock(alt))}
+          </>
+
         ) : (
           <div
             style={{
@@ -276,28 +363,30 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
             padding: '4px 0',
           }}
         >
-          <button
-            type="button"
-            data-testid="ctx-promote-btn"
-            disabled={contextMenu.isMain}
-            onClick={() => {
-              store.getState().promoteVariation(contextMenu.nodeId)
-              setContextMenu(null)
-            }}
-            style={{
-              display: 'block',
-              width: '100%',
-              textAlign: 'left',
-              padding: '7px 14px',
-              fontSize: 13,
-              border: 'none',
-              background: 'transparent',
-              cursor: contextMenu.isMain ? 'not-allowed' : 'pointer',
-              color: contextMenu.isMain ? 'var(--ink-3)' : 'var(--ink-1)',
-            }}
-          >
-            {t('creator.lessonEditor.promoteVariation')}
-          </button>
+          {import.meta.env.VITE_ALLOW_VARIATIONS === 'true' && (
+            <button
+              type="button"
+              data-testid="ctx-promote-btn"
+              disabled={contextMenu.isMain}
+              onClick={() => {
+                store.getState().promoteVariation(contextMenu.nodeId)
+                setContextMenu(null)
+              }}
+              style={{
+                display: 'block',
+                width: '100%',
+                textAlign: 'left',
+                padding: '7px 14px',
+                fontSize: 13,
+                border: 'none',
+                background: 'transparent',
+                cursor: contextMenu.isMain ? 'not-allowed' : 'pointer',
+                color: contextMenu.isMain ? 'var(--ink-3)' : 'var(--ink-1)',
+              }}
+            >
+              {t('creator.lessonEditor.promoteVariation')}
+            </button>
+          )}
           <button
             type="button"
             data-testid="ctx-delete-btn"
