@@ -39,6 +39,7 @@ function NewLessonDialog({ onCancel, onCreate, t }: NewLessonDialogProps) {
   const types: { type: LessonType; labelKey: string }[] = [
     { type: 'video',  labelKey: 'creator.courseEdit.typeVideo' },
     { type: 'chess',  labelKey: 'creator.courseEdit.typeChess' },
+    { type: 'puzzle', labelKey: 'creator.courseEdit.typePuzzle' },
   ]
 
   return (

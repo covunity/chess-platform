@@ -207,6 +207,36 @@ describe('CourseEditPage', () => {
     })
   })
 
+  it('new lesson dialog exposes puzzle type option', async () => {
+    renderPage()
+    await waitFor(() => screen.getByText('Introduction'))
+
+    await userEvent.click(screen.getByTestId('add-lesson-ch1'))
+    await waitFor(() => screen.getByTestId('new-lesson-dialog'))
+
+    expect(screen.getByTestId('lesson-type-puzzle')).toBeInTheDocument()
+  })
+
+  it('creates a puzzle lesson when puzzle type is selected', async () => {
+    renderPage()
+    await waitFor(() => screen.getByText('Introduction'))
+
+    await userEvent.click(screen.getByTestId('add-lesson-ch1'))
+    await waitFor(() => screen.getByTestId('new-lesson-dialog'))
+
+    await userEvent.type(screen.getByTestId('new-lesson-title'), 'Pin Puzzle')
+    await userEvent.click(screen.getByTestId('lesson-type-puzzle'))
+    await userEvent.click(screen.getByTestId('new-lesson-create-btn'))
+
+    await waitFor(() => {
+      expect(mockCreateLesson).toHaveBeenCalledWith(
+        expect.anything(),
+        'ch1',
+        expect.objectContaining({ title: 'Pin Puzzle', type: 'puzzle' })
+      )
+    })
+  })
+
   it('calls deleteLesson when delete lesson button clicked and confirmed', async () => {
     renderPage()
     await waitFor(() => screen.getByText('Welcome Video'))

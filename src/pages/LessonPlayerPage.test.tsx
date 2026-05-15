@@ -3,6 +3,36 @@ import userEvent from '@testing-library/user-event'
 import { vi, describe, it, beforeEach, expect } from 'vitest'
 
 vi.mock('chessground')
+
+// Mock GuidedChessPlayer so we can assert which mode/supabaseClient props the
+// page wires through for each lesson type — without rendering a real chess board.
+// We preserve the structural test ids the existing chess-player tests rely on
+// and expose a "mock-fire-complete" button that synthetically invokes onComplete.
+vi.mock('../components/GuidedChessPlayer/GuidedChessPlayer', () => ({
+  default: (props: {
+    mode?: 'lesson' | 'puzzle' | 'viewer'
+    supabaseClient?: unknown
+    lesson?: { title?: string }
+    onComplete?: () => void
+  }) => (
+    <div data-testid="guided-player-root">
+      <div
+        data-testid="guided-chess-player-mock"
+        data-mode={props.mode ?? 'lesson'}
+        data-has-supabase-client={props.supabaseClient ? 'true' : 'false'}
+      />
+      <div data-testid="guided-player-title">{props.lesson?.title ?? ''}</div>
+      <div data-testid="guided-player-board" />
+      <button
+        type="button"
+        data-testid="mock-fire-complete"
+        onClick={() => props.onComplete?.()}
+      >
+        complete
+      </button>
+    </div>
+  ),
+}))
 import { MemoryRouter, Route, Routes, useSearchParams } from 'react-router-dom'
 import { I18nextProvider } from 'react-i18next'
 import i18n from '../i18n'
@@ -413,13 +443,10 @@ describe('LessonPlayerPage', () => {
     it('calls markLessonCompleted when the player reports completion', async () => {
       const user = userEvent.setup()
       renderPlayer(enrolledUser, '/learn/c1/l2')
-      const board = await screen.findByTestId('guided-player-board')
-
-      // PGN is "1. e4 e5" → play through both plies to fire onComplete
-      await user.click(board.querySelector('[data-square="e2"]')!)
-      await user.click(board.querySelector('[data-square="e4"]')!)
-      await user.click(board.querySelector('[data-square="e7"]')!)
-      await user.click(board.querySelector('[data-square="e5"]')!)
+      // The mocked GuidedChessPlayer exposes a button that fires its onComplete prop;
+      // LessonPlayerPage is the unit under test here, so we exercise the wiring.
+      const fireComplete = await screen.findByTestId('mock-fire-complete')
+      await user.click(fireComplete)
 
       await waitFor(() => {
         expect(mockMarkLessonCompleted).toHaveBeenCalledWith(
@@ -476,6 +503,101 @@ describe('LessonPlayerPage', () => {
       renderPlayer(enrolledUser, '/learn/c1/l1')
       await waitFor(() => screen.getByTestId('lesson-player-layout'))
       expect(screen.queryByTestId('enrollment-toast')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('GuidedChessPlayer wiring', () => {
+    function puzzleCourse(): CourseDetail {
+      return {
+        ...sampleCourse,
+        chapters: [
+          {
+            id: 'ch1',
+            title: 'Puzzles',
+            position: 0,
+            lessons: [
+              { id: 'lp', title: 'Pin Puzzle', type: 'puzzle', position: 0, free_preview: true, duration_seconds: 0 },
+            ],
+          },
+        ],
+      }
+    }
+
+    it("passes mode='puzzle' to GuidedChessPlayer when lesson.type is puzzle", async () => {
+      mockGetCourseDetail.mockResolvedValue({ course: puzzleCourse(), error: null })
+      mockGetFirstLesson.mockResolvedValue({ lessonId: 'lp', error: null })
+      mockGetLessonForPlayer.mockResolvedValue({
+        lesson: {
+          id: 'lp',
+          title: 'Pin Puzzle',
+          type: 'puzzle',
+          pgn_data: '1. e4 e5',
+          board_perspective: 'white',
+          coach_note: null,
+          video_provider: null,
+          video_provider_id: null,
+          video_status: null,
+          description: null,
+          is_view_only: false,
+        },
+        error: null,
+      })
+      renderPlayer(enrolledUser, '/learn/c1/lp')
+      const player = await waitFor(() => screen.getByTestId('guided-chess-player-mock'))
+      expect(player.getAttribute('data-mode')).toBe('puzzle')
+    })
+
+    it("passes a supabaseClient to GuidedChessPlayer for puzzle lessons", async () => {
+      mockGetCourseDetail.mockResolvedValue({ course: puzzleCourse(), error: null })
+      mockGetFirstLesson.mockResolvedValue({ lessonId: 'lp', error: null })
+      mockGetLessonForPlayer.mockResolvedValue({
+        lesson: {
+          id: 'lp',
+          title: 'Pin Puzzle',
+          type: 'puzzle',
+          pgn_data: '1. e4 e5',
+          board_perspective: 'white',
+          coach_note: null,
+          video_provider: null,
+          video_provider_id: null,
+          video_status: null,
+          description: null,
+          is_view_only: false,
+        },
+        error: null,
+      })
+      renderPlayer(enrolledUser, '/learn/c1/lp')
+      const player = await waitFor(() => screen.getByTestId('guided-chess-player-mock'))
+      expect(player.getAttribute('data-has-supabase-client')).toBe('true')
+    })
+
+    it("passes mode='lesson' for a regular chess lesson", async () => {
+      // Default mocks already serve a chess lesson at l2
+      renderPlayer(enrolledUser, '/learn/c1/l2')
+      const player = await waitFor(() => screen.getByTestId('guided-chess-player-mock'))
+      expect(player.getAttribute('data-mode')).toBe('lesson')
+    })
+
+    it("passes mode='viewer' for a view-only chess lesson", async () => {
+      mockGetLessonForPlayer.mockResolvedValue({
+        lesson: {
+          id: 'l2',
+          title: 'The Opening',
+          type: 'chess',
+          pgn_data: '1. e4 e5',
+          board_perspective: 'white',
+          coach_note: null,
+          video_provider: null,
+          video_provider_id: null,
+          video_status: null,
+          description: null,
+          is_view_only: true,
+        },
+        error: null,
+      })
+      renderPlayer(enrolledUser, '/learn/c1/l2')
+      const player = await waitFor(() => screen.getByTestId('guided-chess-player-mock'))
+      expect(player.getAttribute('data-mode')).toBe('viewer')
     })
   })
 })

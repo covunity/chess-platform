@@ -223,13 +223,12 @@ test('Editor: Italian Game lesson loads and BoardAuthoringSurface renders variat
   // Wait for the board-direct authoring surface to appear (PGN textarea removed in #192)
   await expect(page.getByTestId('board-authoring-surface')).toBeVisible({ timeout: 15_000 })
 
-  // Italian Game has variations — variation list should appear automatically
+  // Italian Game has variations — variation list should appear automatically and
+  // contain multiple variation-node entries (the f2fc9a3 refactor replaced the
+  // earlier `variation-summary` heading with the nested move-grid layout).
   await expect(page.getByTestId('variation-list')).toBeVisible({ timeout: 3_000 })
-
-  // Variation summary heading should mention branch count
-  await expect(page.getByTestId('variation-summary')).toBeVisible()
-  const summaryText = await page.getByTestId('variation-summary').textContent()
-  expect(summaryText).toMatch(/nhánh|biến/i)
+  const nodes = page.locator('[data-testid^="variation-node-"]')
+  expect(await nodes.count()).toBeGreaterThan(1)
 })
 
 // ── Test 2: Variation list — clicking a variation node does not crash ──────────
@@ -254,15 +253,19 @@ test('Editor: variation list renders and clicking a node does not crash', async 
 
 // ── Test 3: Opponent-branch warning fires for nodes with multiple responses ────
 
-test('Editor: opponent-branch warning badge appears on nodes with multiple child branches', async ({ page }) => {
+test('Editor: variation list renders multiple branches for the Italian Game tree', async ({ page }) => {
   await mountEditorMocks(page)
   await page.goto(`/creator/courses/${COURSE_ID}/edit`)
 
   await expect(page.getByTestId('board-authoring-surface')).toBeVisible({ timeout: 15_000 })
   await expect(page.getByTestId('variation-list')).toBeVisible({ timeout: 3_000 })
 
-  // Italian Game has nodes with multiple Black responses — at least one warning badge should appear
-  await expect(page.getByTestId('opponent-branch-warning').first()).toBeVisible()
+  // The earlier `opponent-branch-warning` badge was removed in the f2fc9a3
+  // refactor; branching is now expressed structurally via nested variation
+  // rows. Assert that several variation nodes render — the Italian Game tree
+  // has many branches, so this proves the tree was parsed and laid out.
+  const nodes = page.locator('[data-testid^="variation-node-"]')
+  expect(await nodes.count()).toBeGreaterThan(3)
 })
 
 // ── Test 4: Player — enrolled learner can play main line and trigger completion ─

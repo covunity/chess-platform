@@ -703,14 +703,21 @@ export default function LessonPlayerPage() {
           data-testid="lesson-content-slot"
           style={{ flex: 1, overflow: currentLesson?.type === 'chess' ? 'hidden' : 'auto', display: 'flex', alignItems: 'stretch', justifyContent: 'center' }}
         >
-          {currentLesson?.type === 'chess' && playerLesson && playerLesson.id === currentLessonId ? (
+          {(currentLesson?.type === 'chess' || currentLesson?.type === 'puzzle') && playerLesson && playerLesson.id === currentLessonId ? (
             <div style={{ flex: 1, overflow: 'hidden' }}>
               <GuidedChessPlayer
                 lesson={playerLesson}
                 lessonNumber={lessonIndex + 1}
                 totalLessons={allLessons.length}
                 initialNodeId={initialNodeId}
-                mode={playerLesson.is_view_only ? 'viewer' : 'lesson'}
+                mode={
+                  currentLesson.type === 'puzzle'
+                    ? 'puzzle'
+                    : playerLesson.is_view_only
+                      ? 'viewer'
+                      : 'lesson'
+                }
+                supabaseClient={currentLesson.type === 'puzzle' ? supabase : undefined}
                 onComplete={handleLessonComplete}
                 onBookmark={handleBookmark}
               />
