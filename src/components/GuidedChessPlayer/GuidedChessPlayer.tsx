@@ -257,7 +257,15 @@ export default function GuidedChessPlayer({
   // Legal-move destinations from chess.js — required by Chessground (free=false) so the
   // learner can pick up pieces. handlePieceDrop then validates against the lesson tree
   // and snap-backs wrong moves (D-10).
+  //
+  // Returns an empty map when the lesson tree has no more authored moves
+  // (atLeaf) or it's the opponent's turn (awaitingOpponent). Chessground
+  // commits the drag in its own state before firing events.after, so an
+  // early-return inside handlePieceDrop alone leaves the piece visually on
+  // the destination square: emptying dests blocks the drag at the source
+  // and keeps the board pinned to the last authored position.
   const legalDests = useMemo(() => {
+    if (atLeaf || awaitingOpponent) return new Map<string, string[]>()
     try {
       const chess = new Chess(currentFen)
       const map = new Map<string, string[]>()
@@ -270,7 +278,7 @@ export default function GuidedChessPlayer({
     } catch {
       return new Map<string, string[]>()
     }
-  }, [currentFen])
+  }, [currentFen, atLeaf, awaitingOpponent])
 
   // onComplete when leaf reached
   useEffect(() => {
