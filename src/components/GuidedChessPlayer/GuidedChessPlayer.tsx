@@ -71,6 +71,8 @@ interface InteractiveBoardProps {
   validDestinations?: Set<string>
   autoShapes?: DrawShape[]
   viewOnly?: boolean
+  /** Map from origin square to list of destination squares — drives Chessground drag/click. */
+  dests?: Map<string, string[]>
   onSquareClick?: (square: string) => void
   onPieceDrop?: (from: string, to: string) => boolean
   onDragStart?: (square: string) => void
@@ -87,6 +89,7 @@ function InteractiveBoard({
   selectedSquare,
   autoShapes,
   viewOnly = false,
+  dests,
   onSquareClick,
   onPieceDrop,
 }: InteractiveBoardProps) {
@@ -112,6 +115,7 @@ function InteractiveBoard({
         selectedSquare={selectedSquare}
         wrongMoveSquare={wrongMoveSquare}
         movable={viewOnly ? null : perspective}
+        dests={viewOnly ? undefined : dests}
         viewOnly={viewOnly}
         drawable={{ enabled: false, autoShapes: autoShapes ?? [] }}
         onSquareSelect={viewOnly ? undefined : (square) => onSquareClick?.(square)}
@@ -236,6 +240,24 @@ export default function GuidedChessPlayer({
   const lastMove = currentNode && currentNode.parentId !== null
     ? { from: currentNode.from, to: currentNode.to }
     : undefined
+
+  // Legal-move destinations from chess.js — required by Chessground (free=false) so the
+  // learner can pick up pieces. handlePieceDrop then validates against the lesson tree
+  // and snap-backs wrong moves (D-10).
+  const legalDests = useMemo(() => {
+    try {
+      const chess = new Chess(currentFen)
+      const map = new Map<string, string[]>()
+      for (const move of chess.moves({ verbose: true })) {
+        const existing = map.get(move.from)
+        if (existing) existing.push(move.to)
+        else map.set(move.from, [move.to])
+      }
+      return map
+    } catch {
+      return new Map<string, string[]>()
+    }
+  }, [currentFen])
 
   // onComplete when leaf reached
   useEffect(() => {
@@ -616,6 +638,7 @@ export default function GuidedChessPlayer({
           validDestinations={validDestinations}
           autoShapes={[...shapesToDrawShapes(currentNode?.shapes ?? []), ...puzzleHintShapes]}
           viewOnly={isViewer}
+          dests={legalDests}
           onSquareClick={isViewer ? undefined : handleSquareClick}
           onPieceDrop={isViewer ? undefined : handlePieceDrop}
           onDragStart={isViewer ? undefined : setDraggingSquare}
