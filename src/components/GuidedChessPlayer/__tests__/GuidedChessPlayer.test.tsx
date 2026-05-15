@@ -1877,4 +1877,40 @@ describe('GuidedChessPlayer — arrow icons for viewer nav (issue #226 follow-up
     expect(screen.getByTestId('viewer-prev-btn').textContent ?? '').toBe('')
     expect(screen.getByTestId('viewer-next-btn').textContent ?? '').toBe('')
   })
+
+  it('renders Begin and End navigation buttons in viewer mode', () => {
+    render(<GuidedChessPlayer lesson={baseLesson} lessonNumber={1} totalLessons={5} mode="viewer" />)
+    expect(screen.getByTestId('viewer-begin-btn')).toBeInTheDocument()
+    expect(screen.getByTestId('viewer-end-btn')).toBeInTheDocument()
+  })
+
+  it('Begin button is disabled at root and Prev is also disabled', () => {
+    render(<GuidedChessPlayer lesson={baseLesson} lessonNumber={1} totalLessons={5} mode="viewer" />)
+    expect(screen.getByTestId('viewer-begin-btn')).toBeDisabled()
+    expect(screen.getByTestId('viewer-prev-btn')).toBeDisabled()
+  })
+
+  it('End button jumps to the last node of the main line', async () => {
+    render(<GuidedChessPlayer lesson={baseLesson} lessonNumber={1} totalLessons={5} mode="viewer" />)
+    fireEvent.click(screen.getByTestId('viewer-end-btn'))
+    await screen.findByTestId('viewer-end-btn')
+    // After jumping to the end, End + Next should be disabled.
+    expect(screen.getByTestId('viewer-end-btn')).toBeDisabled()
+    expect(screen.getByTestId('viewer-next-btn')).toBeDisabled()
+    // Begin + Prev re-enabled.
+    expect(screen.getByTestId('viewer-begin-btn')).toBeEnabled()
+    expect(screen.getByTestId('viewer-prev-btn')).toBeEnabled()
+  })
+
+  it('Begin button returns to root from the end position', async () => {
+    render(<GuidedChessPlayer lesson={baseLesson} lessonNumber={1} totalLessons={5} mode="viewer" />)
+    fireEvent.click(screen.getByTestId('viewer-end-btn'))
+    await screen.findByTestId('viewer-begin-btn')
+    fireEvent.click(screen.getByTestId('viewer-begin-btn'))
+    await screen.findByTestId('viewer-begin-btn')
+    expect(screen.getByTestId('viewer-begin-btn')).toBeDisabled()
+    expect(screen.getByTestId('viewer-prev-btn')).toBeDisabled()
+    expect(screen.getByTestId('viewer-end-btn')).toBeEnabled()
+    expect(screen.getByTestId('viewer-next-btn')).toBeEnabled()
+  })
 })

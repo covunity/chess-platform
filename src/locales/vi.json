@@ -1065,6 +1065,8 @@
     "puzzleGaveUpComplete": "Bạn đã xem đáp án — không tính là lần giải tốt nhất",
     "viewerNextMove": "Nước sau",
     "viewerPrevMove": "Nước trước",
+    "viewerBeginMove": "Về nước đầu",
+    "viewerEndMove": "Đến nước cuối",
     "modeToggleToRewind": "Tự đi",
     "modeToggleToStudy": "Quay lại học",
     "modeSwitcherAria": "Chế độ học bài",

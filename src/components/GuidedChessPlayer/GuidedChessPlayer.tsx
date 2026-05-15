@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Chess } from 'chess.js'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import ChessgroundView from '../ChessBoard/ChessgroundView'
 import { parsePgn } from '../../utils/parsePgn'
@@ -740,15 +740,30 @@ export default function GuidedChessPlayer({
 
         {/* Action buttons below board */}
         <div className="guided-player-actions">
-          {isViewer ? (
+          {isViewer ? (() => {
+            const mainLineEndId = parsed.mainLine[parsed.mainLine.length - 1]?.id
+            const atMainLineEnd = mainLineEndId !== undefined && currentNodeId === mainLineEndId
+            const atRoot = currentNodeId === 'root' || !currentNode?.parentId
+            return (
             <>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                data-testid="viewer-begin-btn"
+                aria-label={t('guidedPlayer.viewerBeginMove')}
+                title={t('guidedPlayer.viewerBeginMove')}
+                disabled={atRoot}
+                onClick={() => setCurrentNodeId('root')}
+              >
+                <ChevronsLeft size={16} aria-hidden="true" />
+              </button>
               <button
                 type="button"
                 className="btn btn-secondary btn-sm"
                 data-testid="viewer-prev-btn"
                 aria-label={t('guidedPlayer.viewerPrevMove')}
                 title={t('guidedPlayer.viewerPrevMove')}
-                disabled={!currentNode?.parentId}
+                disabled={atRoot}
                 onClick={() => {
                   if (currentNode?.parentId) setCurrentNodeId(currentNode.parentId)
                 }}
@@ -761,7 +776,7 @@ export default function GuidedChessPlayer({
                 data-testid="viewer-next-btn"
                 aria-label={t('guidedPlayer.viewerNextMove')}
                 title={t('guidedPlayer.viewerNextMove')}
-                disabled={atLeaf}
+                disabled={atMainLineEnd || atLeaf}
                 onClick={() => {
                   const next = currentNode?.children[0]
                   if (next) setCurrentNodeId(next.id)
@@ -772,13 +787,27 @@ export default function GuidedChessPlayer({
               <button
                 type="button"
                 className="btn btn-secondary btn-sm"
+                data-testid="viewer-end-btn"
+                aria-label={t('guidedPlayer.viewerEndMove')}
+                title={t('guidedPlayer.viewerEndMove')}
+                disabled={atMainLineEnd || !mainLineEndId}
+                onClick={() => {
+                  if (mainLineEndId) setCurrentNodeId(mainLineEndId)
+                }}
+              >
+                <ChevronsRight size={16} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
                 data-testid="guided-player-flip-btn"
                 onClick={() => setViewPerspective((p) => (p === 'white' ? 'black' : 'white'))}
               >
                 {t('guidedPlayer.flipBoard')}
               </button>
             </>
-          ) : (
+            )
+          })() : (
             <>
               {!isRewindMode && (
                 <button

@@ -9,6 +9,7 @@
 import { useSyncExternalStore, useCallback, useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Chess } from 'chess.js'
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import ChessgroundView from '../../ChessBoard/ChessgroundView'
 import PromotionPicker from '../../GuidedChessPlayer/PromotionPicker'
 import type { PromotionPiece } from '../../GuidedChessPlayer/PromotionPicker'
@@ -109,6 +110,18 @@ export default function BoardAuthoringSurface({
   const lastMove = currentNode.parentId !== null
     ? ([currentNode.from, currentNode.to] as [string, string])
     : null
+
+  // Main-line navigation (Begin / Prev / Next / End). The end-of-main-line is
+  // the last node reachable by always picking children[0] from root, mirroring
+  // the learner-side player.
+  const mainLineEndId = useMemo(() => {
+    let node: PgnNode = tree
+    while (node.children.length > 0) node = node.children[0]
+    return node.id === tree.id ? null : node.id
+  }, [tree])
+  const atRoot = currentNodeId === tree.id || !currentNode.parentId
+  const atMainLineEnd = mainLineEndId !== null && currentNodeId === mainLineEndId
+  const atLeaf = currentNode.children.length === 0
 
   // ── Move handler ──────────────────────────────────────────────────────────
 
@@ -213,6 +226,69 @@ export default function BoardAuthoringSurface({
             defaultValue: 'Chess board — edit mode',
           })}
         />
+      </div>
+
+      {/* Tree navigation — same Begin / Prev / Next / End controls as the
+          learner side, so creators can walk the main line while authoring. */}
+      <div
+        data-testid="board-authoring-nav"
+        style={{
+          display: 'flex',
+          gap: 4,
+          justifyContent: 'center',
+        }}
+      >
+        <button
+          type="button"
+          data-testid="board-authoring-nav-begin"
+          className="btn btn-secondary btn-sm"
+          aria-label={t('guidedPlayer.viewerBeginMove')}
+          title={t('guidedPlayer.viewerBeginMove')}
+          disabled={atRoot}
+          onClick={() => store.getState().setCurrentNode(tree.id)}
+        >
+          <ChevronsLeft size={16} aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          data-testid="board-authoring-nav-prev"
+          className="btn btn-secondary btn-sm"
+          aria-label={t('guidedPlayer.viewerPrevMove')}
+          title={t('guidedPlayer.viewerPrevMove')}
+          disabled={atRoot}
+          onClick={() => {
+            if (currentNode.parentId) store.getState().setCurrentNode(currentNode.parentId)
+          }}
+        >
+          <ChevronLeft size={16} aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          data-testid="board-authoring-nav-next"
+          className="btn btn-secondary btn-sm"
+          aria-label={t('guidedPlayer.viewerNextMove')}
+          title={t('guidedPlayer.viewerNextMove')}
+          disabled={atLeaf}
+          onClick={() => {
+            const next = currentNode.children[0]
+            if (next) store.getState().setCurrentNode(next.id)
+          }}
+        >
+          <ChevronRight size={16} aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          data-testid="board-authoring-nav-end"
+          className="btn btn-secondary btn-sm"
+          aria-label={t('guidedPlayer.viewerEndMove')}
+          title={t('guidedPlayer.viewerEndMove')}
+          disabled={atMainLineEnd || !mainLineEndId}
+          onClick={() => {
+            if (mainLineEndId) store.getState().setCurrentNode(mainLineEndId)
+          }}
+        >
+          <ChevronsRight size={16} aria-hidden="true" />
+        </button>
       </div>
 
       {/* Shape toolbar hint */}
