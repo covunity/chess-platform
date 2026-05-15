@@ -1567,6 +1567,30 @@ describe('GuidedChessPlayer — viewer mode (PRD-0004 Slice 10)', () => {
     expect(screen.getByTestId('viewer-prev-btn')).toBeDisabled()
   })
 
+  it('viewer-next advances exactly one ply per click (no opponent auto-play)', async () => {
+    // SAMPLE_PGN: 1. e4 e5 ... After one click of Next we expect the current
+    // node to be e4 — NOT auto-advanced through Black's reply. Wait long
+    // enough that any leftover 600 ms timer would have fired.
+    render(<GuidedChessPlayer lesson={viewerLesson} lessonNumber={1} totalLessons={3} mode="viewer" />)
+    fireEvent.click(screen.getByTestId('viewer-next-btn'))
+    await new Promise((r) => setTimeout(r, OPPONENT_DELAY_MS + 100))
+    // The highlighted move (aria-current="true") should be e4, not e5.
+    const current = document.querySelector('[aria-current="true"]')
+    expect(current?.textContent).toBe('e4')
+  })
+
+  it('viewer-prev moves back without an immediate auto-play rebound', async () => {
+    // Reproduces the #229 follow-up: previously, clicking Prev after a Next
+    // would advance one ply, the opponent would auto-play forward, and Prev
+    // would visually no-op until clicked twice. Now it should land back at
+    // root in a single click.
+    render(<GuidedChessPlayer lesson={viewerLesson} lessonNumber={1} totalLessons={3} mode="viewer" />)
+    fireEvent.click(screen.getByTestId('viewer-next-btn'))
+    fireEvent.click(screen.getByTestId('viewer-prev-btn'))
+    await new Promise((r) => setTimeout(r, OPPONENT_DELAY_MS + 100))
+    expect(screen.getByTestId('viewer-prev-btn')).toBeDisabled()
+  })
+
   it('→ arrow key advances in viewer mode', async () => {
     render(<GuidedChessPlayer lesson={viewerLesson} lessonNumber={1} totalLessons={3} mode="viewer" />)
     fireEvent.keyDown(document, { key: 'ArrowRight' })

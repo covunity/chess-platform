@@ -356,6 +356,12 @@ export default function GuidedChessPlayer({
 
   // Opponent auto-play
   useEffect(() => {
+    // Viewer (Study) mode is manual stepping — every click of ←/→ should move
+    // exactly one ply, regardless of side. Auto-play here fights both intents:
+    // forward-click jumps two plies, and back-click is immediately undone (#229
+    // follow-up). The interactive lesson + puzzle modes keep auto-play so the
+    // learner only ever plays one side.
+    if (isViewer) return
     // In puzzle mode with an active mistake banner, skip auto-play until banner clears
     if (isPuzzleMode && mistakeBannerNode) return
     // During "Xem đáp án" animation, we step all nodes manually — skip auto-play
@@ -373,7 +379,7 @@ export default function GuidedChessPlayer({
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [awaitingOpponent, currentNodeId, mistakeBannerNode])
+  }, [awaitingOpponent, currentNodeId, mistakeBannerNode, isViewer])
 
   function commitNode(next: PgnNode) {
     setCurrentNodeId(next.id)
@@ -851,6 +857,7 @@ export default function GuidedChessPlayer({
                       <button
                         type="button"
                         data-testid={`move-jump-${entry.whiteId}`}
+                        aria-current={whiteIsCurrent ? 'true' : undefined}
                         className={`guided-player-move-san guided-player-move-san-jump${whiteIsCurrent ? ' guided-player-move-san-current' : ''}`}
                         onClick={() => entry.whiteId && setCurrentNodeId(entry.whiteId)}
                       >
@@ -867,6 +874,7 @@ export default function GuidedChessPlayer({
                       <button
                         type="button"
                         data-testid={`move-jump-${entry.blackId}`}
+                        aria-current={blackIsCurrent ? 'true' : undefined}
                         className={`guided-player-move-san guided-player-move-san-jump${blackIsCurrent ? ' guided-player-move-san-current' : ''}`}
                         onClick={() => entry.blackId && setCurrentNodeId(entry.blackId)}
                       >
