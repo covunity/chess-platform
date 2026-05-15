@@ -750,6 +750,26 @@ body {
   color: var(--ink-1);
 }
 
+.guided-player-move-san-jump {
+  background: transparent;
+  border: none;
+  padding: 1px 4px;
+  margin: 0;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.guided-player-move-san-jump:hover {
+  background: var(--surface-3);
+}
+
+.guided-player-move-san-current {
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+
 .guided-player-move-annotation {
   margin: 0;
   font-size: 13px;

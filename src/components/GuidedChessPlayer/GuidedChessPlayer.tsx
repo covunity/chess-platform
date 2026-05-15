@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Chess } from 'chess.js'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import ChessgroundView from '../ChessBoard/ChessgroundView'
 import { parsePgn } from '../../utils/parsePgn'
@@ -564,26 +565,35 @@ export default function GuidedChessPlayer({
     }
   }
 
-  // Build move log from path-from-root
+  // Build move log. In Study (viewer) mode we show the whole main line so the
+  // learner sees the full lesson at a glance; in every other mode we show only
+  // what's been played so far. The current node is tracked separately for the
+  // highlight pill in the JSX.
   interface FullMoveEntry {
     moveNumber: number
     white?: string
+    whiteId?: string
     black?: string
+    blackId?: string
     note?: RichTextDoc | null
   }
+  const moveLogSourceNodes: PgnNode[] = isViewer ? parsed.mainLine : pathFromRoot
   const playedFullMoves: FullMoveEntry[] = []
-  for (let i = 0; i < pathFromRoot.length; i++) {
-    const node = pathFromRoot[i]
-    const idx = Math.floor(i / 2)
+  for (const node of moveLogSourceNodes) {
+    const idx = node.moveNumber - 1
+    if (idx < 0) continue
     if (!playedFullMoves[idx]) {
-      playedFullMoves[idx] = { moveNumber: idx + 1 }
+      playedFullMoves[idx] = { moveNumber: node.moveNumber }
     }
-    if (i % 2 === 0) {
+    if (node.side === 'w') {
       playedFullMoves[idx].white = node.san
-      if (node.note) playedFullMoves[idx].note = node.note
+      playedFullMoves[idx].whiteId = node.id
     } else {
       playedFullMoves[idx].black = node.san
-      if (node.note) playedFullMoves[idx].note = node.note
+      playedFullMoves[idx].blackId = node.id
+    }
+    if (node.note && !playedFullMoves[idx].note) {
+      playedFullMoves[idx].note = node.note
     }
   }
 
@@ -676,24 +686,28 @@ export default function GuidedChessPlayer({
                 type="button"
                 className="btn btn-secondary btn-sm"
                 data-testid="viewer-prev-btn"
+                aria-label={t('guidedPlayer.viewerPrevMove')}
+                title={t('guidedPlayer.viewerPrevMove')}
                 disabled={!currentNode?.parentId}
                 onClick={() => {
                   if (currentNode?.parentId) setCurrentNodeId(currentNode.parentId)
                 }}
               >
-                {t('guidedPlayer.viewerPrevMove')}
+                <ChevronLeft size={16} aria-hidden="true" />
               </button>
               <button
                 type="button"
                 className="btn btn-secondary btn-sm"
                 data-testid="viewer-next-btn"
+                aria-label={t('guidedPlayer.viewerNextMove')}
+                title={t('guidedPlayer.viewerNextMove')}
                 disabled={atLeaf}
                 onClick={() => {
                   const next = currentNode?.children[0]
                   if (next) setCurrentNodeId(next.id)
                 }}
               >
-                {t('guidedPlayer.viewerNextMove')}
+                <ChevronRight size={16} aria-hidden="true" />
               </button>
               <button
                 type="button"
@@ -818,16 +832,50 @@ export default function GuidedChessPlayer({
         <div data-testid="guided-player-move-log" className="guided-player-annotation-body">
           {playedFullMoves.map((entry, idx) => {
             const isLast = idx === playedFullMoves.length - 1
+            const whiteIsCurrent = !!entry.whiteId && entry.whiteId === currentNodeId
+            const blackIsCurrent = !!entry.blackId && entry.blackId === currentNodeId
+            const containsCurrent = whiteIsCurrent || blackIsCurrent
+            // In viewer mode the move log is also a navigator; in other modes
+            // we keep the existing "last played highlight" semantics.
+            const shouldHighlight = isViewer ? containsCurrent : isLast
             return (
               <div
                 key={entry.moveNumber}
                 data-testid={`move-block-${entry.moveNumber}`}
-                className={`guided-player-move-block${isLast ? ' guided-player-move-block-highlight' : ''}`}
+                className={`guided-player-move-block${shouldHighlight ? ' guided-player-move-block-highlight' : ''}`}
               >
                 <div className="guided-player-move-san-row">
                   <span className="guided-player-move-num">{entry.moveNumber}.</span>
-                  <span className="guided-player-move-san">{entry.white ?? ''}</span>
-                  {entry.black && <span className="guided-player-move-san">{entry.black}</span>}
+                  {entry.white ? (
+                    isViewer && entry.whiteId ? (
+                      <button
+                        type="button"
+                        data-testid={`move-jump-${entry.whiteId}`}
+                        className={`guided-player-move-san guided-player-move-san-jump${whiteIsCurrent ? ' guided-player-move-san-current' : ''}`}
+                        onClick={() => entry.whiteId && setCurrentNodeId(entry.whiteId)}
+                      >
+                        {entry.white}
+                      </button>
+                    ) : (
+                      <span className={`guided-player-move-san${whiteIsCurrent ? ' guided-player-move-san-current' : ''}`}>{entry.white}</span>
+                    )
+                  ) : (
+                    <span className="guided-player-move-san" />
+                  )}
+                  {entry.black && (
+                    isViewer && entry.blackId ? (
+                      <button
+                        type="button"
+                        data-testid={`move-jump-${entry.blackId}`}
+                        className={`guided-player-move-san guided-player-move-san-jump${blackIsCurrent ? ' guided-player-move-san-current' : ''}`}
+                        onClick={() => entry.blackId && setCurrentNodeId(entry.blackId)}
+                      >
+                        {entry.black}
+                      </button>
+                    ) : (
+                      <span className={`guided-player-move-san${blackIsCurrent ? ' guided-player-move-san-current' : ''}`}>{entry.black}</span>
+                    )
+                  )}
                 </div>
                 {entry.note && showAnnotationNotes && (
                   <div

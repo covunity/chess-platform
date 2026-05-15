@@ -1735,4 +1735,61 @@ describe('GuidedChessPlayer — rewind toggle (issue #226)', () => {
     )
     expect(screen.getByTestId('guided-player-coach-note')).toBeInTheDocument()
   })
+
+  it('viewer mode shows the entire main line in the move log (not just played moves)', () => {
+    render(
+      <GuidedChessPlayer
+        lesson={baseLesson}
+        lessonNumber={1}
+        totalLessons={5}
+        mode="viewer"
+        onToggleMode={vi.fn()}
+      />
+    )
+    // SAMPLE_PGN main line is e4 e5 Nf3 Nc6 Bb5 — three full-move blocks.
+    expect(screen.getByTestId('move-block-1')).toHaveTextContent(/e4/)
+    expect(screen.getByTestId('move-block-1')).toHaveTextContent(/e5/)
+    expect(screen.getByTestId('move-block-2')).toHaveTextContent(/Nf3/)
+    expect(screen.getByTestId('move-block-2')).toHaveTextContent(/Nc6/)
+    expect(screen.getByTestId('move-block-3')).toHaveTextContent(/Bb5/)
+  })
+
+  it('lesson mode only shows played moves in the move log', () => {
+    render(<GuidedChessPlayer lesson={baseLesson} lessonNumber={1} totalLessons={5} mode="lesson" />)
+    // No moves played yet → no move blocks rendered.
+    expect(screen.queryByTestId('move-block-1')).not.toBeInTheDocument()
+  })
+
+  it('clicking a move in the viewer move log jumps the board to that node', async () => {
+    const user = userEvent.setup()
+    render(
+      <GuidedChessPlayer
+        lesson={baseLesson}
+        lessonNumber={1}
+        totalLessons={5}
+        mode="viewer"
+        onToggleMode={vi.fn()}
+      />
+    )
+    // Click "Nf3" — should advance currentNodeId so the prev-arrow becomes enabled.
+    const nf3 = screen.getByRole('button', { name: 'Nf3' })
+    await user.click(nf3)
+    expect(screen.getByTestId('viewer-prev-btn')).toBeEnabled()
+  })
+})
+
+describe('GuidedChessPlayer — arrow icons for viewer nav (issue #226 follow-up)', () => {
+  it('viewer prev/next buttons expose accessible labels for the arrow icons', () => {
+    render(<GuidedChessPlayer lesson={baseLesson} lessonNumber={1} totalLessons={5} mode="viewer" />)
+    expect(screen.getByTestId('viewer-prev-btn')).toHaveAttribute('aria-label', 'Nước trước')
+    expect(screen.getByTestId('viewer-next-btn')).toHaveAttribute('aria-label', 'Nước sau')
+  })
+
+  it('viewer prev/next buttons no longer render text labels (icons only)', () => {
+    render(<GuidedChessPlayer lesson={baseLesson} lessonNumber={1} totalLessons={5} mode="viewer" />)
+    // The text label moved to aria-label / title; the visible button content
+    // is just the icon, so the text content should be empty.
+    expect(screen.getByTestId('viewer-prev-btn').textContent ?? '').toBe('')
+    expect(screen.getByTestId('viewer-next-btn').textContent ?? '').toBe('')
+  })
 })
