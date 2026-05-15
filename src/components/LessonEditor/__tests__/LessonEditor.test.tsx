@@ -67,9 +67,9 @@ describe("LessonEditor", () => {
       expect(screen.queryByRole("button", { name: /gửi duyệt/i })).not.toBeInTheDocument();
     });
 
-    it("renders Preview label", () => {
+    it("renders the variation panel for chess lessons", () => {
       renderEditor({ lesson: DEFAULT_LESSON, onSave: vi.fn() });
-      expect(screen.getByText(/^xem trước$/i)).toBeInTheDocument();
+      expect(screen.getByText(/cây nước đi/i)).toBeInTheDocument();
     });
   });
 

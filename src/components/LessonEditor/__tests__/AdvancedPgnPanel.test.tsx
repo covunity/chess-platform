@@ -107,11 +107,10 @@ describe('AdvancedPgnPanel round-trip', () => {
     await user.type(textarea, '1. d4 d5')
     // Switch back to board
     await user.click(screen.getByTestId('board-tab'))
-    // Variation list should show d4 (move was applied to tree)
+    // Variation list should show d4 once the PGN parse debounce fires and the tree updates
     await waitFor(() => {
-      expect(screen.getByTestId('variation-list')).toBeInTheDocument()
+      expect(screen.getByTestId('variation-list')).toHaveTextContent('d4')
     })
-    expect(screen.getByTestId('variation-list')).toHaveTextContent('d4')
   })
 
   it('invalid PGN in textarea shows parse error and does NOT reset the tree', async () => {

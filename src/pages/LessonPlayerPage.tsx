@@ -365,11 +365,14 @@ export default function LessonPlayerPage() {
         setIsEnrolled(enrolledResult)
       }
 
+      const isCourseCreator = !!user && courseData.creator_id === user.id
+
       const accessDecision = canAccessLesson(
         profile?.role,
         isEnrolled,
         { free_preview: lessonMeta?.free_preview ?? false },
-        hasPendingOrder
+        hasPendingOrder,
+        isCourseCreator
       )
 
       if (accessDecision === 'paywall') {

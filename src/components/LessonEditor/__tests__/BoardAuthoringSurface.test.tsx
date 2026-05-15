@@ -1,5 +1,10 @@
 /**
  * BoardAuthoringSurface tests — PRD-0004 Slice 5a
+ *
+ * The board surface and the variation/note panel were split into two components
+ * (BoardAuthoringSurface + VariationPanel). LessonEditor composes them side by side.
+ * These integration tests mount both so they exercise the same shared treeStore
+ * the production layout uses.
  */
 import { render as rtlRender, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -10,12 +15,23 @@ vi.mock('chessground')
 
 // We import the component. If it doesn't exist yet, this is RED.
 import BoardAuthoringSurface from '../BoardAuthoring/BoardAuthoringSurface'
+import VariationPanel from '../VariationPanel'
 import { createTreeStore } from '../treeStore'
 import type { TreeStore } from '../treeStore'
 import { parsePgn } from '../../../utils/parsePgn'
 
 function render(ui: React.ReactNode) {
   return rtlRender(<I18nextProvider i18n={i18n}>{ui}</I18nextProvider>)
+}
+
+/** Mount the board surface + variation/note panel together, mirroring LessonEditor's layout. */
+function renderWithVariationPanel(store: TreeStore, perspective: 'white' | 'black' = 'white') {
+  return render(
+    <>
+      <BoardAuthoringSurface store={store} perspective={perspective} />
+      <VariationPanel store={store} />
+    </>
+  )
 }
 
 const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
@@ -33,21 +49,21 @@ describe('BoardAuthoringSurface', () => {
       expect(screen.getByTestId('board-authoring-board')).toBeInTheDocument()
     })
 
-    it('does not show the variation list when the tree has no variations (linear)', () => {
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
-      expect(screen.queryByTestId('variation-list')).not.toBeInTheDocument()
+    it('shows an empty placeholder when the tree has no moves', () => {
+      renderWithVariationPanel(store)
+      expect(screen.getByTestId('variation-list')).toHaveTextContent(/kéo quân cờ/i)
     })
 
     it('shows the variation list when the tree has moves', () => {
       store.getState().applyMove('e2', 'e4')
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
       expect(screen.getByTestId('variation-list')).toBeInTheDocument()
     })
 
     it('shows move log entries for played moves', () => {
       store.getState().applyMove('e2', 'e4')
       store.getState().applyMove('e7', 'e5')
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
       expect(screen.getByTestId('variation-list')).toHaveTextContent('e4')
       expect(screen.getByTestId('variation-list')).toHaveTextContent('e5')
     })
@@ -61,7 +77,7 @@ describe('BoardAuthoringSurface', () => {
       store.getState().setCurrentNode('root')
       store.getState().applyMove('d2', 'd4')
 
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
 
       // Click on e4 node in variation list
       const e4Node = screen.getByTestId(`variation-node-${e4Id}`)
@@ -77,7 +93,7 @@ describe('BoardAuthoringSurface', () => {
     it('populates variation list when loaded with a branching PGN', () => {
       const parsed = parsePgn('1. e4 e5 (1...c5 2. Nf3) 2. Nf3')
       store.getState().replaceTree(parsed.root!)
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
       const varList = screen.getByTestId('variation-list')
       expect(varList).toHaveTextContent('e4')
       expect(varList).toHaveTextContent('c5')
@@ -100,7 +116,7 @@ describe('BoardAuthoringSurface', () => {
   describe('right-click on variation list rows', () => {
     it('does not crash on right-click', () => {
       store.getState().applyMove('e2', 'e4')
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
       const varList = screen.getByTestId('variation-list')
       expect(() => fireEvent.contextMenu(varList)).not.toThrow()
     })
@@ -108,17 +124,17 @@ describe('BoardAuthoringSurface', () => {
 
   describe('note panel (Slice 7)', () => {
     it('renders the note panel', () => {
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
       expect(screen.getByTestId('note-panel')).toBeInTheDocument()
     })
 
     it('renders a RichNoteEditor inside the note panel', () => {
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
       expect(screen.getByTestId('rich-note-editor')).toBeInTheDocument()
     })
 
     it('note panel is disabled when root is selected (no node selected)', () => {
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
       const editor = screen.getByTestId('rich-note-editor')
       expect(editor).toHaveAttribute('aria-disabled', 'true')
     })
@@ -126,7 +142,7 @@ describe('BoardAuthoringSurface', () => {
     it('note panel is enabled when a non-root node is selected', async () => {
       store.getState().applyMove('e2', 'e4')
       // After applying a move, currentNodeId is the e4 node (not root)
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
       await waitFor(() => {
         const editor = screen.getByTestId('rich-note-editor')
         expect(editor).not.toHaveAttribute('aria-disabled', 'true')
@@ -134,7 +150,7 @@ describe('BoardAuthoringSurface', () => {
     })
 
     it('shows hint text when root is selected', () => {
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
       const panel = screen.getByTestId('note-panel')
       expect(panel).toHaveTextContent(/Chọn một nước/i)
     })
@@ -142,7 +158,7 @@ describe('BoardAuthoringSurface', () => {
     it('dispatches setNote on the store when note changes', async () => {
       store.getState().applyMove('e2', 'e4')
       const e4Id = store.getState().tree.children[0].id
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
 
       await waitFor(() => {
         expect(screen.getByTestId('rich-note-editor')).toBeInTheDocument()
@@ -169,7 +185,7 @@ describe('BoardAuthoringSurface', () => {
       }
       store.getState().setNote(e4Id, doc)
 
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
 
       await waitFor(() => {
         const editableArea = document.querySelector('[contenteditable="true"]')
@@ -183,7 +199,7 @@ describe('BoardAuthoringSurface', () => {
       store.getState().applyMove('e2', 'e4')
       store.getState().setCurrentNode('root')
       store.getState().applyMove('d2', 'd4')
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
       const d4Node = screen.getAllByTestId(/variation-node-/).find(
         (el) => el.textContent?.includes('d4')
       )!
@@ -195,7 +211,7 @@ describe('BoardAuthoringSurface', () => {
       store.getState().applyMove('e2', 'e4')
       store.getState().setCurrentNode('root')
       store.getState().applyMove('d2', 'd4')
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
       const d4Node = screen.getAllByTestId(/variation-node-/).find(
         (el) => el.textContent?.includes('d4')
       )!
@@ -207,7 +223,7 @@ describe('BoardAuthoringSurface', () => {
       store.getState().applyMove('e2', 'e4')
       store.getState().setCurrentNode('root')
       store.getState().applyMove('d2', 'd4')
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
       const d4Node = screen.getAllByTestId(/variation-node-/).find(
         (el) => el.textContent?.includes('d4')
       )!
@@ -219,7 +235,7 @@ describe('BoardAuthoringSurface', () => {
       store.getState().applyMove('e2', 'e4')
       store.getState().setCurrentNode('root')
       store.getState().applyMove('d2', 'd4')
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
       // e4 is children[0] — promote should be disabled for it
       const e4Node = screen.getAllByTestId(/variation-node-/).find(
         (el) => el.textContent?.includes('e4')
@@ -232,7 +248,7 @@ describe('BoardAuthoringSurface', () => {
       store.getState().applyMove('e2', 'e4')
       store.getState().setCurrentNode('root')
       store.getState().applyMove('d2', 'd4')
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
       const d4Node = screen.getAllByTestId(/variation-node-/).find(
         (el) => el.textContent?.includes('d4')
       )!
@@ -244,7 +260,7 @@ describe('BoardAuthoringSurface', () => {
       store.getState().applyMove('e2', 'e4')
       store.getState().setCurrentNode('root')
       store.getState().applyMove('d2', 'd4')
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
       const d4Node = screen.getAllByTestId(/variation-node-/).find(
         (el) => el.textContent?.includes('d4')
       )!
@@ -258,7 +274,7 @@ describe('BoardAuthoringSurface', () => {
       store.getState().applyMove('e2', 'e4')
       store.getState().setCurrentNode('root')
       store.getState().applyMove('d2', 'd4')
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
       const e4Node = screen.getAllByTestId(/variation-node-/).find(
         (el) => el.textContent?.includes('e4')
       )!
@@ -271,7 +287,7 @@ describe('BoardAuthoringSurface', () => {
       store.getState().applyMove('e2', 'e4')
       store.getState().setCurrentNode('root')
       store.getState().applyMove('d2', 'd4')
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
       const e4Node = screen.getAllByTestId(/variation-node-/).find(
         (el) => el.textContent?.includes('e4')
       )!
@@ -286,7 +302,7 @@ describe('BoardAuthoringSurface', () => {
       store.getState().applyMove('e2', 'e4')
       store.getState().setCurrentNode('root')
       store.getState().applyMove('d2', 'd4')
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
       const e4Node = screen.getAllByTestId(/variation-node-/).find(
         (el) => el.textContent?.includes('e4')
       )!
@@ -298,7 +314,7 @@ describe('BoardAuthoringSurface', () => {
 
     it('Delete key on a focused variation node opens the confirm dialog', () => {
       store.getState().applyMove('e2', 'e4')
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
       const e4Node = screen.getAllByTestId(/variation-node-/)[0]
       e4Node.focus()
       fireEvent.keyDown(e4Node, { key: 'Delete' })
@@ -309,7 +325,7 @@ describe('BoardAuthoringSurface', () => {
       store.getState().applyMove('e2', 'e4')
       store.getState().setCurrentNode('root')
       store.getState().applyMove('d2', 'd4')
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
       const d4Node = screen.getAllByTestId(/variation-node-/).find(
         (el) => el.textContent?.includes('d4')
       )!
@@ -344,7 +360,7 @@ describe('BoardAuthoringSurface', () => {
       const customFen = 'r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3'
       store.getState().setStartingFen(customFen)
       store.getState().applyMove('d2', 'd4')
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
       // The variation list header should show the custom starting position FEN info
       const varList = screen.getByTestId('variation-list')
       expect(varList).toBeInTheDocument()

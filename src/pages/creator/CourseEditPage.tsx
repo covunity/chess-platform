@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
 import {
@@ -333,7 +333,7 @@ interface PublishBarProps {
   t: (k: string) => string
 }
 
-function PublishBar({ courseTitle, status, readiness, publishing, onPublish, onUnpublish, onSaveLesson, t }: PublishBarProps) {
+function PublishBar({ courseId, courseTitle, status, readiness, publishing, onPublish, onUnpublish, onSaveLesson, t }: PublishBarProps) {
   const barStyle: React.CSSProperties = {
     padding: '8px 20px',
     background: 'var(--surface)',
@@ -367,6 +367,13 @@ function PublishBar({ courseTitle, status, readiness, publishing, onPublish, onU
             {t('creator.courseEdit.saveLesson')}
           </button>
         )}
+        <Link
+          to={`/courses/${courseId}`}
+          data-testid="view-public-page"
+          className="btn btn-ghost btn-sm"
+        >
+          {t('creator.courseEdit.viewPublicPage')}
+        </Link>
         <button type="button" data-testid="unpublish-btn" className="btn btn-secondary btn-sm" onClick={onUnpublish} disabled={publishing}>
           {t('creator.courseEdit.publish.unpublish')}
         </button>
