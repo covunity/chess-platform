@@ -686,24 +686,38 @@ export default function GuidedChessPlayer({
           </span>
         </div>
 
-        {/* Board */}
-        <InteractiveBoard
-          fen={currentFen}
-          perspective={viewPerspective}
-          size={480}
-          lastMove={lastMove}
-          wrongMoveSquare={wrongMoveSquare}
-          hintSquares={hintSquares}
-          selectedSquare={selectedSquare}
-          validDestinations={validDestinations}
-          autoShapes={[...shapesToDrawShapes(currentNode?.shapes ?? []), ...puzzleHintShapes]}
-          viewOnly={isViewer}
-          dests={legalDests}
-          onSquareClick={isViewer ? undefined : handleSquareClick}
-          onPieceDrop={isViewer ? undefined : handlePieceDrop}
-          onDragStart={isViewer ? undefined : setDraggingSquare}
-          canDrag={isViewer ? undefined : canDrag}
-        />
+        {/* Board (relative parent for the wrong-move overlay) */}
+        <div className="guided-player-board-wrap">
+          <InteractiveBoard
+            fen={currentFen}
+            perspective={viewPerspective}
+            size={480}
+            lastMove={lastMove}
+            wrongMoveSquare={wrongMoveSquare}
+            hintSquares={hintSquares}
+            selectedSquare={selectedSquare}
+            validDestinations={validDestinations}
+            autoShapes={[...shapesToDrawShapes(currentNode?.shapes ?? []), ...puzzleHintShapes]}
+            viewOnly={isViewer}
+            dests={legalDests}
+            onSquareClick={isViewer ? undefined : handleSquareClick}
+            onPieceDrop={isViewer ? undefined : handlePieceDrop}
+            onDragStart={isViewer ? undefined : setDraggingSquare}
+            canDrag={isViewer ? undefined : canDrag}
+          />
+
+          {/* Wrong-move banner — overlay so showing/hiding it does NOT reflow
+              the board (#231 follow-up). Stays out of the layout flow. */}
+          {!isViewer && !isPuzzleMode && wrongMoveSquare && (
+            <div
+              data-testid="wrong-move-banner"
+              role="alert"
+              className="guided-player-wrong-move-banner"
+            >
+              {t('guidedPlayer.wrongMoveBanner')}
+            </div>
+          )}
+        </div>
         {!isViewer && promotionCandidates.length > 0 && (
           <PromotionPicker
             offered={promotionCandidates.map(c => c.promotion as PromotionPiece)}
@@ -714,19 +728,6 @@ export default function GuidedChessPlayer({
             }}
             onDismiss={() => setPromotionCandidates([])}
           />
-        )}
-
-        {/* Wrong-move banner — louder feedback for Rewind mode where the note
-            panel + hint are hidden. The board square is already red (D-10);
-            this gives a short textual cue so the learner knows what happened. */}
-        {!isViewer && !isPuzzleMode && wrongMoveSquare && (
-          <div
-            data-testid="wrong-move-banner"
-            role="alert"
-            className="guided-player-wrong-move-banner"
-          >
-            {t('guidedPlayer.wrongMoveBanner')}
-          </div>
         )}
 
         {/* Action buttons below board */}

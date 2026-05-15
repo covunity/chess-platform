@@ -195,6 +195,14 @@ export default function ChessgroundView(props: ChessgroundViewProps) {
     }
     prevFenRef.current = props.fen
     apiRef.current.set(config)
+    // Belt + braces in player mode: api.set() applies autoShapes via configure(),
+    // but right after a piece-drop chessground has already mutated state via its
+    // own move handling, and the deep merge can race the SVG redraw. Explicitly
+    // re-applying autoShapes via the dedicated API forces a clean render so node
+    // shapes (e.g. learner-side arrows on Rewind moves) actually appear.
+    if (!props.onShapesChange) {
+      apiRef.current.setAutoShapes(props.drawable?.autoShapes ?? [])
+    }
   })
 
   return (
