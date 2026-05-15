@@ -710,6 +710,7 @@ export default function LessonPlayerPage() {
                 lessonNumber={lessonIndex + 1}
                 totalLessons={allLessons.length}
                 initialNodeId={initialNodeId}
+                mode={playerLesson.is_view_only ? 'viewer' : 'lesson'}
                 onComplete={handleLessonComplete}
                 onBookmark={handleBookmark}
               />

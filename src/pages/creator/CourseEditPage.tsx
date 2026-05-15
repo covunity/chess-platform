@@ -607,21 +607,23 @@ export default function CourseEditPage() {
     }
   }
 
-  async function handleSaveLesson(data: { pgn_data: string; board_perspective: 'white' | 'black'; is_free_preview: boolean; title: string; description?: string | null }) {
+  async function handleSaveLesson(data: { pgn_data: string; board_perspective: 'white' | 'black'; is_free_preview: boolean; title: string; description?: string | null; is_view_only?: boolean }) {
     if (!selectedLesson) return
+    const isViewOnly = data.is_view_only ?? false
     await updateLesson(supabase, selectedLesson.id, {
       pgn_data: data.pgn_data,
       board_perspective: data.board_perspective,
       free_preview: data.is_free_preview,
       title: data.title,
       description: data.description ?? null,
+      is_view_only: isViewOnly,
     })
     showToast(t('creator.courseEdit.saveLessonToast'))
     setChapters(prev => prev.map(ch => ({
       ...ch,
       lessons: (ch.lessons ?? []).map(l =>
         l.id === selectedLesson.id
-          ? { ...l, pgn_data: data.pgn_data, board_perspective: data.board_perspective, free_preview: data.is_free_preview, title: data.title, description: data.description ?? null }
+          ? { ...l, pgn_data: data.pgn_data, board_perspective: data.board_perspective, free_preview: data.is_free_preview, title: data.title, description: data.description ?? null, is_view_only: isViewOnly }
           : l
       ),
     })))
@@ -767,6 +769,7 @@ export default function CourseEditPage() {
               board_perspective: selectedLesson.board_perspective ?? 'white',
               is_free_preview: selectedLesson.free_preview,
               type: selectedLesson.type,
+              is_view_only: selectedLesson.is_view_only ?? false,
             }}
             chapterLessons={selectedChapterLessons}
             onSelectLesson={id => {
