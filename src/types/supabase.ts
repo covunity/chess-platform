@@ -405,7 +405,7 @@ export type Database = {
           duration_seconds: number
           free_preview: boolean
           id: string
-          is_view_only: boolean
+          has_rewind_mode: boolean
           pgn_data: string
           position: number
           puzzle_player_side: string | null
@@ -430,7 +430,7 @@ export type Database = {
           duration_seconds?: number
           free_preview?: boolean
           id?: string
-          is_view_only?: boolean
+          has_rewind_mode?: boolean
           pgn_data?: string
           position?: number
           puzzle_player_side?: string | null
@@ -455,7 +455,7 @@ export type Database = {
           duration_seconds?: number
           free_preview?: boolean
           id?: string
-          is_view_only?: boolean
+          has_rewind_mode?: boolean
           pgn_data?: string
           position?: number
           puzzle_player_side?: string | null

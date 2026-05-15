@@ -11,7 +11,7 @@ export interface PlayerLesson {
   video_provider_id: string | null
   video_status: string | null
   description: string | null
-  is_view_only: boolean
+  has_rewind_mode: boolean
 }
 
 export interface GetLessonForPlayerResult {
@@ -25,7 +25,7 @@ export async function getLessonForPlayer(
 ): Promise<GetLessonForPlayerResult> {
   const { data, error } = await client
     .from('lessons')
-    .select('id, title, type, pgn_data, board_perspective, coach_note, video_provider, video_provider_id, video_status, description, is_view_only')
+    .select('id, title, type, pgn_data, board_perspective, coach_note, video_provider, video_provider_id, video_status, description, has_rewind_mode')
     .eq('id', lessonId)
     .single()
 
@@ -46,7 +46,7 @@ export async function getLessonForPlayer(
       video_provider_id: (row.video_provider_id as string | null) ?? null,
       video_status: (row.video_status as string | null) ?? null,
       description: (row.description as string | null) ?? null,
-      is_view_only: (row.is_view_only as boolean | null) ?? false,
+      has_rewind_mode: (row.has_rewind_mode as boolean | null) ?? false,
     },
     error: null,
   }

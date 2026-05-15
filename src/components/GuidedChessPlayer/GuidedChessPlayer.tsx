@@ -24,8 +24,8 @@ export interface GuidedLesson {
   puzzle_player_side?: 'white' | 'black' | null
   /** Lesson type — 'puzzle' activates puzzle mode logic. */
   type?: 'chess' | 'video' | 'puzzle'
-  /** When true the lesson renders in viewer mode (no interaction). */
-  is_view_only?: boolean
+  /** When true the lesson supports a Study (viewer) ↔ Rewind (lesson) toggle. */
+  has_rewind_mode?: boolean
 }
 
 export interface GuidedChessPlayerProps {
@@ -45,6 +45,12 @@ export interface GuidedChessPlayerProps {
   onResumeNodeChange?: (nodeId: string) => void
   /** Supabase client — required in puzzle mode to record attempts and read best attempts. */
   supabaseClient?: SupabaseClient
+  /**
+   * When present, the player renders a Study ↔ Rewind toggle button. The parent
+   * owns the active mode state; clicking the button calls this back so the
+   * parent can swap mode + remount the player at root (issue #226).
+   */
+  onToggleMode?: () => void
 }
 
 const MISTAKE_REVERT_MS = 1500
@@ -135,6 +141,7 @@ export default function GuidedChessPlayer({
   onBookmark,
   onResumeNodeChange,
   supabaseClient,
+  onToggleMode,
 }: GuidedChessPlayerProps) {
   const { t } = useTranslation()
   const parsed = useMemo(() => parsePgn(lesson.pgn_data), [lesson.pgn_data])
@@ -195,6 +202,11 @@ export default function GuidedChessPlayer({
   const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const isViewer = mode === 'viewer'
+  // A two-mode lesson (has_rewind_mode=true) routes through this player twice:
+  // once in 'viewer' = Study, once in 'lesson' = Rewind. The Rewind side hides
+  // the notes + Hint so the learner is forced to play from memory (#226).
+  const isRewindMode = mode === 'lesson' && !!onToggleMode
+  const showAnnotationNotes = !isRewindMode
 
   // Resume debounce — save currentNodeId 2 s after last change
   useEffect(() => {
@@ -691,18 +703,30 @@ export default function GuidedChessPlayer({
               >
                 {t('guidedPlayer.flipBoard')}
               </button>
+              {onToggleMode && (
+                <button
+                  type="button"
+                  className="btn btn-accent btn-sm"
+                  data-testid="mode-toggle-btn"
+                  onClick={onToggleMode}
+                >
+                  {t('guidedPlayer.modeToggleToRewind')}
+                </button>
+              )}
             </>
           ) : (
             <>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                data-testid="guided-player-hint-btn"
-                disabled={awaitingOpponent || upcomingSide !== learnerColor}
-                onClick={() => setHintActive((h) => !h)}
-              >
-                {t('guidedPlayer.hint')}
-              </button>
+              {!isRewindMode && (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  data-testid="guided-player-hint-btn"
+                  disabled={awaitingOpponent || upcomingSide !== learnerColor}
+                  onClick={() => setHintActive((h) => !h)}
+                >
+                  {t('guidedPlayer.hint')}
+                </button>
+              )}
               {isPuzzleMode && hintLevel >= 2 && !gaveUp && (
                 <button
                   type="button"
@@ -730,6 +754,16 @@ export default function GuidedChessPlayer({
               >
                 {t('guidedPlayer.resetLesson')}
               </button>
+              {onToggleMode && (
+                <button
+                  type="button"
+                  className="btn btn-accent btn-sm"
+                  data-testid="mode-toggle-btn"
+                  onClick={onToggleMode}
+                >
+                  {t('guidedPlayer.modeToggleToStudy')}
+                </button>
+              )}
             </>
           )}
         </div>
@@ -795,7 +829,7 @@ export default function GuidedChessPlayer({
                   <span className="guided-player-move-san">{entry.white ?? ''}</span>
                   {entry.black && <span className="guided-player-move-san">{entry.black}</span>}
                 </div>
-                {entry.note && (
+                {entry.note && showAnnotationNotes && (
                   <div
                     data-testid={`move-log-annotation-${entry.moveNumber}`}
                     className="guided-player-move-annotation"
@@ -866,7 +900,7 @@ export default function GuidedChessPlayer({
             </div>
           )}
 
-          {lesson.coach_note && (
+          {lesson.coach_note && showAnnotationNotes && (
             <aside data-testid="guided-player-coach-note" className="guided-player-coach-note">
               <p>{lesson.coach_note}</p>
             </aside>

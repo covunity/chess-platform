@@ -4,22 +4,25 @@ import { vi, describe, it, beforeEach, expect } from 'vitest'
 
 vi.mock('chessground')
 
-// Mock GuidedChessPlayer so we can assert which mode/supabaseClient props the
-// page wires through for each lesson type — without rendering a real chess board.
-// We preserve the structural test ids the existing chess-player tests rely on
-// and expose a "mock-fire-complete" button that synthetically invokes onComplete.
+// Mock GuidedChessPlayer so we can assert which mode/supabaseClient/onToggleMode
+// props the page wires through for each lesson type — without rendering a real
+// chess board. We preserve the structural test ids the existing chess-player
+// tests rely on and expose a "mock-fire-complete" button that synthetically
+// invokes onComplete, plus a "mock-fire-toggle-mode" button.
 vi.mock('../components/GuidedChessPlayer/GuidedChessPlayer', () => ({
   default: (props: {
     mode?: 'lesson' | 'puzzle' | 'viewer'
     supabaseClient?: unknown
     lesson?: { title?: string }
     onComplete?: () => void
+    onToggleMode?: () => void
   }) => (
     <div data-testid="guided-player-root">
       <div
         data-testid="guided-chess-player-mock"
         data-mode={props.mode ?? 'lesson'}
         data-has-supabase-client={props.supabaseClient ? 'true' : 'false'}
+        data-has-toggle-mode={props.onToggleMode ? 'true' : 'false'}
       />
       <div data-testid="guided-player-title">{props.lesson?.title ?? ''}</div>
       <div data-testid="guided-player-board" />
@@ -30,6 +33,15 @@ vi.mock('../components/GuidedChessPlayer/GuidedChessPlayer', () => ({
       >
         complete
       </button>
+      {props.onToggleMode && (
+        <button
+          type="button"
+          data-testid="mock-fire-toggle-mode"
+          onClick={() => props.onToggleMode?.()}
+        >
+          toggle
+        </button>
+      )}
     </div>
   ),
 }))
@@ -538,7 +550,7 @@ describe('LessonPlayerPage', () => {
           video_provider_id: null,
           video_status: null,
           description: null,
-          is_view_only: false,
+          has_rewind_mode: false,
         },
         error: null,
       })
@@ -562,7 +574,7 @@ describe('LessonPlayerPage', () => {
           video_provider_id: null,
           video_status: null,
           description: null,
-          is_view_only: false,
+          has_rewind_mode: false,
         },
         error: null,
       })
@@ -578,7 +590,7 @@ describe('LessonPlayerPage', () => {
       expect(player.getAttribute('data-mode')).toBe('lesson')
     })
 
-    it("passes mode='viewer' for a view-only chess lesson", async () => {
+    it("defaults to mode='viewer' for a chess lesson with has_rewind_mode=true", async () => {
       mockGetLessonForPlayer.mockResolvedValue({
         lesson: {
           id: 'l2',
@@ -591,13 +603,74 @@ describe('LessonPlayerPage', () => {
           video_provider_id: null,
           video_status: null,
           description: null,
-          is_view_only: true,
+          has_rewind_mode: true,
         },
         error: null,
       })
       renderPlayer(enrolledUser, '/learn/c1/l2')
       const player = await waitFor(() => screen.getByTestId('guided-chess-player-mock'))
       expect(player.getAttribute('data-mode')).toBe('viewer')
+    })
+
+    it('passes onToggleMode to GuidedChessPlayer for a has_rewind_mode chess lesson', async () => {
+      mockGetLessonForPlayer.mockResolvedValue({
+        lesson: {
+          id: 'l2',
+          title: 'The Opening',
+          type: 'chess',
+          pgn_data: '1. e4 e5',
+          board_perspective: 'white',
+          coach_note: null,
+          video_provider: null,
+          video_provider_id: null,
+          video_status: null,
+          description: null,
+          has_rewind_mode: true,
+        },
+        error: null,
+      })
+      renderPlayer(enrolledUser, '/learn/c1/l2')
+      const player = await waitFor(() => screen.getByTestId('guided-chess-player-mock'))
+      expect(player.getAttribute('data-has-toggle-mode')).toBe('true')
+    })
+
+    it('does not pass onToggleMode for a regular chess lesson (has_rewind_mode=false)', async () => {
+      // Default mock at top serves l2 with has_rewind_mode=false implicitly
+      renderPlayer(enrolledUser, '/learn/c1/l2')
+      const player = await waitFor(() => screen.getByTestId('guided-chess-player-mock'))
+      expect(player.getAttribute('data-has-toggle-mode')).toBe('false')
+    })
+
+    it('toggling switches between viewer and lesson modes', async () => {
+      const user = userEvent.setup()
+      mockGetLessonForPlayer.mockResolvedValue({
+        lesson: {
+          id: 'l2',
+          title: 'The Opening',
+          type: 'chess',
+          pgn_data: '1. e4 e5',
+          board_perspective: 'white',
+          coach_note: null,
+          video_provider: null,
+          video_provider_id: null,
+          video_status: null,
+          description: null,
+          has_rewind_mode: true,
+        },
+        error: null,
+      })
+      renderPlayer(enrolledUser, '/learn/c1/l2')
+      await waitFor(() => {
+        expect(screen.getByTestId('guided-chess-player-mock').getAttribute('data-mode')).toBe('viewer')
+      })
+      await user.click(screen.getByTestId('mock-fire-toggle-mode'))
+      await waitFor(() => {
+        expect(screen.getByTestId('guided-chess-player-mock').getAttribute('data-mode')).toBe('lesson')
+      })
+      await user.click(screen.getByTestId('mock-fire-toggle-mode'))
+      await waitFor(() => {
+        expect(screen.getByTestId('guided-chess-player-mock').getAttribute('data-mode')).toBe('viewer')
+      })
     })
   })
 })

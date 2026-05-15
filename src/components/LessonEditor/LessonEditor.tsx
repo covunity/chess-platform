@@ -33,13 +33,13 @@ export interface Lesson {
   starting_fen?: string | null;
   /** Puzzle lessons: which side the learner plays. */
   puzzle_player_side?: 'white' | 'black' | null;
-  /** When true the lesson is view-only (no piece interaction) for learners. Chess type only. */
-  is_view_only?: boolean;
+  /** When true the lesson exposes a Study (default) ↔ Rewind toggle to learners. Chess type only. */
+  has_rewind_mode?: boolean;
 }
 
 export interface LessonEditorProps {
   lesson: Lesson;
-  onSave: (data: Pick<Lesson, "pgn_data" | "board_perspective" | "is_free_preview" | "title" | "description" | "is_view_only">) => void;
+  onSave: (data: Pick<Lesson, "pgn_data" | "board_perspective" | "is_free_preview" | "title" | "description" | "has_rewind_mode">) => void;
   chapterLessons?: Array<{ id: string; title: string; type: LessonType }>;
   onSelectLesson?: (id: string) => void;
   onSubmitForReview?: () => void;
@@ -77,7 +77,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   const [pgn] = useState(lesson.pgn_data);
   const [perspective, setPerspective] = useState<"white" | "black">(lesson.board_perspective);
   const [isFreePreview] = useState(lesson.is_free_preview);
-  const [isViewOnly, setIsViewOnly] = useState(lesson.is_view_only ?? false);
+  const [hasRewindMode, setHasRewindMode] = useState(lesson.has_rewind_mode ?? false);
   // Sub-tab for chess lesson: 'board' | 'pgn' (pgn only when editorAdvanced)
   const [chessSubTab, setChessSubTab] = useState<'board' | 'pgn'>('board');
   // Import-from-PGN modal open state
@@ -125,7 +125,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
       const startingFen = rootFen !== STANDARD_FEN ? rootFen : undefined;
       pgnToSave = serializePgn(treeState.tree, startingFen);
     }
-    onSave({ pgn_data: pgnToSave, board_perspective: perspective, is_free_preview: isFreePreview, title, description: description || null, is_view_only: isViewOnly });
+    onSave({ pgn_data: pgnToSave, board_perspective: perspective, is_free_preview: isFreePreview, title, description: description || null, has_rewind_mode: hasRewindMode });
   };
 
   useEffect(() => {
@@ -285,13 +285,13 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
                 }}
               >
                 <input
-                  data-testid="lesson-is-view-only-checkbox"
+                  data-testid="lesson-has-rewind-mode-checkbox"
                   type="checkbox"
-                  checked={isViewOnly}
-                  onChange={(e) => setIsViewOnly(e.target.checked)}
+                  checked={hasRewindMode}
+                  onChange={(e) => setHasRewindMode(e.target.checked)}
                   style={{ cursor: "pointer" }}
                 />
-                {t('creator.lessonEditor.isViewOnlyLabel')}
+                {t('creator.lessonEditor.hasRewindModeLabel')}
               </label>
             </div>
 

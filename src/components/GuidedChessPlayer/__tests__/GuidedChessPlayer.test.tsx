@@ -1522,7 +1522,7 @@ const viewerLesson = {
   pgn_data: VIEWER_PGN,
   board_perspective: 'white' as const,
   coach_note: null,
-  is_view_only: true,
+  has_rewind_mode: true,
 }
 
 describe('GuidedChessPlayer — viewer mode (PRD-0004 Slice 10)', () => {
@@ -1637,5 +1637,102 @@ describe('GuidedChessPlayer — resume position (PRD-0004 Slice 10)', () => {
   it('does not crash when onResumeNodeChange is not provided', () => {
     render(<GuidedChessPlayer lesson={baseLesson} lessonNumber={1} totalLessons={5} />)
     expect(screen.getByTestId('guided-player-root')).toBeInTheDocument()
+  })
+})
+
+describe('GuidedChessPlayer — rewind toggle (issue #226)', () => {
+  it('does not render a mode-toggle button when onToggleMode is not provided', () => {
+    render(<GuidedChessPlayer lesson={baseLesson} lessonNumber={1} totalLessons={5} />)
+    expect(screen.queryByTestId('mode-toggle-btn')).not.toBeInTheDocument()
+  })
+
+  it("renders the 'Tự đi' toggle when mode='viewer' and onToggleMode is set", () => {
+    render(
+      <GuidedChessPlayer
+        lesson={baseLesson}
+        lessonNumber={1}
+        totalLessons={5}
+        mode="viewer"
+        onToggleMode={vi.fn()}
+      />
+    )
+    const btn = screen.getByTestId('mode-toggle-btn')
+    expect(btn).toHaveTextContent(/tự đi/i)
+  })
+
+  it("renders the 'Quay lại học' toggle when mode='lesson' and onToggleMode is set (Rewind side)", () => {
+    render(
+      <GuidedChessPlayer
+        lesson={baseLesson}
+        lessonNumber={1}
+        totalLessons={5}
+        mode="lesson"
+        onToggleMode={vi.fn()}
+      />
+    )
+    const btn = screen.getByTestId('mode-toggle-btn')
+    expect(btn).toHaveTextContent(/quay lại học/i)
+  })
+
+  it('clicking the toggle button calls onToggleMode', async () => {
+    const user = userEvent.setup()
+    const onToggleMode = vi.fn()
+    render(
+      <GuidedChessPlayer
+        lesson={baseLesson}
+        lessonNumber={1}
+        totalLessons={5}
+        mode="viewer"
+        onToggleMode={onToggleMode}
+      />
+    )
+    await user.click(screen.getByTestId('mode-toggle-btn'))
+    expect(onToggleMode).toHaveBeenCalledTimes(1)
+  })
+
+  it("hides the Hint button in Rewind mode (mode='lesson' + onToggleMode)", () => {
+    render(
+      <GuidedChessPlayer
+        lesson={baseLesson}
+        lessonNumber={1}
+        totalLessons={5}
+        mode="lesson"
+        onToggleMode={vi.fn()}
+      />
+    )
+    expect(screen.queryByTestId('guided-player-hint-btn')).not.toBeInTheDocument()
+  })
+
+  it('still shows the Hint button when mode=lesson without onToggleMode (regular lesson)', () => {
+    render(<GuidedChessPlayer lesson={baseLesson} lessonNumber={1} totalLessons={5} mode="lesson" />)
+    expect(screen.getByTestId('guided-player-hint-btn')).toBeInTheDocument()
+  })
+
+  it('hides the coach note in Rewind mode', () => {
+    const lessonWithNote = { ...baseLesson, coach_note: 'Important guidance here.' }
+    render(
+      <GuidedChessPlayer
+        lesson={lessonWithNote}
+        lessonNumber={1}
+        totalLessons={5}
+        mode="lesson"
+        onToggleMode={vi.fn()}
+      />
+    )
+    expect(screen.queryByTestId('guided-player-coach-note')).not.toBeInTheDocument()
+  })
+
+  it('still shows the coach note in Study (viewer) mode', () => {
+    const lessonWithNote = { ...baseLesson, coach_note: 'Important guidance here.' }
+    render(
+      <GuidedChessPlayer
+        lesson={lessonWithNote}
+        lessonNumber={1}
+        totalLessons={5}
+        mode="viewer"
+        onToggleMode={vi.fn()}
+      />
+    )
+    expect(screen.getByTestId('guided-player-coach-note')).toBeInTheDocument()
   })
 })

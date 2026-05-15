@@ -291,6 +291,17 @@ export default function LessonPlayerPage() {
   const currentBookmark = fetchedBookmark?.lessonId === currentLessonId ? fetchedBookmark.bookmark : null
   const [bookmarkToast, setBookmarkToast] = useState<{ moveLabel: string } | null>(null)
   const bookmarkToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Learner-side toggle for has_rewind_mode chess lessons (#226). The override
+  // is scoped to a single lesson so navigating between lessons resets the mode
+  // without an explicit cleanup effect.
+  const [learnerModeOverride, setLearnerModeOverride] = useState<{
+    lessonId: string
+    mode: 'viewer' | 'lesson'
+  } | null>(null)
+  const activeOverrideMode =
+    learnerModeOverride && learnerModeOverride.lessonId === currentLessonId
+      ? learnerModeOverride.mode
+      : null
 
   // Derive initialNodeId from bookmark when both lesson PGN and bookmark are loaded
   const initialNodeId = (() => {
@@ -703,26 +714,46 @@ export default function LessonPlayerPage() {
           data-testid="lesson-content-slot"
           style={{ flex: 1, overflow: currentLesson?.type === 'chess' ? 'hidden' : 'auto', display: 'flex', alignItems: 'stretch', justifyContent: 'center' }}
         >
-          {(currentLesson?.type === 'chess' || currentLesson?.type === 'puzzle') && playerLesson && playerLesson.id === currentLessonId ? (
-            <div style={{ flex: 1, overflow: 'hidden' }}>
-              <GuidedChessPlayer
-                lesson={playerLesson}
-                lessonNumber={lessonIndex + 1}
-                totalLessons={allLessons.length}
-                initialNodeId={initialNodeId}
-                mode={
-                  currentLesson.type === 'puzzle'
-                    ? 'puzzle'
-                    : playerLesson.is_view_only
-                      ? 'viewer'
-                      : 'lesson'
-                }
-                supabaseClient={currentLesson.type === 'puzzle' ? supabase : undefined}
-                onComplete={handleLessonComplete}
-                onBookmark={handleBookmark}
-              />
-            </div>
-          ) : currentLesson?.type === 'video' ? (
+          {(currentLesson?.type === 'chess' || currentLesson?.type === 'puzzle') && playerLesson && playerLesson.id === currentLessonId ? (() => {
+            const isPuzzle = currentLesson.type === 'puzzle'
+            const hasRewindToggle = !isPuzzle && playerLesson.has_rewind_mode
+            // For two-mode chess lessons we default to Study (viewer); for everything
+            // else fall back to the regular interactive guided lesson. After a manual
+            // toggle the override wins until the learner navigates away.
+            const defaultMode: 'lesson' | 'puzzle' | 'viewer' = isPuzzle
+              ? 'puzzle'
+              : hasRewindToggle
+                ? 'viewer'
+                : 'lesson'
+            const activeMode: 'lesson' | 'puzzle' | 'viewer' =
+              hasRewindToggle && activeOverrideMode ? activeOverrideMode : defaultMode
+            const isToggled = hasRewindToggle && activeOverrideMode !== null
+            return (
+              <div style={{ flex: 1, overflow: 'hidden' }}>
+                <GuidedChessPlayer
+                  key={hasRewindToggle ? `${currentLessonId}-${activeMode}` : currentLessonId}
+                  lesson={playerLesson}
+                  lessonNumber={lessonIndex + 1}
+                  totalLessons={allLessons.length}
+                  initialNodeId={isToggled ? undefined : initialNodeId}
+                  mode={activeMode}
+                  supabaseClient={isPuzzle ? supabase : undefined}
+                  onComplete={handleLessonComplete}
+                  onBookmark={handleBookmark}
+                  onToggleMode={
+                    hasRewindToggle
+                      ? () => {
+                          setLearnerModeOverride({
+                            lessonId: currentLessonId,
+                            mode: activeMode === 'viewer' ? 'lesson' : 'viewer',
+                          })
+                        }
+                      : undefined
+                  }
+                />
+              </div>
+            )
+          })() : currentLesson?.type === 'video' ? (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '28px 32px', gap: 16, overflowY: 'auto' }}>
               {videoError ? (
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

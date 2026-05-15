@@ -36,7 +36,7 @@ describe('getLessonForPlayer', () => {
       board_perspective: 'white',
       coach_note: 'Note here',
       description: null,
-      is_view_only: false,
+      has_rewind_mode: false,
       video_provider: null,
       video_provider_id: null,
       video_status: null,
@@ -44,7 +44,7 @@ describe('getLessonForPlayer', () => {
     expect(result.error).toBeNull()
   })
 
-  it('returns is_view_only from lesson data', async () => {
+  it('returns has_rewind_mode from lesson data', async () => {
     const single = vi.fn().mockResolvedValue({
       data: {
         id: 'l1',
@@ -53,7 +53,7 @@ describe('getLessonForPlayer', () => {
         pgn_data: '1. e4',
         board_perspective: 'white',
         coach_note: null,
-        is_view_only: true,
+        has_rewind_mode: true,
       },
       error: null,
     })
@@ -66,10 +66,10 @@ describe('getLessonForPlayer', () => {
     }
 
     const result = await getLessonForPlayer(client as never, 'l1')
-    expect(result.lesson?.is_view_only).toBe(true)
+    expect(result.lesson?.has_rewind_mode).toBe(true)
   })
 
-  it('defaults is_view_only to false when not present in row', async () => {
+  it('defaults has_rewind_mode to false when not present in row', async () => {
     const single = vi.fn().mockResolvedValue({
       data: {
         id: 'l1',
@@ -90,7 +90,7 @@ describe('getLessonForPlayer', () => {
     }
 
     const result = await getLessonForPlayer(client as never, 'l1')
-    expect(result.lesson?.is_view_only).toBe(false)
+    expect(result.lesson?.has_rewind_mode).toBe(false)
   })
 
   it('returns lesson: null and error when not found', async () => {

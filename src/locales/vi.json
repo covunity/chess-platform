@@ -613,7 +613,7 @@
       "notePanelPlaceholder": "Nhập ghi chú cho nước này...",
       "richNoteEditorBoldTooltip": "In đậm",
       "richNoteEditorItalicTooltip": "In nghiêng",
-      "isViewOnlyLabel": "Bài học chỉ xem (không tương tác)",
+      "hasRewindModeLabel": "Tạo Rewind cho bài này",
       "tabPgnAdvanced": "PGN (nâng cao)",
       "advancedTabHint": "Tab này dành cho người dùng nâng cao — sửa trực tiếp PGN.",
       "importFromPgn": "Nhập từ PGN",
@@ -1064,7 +1064,9 @@
     "puzzleShowAnswer": "Xem đáp án",
     "puzzleGaveUpComplete": "Bạn đã xem đáp án — không tính là lần giải tốt nhất",
     "viewerNextMove": "Nước sau",
-    "viewerPrevMove": "Nước trước"
+    "viewerPrevMove": "Nước trước",
+    "modeToggleToRewind": "Tự đi",
+    "modeToggleToStudy": "Quay lại học"
   },
   "errors": {
     "chapterLimitReached": "Bạn đã đạt giới hạn số chương cho gói tài khoản hiện tại.",
