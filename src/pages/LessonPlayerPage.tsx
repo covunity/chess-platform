@@ -96,10 +96,11 @@ interface SidebarProps {
   onSelectLesson: (lessonId: string) => void
   isEnrolled: boolean
   isAdmin: boolean
+  isCourseCreator: boolean
   onLockedLessonClick: () => void
 }
 
-function PlayerSidebar({ course, currentLessonId, expandedChapters, onToggleChapter, onSelectLesson, isEnrolled, isAdmin, onLockedLessonClick }: SidebarProps) {
+function PlayerSidebar({ course, currentLessonId, expandedChapters, onToggleChapter, onSelectLesson, isEnrolled, isAdmin, isCourseCreator, onLockedLessonClick }: SidebarProps) {
   const { t } = useTranslation()
   const totalLessons = course.chapters.reduce((sum, ch) => sum + ch.lessons.length, 0)
 
@@ -203,7 +204,7 @@ function PlayerSidebar({ course, currentLessonId, expandedChapters, onToggleChap
 
               {isExpanded && chapter.lessons.map(lesson => {
                 const isCurrent = lesson.id === currentLessonId
-                const isLocked = !lesson.free_preview && !isEnrolled && !isAdmin
+                const isLocked = !lesson.free_preview && !isEnrolled && !isAdmin && !isCourseCreator
                 return (
                   <button
                     key={lesson.id}
@@ -275,6 +276,7 @@ export default function LessonPlayerPage() {
   const [currentLessonId, setCurrentLessonId] = useState<string>('')
   const [adminWatermark, setAdminWatermark] = useState(false)
   const [isEnrolled, setIsEnrolled] = useState(false)
+  const [isCourseCreator, setIsCourseCreator] = useState(false)
   const [showSidebarPaywall, setShowSidebarPaywall] = useState(false)
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set())
   const initializedCourseRef = useRef<string | null>(null)
@@ -366,6 +368,7 @@ export default function LessonPlayerPage() {
       }
 
       const isCourseCreator = !!user && courseData.creator_id === user.id
+      setIsCourseCreator(isCourseCreator)
 
       const accessDecision = canAccessLesson(
         profile?.role,
@@ -536,6 +539,7 @@ export default function LessonPlayerPage() {
         onSelectLesson={selectLesson}
         isEnrolled={isEnrolled}
         isAdmin={adminWatermark}
+        isCourseCreator={isCourseCreator}
         onLockedLessonClick={() => setShowSidebarPaywall(true)}
       />
 
