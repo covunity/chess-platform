@@ -522,11 +522,40 @@ describe('GuidedChessPlayer', () => {
       )
     })
 
-    it('renders the helper instruction text', () => {
+    it('renders the helper instruction text in interactive lesson mode', () => {
       render(
         <GuidedChessPlayer lesson={baseLesson} lessonNumber={2} totalLessons={5} />
       )
       expect(screen.getByTestId('guided-player-helper')).toBeInTheDocument()
+    })
+
+    it('does not render the helper in Study (viewer) mode', () => {
+      render(
+        <GuidedChessPlayer lesson={baseLesson} lessonNumber={2} totalLessons={5} mode="viewer" />
+      )
+      expect(screen.queryByTestId('guided-player-helper')).not.toBeInTheDocument()
+    })
+
+    it('renders the helper in Rewind mode (lesson + onToggleMode)', () => {
+      render(
+        <GuidedChessPlayer
+          lesson={baseLesson}
+          lessonNumber={2}
+          totalLessons={5}
+          mode="lesson"
+          onToggleMode={vi.fn()}
+        />
+      )
+      expect(screen.getByTestId('guided-player-helper')).toBeInTheDocument()
+    })
+
+    it('helper mentions drag-and-drop and right-click drawing', () => {
+      render(
+        <GuidedChessPlayer lesson={baseLesson} lessonNumber={2} totalLessons={5} />
+      )
+      const helper = screen.getByTestId('guided-player-helper')
+      expect(helper.textContent).toMatch(/kéo quân|drag/i)
+      expect(helper.textContent).toMatch(/chuột phải|vẽ/i)
     })
   })
 

@@ -782,7 +782,7 @@ export default function GuidedChessPlayer({
               {t('guidedPlayer.puzzleBestBadge', { count: bestPuzzleAttempt.wrong_attempts })}
             </span>
           )}
-          {helperVisible && (
+          {helperVisible && !isViewer && (
             <div className="guided-player-helper-wrap">
               <ul data-testid="guided-player-helper" className="guided-player-helper">
                 {(t('guidedPlayer.helperItems', { returnObjects: true }) as string[]).map((item) => (

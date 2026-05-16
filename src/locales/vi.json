@@ -1058,7 +1058,8 @@
   "guidedPlayer": {
     "eyebrow": "BÀI {{current}} / {{total}}",
     "helperItems": [
-      "Click vào quân để chọn, Click vào ô đích để đi nước",
+      "Click vào quân rồi click ô đích, hoặc kéo quân thả vào ô đích",
+      "Chuột phải kéo trên bàn để vẽ mũi tên / khoanh ô (giữ Shift / Alt / Ctrl để đổi màu)",
       "Nước sai: quân bật trở lại, ô xuất phát sáng đỏ"
     ],
     "helperDismiss": "Ẩn hướng dẫn",
