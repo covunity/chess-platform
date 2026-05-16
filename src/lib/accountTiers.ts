@@ -45,6 +45,27 @@ export function clearAccountTiersCache() {
   _tiersPromise = null
 }
 
+export interface UpdateAccountTierPatch {
+  platform_fee_pct: number
+  max_chapters_per_course: number
+}
+
+export async function updateAccountTier(
+  client: SupabaseClient,
+  code: AccountTierCode | string,
+  patch: UpdateAccountTierPatch
+): Promise<{ tier: AccountTier | null; error: Error | null }> {
+  const { data, error } = await client.rpc('admin_update_account_tier', {
+    p_code: code,
+    p_platform_fee_pct: patch.platform_fee_pct,
+    p_max_chapters_per_course: patch.max_chapters_per_course,
+  })
+  if (error) return { tier: null, error: error as unknown as Error }
+  clearAccountTiersCache()
+  const row = Array.isArray(data) ? data[0] : data
+  return { tier: (row as AccountTier) ?? null, error: null }
+}
+
 export function useAccountTiers() {
   const [tiers, setTiers] = useState<AccountTier[]>([])
   const [loading, setLoading] = useState(true)

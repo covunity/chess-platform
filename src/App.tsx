@@ -10,6 +10,7 @@ import AdminReportsPage from './pages/admin/AdminReportsPage'
 import AdminOrdersPage from './pages/admin/AdminOrdersPage'
 import AdminCreatorApplicationsPage from './pages/admin/AdminCreatorApplicationsPage'
 import AdminCreatorFeesPage from './pages/admin/AdminCreatorFeesPage'
+import AdminTiersPage from './pages/admin/AdminTiersPage'
 import AdminSettingsPage from './pages/admin/AdminSettingsPage'
 import AdminComingSoonPage from './pages/admin/AdminComingSoonPage'
 import ProtectedCreatorRoute from './components/creator/ProtectedCreatorRoute'
@@ -62,6 +63,7 @@ export default function App() {
             <Route path="orders" element={<AdminOrdersPage />} />
             <Route path="creator-applications" element={<AdminCreatorApplicationsPage />} />
             <Route path="creators/fees" element={<AdminCreatorFeesPage />} />
+            <Route path="tiers" element={<AdminTiersPage />} />
             <Route path="reports" element={<AdminReportsPage />} />
             <Route path="settings" element={<AdminSettingsPage />} />
             <Route path="*" element={<AdminComingSoonPage />} />

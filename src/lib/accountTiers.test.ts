@@ -99,3 +99,72 @@ describe('fetchAccountTiers', () => {
     await expect(fetchAccountTiers(mockClient as never)).rejects.toThrow('db error')
   })
 })
+
+// ── updateAccountTier ─────────────────────────────────────────────────────────
+
+describe('updateAccountTier', () => {
+  beforeEach(() => {
+    clearAccountTiersCache()
+  })
+
+  it('calls admin_update_account_tier RPC with the right args and returns the row', async () => {
+    const row = {
+      code: 'individual',
+      name_vi: 'Cá nhân',
+      platform_fee_pct: 18,
+      max_chapters_per_course: 12,
+      is_enterprise: false,
+      requires_approval: true,
+      display_order: 1,
+    }
+    const rpc = vi.fn().mockResolvedValue({ data: row, error: null })
+    const mockClient = { rpc }
+    const { updateAccountTier } = await import('./accountTiers')
+    const { tier, error } = await updateAccountTier(mockClient as never, 'individual', {
+      platform_fee_pct: 18,
+      max_chapters_per_course: 12,
+    })
+    expect(error).toBeNull()
+    expect(tier).toEqual(row)
+    expect(rpc).toHaveBeenCalledWith('admin_update_account_tier', {
+      p_code: 'individual',
+      p_platform_fee_pct: 18,
+      p_max_chapters_per_course: 12,
+    })
+  })
+
+  it('clears the tier cache so the next fetch hits supabase', async () => {
+    const mockTiers = [
+      { code: 'individual', name_vi: 'Cá nhân', platform_fee_pct: 20, max_chapters_per_course: 10, is_enterprise: false, requires_approval: true, display_order: 1 },
+    ]
+    const chain: Record<string, unknown> = {}
+    ;['select', 'order'].forEach(m => { chain[m] = vi.fn(() => chain) })
+    ;(chain as { then: (r: (v: unknown) => unknown) => Promise<unknown> }).then = (resolve) =>
+      Promise.resolve(resolve({ data: mockTiers, error: null }))
+    const mockClient = {
+      from: vi.fn(() => chain),
+      rpc: vi.fn().mockResolvedValue({ data: { ...mockTiers[0], platform_fee_pct: 15 }, error: null }),
+    }
+    const { fetchAccountTiers, updateAccountTier } = await import('./accountTiers')
+    await fetchAccountTiers(mockClient as never)
+    await updateAccountTier(mockClient as never, 'individual', {
+      platform_fee_pct: 15,
+      max_chapters_per_course: 10,
+    })
+    await fetchAccountTiers(mockClient as never)
+    // Two SELECTs: initial fetch + post-update fetch (cache was invalidated).
+    expect(mockClient.from).toHaveBeenCalledTimes(2)
+  })
+
+  it('surfaces supabase RPC errors', async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: null, error: new Error('forbidden') })
+    const mockClient = { rpc }
+    const { updateAccountTier } = await import('./accountTiers')
+    const { tier, error } = await updateAccountTier(mockClient as never, 'individual', {
+      platform_fee_pct: 18,
+      max_chapters_per_course: 12,
+    })
+    expect(tier).toBeNull()
+    expect(error?.message).toBe('forbidden')
+  })
+})

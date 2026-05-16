@@ -186,6 +186,7 @@
       "users": "Người dùng",
       "creatorApplications": "Đơn đăng ký creator",
       "creatorFees": "Phí creator",
+      "tiers": "Gói tài khoản",
       "reports": "Báo cáo",
       "settings": "Cài đặt"
     },
@@ -247,6 +248,35 @@
         "range": "Giá trị phải nằm trong khoảng 0–100.",
         "saveFailed": "Không thể lưu override. Vui lòng thử lại.",
         "clearFailed": "Không thể xoá override. Vui lòng thử lại."
+      }
+    },
+    "tiers": {
+      "pageTitle": "Cài đặt gói tài khoản",
+      "intro": "Điều chỉnh phí nền tảng và giới hạn chương cho mỗi gói tài khoản. Thay đổi áp dụng cho đơn hàng mới — đơn hàng đã tạo trước đó vẫn giữ phí cũ.",
+      "colTier": "Gói",
+      "colFee": "Phí nền tảng",
+      "colMaxChapters": "Tối đa chương/khoá",
+      "colRequiresApproval": "Cần duyệt",
+      "yes": "Có",
+      "no": "Không",
+      "edit": "Chỉnh sửa",
+      "empty": "Chưa có gói tài khoản nào.",
+      "loadError": "Không thể tải danh sách gói.",
+      "editDialogTitle": "Chỉnh sửa {{tier}}",
+      "editDialogHint": "Cập nhật phí nền tảng và số chương tối đa. Đơn hàng đã tạo không bị ảnh hưởng.",
+      "feeLabel": "Phí nền tảng (%)",
+      "capLabel": "Số chương tối đa / khoá",
+      "save": "Lưu thay đổi",
+      "saving": "Đang lưu…",
+      "cancel": "Huỷ",
+      "errors": {
+        "feeRequired": "Vui lòng nhập % phí.",
+        "feeNumeric": "% phí phải là số (vd. 12.5).",
+        "feeRange": "% phí phải nằm trong khoảng 0–100.",
+        "capRequired": "Vui lòng nhập số chương tối đa.",
+        "capNumeric": "Số chương phải là số nguyên.",
+        "capRange": "Số chương phải nằm trong khoảng 1–1000.",
+        "saveFailed": "Không thể lưu. Vui lòng thử lại."
       }
     },
     "applications": {
