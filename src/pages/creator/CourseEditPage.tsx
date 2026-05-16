@@ -39,7 +39,11 @@ function NewLessonDialog({ onCancel, onCreate, t }: NewLessonDialogProps) {
   const types: { type: LessonType; labelKey: string }[] = [
     { type: 'video',  labelKey: 'creator.courseEdit.typeVideo' },
     { type: 'chess',  labelKey: 'creator.courseEdit.typeChess' },
-    { type: 'puzzle', labelKey: 'creator.courseEdit.typePuzzle' },
+    // Puzzle lessons are temporarily hidden — stakeholder doesn't want the
+    // feature exposed yet. The backend, editor tab, and player wiring all
+    // remain intact so existing puzzle lessons keep working and the option
+    // can be re-enabled by un-commenting this entry.
+    // { type: 'puzzle', labelKey: 'creator.courseEdit.typePuzzle' },
   ]
 
   return (

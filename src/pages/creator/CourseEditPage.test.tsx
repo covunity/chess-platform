@@ -207,34 +207,17 @@ describe('CourseEditPage', () => {
     })
   })
 
-  it('new lesson dialog exposes puzzle type option', async () => {
+  it('new lesson dialog hides puzzle type option (feature-flagged off)', async () => {
     renderPage()
     await waitFor(() => screen.getByText('Introduction'))
 
     await userEvent.click(screen.getByTestId('add-lesson-ch1'))
     await waitFor(() => screen.getByTestId('new-lesson-dialog'))
 
-    expect(screen.getByTestId('lesson-type-puzzle')).toBeInTheDocument()
-  })
-
-  it('creates a puzzle lesson when puzzle type is selected', async () => {
-    renderPage()
-    await waitFor(() => screen.getByText('Introduction'))
-
-    await userEvent.click(screen.getByTestId('add-lesson-ch1'))
-    await waitFor(() => screen.getByTestId('new-lesson-dialog'))
-
-    await userEvent.type(screen.getByTestId('new-lesson-title'), 'Pin Puzzle')
-    await userEvent.click(screen.getByTestId('lesson-type-puzzle'))
-    await userEvent.click(screen.getByTestId('new-lesson-create-btn'))
-
-    await waitFor(() => {
-      expect(mockCreateLesson).toHaveBeenCalledWith(
-        expect.anything(),
-        'ch1',
-        expect.objectContaining({ title: 'Pin Puzzle', type: 'puzzle' })
-      )
-    })
+    // Puzzle creation is temporarily hidden — only video + chess should appear.
+    expect(screen.queryByTestId('lesson-type-puzzle')).not.toBeInTheDocument()
+    expect(screen.getByTestId('lesson-type-video')).toBeInTheDocument()
+    expect(screen.getByTestId('lesson-type-chess')).toBeInTheDocument()
   })
 
   it('calls deleteLesson when delete lesson button clicked and confirmed', async () => {

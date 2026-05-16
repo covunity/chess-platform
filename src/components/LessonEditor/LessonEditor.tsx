@@ -56,7 +56,11 @@ const LESSON_TYPE_ICON: Record<LessonType, string> = {
   puzzle: '📋',
 };
 
-const LESSON_TAB_VALUES: LessonType[] = ['video', 'chess', 'puzzle'];
+// Puzzle is feature-hidden for the moment (stakeholder decision). The tab
+// only appears for lessons already saved as type='puzzle' so creators can
+// still finish or remove an existing one; otherwise the option is suppressed.
+// Re-enable globally by adding 'puzzle' back to this list.
+const VISIBLE_LESSON_TAB_VALUES: LessonType[] = ['video', 'chess'];
 
 function formatDuration(seconds: number | undefined | null): string {
   if (!seconds || seconds <= 0) return "—:—";
@@ -207,7 +211,10 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
       <div style={{ padding: "12px 16px 16px", display: "flex", flexDirection: "column", gap: 10, overflowY: "auto" }}>
         {/* Lesson type tabs */}
         <div style={{ display: "flex", gap: 6 }}>
-          {LESSON_TAB_VALUES.map((value) => (
+          {(lesson.type === 'puzzle'
+            ? [...VISIBLE_LESSON_TAB_VALUES, 'puzzle' as LessonType]
+            : VISIBLE_LESSON_TAB_VALUES
+          ).map((value) => (
             <button
               key={value}
               type="button"
