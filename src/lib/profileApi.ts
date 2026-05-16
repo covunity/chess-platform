@@ -1,5 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
+export const MAX_BIO_LENGTH = 60
+
 export async function updateProfileName(
   supabase: SupabaseClient,
   userId: string,
@@ -8,6 +10,19 @@ export async function updateProfileName(
   const { error } = await supabase
     .from('users')
     .update({ name })
+    .eq('id', userId)
+  return { error }
+}
+
+export async function updateProfileBio(
+  supabase: SupabaseClient,
+  userId: string,
+  bio: string | null
+): Promise<{ error: Error | null }> {
+  const trimmed = bio === null ? null : bio.slice(0, MAX_BIO_LENGTH)
+  const { error } = await supabase
+    .from('users')
+    .update({ bio: trimmed && trimmed.trim().length > 0 ? trimmed : null })
     .eq('id', userId)
   return { error }
 }

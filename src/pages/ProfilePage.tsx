@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
-import { updateProfileName, uploadAvatar, removeAvatar, updateEditorAdvanced } from '../lib/profileApi'
+import { updateProfileName, updateProfileBio, uploadAvatar, removeAvatar, updateEditorAdvanced, MAX_BIO_LENGTH } from '../lib/profileApi'
 import { validateNewPassword } from '../lib/authValidation'
 
 const MAX_AVATAR_SIZE = 2 * 1024 * 1024
@@ -22,6 +22,8 @@ export default function ProfilePage() {
 
   const [name, setName] = useState(profile?.name ?? '')
   const [prevProfileName, setPrevProfileName] = useState(profile?.name)
+  const [bio, setBio] = useState(profile?.bio ?? '')
+  const [prevProfileBio, setPrevProfileBio] = useState(profile?.bio)
   const [infoLoading, setInfoLoading] = useState(false)
   const [infoSuccess, setInfoSuccess] = useState(false)
   const [infoError, setInfoError] = useState<string | null>(null)
@@ -45,6 +47,10 @@ export default function ProfilePage() {
   if (profile?.name !== prevProfileName) {
     setPrevProfileName(profile?.name)
     setName(profile?.name ?? '')
+  }
+  if (profile?.bio !== prevProfileBio) {
+    setPrevProfileBio(profile?.bio)
+    setBio(profile?.bio ?? '')
   }
   if (profile?.avatar_url !== prevProfileAvatar) {
     setPrevProfileAvatar(profile?.avatar_url)
@@ -145,8 +151,18 @@ export default function ProfilePage() {
     setInfoSuccess(false)
 
     const trimmedName = name.trim()
-    const { error } = await updateProfileName(supabase, user.id, trimmedName)
-    if (error) {
+    const trimmedBioRaw = bio.slice(0, MAX_BIO_LENGTH)
+    const trimmedBio = trimmedBioRaw.trim().length === 0 ? null : trimmedBioRaw
+
+    const { error: nameErr } = await updateProfileName(supabase, user.id, trimmedName)
+    if (nameErr) {
+      setInfoLoading(false)
+      setInfoError(t('profile.errors.saveProfile'))
+      return
+    }
+
+    const { error: bioErr } = await updateProfileBio(supabase, user.id, trimmedBio)
+    if (bioErr) {
       setInfoLoading(false)
       setInfoError(t('profile.errors.saveProfile'))
       return
@@ -155,7 +171,7 @@ export default function ProfilePage() {
     // Also keep auth user_metadata in sync so initials are correct everywhere
     await supabase.auth.updateUser({ data: { name: trimmedName } })
 
-    updateProfile({ name: trimmedName })
+    updateProfile({ name: trimmedName, bio: trimmedBio })
     setInfoLoading(false)
     setInfoSuccess(true)
     setTimeout(() => setInfoSuccess(false), 3000)
@@ -326,6 +342,46 @@ export default function ProfilePage() {
             {nameError && (
               <p style={{ marginTop: 4, fontSize: 12, color: 'var(--danger)' }}>{nameError}</p>
             )}
+          </div>
+
+          <div>
+            <label
+              htmlFor="profile-bio-input"
+              style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                justifyContent: 'space-between',
+                fontSize: 13,
+                fontWeight: 500,
+                color: 'var(--ink-2)',
+                marginBottom: 6,
+              }}
+            >
+              <span>{t('profile.labelBio')}</span>
+              <span
+                data-testid="profile-bio-counter"
+                style={{
+                  fontSize: 11,
+                  color: bio.length > MAX_BIO_LENGTH * 0.9 ? 'var(--danger)' : 'var(--ink-3)',
+                }}
+              >
+                {bio.length}/{MAX_BIO_LENGTH}
+              </span>
+            </label>
+            <textarea
+              id="profile-bio-input"
+              data-testid="profile-bio-input"
+              className="input"
+              value={bio}
+              maxLength={MAX_BIO_LENGTH}
+              onChange={e => { setBio(e.target.value); setInfoSuccess(false) }}
+              rows={2}
+              style={{ width: '100%', resize: 'vertical', minHeight: 56 }}
+              placeholder={t('profile.bioPlaceholder')}
+            />
+            <p style={{ marginTop: 4, fontSize: 12, color: 'var(--ink-3)' }}>
+              {t('profile.bioHint')}
+            </p>
           </div>
 
           <div>

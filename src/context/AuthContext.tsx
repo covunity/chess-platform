@@ -10,6 +10,7 @@ export interface UserProfile {
   email: string
   name: string | null
   avatar_url: string | null
+  bio: string | null
   role: UserRole
   account_tier_id: AccountTierCode
   created_at: string
@@ -26,7 +27,7 @@ export interface AuthContextValue {
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<{ error: Error | null }>
   updatePassword: (password: string) => Promise<{ error: Error | null }>
-  updateProfile: (updates: Partial<Pick<UserProfile, 'name' | 'avatar_url' | 'editor_advanced'>>) => void
+  updateProfile: (updates: Partial<Pick<UserProfile, 'name' | 'avatar_url' | 'bio' | 'editor_advanced'>>) => void
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -57,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false
     supabase
       .from('users')
-      .select('id, email, name, avatar_url, role, account_tier_id, created_at, editor_advanced')
+      .select('id, email, name, avatar_url, bio, role, account_tier_id, created_at, editor_advanced')
       .eq('id', user.id)
       .single()
       .then(({ data }) => {

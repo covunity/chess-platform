@@ -833,6 +833,11 @@ body {
   100% { opacity: 0; transform: translateY(-2px); }
 }
 
+@keyframes user-name-card-fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .guided-player-move-san {
   font-weight: 600;
   color: var(--ink-1);

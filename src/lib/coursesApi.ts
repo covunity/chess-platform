@@ -47,6 +47,8 @@ export interface CourseDetailChapter {
 export interface CourseReview {
   id: string
   reviewer_name: string | null
+  reviewer_avatar_url: string | null
+  reviewer_bio: string | null
   rating: number
   title: string | null
   body: string | null
@@ -78,7 +80,7 @@ export async function getCourseDetail(
         id, title, description, thumbnail_url, price, original_price, promo_ends_at,
         level, language, tags, creator_id, what_you_learn, prerequisites, created_at,
         creator:creator_id ( name ),
-        reviews ( id, rating, title, body, created_at, reviewer:reviewer_id ( name ) ),
+        reviews ( id, rating, title, body, created_at, reviewer:reviewer_id ( name, avatar_url, bio ) ),
         enrollments ( id ),
         chapters ( id, title, position )
       `)
@@ -139,10 +141,12 @@ export async function getCourseDetail(
   const hours_total = allLessons.reduce((sum, l) => sum + l.duration_seconds, 0) / 3600
 
   const courseReviews: CourseReview[] = reviews.map(r => {
-    const reviewer = r.reviewer as { name?: string } | null
+    const reviewer = r.reviewer as { name?: string; avatar_url?: string | null; bio?: string | null } | null
     return {
       id: r.id as string,
       reviewer_name: reviewer?.name ?? null,
+      reviewer_avatar_url: reviewer?.avatar_url ?? null,
+      reviewer_bio: reviewer?.bio ?? null,
       rating: r.rating as number,
       title: (r.title as string | null) ?? null,
       body: (r.body as string | null) ?? null,
@@ -194,7 +198,7 @@ export async function listReviews(
   const offset = (page - 1) * limit
   const { data, error, count } = await client
     .from('reviews')
-    .select('id, rating, title, body, created_at, reviewer:reviewer_id(name)', { count: 'exact' })
+    .select('id, rating, title, body, created_at, reviewer:reviewer_id(name, avatar_url, bio)', { count: 'exact' })
     .eq('course_id', courseId)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1)
@@ -203,10 +207,12 @@ export async function listReviews(
 
   const rows = (data ?? []) as Array<Record<string, unknown>>
   const reviews: CourseReview[] = rows.map(r => {
-    const reviewer = r.reviewer as { name?: string } | null
+    const reviewer = r.reviewer as { name?: string; avatar_url?: string | null; bio?: string | null } | null
     return {
       id: r.id as string,
       reviewer_name: reviewer?.name ?? null,
+      reviewer_avatar_url: reviewer?.avatar_url ?? null,
+      reviewer_bio: reviewer?.bio ?? null,
       rating: r.rating as number,
       title: (r.title as string | null) ?? null,
       body: (r.body as string | null) ?? null,

@@ -643,6 +643,7 @@ export type Database = {
         Row: {
           account_tier_id: string
           avatar_url: string | null
+          bio: string | null
           created_at: string
           editor_advanced: boolean
           email: string
@@ -654,6 +655,7 @@ export type Database = {
         Insert: {
           account_tier_id?: string
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           editor_advanced?: boolean
           email: string
@@ -665,6 +667,7 @@ export type Database = {
         Update: {
           account_tier_id?: string
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           editor_advanced?: boolean
           email?: string

@@ -41,9 +41,11 @@ vi.mock('../lib/supabase', () => ({
 
 vi.mock('../lib/profileApi', () => ({
   updateProfileName: vi.fn().mockResolvedValue({ error: null }),
+  updateProfileBio: vi.fn().mockResolvedValue({ error: null }),
   uploadAvatar: vi.fn(),
   removeAvatar: vi.fn(),
   updateEditorAdvanced: vi.fn().mockResolvedValue({ error: null }),
+  MAX_BIO_LENGTH: 60,
 }))
 
 const stubUser = { id: 'u-1', email: 'user@test.com' } as User

@@ -10,7 +10,7 @@ export interface Comment {
   is_hidden: boolean
   created_at: string
   updated_at: string
-  author: { name: string | null } | null
+  author: { name: string | null; avatar_url: string | null; bio: string | null } | null
 }
 
 const PAGE_SIZE = 20
@@ -25,7 +25,7 @@ export async function listComments(
 
   const { data, error, count } = await client
     .from('comments')
-    .select('id, course_id, author_id, body, is_hidden, created_at, updated_at, author:author_id(name)', {
+    .select('id, course_id, author_id, body, is_hidden, created_at, updated_at, author:author_id(name, avatar_url, bio)', {
       count: 'exact',
     })
     .eq('course_id', courseId)

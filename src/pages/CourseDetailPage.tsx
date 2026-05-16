@@ -18,6 +18,7 @@ import type { Order } from '../lib/orderApi'
 import { useAuth } from '../context/AuthContext'
 import ChessBoard from '../components/ChessBoard/ChessBoard'
 import PaywallSheet from '../components/PaywallSheet'
+import UserNameCardTrigger from '../components/UserNameCard'
 
 const INITIAL_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
@@ -363,7 +364,16 @@ function ReviewCard({ review }: { review: CourseDetail['reviews'][number] }) {
       </div>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-1)' }}>{review.reviewer_name ?? '—'}</span>
+          <UserNameCardTrigger
+            user={{
+              name: review.reviewer_name,
+              avatar_url: review.reviewer_avatar_url,
+              bio: review.reviewer_bio,
+            }}
+            fallbackInitials={initials}
+          >
+            <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-1)' }}>{review.reviewer_name ?? '—'}</span>
+          </UserNameCardTrigger>
           <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>{date}</span>
         </div>
         <StarRow rating={review.rating} size={12} />
@@ -844,7 +854,16 @@ function CommentRow({
       <div style={{ flex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-1)' }}>{authorName}</span>
+            <UserNameCardTrigger
+              user={{
+                name: comment.author?.name ?? null,
+                avatar_url: comment.author?.avatar_url ?? null,
+                bio: comment.author?.bio ?? null,
+              }}
+              fallbackInitials={initials}
+            >
+              <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-1)' }}>{authorName}</span>
+            </UserNameCardTrigger>
             <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>{date}</span>
             {isEdited && (
               <span style={{ fontSize: 11, color: 'var(--ink-4)' }}>· {t('comments.edited')}</span>
