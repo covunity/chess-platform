@@ -1781,6 +1781,43 @@ describe('GuidedChessPlayer — rewind toggle (issue #226)', () => {
     expect(screen.getByTestId('guided-player-coach-note')).toBeInTheDocument()
   })
 
+  it('strips creator-authored autoShapes in Rewind mode (clean board)', () => {
+    // PGN with a green-circle authored on e4 by the creator.
+    const PGN_WITH_SHAPES = '1. e4 { [gambitly:v1]{"s":[{"kind":"circle","square":"e4","color":"green"}]} }'
+    const parsed = parsePgn(PGN_WITH_SHAPES)
+    const e4Node = parsed.root!.children[0]
+    render(
+      <GuidedChessPlayer
+        lesson={{ ...baseLesson, pgn_data: PGN_WITH_SHAPES }}
+        lessonNumber={1}
+        totalLessons={1}
+        mode="lesson"
+        onToggleMode={vi.fn()}
+        initialNodeId={e4Node.id}
+      />
+    )
+    const board = screen.getByTestId('guided-player-board')
+    expect(board.querySelector('[data-autoshape="true"]')).not.toBeInTheDocument()
+  })
+
+  it('still shows creator-authored autoShapes in Study (viewer) mode', () => {
+    const PGN_WITH_SHAPES = '1. e4 { [gambitly:v1]{"s":[{"kind":"circle","square":"e4","color":"green"}]} }'
+    const parsed = parsePgn(PGN_WITH_SHAPES)
+    const e4Node = parsed.root!.children[0]
+    render(
+      <GuidedChessPlayer
+        lesson={{ ...baseLesson, pgn_data: PGN_WITH_SHAPES }}
+        lessonNumber={1}
+        totalLessons={1}
+        mode="viewer"
+        onToggleMode={vi.fn()}
+        initialNodeId={e4Node.id}
+      />
+    )
+    const board = screen.getByTestId('guided-player-board')
+    expect(board.querySelector('[data-square="e4"][data-autoshape="true"]')).toBeInTheDocument()
+  })
+
   it('viewer mode shows the entire main line in the move log (not just played moves)', () => {
     render(
       <GuidedChessPlayer

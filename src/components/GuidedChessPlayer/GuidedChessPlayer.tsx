@@ -708,7 +708,16 @@ export default function GuidedChessPlayer({
             hintSquares={hintSquares}
             selectedSquare={selectedSquare}
             validDestinations={validDestinations}
-            autoShapes={[...shapesToDrawShapes(currentNode?.shapes ?? []), ...puzzleHintShapes]}
+            autoShapes={
+              // Rewind is a "play it back from memory" surface — strip every
+              // shape the creator anchored to the node so the learner has a
+              // clean board to reason on. Puzzle hint shapes never fire in
+              // Rewind mode (different mode prop) so this branch is fine to
+              // empty out entirely.
+              isRewindMode
+                ? []
+                : [...shapesToDrawShapes(currentNode?.shapes ?? []), ...puzzleHintShapes]
+            }
             viewOnly={isViewer}
             // Let learners draw their own arrows/circles for reasoning while
             // they're actually playing (Rewind, regular lesson, puzzle). The
