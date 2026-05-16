@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import type { CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
 import { listUsers, changeUserRole, changeUserAccountTier, parseViolatingCourses } from '../../lib/adminApi'
@@ -16,11 +17,13 @@ const ROLE_PILL_CLASS: Record<UserRole, string> = {
 }
 
 function RolePill({ role, t }: { role: UserRole; t: (k: string) => string }) {
+  const baseStyle: CSSProperties = { whiteSpace: 'nowrap' }
+  const style: CSSProperties =
+    role === 'admin'
+      ? { ...baseStyle, background: 'var(--ink-1)', color: '#fff' }
+      : baseStyle
   return (
-    <span
-      className={ROLE_PILL_CLASS[role]}
-      style={role === 'admin' ? { background: 'var(--ink-1)', color: '#fff' } : undefined}
-    >
+    <span className={ROLE_PILL_CLASS[role]} style={style}>
       {t(`admin.users.role${role}`)}
     </span>
   )
@@ -34,15 +37,17 @@ const TIER_I18N_KEY: Record<AccountTierCode, string> = {
 }
 
 function TierBadge({ tierCode, isEnterprise, t }: { tierCode: AccountTierCode; isEnterprise: boolean; t: (k: string) => string }) {
-  return (
-    <span
-      className="pill"
-      style={
-        isEnterprise
-          ? { background: 'var(--accent-soft)', color: 'var(--accent-ink)', border: '1px solid var(--accent-border)' }
-          : undefined
+  const baseStyle: CSSProperties = { whiteSpace: 'nowrap' }
+  const style: CSSProperties = isEnterprise
+    ? {
+        ...baseStyle,
+        background: 'var(--accent-soft)',
+        color: 'var(--accent-ink)',
+        border: '1px solid var(--accent-border)',
       }
-    >
+    : baseStyle
+  return (
+    <span className="pill" style={style}>
       {t(TIER_I18N_KEY[tierCode] ?? tierCode)}
     </span>
   )
