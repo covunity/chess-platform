@@ -717,14 +717,11 @@ export default function LessonPlayerPage() {
           {(currentLesson?.type === 'chess' || currentLesson?.type === 'puzzle') && playerLesson && playerLesson.id === currentLessonId ? (() => {
             const isPuzzle = currentLesson.type === 'puzzle'
             const hasRewindToggle = !isPuzzle && playerLesson.has_rewind_mode
-            // For two-mode chess lessons we default to Study (viewer); for everything
-            // else fall back to the regular interactive guided lesson. After a manual
-            // toggle the override wins until the learner navigates away.
-            const defaultMode: 'lesson' | 'puzzle' | 'viewer' = isPuzzle
-              ? 'puzzle'
-              : hasRewindToggle
-                ? 'viewer'
-                : 'lesson'
+            // Chess lessons always start in Study (viewer) — that's the
+            // "watch the lesson again" default. Lessons with the Rewind flag
+            // additionally expose a toggle that swaps into self-play. Puzzles
+            // keep their own dedicated mode.
+            const defaultMode: 'lesson' | 'puzzle' | 'viewer' = isPuzzle ? 'puzzle' : 'viewer'
             const activeMode: 'lesson' | 'puzzle' | 'viewer' =
               hasRewindToggle && activeOverrideMode ? activeOverrideMode : defaultMode
             const isToggled = hasRewindToggle && activeOverrideMode !== null

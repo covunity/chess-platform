@@ -583,11 +583,12 @@ describe('LessonPlayerPage', () => {
       expect(player.getAttribute('data-has-supabase-client')).toBe('true')
     })
 
-    it("passes mode='lesson' for a regular chess lesson", async () => {
-      // Default mocks already serve a chess lesson at l2
+    it("defaults to mode='viewer' for a regular chess lesson (Study only, no Rewind toggle)", async () => {
+      // Default mocks serve a chess lesson at l2 with has_rewind_mode=false.
+      // Without the flag, the lesson opens as "watch the lesson again" (viewer).
       renderPlayer(enrolledUser, '/learn/c1/l2')
       const player = await waitFor(() => screen.getByTestId('guided-chess-player-mock'))
-      expect(player.getAttribute('data-mode')).toBe('lesson')
+      expect(player.getAttribute('data-mode')).toBe('viewer')
     })
 
     it("defaults to mode='viewer' for a chess lesson with has_rewind_mode=true", async () => {
