@@ -1,6 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Newsreader:ital,wght@0,400;0,600;1,400;1,600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @import "tailwindcss";
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-serif: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
 
 :root {
   /* Backgrounds */
@@ -51,8 +57,8 @@
   --sh-3: 0 12px 36px rgba(20,22,26,0.12), 0 2px 8px rgba(20,22,26,0.06);
 
   /* Typography */
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-serif: 'Newsreader', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-serif: 'Plus Jakarta Sans', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
   /* Radius */
@@ -82,7 +88,7 @@ body {
   padding: 0 20px;
   border-radius: var(--r-md);
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   cursor: pointer;
   border: 1px solid transparent;
@@ -92,7 +98,7 @@ body {
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .btn-sm { height: 32px; padding: 0 14px; font-size: 13px; }
-.btn-lg { height: 52px; padding: 0 28px; font-size: 15px; }
+.btn-lg { height: 52px; padding: 0 28px; font-size: 16px; }
 
 .btn-primary  { background: var(--ink-1); color: var(--ink-on-accent); }
 .btn-accent   { background: var(--accent); color: var(--ink-on-accent); }
@@ -144,7 +150,7 @@ body {
   border-radius: var(--r-md);
   border: 1px solid var(--border-strong);
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: 15px;
   color: var(--ink-1);
   background: var(--surface);
   outline: none;
@@ -185,7 +191,7 @@ body {
 
 .label {
   display: block;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--ink-2);
   margin-bottom: 6px;
@@ -265,7 +271,7 @@ body {
 }
 
 .auth-brand__sub {
-  font-size: 15px;
+  font-size: 16px;
   color: rgba(239, 233, 217, 0.7);
   max-width: 420px;
   line-height: 1.6;
@@ -348,7 +354,7 @@ body {
 }
 
 .auth-helper {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--ink-3);
   margin: 0 0 24px;
 }
@@ -381,7 +387,7 @@ body {
   color: var(--danger);
   border-radius: var(--r-md);
   padding: 10px 14px;
-  font-size: 13px;
+  font-size: 14px;
   margin-bottom: 16px;
 }
 
@@ -405,7 +411,7 @@ body {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--ink-2);
   cursor: pointer;
 }
@@ -436,7 +442,7 @@ body {
 
 .auth-footer-text {
   text-align: center;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--ink-3);
   margin-top: 20px;
 }
@@ -449,7 +455,7 @@ body {
 .link-accent:hover { text-decoration: underline; }
 
 .link-muted {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--ink-3);
   text-decoration: none;
 }
@@ -509,7 +515,7 @@ body {
   background: none;
   border: none;
   padding: 8px 16px;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--ink-1);
   cursor: pointer;
 }
@@ -655,7 +661,7 @@ body {
 }
 
 .guided-player-title {
-  font-size: 20px;
+  font-size: 21px;
   font-weight: 600;
   color: var(--ink-1);
   margin: 0;
@@ -677,7 +683,7 @@ body {
 .guided-player-helper {
   margin: 0;
   padding: 0 0 0 16px;
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--accent-ink);
   display: flex;
   flex-direction: column;
@@ -740,7 +746,7 @@ body {
   align-items: baseline;
   gap: 8px;
   font-family: var(--font-mono);
-  font-size: 13.5px;
+  font-size: 14px;
 }
 
 .guided-player-move-num {
@@ -812,7 +818,7 @@ body {
 
 .guided-player-move-annotation {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--ink-2);
   line-height: 1.55;
   padding-left: 30px;
@@ -827,7 +833,7 @@ body {
   border: 1px solid var(--accent-border);
   border-radius: var(--r-md);
   padding: 14px 16px;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--accent-ink);
   line-height: 1.5;
   margin-top: 4px;
@@ -856,7 +862,7 @@ body {
 
 .guided-player-coach-note p {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--ink-2);
   line-height: 1.55;
 }
@@ -885,7 +891,7 @@ body {
 
 .guided-player-dialog-body {
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--ink-2);
   line-height: 1.5;
 }
