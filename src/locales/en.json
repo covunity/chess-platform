@@ -12,6 +12,11 @@
     "admin": "Admin",
     "greeting": "Hi {{name}}!"
   },
+  "guidedPlayer": {
+    "viewerFirstMove": "First",
+    "viewerLastMove": "Last",
+    "flipBoardAria": "Flip board"
+  },
   "footer": {
     "becomeCreator": "Become a creator",
     "help": "Help",

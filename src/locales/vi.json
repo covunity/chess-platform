@@ -1125,7 +1125,8 @@
     "viewerPrevMove": "Nước trước",
     "viewerBeginMove": "Về nước đầu",
     "viewerEndMove": "Đến nước cuối",
-    "wrongMoveBanner": "Nước sai. Hãy thử lại."
+    "wrongMoveBanner": "Nước sai. Hãy thử lại.",
+    "flipBoardAria": "Lật bàn cờ"
   },
   "errors": {
     "chapterLimitReached": "Bạn đã đạt giới hạn số chương cho gói tài khoản hiện tại.",

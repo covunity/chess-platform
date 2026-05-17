@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Chess } from 'chess.js'
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import ChessgroundView from '../ChessBoard/ChessgroundView'
 import { parsePgn } from '../../utils/parsePgn'
@@ -177,6 +177,7 @@ export default function GuidedChessPlayer({
   // Puzzle mode: gaveUp flag (set when "Xem đáp án" is clicked)
   const gaveUpRef = useRef(false)
   const [gaveUp, setGaveUp] = useState(false)
+  const [isBoardHovered, setIsBoardHovered] = useState(false)
   // Timers for show-answer animation
   const showAnswerTimers = useRef<ReturnType<typeof setTimeout>[]>([])
 
@@ -235,6 +236,12 @@ export default function GuidedChessPlayer({
     : null
 
   const atLeaf = !currentNode || currentNode.children.length === 0
+
+  const goToLast = useCallback(() => {
+    let node = currentNode
+    while (node && node.children.length > 0) node = node.children[0]
+    if (node) setCurrentNodeId(node.id)
+  }, [currentNode])
   const hasPendingMoves = !atLeaf
   const nextChild = currentNode?.children[0]
   const awaitingOpponent = hasPendingMoves && nextChild!.side !== learnerSide
@@ -665,8 +672,12 @@ export default function GuidedChessPlayer({
           </span>
         </div>
 
-        {/* Board (relative parent for the wrong-move overlay) */}
-        <div className="guided-player-board-wrap">
+        {/* Board (relative parent for overlay + hover flip button) */}
+        <div
+          className="guided-player-board-wrap"
+          onMouseEnter={() => setIsBoardHovered(true)}
+          onMouseLeave={() => setIsBoardHovered(false)}
+        >
           <InteractiveBoard
             fen={currentFen}
             perspective={viewPerspective}
@@ -677,19 +688,11 @@ export default function GuidedChessPlayer({
             selectedSquare={selectedSquare}
             validDestinations={validDestinations}
             autoShapes={
-              // Rewind is a "play it back from memory" surface — strip every
-              // shape the creator anchored to the node so the learner has a
-              // clean board to reason on. Puzzle hint shapes never fire in
-              // Rewind mode (different mode prop) so this branch is fine to
-              // empty out entirely.
               isRewindMode
                 ? []
                 : [...shapesToDrawShapes(currentNode?.shapes ?? []), ...puzzleHintShapes]
             }
             viewOnly={isViewer}
-            // Let learners draw their own arrows/circles for reasoning while
-            // they're actually playing (Rewind, regular lesson, puzzle). The
-            // Study/viewer half is read-only so we keep it off there.
             drawableEnabled={!isViewer}
             dests={legalDests}
             onSquareClick={isViewer ? undefined : handleSquareClick}
@@ -698,8 +701,7 @@ export default function GuidedChessPlayer({
             canDrag={isViewer ? undefined : canDrag}
           />
 
-          {/* Wrong-move banner — overlay so showing/hiding it does NOT reflow
-              the board (#231 follow-up). Stays out of the layout flow. */}
+          {/* Wrong-move banner overlay */}
           {!isViewer && !isPuzzleMode && wrongMoveSquare && (
             <div
               data-testid="wrong-move-banner"
@@ -709,6 +711,38 @@ export default function GuidedChessPlayer({
               {t('guidedPlayer.wrongMoveBanner')}
             </div>
           )}
+
+          {/* Flip board — hover-only icon, top-right corner */}
+          <button
+            type="button"
+            aria-label={t('guidedPlayer.flipBoardAria')}
+            data-testid="guided-player-flip-btn"
+            onClick={() => setViewPerspective(p => p === 'white' ? 'black' : 'white')}
+            style={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              width: 28,
+              height: 28,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 'var(--r-sm)',
+              border: '1px solid var(--border-strong)',
+              background: 'rgba(255,255,255,0.88)',
+              backdropFilter: 'blur(4px)',
+              cursor: 'pointer',
+              color: 'var(--ink-2)',
+              opacity: isBoardHovered ? 1 : 0,
+              transition: 'opacity 0.15s',
+              pointerEvents: isBoardHovered ? 'auto' : 'none',
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M7 16V4m0 0L3 8m4-4 4 4" />
+              <path d="M17 8v12m0 0 4-4m-4 4-4-4" />
+            </svg>
+          </button>
         </div>
         {!isViewer && promotionCandidates.length > 0 && (
           <PromotionPicker
@@ -939,18 +973,20 @@ export default function GuidedChessPlayer({
             <>
               <button
                 type="button"
-                className="btn btn-secondary btn-sm"
+                className="btn btn-secondary"
+                style={{ width: 44, padding: 0 }}
                 data-testid="viewer-begin-btn"
                 aria-label={t('guidedPlayer.viewerBeginMove')}
                 title={t('guidedPlayer.viewerBeginMove')}
                 disabled={atRoot}
                 onClick={() => setCurrentNodeId('root')}
               >
-                <ChevronsLeft size={16} aria-hidden="true" />
+                <ChevronsLeft size={18} aria-hidden="true" />
               </button>
               <button
                 type="button"
-                className="btn btn-secondary btn-sm"
+                className="btn btn-secondary"
+                style={{ width: 44, padding: 0 }}
                 data-testid="viewer-prev-btn"
                 aria-label={t('guidedPlayer.viewerPrevMove')}
                 title={t('guidedPlayer.viewerPrevMove')}
@@ -959,11 +995,12 @@ export default function GuidedChessPlayer({
                   if (currentNode?.parentId) setCurrentNodeId(currentNode.parentId)
                 }}
               >
-                <ChevronLeft size={16} aria-hidden="true" />
+                <ChevronLeft size={20} aria-hidden="true" />
               </button>
               <button
                 type="button"
-                className="btn btn-secondary btn-sm"
+                className="btn btn-secondary"
+                style={{ width: 44, padding: 0 }}
                 data-testid="viewer-next-btn"
                 aria-label={t('guidedPlayer.viewerNextMove')}
                 title={t('guidedPlayer.viewerNextMove')}
@@ -973,11 +1010,12 @@ export default function GuidedChessPlayer({
                   if (next) setCurrentNodeId(next.id)
                 }}
               >
-                <ChevronRight size={16} aria-hidden="true" />
+                <ChevronRight size={20} aria-hidden="true" />
               </button>
               <button
                 type="button"
-                className="btn btn-secondary btn-sm"
+                className="btn btn-secondary"
+                style={{ width: 44, padding: 0 }}
                 data-testid="viewer-end-btn"
                 aria-label={t('guidedPlayer.viewerEndMove')}
                 title={t('guidedPlayer.viewerEndMove')}
@@ -986,15 +1024,7 @@ export default function GuidedChessPlayer({
                   if (mainLineEndId) setCurrentNodeId(mainLineEndId)
                 }}
               >
-                <ChevronsRight size={16} aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                data-testid="guided-player-flip-btn"
-                onClick={() => setViewPerspective((p) => (p === 'white' ? 'black' : 'white'))}
-              >
-                {t('guidedPlayer.flipBoard')}
+                <ChevronsRight size={18} aria-hidden="true" />
               </button>
             </>
             )
@@ -1021,14 +1051,6 @@ export default function GuidedChessPlayer({
                   {t('guidedPlayer.puzzleShowAnswer')}
                 </button>
               )}
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                data-testid="guided-player-flip-btn"
-                onClick={() => setViewPerspective((p) => (p === 'white' ? 'black' : 'white'))}
-              >
-                {t('guidedPlayer.flipBoard')}
-              </button>
               <div className="guided-player-actions-divider" aria-hidden="true" />
               <button
                 type="button"
