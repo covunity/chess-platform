@@ -12,11 +12,6 @@
     "admin": "Admin",
     "greeting": "Hi {{name}}!"
   },
-  "guidedPlayer": {
-    "viewerFirstMove": "First",
-    "viewerLastMove": "Last",
-    "flipBoardAria": "Flip board"
-  },
   "footer": {
     "becomeCreator": "Become a creator",
     "help": "Help",
@@ -818,7 +813,10 @@
     "puzzleShowAnswer": "Show answer",
     "puzzleGaveUpComplete": "You viewed the answer — this won't count as your personal best",
     "viewerNextMove": "Next move",
-    "viewerPrevMove": "Previous move"
+    "viewerPrevMove": "Previous move",
+    "viewerBeginMove": "First move",
+    "viewerEndMove": "Last move",
+    "flipBoardAria": "Flip board"
   },
   "errors": {
     "chapterLimitReached": "You have reached the chapter limit for your current account tier."

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Chess } from 'chess.js'
@@ -236,12 +236,6 @@ export default function GuidedChessPlayer({
     : null
 
   const atLeaf = !currentNode || currentNode.children.length === 0
-
-  const goToLast = useCallback(() => {
-    let node = currentNode
-    while (node && node.children.length > 0) node = node.children[0]
-    if (node) setCurrentNodeId(node.id)
-  }, [currentNode])
   const hasPendingMoves = !atLeaf
   const nextChild = currentNode?.children[0]
   const awaitingOpponent = hasPendingMoves && nextChild!.side !== learnerSide
