@@ -409,6 +409,7 @@ export type Database = {
           pgn_data: string
           position: number
           puzzle_player_side: string | null
+          rewind_source_id: string | null
           starting_fen: string | null
           title: string
           type: Database["public"]["Enums"]["lesson_type"]
@@ -434,6 +435,7 @@ export type Database = {
           pgn_data?: string
           position?: number
           puzzle_player_side?: string | null
+          rewind_source_id?: string | null
           starting_fen?: string | null
           title: string
           type?: Database["public"]["Enums"]["lesson_type"]
@@ -459,6 +461,7 @@ export type Database = {
           pgn_data?: string
           position?: number
           puzzle_player_side?: string | null
+          rewind_source_id?: string | null
           starting_fen?: string | null
           title?: string
           type?: Database["public"]["Enums"]["lesson_type"]

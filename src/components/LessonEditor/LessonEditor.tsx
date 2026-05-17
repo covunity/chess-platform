@@ -33,8 +33,12 @@ export interface Lesson {
   starting_fen?: string | null;
   /** Puzzle lessons: which side the learner plays. */
   puzzle_player_side?: 'white' | 'black' | null;
-  /** When true the lesson exposes a Study (default) ↔ Rewind toggle to learners. Chess type only. */
+  /** When true the lesson auto-creates a paired Rewind sibling lesson. Chess type only. */
   has_rewind_mode?: boolean;
+  /** When set, this lesson IS the auto-managed Rewind sibling of the referenced source. */
+  rewind_source_id?: string | null;
+  /** Title of the source lesson — only used for the read-only banner on rewind siblings. */
+  rewind_source_title?: string | null;
 }
 
 export interface LessonEditorProps {
@@ -82,6 +86,10 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   const [perspective, setPerspective] = useState<"white" | "black">(lesson.board_perspective);
   const [isFreePreview] = useState(lesson.is_free_preview);
   const [hasRewindMode, setHasRewindMode] = useState(lesson.has_rewind_mode ?? false);
+  // True when this lesson row is the auto-managed Rewind sibling of another
+  // source lesson — the editor switches to a read-only banner because the
+  // content is kept in sync by the DB trigger from the source side.
+  const isRewindSibling = !!lesson.rewind_source_id;
   // Sub-tab for chess lesson: 'board' | 'pgn' (pgn only when editorAdvanced)
   const [chessSubTab, setChessSubTab] = useState<'board' | 'pgn'>('board');
   // Import-from-PGN modal open state
@@ -239,7 +247,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
 
         {activeTab === "chess" ? (
           <>
-            {/* Compact metadata bar: title + perspective toggle + view-only in one row */}
+            {/* Compact metadata bar: title + (source-only) perspective + rewind toggle */}
             <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
               <input
                 id="lesson-title"
@@ -251,144 +259,169 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
               />
-              {/* Perspective segmented control */}
-              {(["white", "black"] as const).map((val, i) => (
-                <button
-                  key={val}
-                  type="button"
-                  aria-pressed={perspective === val}
-                  onClick={() => setPerspective(val)}
-                  style={{
-                    height: 34,
-                    padding: "0 10px",
-                    border: "1px solid var(--border)",
-                    borderRadius: i === 0 ? "var(--r-sm) 0 0 var(--r-sm)" : "0 var(--r-sm) var(--r-sm) 0",
-                    marginLeft: i === 1 ? -1 : 0,
-                    background: perspective === val ? "var(--ink-1)" : "var(--surface)",
-                    color: perspective === val ? "var(--ink-on-accent)" : "var(--ink-1)",
-                    fontWeight: 500,
-                    fontSize: 12.5,
-                    cursor: "pointer",
-                    position: "relative" as const,
-                    zIndex: perspective === val ? 1 : 0,
-                    flexShrink: 0,
-                  }}
-                >
-                  {val === "white" ? t('creator.lessonEditor.perspectiveWhite') : t('creator.lessonEditor.perspectiveBlack')}
-                </button>
-              ))}
-              {/* View-only toggle */}
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 5,
-                  fontSize: 12.5,
-                  color: "var(--ink-2)",
-                  cursor: "pointer",
-                  flexShrink: 0,
-                  whiteSpace: "nowrap" as const,
-                  paddingLeft: 4,
-                }}
-              >
-                <input
-                  data-testid="lesson-has-rewind-mode-checkbox"
-                  type="checkbox"
-                  checked={hasRewindMode}
-                  onChange={(e) => setHasRewindMode(e.target.checked)}
-                  style={{ cursor: "pointer" }}
-                />
-                {t('creator.lessonEditor.hasRewindModeLabel')}
-              </label>
-            </div>
-
-            {/* Authoring sub-tabs: Board | PGN (advanced) + Import-from-PGN button */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {/* Board sub-tab — always present */}
-              <button
-                type="button"
-                data-testid="board-tab"
-                aria-pressed={chessSubTab === 'board'}
-                onClick={() => setChessSubTab('board')}
-                style={{
-                  padding: '4px 12px',
-                  borderRadius: 999,
-                  border: '1px solid var(--border)',
-                  background: chessSubTab === 'board' ? 'var(--ink-1)' : 'var(--surface)',
-                  color: chessSubTab === 'board' ? 'var(--ink-on-accent)' : 'var(--ink-2)',
-                  fontSize: 12,
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                }}
-              >
-                {t('creator.lessonEditor.tabBoardAuthoring')}
-              </button>
-
-              {/* PGN (advanced) sub-tab — only when editorAdvanced */}
-              {editorAdvanced && (
-                <button
-                  type="button"
-                  data-testid="pgn-advanced-tab"
-                  aria-pressed={chessSubTab === 'pgn'}
-                  onClick={() => setChessSubTab('pgn')}
-                  style={{
-                    padding: '4px 12px',
-                    borderRadius: 999,
-                    border: '1px solid var(--border)',
-                    background: chessSubTab === 'pgn' ? 'var(--ink-1)' : 'var(--surface)',
-                    color: chessSubTab === 'pgn' ? 'var(--ink-on-accent)' : 'var(--ink-2)',
-                    fontSize: 12,
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {t('creator.lessonEditor.tabPgnAdvanced')}
-                </button>
+              {/* Perspective segmented control + Rewind-toggle checkbox only show on
+                  source lessons; siblings inherit their content (including perspective)
+                  from the source via the DB trigger. */}
+              {!isRewindSibling && (
+                <>
+                  {(["white", "black"] as const).map((val, i) => (
+                    <button
+                      key={val}
+                      type="button"
+                      aria-pressed={perspective === val}
+                      onClick={() => setPerspective(val)}
+                      style={{
+                        height: 34,
+                        padding: "0 10px",
+                        border: "1px solid var(--border)",
+                        borderRadius: i === 0 ? "var(--r-sm) 0 0 var(--r-sm)" : "0 var(--r-sm) var(--r-sm) 0",
+                        marginLeft: i === 1 ? -1 : 0,
+                        background: perspective === val ? "var(--ink-1)" : "var(--surface)",
+                        color: perspective === val ? "var(--ink-on-accent)" : "var(--ink-1)",
+                        fontWeight: 500,
+                        fontSize: 12.5,
+                        cursor: "pointer",
+                        position: "relative" as const,
+                        zIndex: perspective === val ? 1 : 0,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {val === "white" ? t('creator.lessonEditor.perspectiveWhite') : t('creator.lessonEditor.perspectiveBlack')}
+                    </button>
+                  ))}
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 5,
+                      fontSize: 12.5,
+                      color: "var(--ink-2)",
+                      cursor: "pointer",
+                      flexShrink: 0,
+                      whiteSpace: "nowrap" as const,
+                      paddingLeft: 4,
+                    }}
+                  >
+                    <input
+                      data-testid="lesson-has-rewind-mode-checkbox"
+                      type="checkbox"
+                      checked={hasRewindMode}
+                      onChange={(e) => setHasRewindMode(e.target.checked)}
+                      style={{ cursor: "pointer" }}
+                    />
+                    {t('creator.lessonEditor.hasRewindModeLabel')}
+                  </label>
+                </>
               )}
-
-              {/* Import-from-PGN button — available to ALL creators */}
-              <button
-                type="button"
-                data-testid="import-from-pgn-btn"
-                onClick={() => setImportModalOpen(true)}
-                style={{
-                  marginLeft: 'auto',
-                  padding: '4px 12px',
-                  borderRadius: 999,
-                  border: '1px solid var(--border)',
-                  background: 'var(--surface)',
-                  color: 'var(--ink-2)',
-                  fontSize: 12,
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                }}
-              >
-                {t('creator.lessonEditor.importFromPgn')}
-              </button>
             </div>
 
-            {/* Board authoring surface (default sub-tab) */}
-            {chessSubTab === 'board' && (
-              <BoardAuthoringSurface
-                store={treeStoreRef.current}
-                perspective={perspective}
-                size={460}
-              />
-            )}
+            {isRewindSibling ? (
+              <div
+                data-testid="rewind-sibling-banner"
+                style={{
+                  background: 'var(--accent-soft)',
+                  border: '1px solid var(--accent-border)',
+                  borderRadius: 'var(--r-md)',
+                  padding: '14px 16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 4,
+                }}
+              >
+                <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--accent-ink)' }}>
+                  {t('creator.lessonEditor.rewindSiblingHeading')}
+                </div>
+                <div style={{ fontSize: 12.5, color: 'var(--ink-2)', lineHeight: 1.55 }}>
+                  {lesson.rewind_source_title
+                    ? t('creator.lessonEditor.rewindSiblingBodyWithSource', { source: lesson.rewind_source_title })
+                    : t('creator.lessonEditor.rewindSiblingBody')}
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Authoring sub-tabs: Board | PGN (advanced) + Import-from-PGN button */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <button
+                    type="button"
+                    data-testid="board-tab"
+                    aria-pressed={chessSubTab === 'board'}
+                    onClick={() => setChessSubTab('board')}
+                    style={{
+                      padding: '4px 12px',
+                      borderRadius: 999,
+                      border: '1px solid var(--border)',
+                      background: chessSubTab === 'board' ? 'var(--ink-1)' : 'var(--surface)',
+                      color: chessSubTab === 'board' ? 'var(--ink-on-accent)' : 'var(--ink-2)',
+                      fontSize: 12,
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {t('creator.lessonEditor.tabBoardAuthoring')}
+                  </button>
 
-            {/* Advanced PGN panel (shown only when editorAdvanced + pgn sub-tab active) */}
-            {editorAdvanced && chessSubTab === 'pgn' && (
-              <AdvancedPgnPanel
-                store={treeStoreRef.current}
-              />
-            )}
+                  {editorAdvanced && (
+                    <button
+                      type="button"
+                      data-testid="pgn-advanced-tab"
+                      aria-pressed={chessSubTab === 'pgn'}
+                      onClick={() => setChessSubTab('pgn')}
+                      style={{
+                        padding: '4px 12px',
+                        borderRadius: 999,
+                        border: '1px solid var(--border)',
+                        background: chessSubTab === 'pgn' ? 'var(--ink-1)' : 'var(--surface)',
+                        color: chessSubTab === 'pgn' ? 'var(--ink-on-accent)' : 'var(--ink-2)',
+                        fontSize: 12,
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {t('creator.lessonEditor.tabPgnAdvanced')}
+                    </button>
+                  )}
 
-            {/* Import-from-PGN modal */}
-            {importModalOpen && (
-              <ImportFromPgnModal
-                store={treeStoreRef.current}
-                onClose={() => setImportModalOpen(false)}
-              />
+                  <button
+                    type="button"
+                    data-testid="import-from-pgn-btn"
+                    onClick={() => setImportModalOpen(true)}
+                    style={{
+                      marginLeft: 'auto',
+                      padding: '4px 12px',
+                      borderRadius: 999,
+                      border: '1px solid var(--border)',
+                      background: 'var(--surface)',
+                      color: 'var(--ink-2)',
+                      fontSize: 12,
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {t('creator.lessonEditor.importFromPgn')}
+                  </button>
+                </div>
+
+                {chessSubTab === 'board' && (
+                  <BoardAuthoringSurface
+                    store={treeStoreRef.current}
+                    perspective={perspective}
+                    size={460}
+                  />
+                )}
+
+                {editorAdvanced && chessSubTab === 'pgn' && (
+                  <AdvancedPgnPanel
+                    store={treeStoreRef.current}
+                  />
+                )}
+
+                {importModalOpen && (
+                  <ImportFromPgnModal
+                    store={treeStoreRef.current}
+                    onClose={() => setImportModalOpen(false)}
+                  />
+                )}
+              </>
             )}
           </>
         ) : activeTab === "video" ? (

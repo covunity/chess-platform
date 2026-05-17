@@ -615,6 +615,27 @@ export default function CourseEditPage() {
   async function handleSaveLesson(data: { pgn_data: string; board_perspective: 'white' | 'black'; is_free_preview: boolean; title: string; description?: string | null; has_rewind_mode?: boolean }) {
     if (!selectedLesson) return
     const hasRewindMode = data.has_rewind_mode ?? false
+    // Rewind sibling rows are content-managed by the DB trigger from their
+    // source. Pushing pgn / perspective / etc. from a sibling save would lose
+    // the source's intent — only title + free_preview are safe to forward.
+    const isSibling = !!selectedLesson.rewind_source_id
+    if (isSibling) {
+      await updateLesson(supabase, selectedLesson.id, {
+        free_preview: data.is_free_preview,
+        title: data.title,
+      })
+      showToast(t('creator.courseEdit.saveLessonToast'))
+      setChapters(prev => prev.map(ch => ({
+        ...ch,
+        lessons: (ch.lessons ?? []).map(l =>
+          l.id === selectedLesson.id
+            ? { ...l, free_preview: data.is_free_preview, title: data.title }
+            : l
+        ),
+      })))
+      await refreshReadiness()
+      return
+    }
     await updateLesson(supabase, selectedLesson.id, {
       pgn_data: data.pgn_data,
       board_perspective: data.board_perspective,
@@ -775,6 +796,12 @@ export default function CourseEditPage() {
               is_free_preview: selectedLesson.free_preview,
               type: selectedLesson.type,
               has_rewind_mode: selectedLesson.has_rewind_mode ?? false,
+              rewind_source_id: selectedLesson.rewind_source_id ?? null,
+              rewind_source_title: selectedLesson.rewind_source_id
+                ? chapters
+                    .flatMap(ch => ch.lessons ?? [])
+                    .find(l => l.id === selectedLesson.rewind_source_id)?.title ?? null
+                : null,
             }}
             chapterLessons={selectedChapterLessons}
             onSelectLesson={id => {

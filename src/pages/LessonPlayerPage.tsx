@@ -291,17 +291,6 @@ export default function LessonPlayerPage() {
   const currentBookmark = fetchedBookmark?.lessonId === currentLessonId ? fetchedBookmark.bookmark : null
   const [bookmarkToast, setBookmarkToast] = useState<{ moveLabel: string } | null>(null)
   const bookmarkToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  // Learner-side toggle for has_rewind_mode chess lessons (#226). The override
-  // is scoped to a single lesson so navigating between lessons resets the mode
-  // without an explicit cleanup effect.
-  const [learnerModeOverride, setLearnerModeOverride] = useState<{
-    lessonId: string
-    mode: 'viewer' | 'lesson'
-  } | null>(null)
-  const activeOverrideMode =
-    learnerModeOverride && learnerModeOverride.lessonId === currentLessonId
-      ? learnerModeOverride.mode
-      : null
 
   // Derive initialNodeId from bookmark when both lesson PGN and bookmark are loaded
   const initialNodeId = (() => {
@@ -716,37 +705,29 @@ export default function LessonPlayerPage() {
         >
           {(currentLesson?.type === 'chess' || currentLesson?.type === 'puzzle') && playerLesson && playerLesson.id === currentLessonId ? (() => {
             const isPuzzle = currentLesson.type === 'puzzle'
-            const hasRewindToggle = !isPuzzle && playerLesson.has_rewind_mode
-            // Chess lessons always start in Study (viewer) — that's the
-            // "watch the lesson again" default. Lessons with the Rewind flag
-            // additionally expose a toggle that swaps into self-play. Puzzles
-            // keep their own dedicated mode.
-            const defaultMode: 'lesson' | 'puzzle' | 'viewer' = isPuzzle ? 'puzzle' : 'viewer'
-            const activeMode: 'lesson' | 'puzzle' | 'viewer' =
-              hasRewindToggle && activeOverrideMode ? activeOverrideMode : defaultMode
-            const isToggled = hasRewindToggle && activeOverrideMode !== null
+            const isRewindLesson = !isPuzzle && !!playerLesson.rewind_source_id
+            // Rewind sibling lessons live as their own row (#244): they always
+            // open in interactive 'lesson' mode. Normal chess lessons stay in
+            // Study (viewer) — read-only walkthrough. Puzzles keep their own
+            // dedicated mode.
+            const mode: 'lesson' | 'puzzle' | 'viewer' = isPuzzle
+              ? 'puzzle'
+              : isRewindLesson
+                ? 'lesson'
+                : 'viewer'
             return (
               <div style={{ flex: 1, overflow: 'hidden' }}>
                 <GuidedChessPlayer
-                  key={hasRewindToggle ? `${currentLessonId}-${activeMode}` : currentLessonId}
+                  key={currentLessonId}
                   lesson={playerLesson}
                   lessonNumber={lessonIndex + 1}
                   totalLessons={allLessons.length}
-                  initialNodeId={isToggled ? undefined : initialNodeId}
-                  mode={activeMode}
+                  initialNodeId={initialNodeId}
+                  mode={mode}
+                  isRewindLesson={isRewindLesson}
                   supabaseClient={isPuzzle ? supabase : undefined}
                   onComplete={handleLessonComplete}
                   onBookmark={handleBookmark}
-                  onToggleMode={
-                    hasRewindToggle
-                      ? () => {
-                          setLearnerModeOverride({
-                            lessonId: currentLessonId,
-                            mode: activeMode === 'viewer' ? 'lesson' : 'viewer',
-                          })
-                        }
-                      : undefined
-                  }
                 />
               </div>
             )

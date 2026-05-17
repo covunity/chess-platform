@@ -644,6 +644,9 @@
       "richNoteEditorBoldTooltip": "In đậm",
       "richNoteEditorItalicTooltip": "In nghiêng",
       "hasRewindModeLabel": "Tạo Rewind cho bài này",
+      "rewindSiblingHeading": "Bài Rewind tự đồng bộ",
+      "rewindSiblingBody": "Nội dung bài này tự cập nhật theo bài gốc. Bạn vẫn có thể đổi tiêu đề ở trên và bật xem thử miễn phí. Để sửa nội dung, hãy mở bài gốc.",
+      "rewindSiblingBodyWithSource": "Nội dung bài này tự cập nhật theo bài gốc \"{{source}}\". Bạn vẫn có thể đổi tiêu đề ở trên và bật xem thử miễn phí.",
       "tabPgnAdvanced": "PGN (nâng cao)",
       "advancedTabHint": "Tab này dành cho người dùng nâng cao — sửa trực tiếp PGN.",
       "importFromPgn": "Nhập từ PGN",
@@ -1101,13 +1104,6 @@
     "viewerPrevMove": "Nước trước",
     "viewerBeginMove": "Về nước đầu",
     "viewerEndMove": "Đến nước cuối",
-    "modeToggleToRewind": "Tự đi",
-    "modeToggleToStudy": "Quay lại học",
-    "modeSwitcherAria": "Chế độ học bài",
-    "modeStudyTitle": "Học",
-    "modeStudySubtitle": "Xem hướng dẫn từng nước",
-    "modeRewindTitle": "Tự đi",
-    "modeRewindSubtitle": "Tự kéo quân để ghi nhớ",
     "wrongMoveBanner": "Nước sai. Hãy thử lại."
   },
   "errors": {

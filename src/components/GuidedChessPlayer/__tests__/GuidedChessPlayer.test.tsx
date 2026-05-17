@@ -536,14 +536,14 @@ describe('GuidedChessPlayer', () => {
       expect(screen.queryByTestId('guided-player-helper')).not.toBeInTheDocument()
     })
 
-    it('renders the helper in Rewind mode (lesson + onToggleMode)', () => {
+    it('renders the helper in Rewind mode (lesson + isRewindLesson)', () => {
       render(
         <GuidedChessPlayer
           lesson={baseLesson}
           lessonNumber={2}
           totalLessons={5}
           mode="lesson"
-          onToggleMode={vi.fn()}
+          isRewindLesson
         />
       )
       expect(screen.getByTestId('guided-player-helper')).toBeInTheDocument()
@@ -1693,96 +1693,26 @@ describe('GuidedChessPlayer — resume position (PRD-0004 Slice 10)', () => {
   })
 })
 
-describe('GuidedChessPlayer — rewind toggle (issue #226)', () => {
-  it('does not render a mode switcher when onToggleMode is not provided', () => {
-    render(<GuidedChessPlayer lesson={baseLesson} lessonNumber={1} totalLessons={5} />)
-    expect(screen.queryByTestId('mode-switcher')).not.toBeInTheDocument()
-    expect(screen.queryByTestId('mode-switch-study')).not.toBeInTheDocument()
-    expect(screen.queryByTestId('mode-switch-rewind')).not.toBeInTheDocument()
-  })
-
-  it("highlights the Study segment when mode='viewer' and onToggleMode is set", () => {
-    render(
-      <GuidedChessPlayer
-        lesson={baseLesson}
-        lessonNumber={1}
-        totalLessons={5}
-        mode="viewer"
-        onToggleMode={vi.fn()}
-      />
-    )
-    expect(screen.getByTestId('mode-switcher')).toBeInTheDocument()
-    expect(screen.getByTestId('mode-switch-study')).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByTestId('mode-switch-rewind')).toHaveAttribute('aria-pressed', 'false')
-    expect(screen.getByTestId('mode-switch-study')).toHaveTextContent(/học/i)
-    expect(screen.getByTestId('mode-switch-rewind')).toHaveTextContent(/tự đi/i)
-  })
-
-  it("highlights the Rewind segment when mode='lesson' and onToggleMode is set", () => {
+describe('GuidedChessPlayer — rewind sibling lesson (issue #244)', () => {
+  it("hides the Hint button when isRewindLesson + mode='lesson'", () => {
     render(
       <GuidedChessPlayer
         lesson={baseLesson}
         lessonNumber={1}
         totalLessons={5}
         mode="lesson"
-        onToggleMode={vi.fn()}
-      />
-    )
-    expect(screen.getByTestId('mode-switch-study')).toHaveAttribute('aria-pressed', 'false')
-    expect(screen.getByTestId('mode-switch-rewind')).toHaveAttribute('aria-pressed', 'true')
-  })
-
-  it('clicking the inactive Rewind segment calls onToggleMode from Study', async () => {
-    const user = userEvent.setup()
-    const onToggleMode = vi.fn()
-    render(
-      <GuidedChessPlayer
-        lesson={baseLesson}
-        lessonNumber={1}
-        totalLessons={5}
-        mode="viewer"
-        onToggleMode={onToggleMode}
-      />
-    )
-    await user.click(screen.getByTestId('mode-switch-rewind'))
-    expect(onToggleMode).toHaveBeenCalledTimes(1)
-  })
-
-  it('clicking the active segment is a no-op (does not call onToggleMode)', async () => {
-    const user = userEvent.setup()
-    const onToggleMode = vi.fn()
-    render(
-      <GuidedChessPlayer
-        lesson={baseLesson}
-        lessonNumber={1}
-        totalLessons={5}
-        mode="viewer"
-        onToggleMode={onToggleMode}
-      />
-    )
-    await user.click(screen.getByTestId('mode-switch-study'))
-    expect(onToggleMode).not.toHaveBeenCalled()
-  })
-
-  it("hides the Hint button in Rewind mode (mode='lesson' + onToggleMode)", () => {
-    render(
-      <GuidedChessPlayer
-        lesson={baseLesson}
-        lessonNumber={1}
-        totalLessons={5}
-        mode="lesson"
-        onToggleMode={vi.fn()}
+        isRewindLesson
       />
     )
     expect(screen.queryByTestId('guided-player-hint-btn')).not.toBeInTheDocument()
   })
 
-  it('still shows the Hint button when mode=lesson without onToggleMode (regular lesson)', () => {
+  it('still shows the Hint button for a non-rewind lesson in lesson mode', () => {
     render(<GuidedChessPlayer lesson={baseLesson} lessonNumber={1} totalLessons={5} mode="lesson" />)
     expect(screen.getByTestId('guided-player-hint-btn')).toBeInTheDocument()
   })
 
-  it('hides the coach note in Rewind mode', () => {
+  it('hides the coach note on a rewind sibling', () => {
     const lessonWithNote = { ...baseLesson, coach_note: 'Important guidance here.' }
     render(
       <GuidedChessPlayer
@@ -1790,7 +1720,7 @@ describe('GuidedChessPlayer — rewind toggle (issue #226)', () => {
         lessonNumber={1}
         totalLessons={5}
         mode="lesson"
-        onToggleMode={vi.fn()}
+        isRewindLesson
       />
     )
     expect(screen.queryByTestId('guided-player-coach-note')).not.toBeInTheDocument()
@@ -1804,14 +1734,12 @@ describe('GuidedChessPlayer — rewind toggle (issue #226)', () => {
         lessonNumber={1}
         totalLessons={5}
         mode="viewer"
-        onToggleMode={vi.fn()}
       />
     )
     expect(screen.getByTestId('guided-player-coach-note')).toBeInTheDocument()
   })
 
-  it('strips creator-authored autoShapes in Rewind mode (clean board)', () => {
-    // PGN with a green-circle authored on e4 by the creator.
+  it('strips creator-authored autoShapes on a rewind sibling', () => {
     const PGN_WITH_SHAPES = '1. e4 { [gambitly:v1]{"s":[{"kind":"circle","square":"e4","color":"green"}]} }'
     const parsed = parsePgn(PGN_WITH_SHAPES)
     const e4Node = parsed.root!.children[0]
@@ -1821,7 +1749,7 @@ describe('GuidedChessPlayer — rewind toggle (issue #226)', () => {
         lessonNumber={1}
         totalLessons={1}
         mode="lesson"
-        onToggleMode={vi.fn()}
+        isRewindLesson
         initialNodeId={e4Node.id}
       />
     )
@@ -1839,7 +1767,6 @@ describe('GuidedChessPlayer — rewind toggle (issue #226)', () => {
         lessonNumber={1}
         totalLessons={1}
         mode="viewer"
-        onToggleMode={vi.fn()}
         initialNodeId={e4Node.id}
       />
     )
@@ -1854,7 +1781,6 @@ describe('GuidedChessPlayer — rewind toggle (issue #226)', () => {
         lessonNumber={1}
         totalLessons={5}
         mode="viewer"
-        onToggleMode={vi.fn()}
       />
     )
     // SAMPLE_PGN main line is e4 e5 Nf3 Nc6 Bb5 — three full-move blocks.
@@ -1879,7 +1805,6 @@ describe('GuidedChessPlayer — rewind toggle (issue #226)', () => {
         lessonNumber={1}
         totalLessons={5}
         mode="viewer"
-        onToggleMode={vi.fn()}
       />
     )
     // Click "Nf3" — should advance currentNodeId so the prev-arrow becomes enabled.
@@ -1888,14 +1813,14 @@ describe('GuidedChessPlayer — rewind toggle (issue #226)', () => {
     expect(screen.getByTestId('viewer-prev-btn')).toBeEnabled()
   })
 
-  it('shows the wrong-move banner in Rewind mode when a non-tree move is attempted', () => {
+  it('shows the wrong-move banner on a rewind sibling when a non-tree move is attempted', () => {
     render(
       <GuidedChessPlayer
         lesson={baseLesson}
         lessonNumber={1}
         totalLessons={5}
         mode="lesson"
-        onToggleMode={vi.fn()}
+        isRewindLesson
       />
     )
     expect(screen.queryByTestId('wrong-move-banner')).not.toBeInTheDocument()
@@ -1907,7 +1832,7 @@ describe('GuidedChessPlayer — rewind toggle (issue #226)', () => {
     expect(screen.getByTestId('wrong-move-banner')).toHaveTextContent(/nước sai/i)
   })
 
-  it('also shows the wrong-move banner in regular lesson mode (no onToggleMode)', () => {
+  it('also shows the wrong-move banner in regular lesson mode (non-rewind)', () => {
     render(<GuidedChessPlayer lesson={baseLesson} lessonNumber={1} totalLessons={5} />)
     const board = screen.getByTestId('guided-player-board')
     fireEvent.click(board.querySelector('[data-square="e2"]')!)
@@ -1922,7 +1847,6 @@ describe('GuidedChessPlayer — rewind toggle (issue #226)', () => {
         lessonNumber={1}
         totalLessons={5}
         mode="viewer"
-        onToggleMode={vi.fn()}
       />
     )
     expect(screen.queryByTestId('wrong-move-banner')).not.toBeInTheDocument()

@@ -50,6 +50,8 @@ export interface Lesson {
   video_error?: string | null
   description?: string | null
   has_rewind_mode?: boolean
+  /** When set, this lesson is the auto-managed Rewind sibling of the referenced source. */
+  rewind_source_id?: string | null
 }
 
 export interface LessonVideoUpdate {

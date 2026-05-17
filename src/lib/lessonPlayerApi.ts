@@ -12,6 +12,8 @@ export interface PlayerLesson {
   video_status: string | null
   description: string | null
   has_rewind_mode: boolean
+  /** When set, this lesson is the Rewind sibling of the referenced source. */
+  rewind_source_id: string | null
 }
 
 export interface GetLessonForPlayerResult {
@@ -25,7 +27,7 @@ export async function getLessonForPlayer(
 ): Promise<GetLessonForPlayerResult> {
   const { data, error } = await client
     .from('lessons')
-    .select('id, title, type, pgn_data, board_perspective, coach_note, video_provider, video_provider_id, video_status, description, has_rewind_mode')
+    .select('id, title, type, pgn_data, board_perspective, coach_note, video_provider, video_provider_id, video_status, description, has_rewind_mode, rewind_source_id')
     .eq('id', lessonId)
     .single()
 
@@ -47,6 +49,7 @@ export async function getLessonForPlayer(
       video_status: (row.video_status as string | null) ?? null,
       description: (row.description as string | null) ?? null,
       has_rewind_mode: (row.has_rewind_mode as boolean | null) ?? false,
+      rewind_source_id: (row.rewind_source_id as string | null) ?? null,
     },
     error: null,
   }

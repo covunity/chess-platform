@@ -47,11 +47,11 @@ export interface GuidedChessPlayerProps {
   /** Supabase client — required in puzzle mode to record attempts and read best attempts. */
   supabaseClient?: SupabaseClient
   /**
-   * When present, the player renders a Study ↔ Rewind toggle button. The parent
-   * owns the active mode state; clicking the button calls this back so the
-   * parent can swap mode + remount the player at root (issue #226).
+   * When true, this lesson is the Rewind sibling of another source lesson:
+   * the player hides the lesson notes, coach note and hint button so the
+   * learner replays the content from memory (#244).
    */
-  onToggleMode?: () => void
+  isRewindLesson?: boolean
 }
 
 const MISTAKE_REVERT_MS = 1500
@@ -145,7 +145,7 @@ export default function GuidedChessPlayer({
   onBookmark,
   onResumeNodeChange,
   supabaseClient,
-  onToggleMode,
+  isRewindLesson = false,
 }: GuidedChessPlayerProps) {
   const { t } = useTranslation()
   const parsed = useMemo(() => parsePgn(lesson.pgn_data), [lesson.pgn_data])
@@ -209,7 +209,7 @@ export default function GuidedChessPlayer({
   // A two-mode lesson (has_rewind_mode=true) routes through this player twice:
   // once in 'viewer' = Study, once in 'lesson' = Rewind. The Rewind side hides
   // the notes + Hint so the learner is forced to play from memory (#226).
-  const isRewindMode = mode === 'lesson' && !!onToggleMode
+  const isRewindMode = isRewindLesson
   const showAnnotationNotes = !isRewindMode
 
   // Resume debounce — save currentNodeId 2 s after last change
@@ -641,38 +641,6 @@ export default function GuidedChessPlayer({
     <div data-testid="guided-player-root" className="guided-player-root">
       {/* Board column */}
       <div className="guided-player-board-col">
-        {/* Study ↔ Rewind switcher — only for two-mode lessons. Placed above
-            the board so the active mode is immediately obvious. */}
-        {onToggleMode && (
-          <div
-            data-testid="mode-switcher"
-            role="group"
-            aria-label={t('guidedPlayer.modeSwitcherAria')}
-            className="guided-player-mode-switcher"
-          >
-            <button
-              type="button"
-              data-testid="mode-switch-study"
-              aria-pressed={isViewer}
-              className={`guided-player-mode-switch-btn${isViewer ? ' guided-player-mode-switch-btn-active' : ''}`}
-              onClick={() => { if (!isViewer) onToggleMode() }}
-            >
-              <span className="guided-player-mode-switch-title">{t('guidedPlayer.modeStudyTitle')}</span>
-              <span className="guided-player-mode-switch-subtitle">{t('guidedPlayer.modeStudySubtitle')}</span>
-            </button>
-            <button
-              type="button"
-              data-testid="mode-switch-rewind"
-              aria-pressed={!isViewer}
-              className={`guided-player-mode-switch-btn${!isViewer ? ' guided-player-mode-switch-btn-active' : ''}`}
-              onClick={() => { if (isViewer) onToggleMode() }}
-            >
-              <span className="guided-player-mode-switch-title">{t('guidedPlayer.modeRewindTitle')}</span>
-              <span className="guided-player-mode-switch-subtitle">{t('guidedPlayer.modeRewindSubtitle')}</span>
-            </button>
-          </div>
-        )}
-
         {/* Meta row: side badge + move counter */}
         <div className="guided-player-board-meta">
           <div className="guided-player-board-meta-left">

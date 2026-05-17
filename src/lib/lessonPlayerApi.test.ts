@@ -37,6 +37,7 @@ describe('getLessonForPlayer', () => {
       coach_note: 'Note here',
       description: null,
       has_rewind_mode: false,
+      rewind_source_id: null,
       video_provider: null,
       video_provider_id: null,
       video_status: null,
