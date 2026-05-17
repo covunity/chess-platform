@@ -9,7 +9,8 @@
     "orders": "Order history",
     "dashboard": "Dashboard",
     "creatorStudio": "Creator Studio",
-    "admin": "Admin"
+    "admin": "Admin",
+    "greeting": "Hi {{name}}!"
   },
   "footer": {
     "becomeCreator": "Become a creator",

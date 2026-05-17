@@ -148,22 +148,14 @@ export default function HomePage() {
               {t('home.heroSubparagraph')}
             </p>
 
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button
-                type="button"
-                className="btn btn-accent btn-lg"
-                onClick={() => (() => { const el = document.getElementById('course-section'); const navHeight = (document.querySelector('header[role="banner"]') as HTMLElement)?.offsetHeight ?? 0; if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - navHeight, behavior: 'smooth' }) })()}
-              >
-                {t('home.heroCta1')} →
-              </button>
-              <button
-                type="button"
-                className="btn btn-ghost btn-lg"
-                onClick={() => (() => { const el = document.getElementById('course-section'); const navHeight = (document.querySelector('header[role="banner"]') as HTMLElement)?.offsetHeight ?? 0; if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - navHeight, behavior: 'smooth' }) })()}
-              >
-                {t('home.heroCta2')}
-              </button>
-            </div>
+            <button
+              type="button"
+              className="btn btn-accent btn-lg"
+              style={{ alignSelf: 'flex-start' }}
+              onClick={() => (() => { const el = document.getElementById('course-section'); const navHeight = (document.querySelector('header[role="banner"]') as HTMLElement)?.offsetHeight ?? 0; if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - navHeight, behavior: 'smooth' }) })()}
+            >
+              {t('home.heroCta1')} →
+            </button>
 
             <p style={{ fontSize: 13, color: 'var(--ink-3)', margin: 0 }}>
               {t('home.heroTrust')}
@@ -327,7 +319,7 @@ export default function HomePage() {
                 style={{
                   height: 32,
                   padding: '0 14px',
-                  borderRadius: 999,
+                  borderRadius: 'var(--r-sm)',
                   fontSize: 13,
                   fontWeight: 500,
                   cursor: 'pointer',
@@ -351,7 +343,7 @@ export default function HomePage() {
                 style={{
                   height: 32,
                   padding: '0 14px',
-                  borderRadius: 999,
+                  borderRadius: 'var(--r-sm)',
                   fontSize: 13,
                   fontWeight: 500,
                   cursor: 'pointer',

@@ -80,6 +80,13 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
     ? (user.user_metadata.name as string).charAt(0).toUpperCase()
     : user?.email?.charAt(0).toUpperCase() ?? '?'
 
+  const firstName = (
+    profile?.name ||
+    (user?.user_metadata?.name as string | undefined) ||
+    user?.email?.split('@')[0] ||
+    ''
+  ).split(' ')[0]
+
   return (
     <header
       role="banner"
@@ -279,22 +286,35 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
           <div className="nav-avatar-menu" ref={menuRef}>
             <button
               type="button"
-              className="avatar"
               aria-label={t('nav.myProfile')}
               aria-haspopup="true"
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen(o => !o)}
-              style={{ padding: 0, overflow: 'hidden' }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '4px 10px 4px 4px',
+                background: menuOpen ? 'var(--surface-2)' : 'transparent',
+                border: '1px solid transparent',
+                borderRadius: 'var(--r-md)',
+                cursor: 'pointer',
+              }}
             >
-              {profile?.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt={profile.name ?? user.email ?? ''}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
-                />
-              ) : (
-                initials
-              )}
+              <span className="avatar" style={{ flexShrink: 0, overflow: 'hidden' }}>
+                {profile?.avatar_url ? (
+                  <img
+                    src={profile.avatar_url}
+                    alt={profile.name ?? user.email ?? ''}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                  />
+                ) : (
+                  initials
+                )}
+              </span>
+              <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--ink-1)', whiteSpace: 'nowrap' }}>
+                {t('nav.greeting', { name: firstName })}
+              </span>
             </button>
             {menuOpen && (
               <div className="nav-dropdown" role="menu">

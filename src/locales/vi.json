@@ -17,7 +17,8 @@
     "creatorPayoutSettings": "Thông tin thanh toán",
     "admin": "Quản trị",
     "becomeCreator": "Trở thành creator",
-    "registerBusiness": "Đăng ký doanh nghiệp"
+    "registerBusiness": "Đăng ký doanh nghiệp",
+    "greeting": "Hi {{name}}!"
   },
   "footer": {
     "becomeCreator": "Trở thành creator",
