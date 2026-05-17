@@ -67,6 +67,7 @@ export type Database = {
           display_order: number
           is_enterprise: boolean
           max_chapters_per_course: number
+          max_lessons_per_course: number
           name_vi: string
           platform_fee_pct: number
           requires_approval: boolean
@@ -77,6 +78,7 @@ export type Database = {
           display_order?: number
           is_enterprise?: boolean
           max_chapters_per_course: number
+          max_lessons_per_course?: number
           name_vi: string
           platform_fee_pct: number
           requires_approval?: boolean
@@ -87,6 +89,7 @@ export type Database = {
           display_order?: number
           is_enterprise?: boolean
           max_chapters_per_course?: number
+          max_lessons_per_course?: number
           name_vi?: string
           platform_fee_pct?: number
           requires_approval?: boolean
@@ -651,6 +654,7 @@ export type Database = {
           editor_advanced: boolean
           email: string
           id: string
+          max_lessons_per_course_override: number | null
           name: string | null
           platform_fee_pct_override: number | null
           role: string
@@ -663,6 +667,7 @@ export type Database = {
           editor_advanced?: boolean
           email: string
           id: string
+          max_lessons_per_course_override?: number | null
           name?: string | null
           platform_fee_pct_override?: number | null
           role?: string
@@ -675,6 +680,7 @@ export type Database = {
           editor_advanced?: boolean
           email?: string
           id?: string
+          max_lessons_per_course_override?: number | null
           name?: string | null
           platform_fee_pct_override?: number | null
           role?: string

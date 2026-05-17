@@ -5,14 +5,19 @@ import {
   listCreatorFees,
   setCreatorFeeOverride,
   clearCreatorFeeOverride,
+  setCreatorLessonLimitOverride,
+  clearCreatorLessonLimitOverride,
   validateOverridePct,
+  validateLessonLimitOverride,
 } from '../../lib/adminCreatorFeesApi'
 import type { CreatorFeeRow, OverrideValidationError } from '../../lib/adminCreatorFeesApi'
 
 const SEARCH_DEBOUNCE_MS = 250
 
+type ModalKind = 'fee' | 'lesson'
 type ModalMode = 'set' | 'clear'
 interface ModalState {
+  kind: ModalKind
   mode: ModalMode
   creator: CreatorFeeRow
 }
@@ -21,6 +26,12 @@ const ERROR_KEY: Record<OverrideValidationError, string> = {
   required: 'admin.creatorFees.errors.required',
   numeric: 'admin.creatorFees.errors.numeric',
   range: 'admin.creatorFees.errors.range',
+}
+
+const ERROR_KEY_LESSON: Record<OverrideValidationError, string> = {
+  required: 'admin.creatorFees.errors.required',
+  numeric: 'admin.creatorFees.errors.lessonNumeric',
+  range: 'admin.creatorFees.errors.lessonRange',
 }
 
 function formatPct(value: number): string {
@@ -66,14 +77,27 @@ export default function AdminCreatorFeesPage() {
     return () => { cancelled = true }
   }, [debouncedSearch, overridesOnly, refetchKey, t])
 
-  function openSetModal(c: CreatorFeeRow) {
-    setModal({ mode: 'set', creator: c })
+  function openSetFeeModal(c: CreatorFeeRow) {
+    setModal({ kind: 'fee', mode: 'set', creator: c })
     setOverrideInput(c.platform_fee_pct_override == null ? '' : formatPct(c.platform_fee_pct_override))
     setModalError(null)
   }
 
-  function openClearModal(c: CreatorFeeRow) {
-    setModal({ mode: 'clear', creator: c })
+  function openClearFeeModal(c: CreatorFeeRow) {
+    setModal({ kind: 'fee', mode: 'clear', creator: c })
+    setModalError(null)
+  }
+
+  function openSetLessonModal(c: CreatorFeeRow) {
+    setModal({ kind: 'lesson', mode: 'set', creator: c })
+    setOverrideInput(
+      c.max_lessons_per_course_override == null ? '' : String(c.max_lessons_per_course_override)
+    )
+    setModalError(null)
+  }
+
+  function openClearLessonModal(c: CreatorFeeRow) {
+    setModal({ kind: 'lesson', mode: 'clear', creator: c })
     setModalError(null)
   }
 
@@ -84,33 +108,55 @@ export default function AdminCreatorFeesPage() {
   }
 
   async function confirmSet() {
-    if (!modal) return
-    const validation = validateOverridePct(overrideInput)
-    if (validation) {
-      setModalError(t(ERROR_KEY[validation]))
-      return
-    }
-    setSaving(true)
-    setModalError(null)
-    const { error: rpcErr } = await setCreatorFeeOverride(
-      supabase,
-      modal.creator.user_id,
-      Number(overrideInput.trim())
-    )
-    setSaving(false)
-    if (rpcErr) {
-      setModalError(t('admin.creatorFees.errors.saveFailed'))
-      return
+    if (!modal || modal.mode !== 'set') return
+    if (modal.kind === 'fee') {
+      const validation = validateOverridePct(overrideInput)
+      if (validation) {
+        setModalError(t(ERROR_KEY[validation]))
+        return
+      }
+      setSaving(true)
+      setModalError(null)
+      const { error: rpcErr } = await setCreatorFeeOverride(
+        supabase,
+        modal.creator.user_id,
+        Number(overrideInput.trim())
+      )
+      setSaving(false)
+      if (rpcErr) {
+        setModalError(t('admin.creatorFees.errors.saveFailed'))
+        return
+      }
+    } else {
+      const validation = validateLessonLimitOverride(overrideInput)
+      if (validation) {
+        setModalError(t(ERROR_KEY_LESSON[validation]))
+        return
+      }
+      setSaving(true)
+      setModalError(null)
+      const { error: rpcErr } = await setCreatorLessonLimitOverride(
+        supabase,
+        modal.creator.user_id,
+        Number(overrideInput.trim())
+      )
+      setSaving(false)
+      if (rpcErr) {
+        setModalError(t('admin.creatorFees.errors.saveFailed'))
+        return
+      }
     }
     closeModal()
     setRefetchKey(k => k + 1)
   }
 
   async function confirmClear() {
-    if (!modal) return
+    if (!modal || modal.mode !== 'clear') return
     setSaving(true)
     setModalError(null)
-    const { error: rpcErr } = await clearCreatorFeeOverride(supabase, modal.creator.user_id)
+    const { error: rpcErr } = modal.kind === 'fee'
+      ? await clearCreatorFeeOverride(supabase, modal.creator.user_id)
+      : await clearCreatorLessonLimitOverride(supabase, modal.creator.user_id)
     setSaving(false)
     if (rpcErr) {
       setModalError(t('admin.creatorFees.errors.clearFailed'))
@@ -181,9 +227,8 @@ export default function AdminCreatorFeesPage() {
                 {[
                   t('admin.creatorFees.colCreator'),
                   t('admin.creatorFees.colTier'),
-                  t('admin.creatorFees.colTierFee'),
-                  t('admin.creatorFees.colOverride'),
-                  t('admin.creatorFees.colEffectiveFee'),
+                  t('admin.creatorFees.colFee'),
+                  t('admin.creatorFees.colLessons'),
                   '',
                 ].map((col, i) => (
                   <th
@@ -199,13 +244,13 @@ export default function AdminCreatorFeesPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="text-center text-(--ink-3) py-10" data-testid="creator-fees-loading">
+                  <td colSpan={5} className="text-center text-(--ink-3) py-10" data-testid="creator-fees-loading">
                     …
                   </td>
                 </tr>
               ) : creators.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center text-(--ink-3) py-10" data-testid="creator-fees-empty">
+                  <td colSpan={5} className="text-center text-(--ink-3) py-10" data-testid="creator-fees-empty">
                     {t('admin.creatorFees.empty')}
                   </td>
                 </tr>
@@ -223,52 +268,24 @@ export default function AdminCreatorFeesPage() {
                     <td style={{ padding: '14px 16px' }} className="text-(--ink-2)">
                       {c.tier_name_vi ?? c.account_tier_id}
                     </td>
-                    <td style={{ padding: '14px 16px' }} className="text-(--ink-2)">
-                      {formatPct(c.tier_fee_pct)}%
+
+                    <td style={{ padding: '14px 16px', verticalAlign: 'top' }}>
+                      <FeeCell
+                        creator={c}
+                        onSet={() => openSetFeeModal(c)}
+                        onClear={() => openClearFeeModal(c)}
+                      />
                     </td>
-                    <td style={{ padding: '14px 16px' }}>
-                      {c.platform_fee_pct_override != null ? (
-                        <span
-                          className="pill"
-                          style={{
-                            background: 'var(--accent-soft)',
-                            color: 'var(--accent-ink)',
-                            border: '1px solid var(--accent-border)',
-                            padding: '2px 8px',
-                            fontSize: 12,
-                          }}
-                        >
-                          {t('admin.creatorFees.overrideBadge')} · {formatPct(c.platform_fee_pct_override)}%
-                        </span>
-                      ) : (
-                        <span className="text-(--ink-3)">{t('admin.creatorFees.noOverride')}</span>
-                      )}
+
+                    <td style={{ padding: '14px 16px', verticalAlign: 'top' }}>
+                      <LessonCell
+                        creator={c}
+                        onSet={() => openSetLessonModal(c)}
+                        onClear={() => openClearLessonModal(c)}
+                      />
                     </td>
-                    <td style={{ padding: '14px 16px' }} className="font-medium text-(--ink-1)">
-                      {formatPct(c.effective_fee_pct)}%
-                    </td>
-                    <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-sm"
-                          data-testid={`set-override-btn-${c.user_id}`}
-                          onClick={() => openSetModal(c)}
-                        >
-                          {t('admin.creatorFees.setOverride')}
-                        </button>
-                        {c.platform_fee_pct_override != null && (
-                          <button
-                            type="button"
-                            className="btn btn-ghost btn-sm"
-                            data-testid={`clear-override-btn-${c.user_id}`}
-                            onClick={() => openClearModal(c)}
-                          >
-                            {t('admin.creatorFees.clearOverride')}
-                          </button>
-                        )}
-                      </div>
-                    </td>
+
+                    <td style={{ padding: '14px 16px' }} />
                   </tr>
                 ))
               )}
@@ -308,35 +325,53 @@ export default function AdminCreatorFeesPage() {
           >
             <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--ink-1)', margin: 0 }}>
               {modal.mode === 'set'
-                ? t('admin.creatorFees.modal.setHeading', { name: modal.creator.name ?? modal.creator.email })
-                : t('admin.creatorFees.modal.clearHeading', { name: modal.creator.name ?? modal.creator.email })}
+                ? t(
+                    modal.kind === 'fee'
+                      ? 'admin.creatorFees.modal.setHeading'
+                      : 'admin.creatorFees.modal.setLessonHeading',
+                    { name: modal.creator.name ?? modal.creator.email }
+                  )
+                : t(
+                    modal.kind === 'fee'
+                      ? 'admin.creatorFees.modal.clearHeading'
+                      : 'admin.creatorFees.modal.clearLessonHeading',
+                    { name: modal.creator.name ?? modal.creator.email }
+                  )}
             </h2>
             <p style={{ fontSize: 13, color: 'var(--ink-3)', margin: 0 }}>
-              {t('admin.creatorFees.modal.tierFeeNote', { pct: formatPct(modal.creator.tier_fee_pct) })}
+              {modal.kind === 'fee'
+                ? t('admin.creatorFees.modal.tierFeeNote', { pct: formatPct(modal.creator.tier_fee_pct) })
+                : t('admin.creatorFees.modal.tierLessonNote', { max: modal.creator.tier_max_lessons })}
             </p>
 
             {modal.mode === 'set' ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <span className="label" style={{ marginBottom: 0 }}>
-                  {t('admin.creatorFees.modal.inputLabel')}
+                  {modal.kind === 'fee'
+                    ? t('admin.creatorFees.modal.inputLabel')
+                    : t('admin.creatorFees.modal.inputLessonLabel')}
                   <span aria-hidden="true" style={{ color: 'var(--danger)', marginLeft: 4 }}>*</span>
                 </span>
                 <input
                   data-testid="override-input"
                   className="input"
                   type="text"
-                  inputMode="decimal"
+                  inputMode={modal.kind === 'fee' ? 'decimal' : 'numeric'}
                   value={overrideInput}
                   onChange={e => setOverrideInput(e.target.value)}
                   autoFocus
                 />
                 <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>
-                  {t('admin.creatorFees.modal.inputHint')}
+                  {modal.kind === 'fee'
+                    ? t('admin.creatorFees.modal.inputHint')
+                    : t('admin.creatorFees.modal.inputLessonHint')}
                 </span>
               </div>
             ) : (
               <p style={{ fontSize: 13, color: 'var(--ink-2)', margin: 0, lineHeight: 1.55 }}>
-                {t('admin.creatorFees.modal.clearConfirm', { pct: formatPct(modal.creator.tier_fee_pct) })}
+                {modal.kind === 'fee'
+                  ? t('admin.creatorFees.modal.clearConfirm', { pct: formatPct(modal.creator.tier_fee_pct) })
+                  : t('admin.creatorFees.modal.clearLessonConfirm', { max: modal.creator.tier_max_lessons })}
               </p>
             )}
 
@@ -391,6 +426,129 @@ export default function AdminCreatorFeesPage() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function FeeCell({
+  creator: c,
+  onSet,
+  onClear,
+}: {
+  creator: CreatorFeeRow
+  onSet: () => void
+  onClear: () => void
+}) {
+  const { t } = useTranslation()
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+        <span className="font-medium text-(--ink-1)" data-testid={`creator-fees-effective-fee-${c.user_id}`}>
+          {formatPct(c.effective_fee_pct)}%
+        </span>
+        <span className="text-(--ink-3)" style={{ fontSize: 12 }}>
+          {t('admin.creatorFees.tierBaseFee', { pct: formatPct(c.tier_fee_pct) })}
+        </span>
+      </div>
+      {c.platform_fee_pct_override != null && (
+        <span
+          className="pill"
+          data-testid={`creator-fees-fee-override-badge-${c.user_id}`}
+          style={{
+            background: 'var(--accent-soft)',
+            color: 'var(--accent-ink)',
+            border: '1px solid var(--accent-border)',
+            padding: '2px 8px',
+            fontSize: 12,
+            alignSelf: 'flex-start',
+          }}
+        >
+          {t('admin.creatorFees.overrideBadge')} · {formatPct(c.platform_fee_pct_override)}%
+        </span>
+      )}
+      <div style={{ display: 'flex', gap: 6 }}>
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm"
+          data-testid={`set-override-btn-${c.user_id}`}
+          onClick={onSet}
+        >
+          {t('admin.creatorFees.setOverride')}
+        </button>
+        {c.platform_fee_pct_override != null && (
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            data-testid={`clear-override-btn-${c.user_id}`}
+            onClick={onClear}
+          >
+            {t('admin.creatorFees.clearOverride')}
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function LessonCell({
+  creator: c,
+  onSet,
+  onClear,
+}: {
+  creator: CreatorFeeRow
+  onSet: () => void
+  onClear: () => void
+}) {
+  const { t } = useTranslation()
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+        <span
+          className="font-medium text-(--ink-1)"
+          data-testid={`creator-fees-effective-lessons-${c.user_id}`}
+        >
+          {c.effective_max_lessons}
+        </span>
+        <span className="text-(--ink-3)" style={{ fontSize: 12 }}>
+          {t('admin.creatorFees.tierBaseLessons', { max: c.tier_max_lessons })}
+        </span>
+      </div>
+      {c.max_lessons_per_course_override != null && (
+        <span
+          className="pill"
+          data-testid={`creator-fees-lesson-override-badge-${c.user_id}`}
+          style={{
+            background: 'var(--accent-soft)',
+            color: 'var(--accent-ink)',
+            border: '1px solid var(--accent-border)',
+            padding: '2px 8px',
+            fontSize: 12,
+            alignSelf: 'flex-start',
+          }}
+        >
+          {t('admin.creatorFees.overrideBadge')} · {c.max_lessons_per_course_override}
+        </span>
+      )}
+      <div style={{ display: 'flex', gap: 6 }}>
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm"
+          data-testid={`set-lesson-override-btn-${c.user_id}`}
+          onClick={onSet}
+        >
+          {t('admin.creatorFees.setLessonOverride')}
+        </button>
+        {c.max_lessons_per_course_override != null && (
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            data-testid={`clear-lesson-override-btn-${c.user_id}`}
+            onClick={onClear}
+          >
+            {t('admin.creatorFees.clearLessonOverride')}
+          </button>
+        )}
+      </div>
     </div>
   )
 }

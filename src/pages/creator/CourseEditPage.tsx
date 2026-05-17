@@ -574,12 +574,17 @@ export default function CourseEditPage() {
     const chapter = chapters.find(ch => ch.id === chapterId)
     if (!chapter) return
     const position = (chapter.lessons ?? []).length
-    const { lesson } = await createLesson(supabase, chapterId, {
+    const { lesson, error } = await createLesson(supabase, chapterId, {
       title,
       type,
       position,
       free_preview: false,
     })
+    if (error?.message === 'errors.lessonLimitReached') {
+      showToast(t('errors.lessonLimitReached'))
+      setNewLessonChapterId(null)
+      return
+    }
     if (lesson) {
       setChapters(prev => prev.map(ch =>
         ch.id === chapterId
@@ -636,7 +641,7 @@ export default function CourseEditPage() {
       await refreshReadiness()
       return
     }
-    await updateLesson(supabase, selectedLesson.id, {
+    const { error: updateErr } = await updateLesson(supabase, selectedLesson.id, {
       pgn_data: data.pgn_data,
       board_perspective: data.board_perspective,
       free_preview: data.is_free_preview,
@@ -644,6 +649,11 @@ export default function CourseEditPage() {
       description: data.description ?? null,
       has_rewind_mode: hasRewindMode,
     })
+    if (updateErr?.message === 'errors.lessonLimitReached') {
+      // Sibling-create from has_rewind_mode=true hit the per-course lesson cap.
+      showToast(t('errors.lessonLimitReached'))
+      return
+    }
     showToast(t('creator.courseEdit.saveLessonToast'))
     setChapters(prev => prev.map(ch => ({
       ...ch,

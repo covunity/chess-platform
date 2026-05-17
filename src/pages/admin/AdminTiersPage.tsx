@@ -8,7 +8,10 @@ interface ModalState {
   tier: AccountTier
 }
 
-type FieldError = 'fee_required' | 'fee_numeric' | 'fee_range' | 'cap_required' | 'cap_numeric' | 'cap_range'
+type FieldError =
+  | 'fee_required' | 'fee_numeric' | 'fee_range'
+  | 'cap_required' | 'cap_numeric' | 'cap_range'
+  | 'lesson_required' | 'lesson_numeric' | 'lesson_range'
 
 const ERROR_KEY: Record<FieldError, string> = {
   fee_required: 'admin.tiers.errors.feeRequired',
@@ -17,13 +20,16 @@ const ERROR_KEY: Record<FieldError, string> = {
   cap_required: 'admin.tiers.errors.capRequired',
   cap_numeric: 'admin.tiers.errors.capNumeric',
   cap_range: 'admin.tiers.errors.capRange',
+  lesson_required: 'admin.tiers.errors.lessonRequired',
+  lesson_numeric: 'admin.tiers.errors.lessonNumeric',
+  lesson_range: 'admin.tiers.errors.lessonRange',
 }
 
 function formatPct(value: number): string {
   return Number(value).toString()
 }
 
-function validate(feeRaw: string, capRaw: string): FieldError | null {
+function validate(feeRaw: string, capRaw: string, lessonRaw: string): FieldError | null {
   const fee = feeRaw.trim()
   if (!fee) return 'fee_required'
   const feeNum = Number(fee)
@@ -34,6 +40,11 @@ function validate(feeRaw: string, capRaw: string): FieldError | null {
   const capNum = Number(cap)
   if (!Number.isInteger(capNum)) return 'cap_numeric'
   if (capNum < 1 || capNum > 1000) return 'cap_range'
+  const lesson = lessonRaw.trim()
+  if (!lesson) return 'lesson_required'
+  const lessonNum = Number(lesson)
+  if (!Number.isInteger(lessonNum)) return 'lesson_numeric'
+  if (lessonNum < 1 || lessonNum > 10000) return 'lesson_range'
   return null
 }
 
@@ -45,6 +56,7 @@ export default function AdminTiersPage() {
   const [modal, setModal] = useState<ModalState | null>(null)
   const [feeInput, setFeeInput] = useState('')
   const [capInput, setCapInput] = useState('')
+  const [lessonInput, setLessonInput] = useState('')
   const [modalError, setModalError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [refetchKey, setRefetchKey] = useState(0)
@@ -74,6 +86,7 @@ export default function AdminTiersPage() {
     setModal({ tier })
     setFeeInput(formatPct(tier.platform_fee_pct))
     setCapInput(String(tier.max_chapters_per_course))
+    setLessonInput(String(tier.max_lessons_per_course))
     setModalError(null)
   }
 
@@ -81,12 +94,13 @@ export default function AdminTiersPage() {
     setModal(null)
     setFeeInput('')
     setCapInput('')
+    setLessonInput('')
     setModalError(null)
   }
 
   async function confirmSave() {
     if (!modal) return
-    const validation = validate(feeInput, capInput)
+    const validation = validate(feeInput, capInput, lessonInput)
     if (validation) {
       setModalError(t(ERROR_KEY[validation]))
       return
@@ -96,6 +110,7 @@ export default function AdminTiersPage() {
     const { error: rpcErr } = await updateAccountTier(supabase, modal.tier.code, {
       platform_fee_pct: Number(feeInput.trim()),
       max_chapters_per_course: Number(capInput.trim()),
+      max_lessons_per_course: Number(lessonInput.trim()),
     })
     setSaving(false)
     if (rpcErr) {
@@ -147,6 +162,7 @@ export default function AdminTiersPage() {
                   t('admin.tiers.colTier'),
                   t('admin.tiers.colFee'),
                   t('admin.tiers.colMaxChapters'),
+                  t('admin.tiers.colMaxLessons'),
                   t('admin.tiers.colRequiresApproval'),
                   '',
                 ].map((col, i) => (
@@ -163,13 +179,13 @@ export default function AdminTiersPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="text-center text-(--ink-3) py-10" data-testid="admin-tiers-loading">
+                  <td colSpan={6} className="text-center text-(--ink-3) py-10" data-testid="admin-tiers-loading">
                     …
                   </td>
                 </tr>
               ) : tiers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center text-(--ink-3) py-10" data-testid="admin-tiers-empty">
+                  <td colSpan={6} className="text-center text-(--ink-3) py-10" data-testid="admin-tiers-empty">
                     {t('admin.tiers.empty')}
                   </td>
                 </tr>
@@ -189,6 +205,9 @@ export default function AdminTiersPage() {
                     </td>
                     <td style={{ padding: '14px 16px' }} className="text-(--ink-2)" data-testid={`admin-tiers-cap-${tier.code}`}>
                       {tier.max_chapters_per_course}
+                    </td>
+                    <td style={{ padding: '14px 16px' }} className="text-(--ink-2)" data-testid={`admin-tiers-lessoncap-${tier.code}`}>
+                      {tier.max_lessons_per_course}
                     </td>
                     <td style={{ padding: '14px 16px' }} className="text-(--ink-2)">
                       {tier.requires_approval ? t('admin.tiers.yes') : t('admin.tiers.no')}
@@ -248,6 +267,18 @@ export default function AdminTiersPage() {
               className="input w-full mb-3"
               value={capInput}
               onChange={(e) => setCapInput(e.target.value)}
+              inputMode="numeric"
+            />
+
+            <label className="block text-xs font-medium text-(--ink-2) mb-1" htmlFor="admin-tiers-lesson-input">
+              {t('admin.tiers.lessonLabel')}
+            </label>
+            <input
+              id="admin-tiers-lesson-input"
+              data-testid="admin-tiers-lesson-input"
+              className="input w-full mb-3"
+              value={lessonInput}
+              onChange={(e) => setLessonInput(e.target.value)}
               inputMode="numeric"
             />
 

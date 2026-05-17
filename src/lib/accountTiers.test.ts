@@ -40,8 +40,8 @@ describe('fetchAccountTiers', () => {
 
   it('fetches tiers from supabase and returns them', async () => {
     const mockTiers = [
-      { code: 'individual', name_vi: 'Cá nhân', platform_fee_pct: 20, max_chapters_per_course: 10, is_enterprise: false, requires_approval: true, display_order: 1 },
-      { code: 'business', name_vi: 'Doanh nghiệp', platform_fee_pct: 15, max_chapters_per_course: 30, is_enterprise: true, requires_approval: true, display_order: 2 },
+      { code: 'individual', name_vi: 'Cá nhân', platform_fee_pct: 20, max_chapters_per_course: 10, max_lessons_per_course: 30, is_enterprise: false, requires_approval: true, display_order: 1 },
+      { code: 'business', name_vi: 'Doanh nghiệp', platform_fee_pct: 15, max_chapters_per_course: 30, max_lessons_per_course: 150, is_enterprise: true, requires_approval: true, display_order: 2 },
     ]
 
     const chain: Record<string, unknown> = {}
@@ -63,7 +63,7 @@ describe('fetchAccountTiers', () => {
     clearAccountTiersCache()
 
     const mockTiers = [
-      { code: 'individual', name_vi: 'Cá nhân', platform_fee_pct: 20, max_chapters_per_course: 10, is_enterprise: false, requires_approval: true, display_order: 1 },
+      { code: 'individual', name_vi: 'Cá nhân', platform_fee_pct: 20, max_chapters_per_course: 10, max_lessons_per_course: 30, is_enterprise: false, requires_approval: true, display_order: 1 },
     ]
 
     let callCount = 0
@@ -113,6 +113,7 @@ describe('updateAccountTier', () => {
       name_vi: 'Cá nhân',
       platform_fee_pct: 18,
       max_chapters_per_course: 12,
+      max_lessons_per_course: 40,
       is_enterprise: false,
       requires_approval: true,
       display_order: 1,
@@ -123,6 +124,7 @@ describe('updateAccountTier', () => {
     const { tier, error } = await updateAccountTier(mockClient as never, 'individual', {
       platform_fee_pct: 18,
       max_chapters_per_course: 12,
+      max_lessons_per_course: 40,
     })
     expect(error).toBeNull()
     expect(tier).toEqual(row)
@@ -130,12 +132,13 @@ describe('updateAccountTier', () => {
       p_code: 'individual',
       p_platform_fee_pct: 18,
       p_max_chapters_per_course: 12,
+      p_max_lessons_per_course: 40,
     })
   })
 
   it('clears the tier cache so the next fetch hits supabase', async () => {
     const mockTiers = [
-      { code: 'individual', name_vi: 'Cá nhân', platform_fee_pct: 20, max_chapters_per_course: 10, is_enterprise: false, requires_approval: true, display_order: 1 },
+      { code: 'individual', name_vi: 'Cá nhân', platform_fee_pct: 20, max_chapters_per_course: 10, max_lessons_per_course: 30, is_enterprise: false, requires_approval: true, display_order: 1 },
     ]
     const chain: Record<string, unknown> = {}
     ;['select', 'order'].forEach(m => { chain[m] = vi.fn(() => chain) })
@@ -150,6 +153,7 @@ describe('updateAccountTier', () => {
     await updateAccountTier(mockClient as never, 'individual', {
       platform_fee_pct: 15,
       max_chapters_per_course: 10,
+      max_lessons_per_course: 30,
     })
     await fetchAccountTiers(mockClient as never)
     // Two SELECTs: initial fetch + post-update fetch (cache was invalidated).
@@ -163,6 +167,7 @@ describe('updateAccountTier', () => {
     const { tier, error } = await updateAccountTier(mockClient as never, 'individual', {
       platform_fee_pct: 18,
       max_chapters_per_course: 12,
+      max_lessons_per_course: 40,
     })
     expect(tier).toBeNull()
     expect(error?.message).toBe('forbidden')

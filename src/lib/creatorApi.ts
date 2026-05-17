@@ -221,7 +221,17 @@ export async function duplicateCourse(
         video_mime: l.video_mime,
         duration_seconds: l.duration_seconds,
       }))
-      await client.from('lessons').insert(lessonsInsert)
+      const { error: insertLessonErr } = await client.from('lessons').insert(lessonsInsert)
+      if (insertLessonErr) {
+        // Best-effort rollback of the partial clone (cascades through chapters/lessons).
+        // supabase-js has no client transactions, so we accept a small window where
+        // a delete failure leaves a stray draft — the user can delete it manually.
+        await client.from('courses').delete().eq('id', newCourse.id)
+        const friendly = insertLessonErr.message?.includes('lesson_limit_exceeded')
+          ? new Error('errors.lessonLimitReached')
+          : (insertLessonErr as unknown as Error)
+        return { course: null, error: friendly }
+      }
     }
   }
 
@@ -326,6 +336,11 @@ export async function createLesson(
     .select()
     .single()
 
+  // enforce_lesson_limit trigger raises 'lesson_limit_exceeded: current=X, max=Y'
+  // (SQLSTATE check_violation). Map to a friendly i18n key for the UI.
+  if (error?.message?.includes('lesson_limit_exceeded')) {
+    return { lesson: null, error: new Error('errors.lessonLimitReached') }
+  }
   return { lesson: (data as Lesson) ?? null, error: error as Error | null }
 }
 
@@ -341,6 +356,12 @@ export async function updateLesson(
     .select()
     .single()
 
+  // Toggling has_rewind_mode=true fires the sibling-create trigger which inserts
+  // a new lesson row — that insert can fail enforce_lesson_limit. Map here too
+  // so the UI can show the friendly toast.
+  if (error?.message?.includes('lesson_limit_exceeded')) {
+    return { lesson: null, error: new Error('errors.lessonLimitReached') }
+  }
   return { lesson: (data as Lesson) ?? null, error: error as Error | null }
 }
 

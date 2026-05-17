@@ -10,10 +10,14 @@ const {
   mockListCreatorFees,
   mockSetCreatorFeeOverride,
   mockClearCreatorFeeOverride,
+  mockSetCreatorLessonLimitOverride,
+  mockClearCreatorLessonLimitOverride,
 } = vi.hoisted(() => ({
   mockListCreatorFees: vi.fn(),
   mockSetCreatorFeeOverride: vi.fn(),
   mockClearCreatorFeeOverride: vi.fn(),
+  mockSetCreatorLessonLimitOverride: vi.fn(),
+  mockClearCreatorLessonLimitOverride: vi.fn(),
 }))
 
 vi.mock('../../lib/adminCreatorFeesApi', async () => {
@@ -25,6 +29,8 @@ vi.mock('../../lib/adminCreatorFeesApi', async () => {
     listCreatorFees: mockListCreatorFees,
     setCreatorFeeOverride: mockSetCreatorFeeOverride,
     clearCreatorFeeOverride: mockClearCreatorFeeOverride,
+    setCreatorLessonLimitOverride: mockSetCreatorLessonLimitOverride,
+    clearCreatorLessonLimitOverride: mockClearCreatorLessonLimitOverride,
   }
 })
 
@@ -39,6 +45,9 @@ const alice = {
   tier_fee_pct: 20,
   platform_fee_pct_override: null,
   effective_fee_pct: 20,
+  tier_max_lessons: 30,
+  max_lessons_per_course_override: null,
+  effective_max_lessons: 30,
 }
 const bob = {
   user_id: 'u-bob',
@@ -49,6 +58,9 @@ const bob = {
   tier_fee_pct: 15,
   platform_fee_pct_override: 10,
   effective_fee_pct: 10,
+  tier_max_lessons: 150,
+  max_lessons_per_course_override: 200,
+  effective_max_lessons: 200,
 }
 
 function renderPage() {
@@ -71,6 +83,14 @@ describe('AdminCreatorFeesPage', () => {
     })
     mockClearCreatorFeeOverride.mockResolvedValue({
       user: { id: 'u-bob', platform_fee_pct_override: null },
+      error: null,
+    })
+    mockSetCreatorLessonLimitOverride.mockResolvedValue({
+      user: { id: 'u-alice', max_lessons_per_course_override: 100 },
+      error: null,
+    })
+    mockClearCreatorLessonLimitOverride.mockResolvedValue({
+      user: { id: 'u-bob', max_lessons_per_course_override: null },
       error: null,
     })
   })
@@ -237,6 +257,90 @@ describe('AdminCreatorFeesPage', () => {
 
       await waitFor(() => {
         expect(mockClearCreatorFeeOverride).toHaveBeenCalledWith(expect.anything(), 'u-bob')
+      })
+      await waitFor(() => {
+        expect(screen.queryByTestId('creator-fees-modal')).not.toBeInTheDocument()
+      })
+      expect(mockListCreatorFees).toHaveBeenCalled()
+    })
+  })
+
+  describe('lesson-limit override flow', () => {
+    it('shows effective lessons + tier base + badge when override is set', async () => {
+      renderPage()
+      await waitFor(() => screen.getByTestId('creator-fees-row-u-alice'))
+
+      // Alice: no override → effective = tier (30), no lesson override badge
+      expect(screen.getByTestId('creator-fees-effective-lessons-u-alice')).toHaveTextContent('30')
+      expect(screen.queryByTestId('creator-fees-lesson-override-badge-u-alice')).not.toBeInTheDocument()
+
+      // Bob: override=200, tier=150 → effective=200, badge visible
+      expect(screen.getByTestId('creator-fees-effective-lessons-u-bob')).toHaveTextContent('200')
+      expect(screen.getByTestId('creator-fees-lesson-override-badge-u-bob')).toBeInTheDocument()
+    })
+
+    it('only renders Clear lesson button when override is set', async () => {
+      renderPage()
+      await waitFor(() => screen.getByTestId('creator-fees-row-u-alice'))
+      expect(screen.queryByTestId('clear-lesson-override-btn-u-alice')).not.toBeInTheDocument()
+      expect(screen.getByTestId('clear-lesson-override-btn-u-bob')).toBeInTheDocument()
+    })
+
+    it('rejects empty input on the lesson modal', async () => {
+      renderPage()
+      await waitFor(() => screen.getByTestId('creator-fees-row-u-alice'))
+      await userEvent.click(screen.getByTestId('set-lesson-override-btn-u-alice'))
+      await userEvent.click(screen.getByTestId('modal-confirm-save'))
+
+      expect(screen.getByTestId('modal-error')).toBeInTheDocument()
+      expect(mockSetCreatorLessonLimitOverride).not.toHaveBeenCalled()
+    })
+
+    it('rejects out-of-range / decimal inputs', async () => {
+      renderPage()
+      await waitFor(() => screen.getByTestId('creator-fees-row-u-alice'))
+      await userEvent.click(screen.getByTestId('set-lesson-override-btn-u-alice'))
+
+      await userEvent.type(screen.getByTestId('override-input'), '12.5')
+      await userEvent.click(screen.getByTestId('modal-confirm-save'))
+
+      expect(screen.getByTestId('modal-error')).toBeInTheDocument()
+      expect(mockSetCreatorLessonLimitOverride).not.toHaveBeenCalled()
+    })
+
+    it('calls setCreatorLessonLimitOverride RPC, closes modal, and refetches list', async () => {
+      renderPage()
+      await waitFor(() => screen.getByTestId('creator-fees-row-u-alice'))
+      mockListCreatorFees.mockClear()
+
+      await userEvent.click(screen.getByTestId('set-lesson-override-btn-u-alice'))
+      await userEvent.type(screen.getByTestId('override-input'), '120')
+      await userEvent.click(screen.getByTestId('modal-confirm-save'))
+
+      await waitFor(() => {
+        expect(mockSetCreatorLessonLimitOverride).toHaveBeenCalledWith(
+          expect.anything(),
+          'u-alice',
+          120
+        )
+      })
+      await waitFor(() => {
+        expect(screen.queryByTestId('creator-fees-modal')).not.toBeInTheDocument()
+      })
+      expect(mockListCreatorFees).toHaveBeenCalled()
+    })
+
+    it('opens the clear-lesson modal and calls clearCreatorLessonLimitOverride RPC on confirm', async () => {
+      renderPage()
+      await waitFor(() => screen.getByTestId('creator-fees-row-u-bob'))
+      mockListCreatorFees.mockClear()
+
+      await userEvent.click(screen.getByTestId('clear-lesson-override-btn-u-bob'))
+      expect(screen.getByTestId('creator-fees-modal')).toBeInTheDocument()
+      await userEvent.click(screen.getByTestId('modal-confirm-clear'))
+
+      await waitFor(() => {
+        expect(mockClearCreatorLessonLimitOverride).toHaveBeenCalledWith(expect.anything(), 'u-bob')
       })
       await waitFor(() => {
         expect(screen.queryByTestId('creator-fees-modal')).not.toBeInTheDocument()

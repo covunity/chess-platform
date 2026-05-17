@@ -70,7 +70,8 @@
     "tierSelector": {
       "heading": "Chọn loại tài khoản",
       "feeLabel": "Phí nền tảng: {{pct}}%",
-      "maxChaptersLabel": "Tối đa {{max}} chương/khóa"
+      "maxChaptersLabel": "Tối đa {{max}} chương/khóa",
+      "maxLessonsLabel": "Tối đa {{max}} bài học/khóa"
     },
     "fields": {
       "businessName": "Tên doanh nghiệp",
@@ -186,7 +187,7 @@
       "orders": "Đơn hàng",
       "users": "Người dùng",
       "creatorApplications": "Đơn đăng ký creator",
-      "creatorFees": "Phí creator",
+      "creatorFees": "Override creator",
       "tiers": "Gói tài khoản",
       "reports": "Báo cáo",
       "settings": "Cài đặt"
@@ -214,8 +215,8 @@
       "rejectError": "Không thể từ chối đơn. Vui lòng thử lại."
     },
     "creatorFees": {
-      "pageTitle": "Phí creator",
-      "intro": "Quản lý mức phí nền tảng áp dụng cho từng creator. Mặc định dùng phí theo tier; override để áp riêng cho creator cụ thể (vd. KOL ký hợp đồng đặc biệt).",
+      "pageTitle": "Override creator",
+      "intro": "Quản lý phí nền tảng và giới hạn số bài học/khoá áp dụng cho từng creator. Mặc định lấy theo tier; override để áp riêng cho creator cụ thể (vd. KOL ký hợp đồng đặc biệt).",
       "searchPlaceholder": "Tìm theo tên hoặc email…",
       "filterAll": "Tất cả creator",
       "filterOverridesOnly": "Chỉ creator có override",
@@ -224,39 +225,54 @@
       "colTierFee": "Phí theo tier",
       "colOverride": "Override",
       "colEffectiveFee": "Phí thực tế",
+      "colFee": "Phí nền tảng",
+      "colLessons": "Bài học / khoá",
       "colActions": "",
       "overrideBadge": "Override",
       "noOverride": "—",
       "setOverride": "Đặt override",
       "clearOverride": "Xoá override",
+      "setLessonOverride": "Đặt override",
+      "clearLessonOverride": "Xoá override",
+      "tierBaseFee": "Tier: {{pct}}%",
+      "tierBaseLessons": "Tier: {{max}}",
       "empty": "Không có creator nào phù hợp.",
       "loadError": "Không thể tải danh sách phí creator.",
       "modal": {
-        "setHeading": "Đặt override cho {{name}}",
-        "clearHeading": "Xoá override cho {{name}}",
+        "setHeading": "Đặt override phí cho {{name}}",
+        "clearHeading": "Xoá override phí cho {{name}}",
+        "setLessonHeading": "Đặt override số bài học cho {{name}}",
+        "clearLessonHeading": "Xoá override số bài học cho {{name}}",
         "tierFeeNote": "Mức phí theo tier hiện tại: {{pct}}%",
+        "tierLessonNote": "Số bài học tối đa / khoá theo tier hiện tại: {{max}}",
         "inputLabel": "Phí nền tảng (%)",
+        "inputLessonLabel": "Số bài học tối đa / khoá",
         "inputHint": "Từ 0 đến 100, tối đa 2 chữ số thập phân (vd. 12.5).",
+        "inputLessonHint": "Số nguyên từ 1 đến 10.000.",
         "clearConfirm": "Sau khi xoá, creator sẽ áp dụng lại phí theo tier ({{pct}}%). Đơn hàng đã tạo trước đó không thay đổi.",
+        "clearLessonConfirm": "Sau khi xoá, creator sẽ áp dụng lại giới hạn theo tier ({{max}} bài/khoá).",
         "save": "Lưu override",
         "confirmClear": "Xoá override",
         "cancel": "Huỷ",
         "saving": "Đang lưu…"
       },
       "errors": {
-        "required": "Vui lòng nhập % phí.",
+        "required": "Vui lòng nhập giá trị.",
         "numeric": "Giá trị phải là số (vd. 12.5).",
         "range": "Giá trị phải nằm trong khoảng 0–100.",
+        "lessonNumeric": "Số bài học phải là số nguyên dương.",
+        "lessonRange": "Số bài học phải nằm trong khoảng 1–10.000.",
         "saveFailed": "Không thể lưu override. Vui lòng thử lại.",
         "clearFailed": "Không thể xoá override. Vui lòng thử lại."
       }
     },
     "tiers": {
       "pageTitle": "Cài đặt gói tài khoản",
-      "intro": "Điều chỉnh phí nền tảng và giới hạn chương cho mỗi gói tài khoản. Thay đổi áp dụng cho đơn hàng mới — đơn hàng đã tạo trước đó vẫn giữ phí cũ.",
+      "intro": "Điều chỉnh phí nền tảng và giới hạn chương / bài học cho mỗi gói tài khoản. Thay đổi áp dụng cho đơn hàng và bài học tạo mới — dữ liệu cũ không bị ảnh hưởng.",
       "colTier": "Gói",
       "colFee": "Phí nền tảng",
       "colMaxChapters": "Tối đa chương/khoá",
+      "colMaxLessons": "Tối đa bài học/khoá",
       "colRequiresApproval": "Cần duyệt",
       "yes": "Có",
       "no": "Không",
@@ -264,9 +280,10 @@
       "empty": "Chưa có gói tài khoản nào.",
       "loadError": "Không thể tải danh sách gói.",
       "editDialogTitle": "Chỉnh sửa {{tier}}",
-      "editDialogHint": "Cập nhật phí nền tảng và số chương tối đa. Đơn hàng đã tạo không bị ảnh hưởng.",
+      "editDialogHint": "Cập nhật phí nền tảng, số chương và số bài học tối đa. Dữ liệu đã tạo trước đó không bị ảnh hưởng.",
       "feeLabel": "Phí nền tảng (%)",
       "capLabel": "Số chương tối đa / khoá",
+      "lessonLabel": "Số bài học tối đa / khoá",
       "save": "Lưu thay đổi",
       "saving": "Đang lưu…",
       "cancel": "Huỷ",
@@ -277,6 +294,9 @@
         "capRequired": "Vui lòng nhập số chương tối đa.",
         "capNumeric": "Số chương phải là số nguyên.",
         "capRange": "Số chương phải nằm trong khoảng 1–1000.",
+        "lessonRequired": "Vui lòng nhập số bài học tối đa.",
+        "lessonNumeric": "Số bài học phải là số nguyên.",
+        "lessonRange": "Số bài học phải nằm trong khoảng 1–10000.",
         "saveFailed": "Không thể lưu. Vui lòng thử lại."
       }
     },
@@ -1109,6 +1129,7 @@
   },
   "errors": {
     "chapterLimitReached": "Bạn đã đạt giới hạn số chương cho gói tài khoản hiện tại.",
+    "lessonLimitReached": "Bạn đã đạt giới hạn số bài học trên mỗi khoá học cho gói tài khoản hiện tại.",
     "tierDowngradeBlocked": "Không thể đổi tier: có khóa học đang vượt giới hạn số chương của tier mới.",
     "tierDowngradeBlockedWithCourses": "Không thể đổi tier: các khoá học sau vượt giới hạn số chương: {{courses}}.",
     "andMore": "... và {{count}} khoá khác"

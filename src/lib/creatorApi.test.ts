@@ -781,6 +781,43 @@ describe('duplicateCourse', () => {
     expect(inserted[1].pgn_data).toBe('1. e4 e5')
     expect(inserted[1].board_perspective).toBe('black')
   })
+
+  it('rolls back the partial clone and maps lesson_limit_exceeded to errors.lessonLimitReached', async () => {
+    const original = {
+      id: 'c1', creator_id: 'u1', title: 'Mix', description: null, thumbnail_url: null,
+      price: 0, level: 'beginner', language: 'vi', tags: [], status: 'draft',
+      created_at: '', updated_at: '',
+    }
+    const newCourse = { ...original, id: 'c1-copy', title: 'Copy of Mix', status: 'draft' as CourseStatus }
+    const lessons = [
+      { id: 'l1', chapter_id: 'ch1', title: 'A', type: 'chess', position: 0, free_preview: false, pgn_data: '', board_perspective: 'white', created_at: '' },
+    ]
+    const chapter1 = { id: 'ch1', course_id: 'c1', title: 'Ch1', position: 0, created_at: '', lessons }
+    const newCh1 = { id: 'ch1-copy', course_id: 'c1-copy', title: 'Ch1', position: 0, created_at: '' }
+    const lessonsInsertChain = makeChain({
+      data: null,
+      error: { message: 'lesson_limit_exceeded: current=30, max=30' },
+    })
+    const courseDeleteChain = makeChain({ data: null, error: null })
+    const chains = [
+      makeChain({ data: original, error: null }),
+      makeChain({ data: newCourse, error: null }),
+      makeChain({ data: [chapter1], error: null }),
+      makeChain({ data: newCh1, error: null }),
+      lessonsInsertChain,
+      courseDeleteChain,
+    ]
+    let call = 0
+    const fromSpy = vi.fn(() => chains[call++])
+    const client = { from: fromSpy }
+    const result = await duplicateCourse(client as never, 'c1')
+
+    expect(result.course).toBeNull()
+    expect(result.error?.message).toBe('errors.lessonLimitReached')
+    // Cleanup delete was attempted on the new course id
+    expect(courseDeleteChain.delete).toHaveBeenCalled()
+    expect(courseDeleteChain.eq).toHaveBeenCalledWith('id', 'c1-copy')
+  })
 })
 
 // ── submitCourseForReview ─────────────────────────────────────────────────

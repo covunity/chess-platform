@@ -141,6 +141,9 @@ function TierSelectorCards({
             <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>
               {t('becomeCreator.tierSelector.maxChaptersLabel', { max: tier.max_chapters_per_course })}
             </div>
+            <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>
+              {t('becomeCreator.tierSelector.maxLessonsLabel', { max: tier.max_lessons_per_course })}
+            </div>
           </button>
         ))}
       </div>

@@ -9,6 +9,7 @@ export interface AccountTier {
   name_vi: string
   platform_fee_pct: number
   max_chapters_per_course: number
+  max_lessons_per_course: number
   is_enterprise: boolean
   requires_approval: boolean
   display_order: number
@@ -25,7 +26,7 @@ export async function fetchAccountTiers(client: SupabaseClient): Promise<Account
     _tiersPromise = Promise.resolve(
       client
         .from('account_tiers')
-        .select('code, name_vi, platform_fee_pct, max_chapters_per_course, is_enterprise, requires_approval, display_order')
+        .select('code, name_vi, platform_fee_pct, max_chapters_per_course, max_lessons_per_course, is_enterprise, requires_approval, display_order')
         .order('display_order', { ascending: true })
     ).then(({ data, error }) => {
       if (error) throw error
@@ -48,6 +49,7 @@ export function clearAccountTiersCache() {
 export interface UpdateAccountTierPatch {
   platform_fee_pct: number
   max_chapters_per_course: number
+  max_lessons_per_course: number
 }
 
 export async function updateAccountTier(
@@ -59,6 +61,7 @@ export async function updateAccountTier(
     p_code: code,
     p_platform_fee_pct: patch.platform_fee_pct,
     p_max_chapters_per_course: patch.max_chapters_per_course,
+    p_max_lessons_per_course: patch.max_lessons_per_course,
   })
   if (error) return { tier: null, error: error as unknown as Error }
   clearAccountTiersCache()

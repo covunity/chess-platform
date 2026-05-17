@@ -9,6 +9,9 @@ export interface CreatorFeeRow {
   tier_fee_pct: number
   platform_fee_pct_override: number | null
   effective_fee_pct: number
+  tier_max_lessons: number
+  max_lessons_per_course_override: number | null
+  effective_max_lessons: number
 }
 
 export interface ListCreatorFeesOptions {
@@ -29,6 +32,16 @@ export function validateOverridePct(raw: string): OverrideValidationError | null
   const n = Number(trimmed)
   if (Number.isNaN(n)) return 'numeric'
   if (n < 0 || n > 100) return 'range'
+  return null
+}
+
+export function validateLessonLimitOverride(raw: string): OverrideValidationError | null {
+  const trimmed = raw.trim()
+  if (!trimmed) return 'required'
+  if (!/^\d+$/.test(trimmed)) return 'numeric'
+  const n = Number(trimmed)
+  if (Number.isNaN(n) || !Number.isInteger(n)) return 'numeric'
+  if (n < 1 || n > 10000) return 'range'
   return null
 }
 
@@ -59,6 +72,10 @@ export async function listCreatorFees(
     platform_fee_pct_override:
       r.platform_fee_pct_override == null ? null : Number(r.platform_fee_pct_override),
     effective_fee_pct: Number(r.effective_fee_pct),
+    tier_max_lessons: Number(r.tier_max_lessons),
+    max_lessons_per_course_override:
+      r.max_lessons_per_course_override == null ? null : Number(r.max_lessons_per_course_override),
+    effective_max_lessons: Number(r.effective_max_lessons),
   }))
   return { creators, total, error: null }
 }
@@ -92,6 +109,39 @@ export async function clearCreatorFeeOverride(
   })
   return {
     user: (data as UserWithOverride) ?? null,
+    error: error as unknown as Error | null,
+  }
+}
+
+export interface UserWithLessonLimitOverride {
+  id: string
+  max_lessons_per_course_override: number | null
+}
+
+export async function setCreatorLessonLimitOverride(
+  client: SupabaseClient,
+  userId: string,
+  max: number
+): Promise<{ user: UserWithLessonLimitOverride | null; error: Error | null }> {
+  const { data, error } = await client.rpc('admin_set_creator_lesson_limit_override', {
+    p_user_id: userId,
+    p_max: max,
+  })
+  return {
+    user: (data as UserWithLessonLimitOverride) ?? null,
+    error: error as unknown as Error | null,
+  }
+}
+
+export async function clearCreatorLessonLimitOverride(
+  client: SupabaseClient,
+  userId: string
+): Promise<{ user: UserWithLessonLimitOverride | null; error: Error | null }> {
+  const { data, error } = await client.rpc('admin_clear_creator_lesson_limit_override', {
+    p_user_id: userId,
+  })
+  return {
+    user: (data as UserWithLessonLimitOverride) ?? null,
     error: error as unknown as Error | null,
   }
 }

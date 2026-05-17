@@ -4,7 +4,10 @@ import {
   listCreatorFees,
   setCreatorFeeOverride,
   clearCreatorFeeOverride,
+  setCreatorLessonLimitOverride,
+  clearCreatorLessonLimitOverride,
   validateOverridePct,
+  validateLessonLimitOverride,
 } from './adminCreatorFeesApi'
 
 // ── validateOverridePct ────────────────────────────────────────────────────
@@ -44,6 +47,9 @@ describe('listCreatorFees', () => {
         tier_fee_pct: 20,
         platform_fee_pct_override: 12.5,
         effective_fee_pct: 12.5,
+        tier_max_lessons: 30,
+        max_lessons_per_course_override: 100,
+        effective_max_lessons: 100,
         total_count: 2,
       },
       {
@@ -55,6 +61,9 @@ describe('listCreatorFees', () => {
         tier_fee_pct: 15,
         platform_fee_pct_override: null,
         effective_fee_pct: 15,
+        tier_max_lessons: 150,
+        max_lessons_per_course_override: null,
+        effective_max_lessons: 150,
         total_count: 2,
       },
     ]
@@ -73,6 +82,10 @@ describe('listCreatorFees', () => {
     expect(creators).toHaveLength(2)
     expect(creators[0].effective_fee_pct).toBe(12.5)
     expect(creators[1].platform_fee_pct_override).toBeNull()
+    expect(creators[0].effective_max_lessons).toBe(100)
+    expect(creators[0].max_lessons_per_course_override).toBe(100)
+    expect(creators[1].max_lessons_per_course_override).toBeNull()
+    expect(creators[1].effective_max_lessons).toBe(150)
     expect(rpc).toHaveBeenCalledWith('admin_list_creator_fees', {
       p_search: 'alice',
       p_overrides_only: true,
@@ -158,6 +171,77 @@ describe('clearCreatorFeeOverride', () => {
     expect(error).toBeNull()
     expect(user?.platform_fee_pct_override).toBeNull()
     expect(rpc).toHaveBeenCalledWith('admin_clear_creator_fee_override', {
+      p_user_id: 'u1',
+    })
+  })
+})
+
+// ── validateLessonLimitOverride ────────────────────────────────────────────
+
+describe('validateLessonLimitOverride', () => {
+  it('returns null for valid integers in range', () => {
+    expect(validateLessonLimitOverride('1')).toBeNull()
+    expect(validateLessonLimitOverride('30')).toBeNull()
+    expect(validateLessonLimitOverride('10000')).toBeNull()
+  })
+  it('rejects empty / whitespace', () => {
+    expect(validateLessonLimitOverride('')).toBe('required')
+    expect(validateLessonLimitOverride('   ')).toBe('required')
+  })
+  it('rejects decimals + non-numeric', () => {
+    expect(validateLessonLimitOverride('10.5')).toBe('numeric')
+    expect(validateLessonLimitOverride('abc')).toBe('numeric')
+    expect(validateLessonLimitOverride('-5')).toBe('numeric')
+  })
+  it('rejects out-of-range values', () => {
+    expect(validateLessonLimitOverride('0')).toBe('range')
+    expect(validateLessonLimitOverride('10001')).toBe('range')
+  })
+})
+
+// ── setCreatorLessonLimitOverride ─────────────────────────────────────────
+
+describe('setCreatorLessonLimitOverride', () => {
+  it('calls admin_set_creator_lesson_limit_override RPC with numeric max', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: { id: 'u1', max_lessons_per_course_override: 200 },
+      error: null,
+    })
+    const client = { rpc } as unknown as SupabaseClient
+
+    const { user, error } = await setCreatorLessonLimitOverride(client, 'u1', 200)
+    expect(error).toBeNull()
+    expect(user?.max_lessons_per_course_override).toBe(200)
+    expect(rpc).toHaveBeenCalledWith('admin_set_creator_lesson_limit_override', {
+      p_user_id: 'u1',
+      p_max: 200,
+    })
+  })
+
+  it('returns null user + error when RPC fails', async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: null, error: { message: 'forbidden' } })
+    const client = { rpc } as unknown as SupabaseClient
+
+    const { user, error } = await setCreatorLessonLimitOverride(client, 'u1', 200)
+    expect(user).toBeNull()
+    expect(error).toBeTruthy()
+  })
+})
+
+// ── clearCreatorLessonLimitOverride ───────────────────────────────────────
+
+describe('clearCreatorLessonLimitOverride', () => {
+  it('calls admin_clear_creator_lesson_limit_override RPC', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: { id: 'u1', max_lessons_per_course_override: null },
+      error: null,
+    })
+    const client = { rpc } as unknown as SupabaseClient
+
+    const { user, error } = await clearCreatorLessonLimitOverride(client, 'u1')
+    expect(error).toBeNull()
+    expect(user?.max_lessons_per_course_override).toBeNull()
+    expect(rpc).toHaveBeenCalledWith('admin_clear_creator_lesson_limit_override', {
       p_user_id: 'u1',
     })
   })
