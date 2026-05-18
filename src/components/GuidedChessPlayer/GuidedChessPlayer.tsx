@@ -666,65 +666,65 @@ export default function GuidedChessPlayer({
           </span>
         </div>
 
-        {/* Board (relative parent for overlay + hover flip button) */}
+        {/* Board + flip button — flex row so flip sits outside the board */}
         <div
-          className="guided-player-board-wrap"
+          style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}
           onMouseEnter={() => setIsBoardHovered(true)}
           onMouseLeave={() => setIsBoardHovered(false)}
         >
-          <InteractiveBoard
-            fen={currentFen}
-            perspective={viewPerspective}
-            size={480}
-            lastMove={lastMove}
-            wrongMoveSquare={wrongMoveSquare}
-            hintSquares={hintSquares}
-            selectedSquare={selectedSquare}
-            validDestinations={validDestinations}
-            autoShapes={
-              isRewindMode
-                ? []
-                : [...shapesToDrawShapes(currentNode?.shapes ?? []), ...puzzleHintShapes]
-            }
-            viewOnly={isViewer}
-            drawableEnabled={!isViewer}
-            dests={legalDests}
-            onSquareClick={isViewer ? undefined : handleSquareClick}
-            onPieceDrop={isViewer ? undefined : handlePieceDrop}
-            onDragStart={isViewer ? undefined : setDraggingSquare}
-            canDrag={isViewer ? undefined : canDrag}
-          />
+          <div className="guided-player-board-wrap">
+            <InteractiveBoard
+              fen={currentFen}
+              perspective={viewPerspective}
+              size={480}
+              lastMove={lastMove}
+              wrongMoveSquare={wrongMoveSquare}
+              hintSquares={hintSquares}
+              selectedSquare={selectedSquare}
+              validDestinations={validDestinations}
+              autoShapes={
+                isRewindMode
+                  ? []
+                  : [...shapesToDrawShapes(currentNode?.shapes ?? []), ...puzzleHintShapes]
+              }
+              viewOnly={isViewer}
+              drawableEnabled={!isViewer}
+              dests={legalDests}
+              onSquareClick={isViewer ? undefined : handleSquareClick}
+              onPieceDrop={isViewer ? undefined : handlePieceDrop}
+              onDragStart={isViewer ? undefined : setDraggingSquare}
+              canDrag={isViewer ? undefined : canDrag}
+            />
 
-          {/* Wrong-move banner overlay */}
-          {!isViewer && !isPuzzleMode && wrongMoveSquare && (
-            <div
-              data-testid="wrong-move-banner"
-              role="alert"
-              className="guided-player-wrong-move-banner"
-            >
-              {t('guidedPlayer.wrongMoveBanner')}
-            </div>
-          )}
+            {/* Wrong-move banner overlay */}
+            {!isViewer && !isPuzzleMode && wrongMoveSquare && (
+              <div
+                data-testid="wrong-move-banner"
+                role="alert"
+                className="guided-player-wrong-move-banner"
+              >
+                {t('guidedPlayer.wrongMoveBanner')}
+              </div>
+            )}
+          </div>
 
-          {/* Flip board — hover-only icon, top-right corner */}
+          {/* Flip board — right of board, hover-only */}
           <button
             type="button"
             aria-label={t('guidedPlayer.flipBoardAria')}
             data-testid="guided-player-flip-btn"
             onClick={() => setViewPerspective(p => p === 'white' ? 'black' : 'white')}
             style={{
-              position: 'absolute',
-              top: 8,
-              right: 8,
               width: 28,
               height: 28,
+              flexShrink: 0,
+              marginTop: 8,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               borderRadius: 'var(--r-sm)',
               border: '1px solid var(--border-strong)',
-              background: 'rgba(255,255,255,0.88)',
-              backdropFilter: 'blur(4px)',
+              background: 'var(--surface)',
               cursor: 'pointer',
               color: 'var(--ink-2)',
               opacity: isBoardHovered ? 1 : 0,
@@ -968,7 +968,7 @@ export default function GuidedChessPlayer({
               <button
                 type="button"
                 className="btn btn-secondary"
-                style={{ width: 44, padding: 0 }}
+                style={{ flex: 1, padding: 0 }}
                 data-testid="viewer-begin-btn"
                 aria-label={t('guidedPlayer.viewerBeginMove')}
                 title={t('guidedPlayer.viewerBeginMove')}
@@ -980,7 +980,7 @@ export default function GuidedChessPlayer({
               <button
                 type="button"
                 className="btn btn-secondary"
-                style={{ width: 44, padding: 0 }}
+                style={{ flex: 1, padding: 0 }}
                 data-testid="viewer-prev-btn"
                 aria-label={t('guidedPlayer.viewerPrevMove')}
                 title={t('guidedPlayer.viewerPrevMove')}
@@ -994,7 +994,7 @@ export default function GuidedChessPlayer({
               <button
                 type="button"
                 className="btn btn-secondary"
-                style={{ width: 44, padding: 0 }}
+                style={{ flex: 1, padding: 0 }}
                 data-testid="viewer-next-btn"
                 aria-label={t('guidedPlayer.viewerNextMove')}
                 title={t('guidedPlayer.viewerNextMove')}
@@ -1009,7 +1009,7 @@ export default function GuidedChessPlayer({
               <button
                 type="button"
                 className="btn btn-secondary"
-                style={{ width: 44, padding: 0 }}
+                style={{ flex: 1, padding: 0 }}
                 data-testid="viewer-end-btn"
                 aria-label={t('guidedPlayer.viewerEndMove')}
                 title={t('guidedPlayer.viewerEndMove')}
