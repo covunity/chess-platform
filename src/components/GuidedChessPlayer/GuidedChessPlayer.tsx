@@ -968,7 +968,7 @@ export default function GuidedChessPlayer({
               <button
                 type="button"
                 className="btn btn-secondary"
-                style={{ flex: 1, padding: 0 }}
+                style={{ flex: 1, padding: 0, background: 'var(--surface-2)' }}
                 data-testid="viewer-begin-btn"
                 aria-label={t('guidedPlayer.viewerBeginMove')}
                 title={t('guidedPlayer.viewerBeginMove')}
@@ -980,7 +980,7 @@ export default function GuidedChessPlayer({
               <button
                 type="button"
                 className="btn btn-secondary"
-                style={{ flex: 1, padding: 0 }}
+                style={{ flex: 1, padding: 0, background: 'var(--surface-2)' }}
                 data-testid="viewer-prev-btn"
                 aria-label={t('guidedPlayer.viewerPrevMove')}
                 title={t('guidedPlayer.viewerPrevMove')}
@@ -994,7 +994,7 @@ export default function GuidedChessPlayer({
               <button
                 type="button"
                 className="btn btn-secondary"
-                style={{ flex: 1, padding: 0 }}
+                style={{ flex: 1, padding: 0, background: 'var(--surface-2)' }}
                 data-testid="viewer-next-btn"
                 aria-label={t('guidedPlayer.viewerNextMove')}
                 title={t('guidedPlayer.viewerNextMove')}
@@ -1009,7 +1009,7 @@ export default function GuidedChessPlayer({
               <button
                 type="button"
                 className="btn btn-secondary"
-                style={{ flex: 1, padding: 0 }}
+                style={{ flex: 1, padding: 0, background: 'var(--surface-2)' }}
                 data-testid="viewer-end-btn"
                 aria-label={t('guidedPlayer.viewerEndMove')}
                 title={t('guidedPlayer.viewerEndMove')}
