@@ -342,19 +342,20 @@ describe('LessonPlayerPage', () => {
       })
     })
 
-    it('second chapter is collapsed by default', async () => {
+    it('all chapters are expanded by default', async () => {
       renderPlayer()
-      await waitFor(() => screen.getByTestId('chapter-item-ch2'))
-      expect(screen.queryByTestId('lesson-item-l3')).not.toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByTestId('lesson-item-l3')).toBeInTheDocument()
+      })
     })
 
-    it('clicking a collapsed chapter expands it', async () => {
+    it('clicking an expanded chapter collapses it', async () => {
       const user = userEvent.setup()
       renderPlayer()
       await waitFor(() => screen.getByTestId('chapter-item-ch2'))
       await user.click(screen.getByTestId('chapter-item-ch2'))
       await waitFor(() => {
-        expect(screen.getByTestId('lesson-item-l3')).toBeInTheDocument()
+        expect(screen.queryByTestId('lesson-item-l3')).not.toBeInTheDocument()
       })
     })
 

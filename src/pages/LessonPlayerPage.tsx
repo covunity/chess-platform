@@ -323,10 +323,7 @@ export default function LessonPlayerPage() {
       setCourse(courseData)
 
       if (initializedCourseRef.current !== courseId) {
-        const firstChapter = courseData.chapters[0]
-        if (firstChapter) {
-          setExpandedChapters(new Set([firstChapter.id]))
-        }
+        setExpandedChapters(new Set(courseData.chapters.map((ch: { id: string }) => ch.id)))
         initializedCourseRef.current = courseId!
       }
 
