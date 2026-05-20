@@ -9,13 +9,15 @@ import { AuthContext } from '../context/AuthContext'
 import type { AuthContextValue } from '../context/AuthContext'
 import type { User } from '@supabase/supabase-js'
 
-const { mockListMyOrders, mockNavigate } = vi.hoisted(() => ({
+const { mockListMyOrders, mockCreateOrder, mockNavigate } = vi.hoisted(() => ({
   mockListMyOrders: vi.fn(),
+  mockCreateOrder: vi.fn(),
   mockNavigate: vi.fn(),
 }))
 
 vi.mock('../lib/orderApi', () => ({
   listMyOrders: mockListMyOrders,
+  createOrder: mockCreateOrder,
 }))
 
 vi.mock('../lib/supabase', () => ({ supabase: {} }))
@@ -195,6 +197,106 @@ describe('AccountOrdersPage', () => {
     })
   })
 
+  describe('expired orders', () => {
+    it('renders "Hết hạn" badge for expired orders', async () => {
+      mockListMyOrders.mockResolvedValueOnce({
+        orders: [
+          makeRow({
+            id: 'ord-expired',
+            status: 'expired' as const,
+            code: 'ORD-2026-000200',
+          }),
+        ],
+        total: 1,
+        error: null,
+      })
+      renderPage()
+      const row = await screen.findByTestId('order-row-ord-expired')
+      expect(within(row).getByText(/hết hạn/i)).toBeInTheDocument()
+    })
+
+    it('renders "Mua lại" CTA for expired orders and reorders on click', async () => {
+      mockListMyOrders.mockResolvedValueOnce({
+        orders: [
+          makeRow({
+            id: 'ord-expired',
+            status: 'expired' as const,
+            code: 'ORD-2026-000200',
+          }),
+        ],
+        total: 1,
+        error: null,
+      })
+      mockCreateOrder.mockResolvedValueOnce({
+        order: { id: 'ord-new', course_id: 'c-1', status: 'pending' },
+        error: null,
+      })
+      renderPage()
+      const row = await screen.findByTestId('order-row-ord-expired')
+      const reorderBtn = within(row).getByTestId('action-reorder-ord-expired')
+      expect(reorderBtn).toHaveTextContent(/mua lại/i)
+      await userEvent.click(reorderBtn)
+      await waitFor(() => {
+        expect(mockCreateOrder).toHaveBeenCalledWith(expect.anything(), 'c-1')
+      })
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/checkout/ord-new')
+      })
+    })
+
+    it('filter pill "Hết hạn" refetches with status=expired', async () => {
+      renderPage()
+      await waitFor(() => screen.getByTestId('order-row-ord-1'))
+
+      mockListMyOrders.mockResolvedValueOnce({ orders: [], total: 0, error: null })
+      await userEvent.click(screen.getByTestId('filter-expired'))
+
+      await waitFor(() => {
+        const lastCall = mockListMyOrders.mock.calls[mockListMyOrders.mock.calls.length - 1]
+        expect(lastCall[1]).toMatchObject({ status: 'expired' })
+      })
+    })
+  })
+
+  describe('refund_pending orders', () => {
+    it('renders amber "Đang hoàn tiền" badge with refund-pending tooltip', async () => {
+      mockListMyOrders.mockResolvedValueOnce({
+        orders: [
+          makeRow({
+            id: 'ord-refund',
+            status: 'refund_pending' as const,
+            code: 'ORD-2026-000300',
+          }),
+        ],
+        total: 1,
+        error: null,
+      })
+      renderPage()
+      const row = await screen.findByTestId('order-row-ord-refund')
+      const badge = within(row).getByText(/đang hoàn tiền/i)
+      expect(badge).toBeInTheDocument()
+      // Tooltip — PRD-0005 D12d: "Admin sẽ chuyển khoản lại trong 3–7 ngày"
+      expect(badge).toHaveAttribute('title', expect.stringMatching(/3.7 ngày/i))
+    })
+
+    it('renders "Đã hoàn tiền" badge for refunded orders (terminal state)', async () => {
+      mockListMyOrders.mockResolvedValueOnce({
+        orders: [
+          makeRow({
+            id: 'ord-refunded',
+            status: 'refunded' as const,
+            code: 'ORD-2026-000301',
+          }),
+        ],
+        total: 1,
+        error: null,
+      })
+      renderPage()
+      const row = await screen.findByTestId('order-row-ord-refunded')
+      expect(within(row).getByText(/đã hoàn tiền/i)).toBeInTheDocument()
+    })
+  })
+
   describe('filter pills', () => {
     it('switches to Active and refetches with status filter', async () => {
       renderPage()
@@ -228,6 +330,36 @@ describe('AccountOrdersPage', () => {
         const lastCall = mockListMyOrders.mock.calls[mockListMyOrders.mock.calls.length - 1]
         expect(lastCall[1].status).toBeUndefined()
       })
+    })
+  })
+
+  // ── PRD-0005 D12c — last_seen_orders_at write on page open ──────────────
+  //
+  // Opening /account/orders is the user signal "I have seen the latest order
+  // activity". The TopNav dot indicator reads this same key to decide whether
+  // any order has confirmed/refunded/expired since.
+  describe('last_seen_orders_at timestamp (PRD-0005 D12c)', () => {
+    beforeEach(() => {
+      localStorage.clear()
+    })
+
+    it('writes localStorage.last_seen_orders_at to a recent ISO timestamp after successful mount', async () => {
+      const before = Date.now()
+      renderPage()
+      await waitFor(() => screen.getByTestId('order-row-ord-1'))
+      const stored = localStorage.getItem('last_seen_orders_at')
+      expect(stored).not.toBeNull()
+      const writtenAt = new Date(stored!).getTime()
+      expect(writtenAt).toBeGreaterThanOrEqual(before)
+      expect(writtenAt).toBeLessThanOrEqual(Date.now())
+    })
+
+    it('does not write the timestamp when the user is unauthenticated (redirects to login)', async () => {
+      renderPage(makeCtx({ user: null, profile: null }))
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/login', { replace: true })
+      })
+      expect(localStorage.getItem('last_seen_orders_at')).toBeNull()
     })
   })
 })

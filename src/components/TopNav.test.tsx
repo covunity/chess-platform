@@ -10,6 +10,21 @@ import * as coursesApi from '../lib/coursesApi'
 
 const mockListPublishedCourses = vi.spyOn(coursesApi, 'listPublishedCourses')
 
+const { mockHasUnreadOrderUpdates, mockReadLastSeenOrdersAt } = vi.hoisted(() => ({
+  mockHasUnreadOrderUpdates: vi.fn(),
+  mockReadLastSeenOrdersAt: vi.fn(),
+}))
+
+vi.mock('../lib/orderUpdatesApi', () => ({
+  hasUnreadOrderUpdates: mockHasUnreadOrderUpdates,
+  readLastSeenOrdersAt: mockReadLastSeenOrdersAt,
+  writeLastSeenOrdersAt: vi.fn(),
+}))
+
+vi.mock('../lib/bookmarkApi', () => ({
+  getBookmarks: vi.fn().mockResolvedValue({ bookmarks: [], error: null }),
+}))
+
 const mockSignOut = vi.fn()
 const mockNavigate = vi.fn()
 
@@ -60,6 +75,9 @@ describe('TopNav', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockSignOut.mockResolvedValue(undefined)
+    // Default: no unread orders. Individual tests override.
+    mockHasUnreadOrderUpdates.mockResolvedValue({ hasUpdates: false, error: null })
+    mockReadLastSeenOrdersAt.mockReturnValue(null)
   })
 
   it('renders a banner landmark', () => {
@@ -261,6 +279,72 @@ describe('TopNav', () => {
       await waitFor(() => {
         expect(screen.queryByTestId('search-overlay')).not.toBeInTheDocument()
       })
+    })
+  })
+
+  // ── PRD-0005 D12c — unread-orders dot indicator ─────────────────────────
+  //
+  // Because email notifications are deferred (D-14), the dot on the
+  // avatar-dropdown "Lịch sử đơn hàng" link is the only learner-facing
+  // signal that an order has flipped to active/refunded/expired since
+  // they last opened the page.
+  describe('unread-orders dot indicator (PRD-0005 D12c)', () => {
+    const loggedInUser = { email: 'user@example.com', id: '123', user_metadata: { name: 'John Doe' } }
+
+    async function openDropdown() {
+      await userEvent.click(screen.getByRole('button', { name: /hồ sơ/i }))
+      await waitFor(() => screen.getByTestId('nav-orders-link'))
+    }
+
+    it('shows the dot on the orders link when hasUnreadOrderUpdates resolves true', async () => {
+      mockHasUnreadOrderUpdates.mockResolvedValue({ hasUpdates: true, error: null })
+      renderNav({ user: loggedInUser, profile: profileFor('learner') })
+      await waitFor(() => {
+        expect(mockHasUnreadOrderUpdates).toHaveBeenCalled()
+      })
+      await openDropdown()
+      expect(screen.getByTestId('topnav-orders-dot')).toBeInTheDocument()
+    })
+
+    it('hides the dot when hasUnreadOrderUpdates resolves false', async () => {
+      mockHasUnreadOrderUpdates.mockResolvedValue({ hasUpdates: false, error: null })
+      renderNav({ user: loggedInUser, profile: profileFor('learner') })
+      await waitFor(() => {
+        expect(mockHasUnreadOrderUpdates).toHaveBeenCalled()
+      })
+      await openDropdown()
+      expect(screen.queryByTestId('topnav-orders-dot')).not.toBeInTheDocument()
+    })
+
+    it('passes the value of readLastSeenOrdersAt as the since arg', async () => {
+      mockReadLastSeenOrdersAt.mockReturnValue('2026-05-19T10:00:00Z')
+      mockHasUnreadOrderUpdates.mockResolvedValue({ hasUpdates: false, error: null })
+      renderNav({ user: loggedInUser, profile: profileFor('learner') })
+      await waitFor(() => {
+        expect(mockHasUnreadOrderUpdates).toHaveBeenCalledWith(
+          expect.anything(),
+          '2026-05-19T10:00:00Z'
+        )
+      })
+    })
+
+    it('does not run the unread query when the user is logged out', async () => {
+      renderNav()
+      // Allow any pending microtasks to resolve.
+      await new Promise(r => setTimeout(r, 0))
+      expect(mockHasUnreadOrderUpdates).not.toHaveBeenCalled()
+    })
+
+    it('clears the dot optimistically when the user clicks the orders link', async () => {
+      mockHasUnreadOrderUpdates.mockResolvedValue({ hasUpdates: true, error: null })
+      renderNav({ user: loggedInUser, profile: profileFor('learner') })
+      await waitFor(() => {
+        expect(mockHasUnreadOrderUpdates).toHaveBeenCalled()
+      })
+      await openDropdown()
+      expect(screen.getByTestId('topnav-orders-dot')).toBeInTheDocument()
+      await userEvent.click(screen.getByTestId('nav-orders-link'))
+      expect(screen.queryByTestId('topnav-orders-dot')).not.toBeInTheDocument()
     })
   })
 })

@@ -1,7 +1,13 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { AccountTierCode } from './accountTiers'
 
-export type OrderStatus = 'pending' | 'active' | 'cancelled'
+export type OrderStatus =
+  | 'pending'
+  | 'active'
+  | 'cancelled'
+  | 'expired'
+  | 'refund_pending'
+  | 'refunded'
 
 export interface Order {
   id: string
@@ -21,6 +27,7 @@ export interface Order {
   cancelled_at: string | null
   cancelled_by: string | null
   cancelled_reason: string | null
+  manual_confirm_reason: string | null
   created_at: string
   updated_at: string
 }
@@ -42,10 +49,12 @@ export async function createOrder(
 
 export async function confirmOrder(
   client: SupabaseClient,
-  orderId: string
+  orderId: string,
+  reason: string
 ): Promise<{ order: Order | null; error: Error | null }> {
   const { data, error } = await client.rpc('confirm_order', {
     p_order_id: orderId,
+    p_reason: reason,
   })
   return { order: (data as Order) ?? null, error: error as Error | null }
 }
@@ -77,7 +86,7 @@ export async function getOrder(
       id, course_id, user_id, status, amount, code, notes,
       platform_fee_pct, platform_fee_amount, creator_payout_amount, creator_payout,
       account_tier_code, confirmed_at, confirmed_by, cancelled_at, cancelled_by, cancelled_reason,
-      created_at, updated_at,
+      manual_confirm_reason, created_at, updated_at,
       course:course_id(id, title, thumbnail_url)
     `
     )
@@ -124,7 +133,7 @@ export async function listMyOrders(
       id, course_id, user_id, status, amount, code, notes,
       platform_fee_pct, platform_fee_amount, creator_payout_amount, creator_payout,
       account_tier_code, confirmed_at, confirmed_by, cancelled_at, cancelled_by, cancelled_reason,
-      created_at, updated_at,
+      manual_confirm_reason, created_at, updated_at,
       course:course_id(id, title, thumbnail_url)
     `,
       { count: 'exact' }

@@ -80,7 +80,7 @@ describe('AdminSidebar', () => {
     expect(screen.getByRole('link', { name: /đơn hàng/i })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /người dùng/i })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /báo cáo/i })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /cài đặt/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /chi trả creator/i })).toBeInTheDocument()
   })
 
   it('marks Users link as active at /admin/users', () => {

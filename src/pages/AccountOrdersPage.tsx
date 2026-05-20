@@ -3,16 +3,23 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
-import { listMyOrders } from '../lib/orderApi'
+import { listMyOrders, createOrder } from '../lib/orderApi'
 import type { MyOrderRow, OrderStatus } from '../lib/orderApi'
+import { writeLastSeenOrdersAt } from '../lib/orderUpdatesApi'
 
 const PAGE_SIZE = 20
-const FILTERS: ('all' | OrderStatus)[] = ['all', 'active', 'pending', 'cancelled']
+const FILTERS: ('all' | OrderStatus)[] = ['all', 'active', 'pending', 'expired', 'cancelled']
 
 const STATUS_PILL_STYLE: Record<OrderStatus, React.CSSProperties> = {
   active: { background: 'var(--success-soft)', color: 'var(--success)', border: '1px solid var(--success-border)' },
   pending: { background: 'var(--warning-soft)', color: 'var(--warning)', border: '1px solid var(--warning-border)' },
   cancelled: { background: 'var(--danger-soft)', color: 'var(--danger)', border: '1px solid var(--danger-border)' },
+  expired: { background: 'var(--surface-2)', color: 'var(--ink-3)', border: '1px solid var(--border)' },
+  // refund_pending uses the same amber palette as pending — money is in flight
+  // back to the learner, PRD-0005 D12d. The tooltip explains the 3–7 day SLA.
+  refund_pending: { background: 'var(--warning-soft)', color: 'var(--warning)', border: '1px solid var(--warning-border)' },
+  // refunded is a terminal neutral state, visually identical to expired.
+  refunded: { background: 'var(--surface-2)', color: 'var(--ink-3)', border: '1px solid var(--border)' },
 }
 
 function formatVnd(n: number): string {
@@ -43,10 +50,39 @@ export default function AccountOrdersPage() {
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [revealedId, setRevealedId] = useState<string | null>(null)
+  const [reorderingId, setReorderingId] = useState<string | null>(null)
+
+  async function handleReorder(courseId: string, orderId: string) {
+    setReorderingId(orderId)
+    const { order, error } = await createOrder(supabase, courseId)
+    setReorderingId(null)
+    if (order) {
+      navigate(`/checkout/${order.id}`)
+      return
+    }
+    // If a duplicate pending exists (raced), navigate there.
+    if (error) {
+      const msg = (error as { message?: string }).message ?? ''
+      if (msg.includes('duplicate_pending_order')) {
+        const parts = msg.split(':')
+        const existingId = parts[1]?.trim()
+        if (existingId) navigate(`/checkout/${existingId}`)
+      }
+    }
+  }
 
   useEffect(() => {
     if (!user) navigate('/login', { replace: true })
   }, [user, navigate])
+
+  // PRD-0005 D12c — opening this page is the user signal "I have seen the
+  // latest order activity". TopNav reads `last_seen_orders_at` from
+  // localStorage to decide whether to show the unread-orders dot indicator.
+  // Write AFTER the auth gate so unauthorized visits don't clear the marker.
+  useEffect(() => {
+    if (!user) return
+    writeLastSeenOrdersAt()
+  }, [user])
 
   useEffect(() => {
     if (!user) return
@@ -226,7 +262,15 @@ export default function AccountOrdersPage() {
                       {isFree ? t('account.orders.free') : formatVnd(o.amount)}
                     </td>
                     <td style={{ padding: '14px 16px' }}>
-                      <span className="pill" style={STATUS_PILL_STYLE[o.status]}>
+                      <span
+                        className="pill"
+                        style={STATUS_PILL_STYLE[o.status]}
+                        title={
+                          o.status === 'refund_pending'
+                            ? t('account.orders.refundPendingTooltip')
+                            : undefined
+                        }
+                      >
                         {t(`account.orders.status.${o.status}`)}
                       </span>
                     </td>
@@ -255,6 +299,17 @@ export default function AccountOrdersPage() {
                         >
                           {t('account.orders.actionCheckout')}
                         </Link>
+                      )}
+                      {o.status === 'expired' && (
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          data-testid={`action-reorder-${o.id}`}
+                          onClick={() => handleReorder(o.course_id, o.id)}
+                          disabled={reorderingId === o.id}
+                        >
+                          {t('account.orders.actionReorder')}
+                        </button>
                       )}
                       {o.status === 'cancelled' && (
                         <div className="flex flex-col items-end gap-2">

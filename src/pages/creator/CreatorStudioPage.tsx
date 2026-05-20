@@ -15,8 +15,10 @@ import { getMyLatestAccountApplication } from '../../lib/accountApplicationApi'
 import type { AccountApplication } from '../../lib/accountApplicationApi'
 import { Pencil, Copy, Trash2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import RevenuePanel from '../../components/creator/RevenuePanel'
 
 type StatusFilter = CourseStatus | 'all'
+type DashboardTab = 'courses' | 'revenue'
 
 const STATUS_PILL: Record<CourseStatus, string> = {
   published: 'pill pill-success',
@@ -202,6 +204,7 @@ export default function CreatorStudioPage() {
   const [courses, setCourses] = useState<Course[]>([])
   const [coursesLoaded, setCoursesLoaded] = useState(false)
   const [filter, setFilter] = useState<StatusFilter>('all')
+  const [activeTab, setActiveTab] = useState<DashboardTab>('courses')
   const [deletingCourse, setDeletingCourse] = useState<Course | null>(null)
   const [childCounts, setChildCounts] = useState({ chapters: 0, lessons: 0 })
   const [kpis, setKpis] = useState<CreatorKpis>({ totalStudents: 0, grossRevenue: 0, totalPayout: 0, avgRating: 0, courseCount: 0 })
@@ -316,6 +319,43 @@ export default function CreatorStudioPage() {
         </Link>
       </div>
 
+      {/* Dashboard tabs */}
+      <div
+        className="flex gap-1 border-b border-(--border) mb-6"
+        role="tablist"
+      >
+        {([
+          { key: 'courses', label: t('creator.studio.heading'), testid: 'tab-courses' },
+          { key: 'revenue', label: t('creator.revenue.tabLabel'), testid: 'tab-revenue' },
+        ] as const).map(({ key, label, testid }) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === key}
+            data-testid={testid}
+            onClick={() => setActiveTab(key)}
+            style={{
+              padding: '10px 18px',
+              fontSize: 14,
+              fontWeight: activeTab === key ? 600 : 500,
+              color: activeTab === key ? 'var(--ink-1)' : 'var(--ink-3)',
+              borderBottom: activeTab === key ? '2px solid var(--ink-1)' : '2px solid transparent',
+              marginBottom: -1,
+              background: 'transparent',
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'revenue' && profile?.id && (
+        <RevenuePanel creatorId={profile.id} />
+      )}
+
+      {activeTab === 'courses' && (
+        <>
       {/* KPI Strip */}
       <div className="flex gap-4 mb-8">
         <KpiCard
@@ -606,6 +646,8 @@ export default function CreatorStudioPage() {
           onConfirm={handleDeleteConfirm}
           t={t}
         />
+      )}
+        </>
       )}
     </div>
   )

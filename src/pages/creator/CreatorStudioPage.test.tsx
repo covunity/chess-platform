@@ -46,6 +46,18 @@ vi.mock('../../lib/accountApplicationApi', () => ({
   getMyLatestAccountApplication: mockGetMyLatestAccountApplication,
 }))
 
+const { mockFetchCreatorWallet, mockFetchRecentEarnings, mockFetchPayoutHistory } = vi.hoisted(() => ({
+  mockFetchCreatorWallet: vi.fn(),
+  mockFetchRecentEarnings: vi.fn(),
+  mockFetchPayoutHistory: vi.fn(),
+}))
+
+vi.mock('../../lib/creatorWalletApi', () => ({
+  fetchCreatorWallet: mockFetchCreatorWallet,
+  fetchRecentEarnings: mockFetchRecentEarnings,
+  fetchPayoutHistory: mockFetchPayoutHistory,
+}))
+
 vi.mock('../../lib/supabase', () => ({ supabase: {} }))
 
 const { mockUseAuth } = vi.hoisted(() => ({ mockUseAuth: vi.fn() }))
@@ -114,6 +126,12 @@ describe('CreatorStudioPage', () => {
     mockSubmitCourseForReview.mockResolvedValue({ course: null, error: null })
     mockDuplicateCourse.mockResolvedValue({ course: null, error: null })
     mockGetMyLatestAccountApplication.mockResolvedValue({ application: null, error: null })
+    mockFetchCreatorWallet.mockResolvedValue({
+      wallet: { pendingBalance: 0, totalPaidOut: 0, lifetimeEarnings: 0 },
+      error: null,
+    })
+    mockFetchRecentEarnings.mockResolvedValue({ earnings: [], error: null })
+    mockFetchPayoutHistory.mockResolvedValue({ payouts: [], error: null })
   })
 
   it('renders the CREATOR STUDIO eyebrow', async () => {
@@ -499,5 +517,25 @@ describe('CreatorStudioPage', () => {
 
     expect(clickSpy).toHaveBeenCalled()
     vi.restoreAllMocks()
+  })
+
+  it('renders top-level Khóa học and Doanh thu tabs', async () => {
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('tab-courses')).toBeInTheDocument()
+      expect(screen.getByTestId('tab-revenue')).toBeInTheDocument()
+    })
+  })
+
+  it('shows revenue panel after clicking Doanh thu tab and hides courses table', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await waitFor(() => expect(screen.getByTestId('tab-revenue')).toBeInTheDocument())
+    expect(screen.queryByTestId('revenue-panel')).not.toBeInTheDocument()
+
+    await user.click(screen.getByTestId('tab-revenue'))
+
+    await waitFor(() => expect(screen.getByTestId('revenue-panel')).toBeInTheDocument())
+    expect(screen.queryByTestId('course-title-c1')).not.toBeInTheDocument()
   })
 })

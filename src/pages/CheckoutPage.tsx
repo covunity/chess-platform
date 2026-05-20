@@ -1,13 +1,22 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { QRCode } from 'react-qr-code'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { getOrder, cancelOrder } from '../lib/orderApi'
-import { getBankConfig } from '../lib/configApi'
-import { buildVietQRUrl } from '../lib/vietqr'
+import { createPayosPayment } from '../lib/payos'
 import type { OrderWithCourse } from '../lib/orderApi'
-import type { BankConfig } from '../lib/configApi'
+import type { PayosCheckoutData } from '../lib/payos'
+
+const POLL_INTERVAL_MS = 5000
+
+// PRD-0005 §5.8: PayOS returns the EMV QR code as a text payload. We render
+// it client-side via `react-qr-code` (SVG output) — see issue #274. This
+// removes a third-party SaaS dependency (api.qrserver.com) from the
+// payment-critical path. ECC level "M" matches the api.qrserver.com default.
+const QR_SIZE_PX = 240
+const QR_ECC_LEVEL: 'L' | 'M' | 'Q' | 'H' = 'M'
 
 function formatVnd(n: number): string {
   return `${n.toLocaleString('vi-VN')} ₫`
@@ -103,11 +112,12 @@ function CancelDialog({ onConfirm, onClose, loading }: CancelDialogProps) {
 export default function CheckoutPage() {
   const { orderId } = useParams<{ orderId: string }>()
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const { t } = useTranslation()
 
   const [order, setOrder] = useState<OrderWithCourse | null>(null)
-  const [bank, setBank] = useState<BankConfig | null>(null)
+  const [payos, setPayos] = useState<PayosCheckoutData | null>(null)
+  const [payosLoading, setPayosLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [showCancel, setShowCancel] = useState(false)
@@ -115,17 +125,31 @@ export default function CheckoutPage() {
   const [cancelError, setCancelError] = useState(false)
   const [copied, setCopied] = useState(false)
 
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  function stopPolling() {
+    if (pollRef.current !== null) {
+      clearInterval(pollRef.current)
+      pollRef.current = null
+    }
+  }
+
+  // Initial load + PayOS data fetch.
   useEffect(() => {
+    // Wait for AuthContext to hydrate the persisted session from localStorage
+    // before deciding whether the caller is logged in. On a hard refresh
+    // `user` is null for ~1 frame while `getSession()` resolves; without this
+    // guard we'd navigate('/login') and kick the user out unnecessarily.
+    if (authLoading) return
     if (!user) {
       navigate('/login', { replace: true })
       return
     }
     if (!orderId) return
 
-    Promise.all([
-      getOrder(supabase, orderId),
-      getBankConfig(supabase),
-    ]).then(([{ order: o, error }, { bank: b }]) => {
+    let cancelled = false
+    getOrder(supabase, orderId).then(async ({ order: o, error }) => {
+      if (cancelled) return
       if (error || !o) {
         setNotFound(true)
         setLoading(false)
@@ -140,15 +164,53 @@ export default function CheckoutPage() {
         navigate(`/learn/${o.course_id}`, { replace: true })
         return
       }
-      if (o.status === 'cancelled') {
+      if (o.status === 'cancelled' || o.status === 'expired') {
         navigate('/account/orders', { replace: true })
         return
       }
       setOrder(o)
-      setBank(b)
       setLoading(false)
+
+      // Fetch PayOS checkout data. The Edge Function is idempotent on this
+      // call (issue #275): if a payment was already created for the order,
+      // it returns the cached payload — same shape as a first-create — so
+      // a page refresh after the QR loads renders normally with no 409.
+      setPayosLoading(true)
+      const result = await createPayosPayment(supabase, orderId)
+      if (cancelled) return
+      setPayos(result)
+      setPayosLoading(false)
     })
-  }, [user, orderId, navigate])
+
+    return () => {
+      cancelled = true
+      stopPolling()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, orderId, authLoading])
+
+  // Status polling — every 5s while order is pending and tab visible.
+  useEffect(() => {
+    if (!order || order.status !== 'pending' || !orderId) return
+
+    async function poll() {
+      if (document.visibilityState !== 'visible') return
+      const { order: fresh } = await getOrder(supabase, orderId!)
+      if (!fresh) return
+      if (fresh.status === 'active') {
+        stopPolling()
+        navigate(`/learn/${fresh.course_id}`, { replace: true })
+      } else if (fresh.status === 'cancelled' || fresh.status === 'expired') {
+        stopPolling()
+        navigate('/account/orders', { replace: true })
+      }
+    }
+
+    stopPolling()
+    pollRef.current = setInterval(poll, POLL_INTERVAL_MS)
+    return stopPolling
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order, orderId])
 
   async function handleCancel(reason: string) {
     if (!order) return
@@ -172,19 +234,15 @@ export default function CheckoutPage() {
     })
   }
 
-  function buildQRUrl(): string | null {
-    if (!bank || !bank.short_name || !bank.account_number || !bank.account_name || !order) return null
-    try {
-      return buildVietQRUrl({
-        shortName: bank.short_name,
-        accountNumber: bank.account_number,
-        accountName: bank.account_name,
-        amount: order.amount,
-        addInfo: order.code,
-      })
-    } catch {
-      return null
-    }
+  // Render a spinner while we're either still hydrating the auth session OR
+  // loading the order. Avoids the "blank page then flash to login" jank that
+  // used to happen on a hard refresh of /checkout/:orderId.
+  if (authLoading || (user && loading)) {
+    return (
+      <div style={{ padding: '80px 56px', textAlign: 'center' }}>
+        <div style={{ width: 32, height: 32, border: '3px solid var(--border)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'spin 0.7s linear infinite', margin: '0 auto' }} />
+      </div>
+    )
   }
 
   if (!user) return null
@@ -212,7 +270,7 @@ export default function CheckoutPage() {
 
   if (!order) return null
 
-  const qrUrl = buildQRUrl()
+  const payosReady = payos && payos.error === null && payos.qrCode
 
   return (
     <main style={{ padding: '48px 56px', minHeight: '100vh' }}>
@@ -253,7 +311,6 @@ export default function CheckoutPage() {
               {t('checkout.summary.heading')}
             </h2>
 
-            {/* Course thumbnail */}
             {order.course?.thumbnail_url ? (
               <img
                 src={order.course.thumbnail_url}
@@ -280,7 +337,6 @@ export default function CheckoutPage() {
               </div>
             )}
 
-            {/* Course title */}
             <div>
               <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink-1)', lineHeight: 1.3 }}>
                 {order.course?.title ?? ''}
@@ -289,7 +345,6 @@ export default function CheckoutPage() {
 
             <div style={{ height: 1, background: 'var(--border)' }} />
 
-            {/* Price rows */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
                 <span style={{ color: 'var(--ink-2)' }}>{t('checkout.summary.price')}</span>
@@ -301,7 +356,6 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* Order code */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>{t('checkout.summary.orderCode')}</span>
               <span style={{ fontFamily: 'monospace', fontSize: 13, color: 'var(--ink-1)', fontWeight: 500 }}>
@@ -310,7 +364,7 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          {/* Right: QR + transfer info */}
+          {/* Right: PayOS QR + bank info */}
           <div
             style={{
               background: 'var(--surface)',
@@ -326,36 +380,63 @@ export default function CheckoutPage() {
               {t('checkout.qr.heading')}
             </h2>
 
-            {/* VietQR image or fallback */}
-            {qrUrl ? (
-              <img
-                data-testid="vietqr-image"
-                src={qrUrl}
-                alt="VietQR"
-                width={220}
-                height={220}
-                style={{ display: 'block', margin: '0 auto', borderRadius: 'var(--r-md)' }}
-                onError={e => {
-                  const target = e.currentTarget
-                  target.style.display = 'none'
-                  const fallback = target.nextElementSibling as HTMLElement | null
-                  if (fallback) fallback.style.display = 'block'
+            {payosLoading && !payos && (
+              <div
+                data-testid="payos-loading"
+                style={{ width: 240, height: 240, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <div style={{ width: 32, height: 32, border: '3px solid var(--border)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+              </div>
+            )}
+
+            {payos && payos.error && (
+              <div
+                data-testid="payos-error"
+                style={{
+                  padding: 16,
+                  background: 'var(--danger-soft)',
+                  border: '1px solid var(--danger-border)',
+                  borderRadius: 'var(--r-md)',
+                  fontSize: 13,
+                  color: 'var(--danger)',
                 }}
-              />
-            ) : null}
+              >
+                {t('checkout.payos.error')}
+              </div>
+            )}
 
-            {/* Bank info fallback — shown when qrUrl is null or image errors */}
-            <div
-              data-testid="bank-info-fallback"
-              style={{ display: qrUrl ? 'none' : 'block' }}
-            >
-              <p style={{ fontSize: 13, color: 'var(--ink-2)', margin: 0 }}>
-                {t('checkout.qr.fallback')}
+            {payosReady && (
+              <div
+                data-testid="payos-qr"
+                aria-label="PayOS QR"
+                style={{
+                  width: QR_SIZE_PX,
+                  height: QR_SIZE_PX,
+                  margin: '0 auto',
+                  padding: 8,
+                  background: '#fff',
+                  borderRadius: 'var(--r-md)',
+                  boxSizing: 'border-box',
+                }}
+              >
+                <QRCode
+                  value={payos!.qrCode!}
+                  size={QR_SIZE_PX - 16}
+                  level={QR_ECC_LEVEL}
+                  bgColor="#ffffff"
+                  fgColor="#000000"
+                  style={{ display: 'block', width: '100%', height: '100%' }}
+                />
+              </div>
+            )}
+
+            {payosReady && (
+              <p style={{ fontSize: 12.5, color: 'var(--ink-2)', margin: 0, textAlign: 'center' }}>
+                {t('checkout.qr.scanInstruction')}
               </p>
-            </div>
+            )}
 
-            {/* Bank details */}
-            {bank && (
+            {payosReady && (
               <div
                 style={{
                   background: 'var(--surface-2)',
@@ -366,32 +447,26 @@ export default function CheckoutPage() {
                   gap: 8,
                 }}
               >
-                {bank.short_name && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                    <span style={{ color: 'var(--ink-3)' }}>{t('checkout.bank.bankName')}</span>
-                    <span style={{ color: 'var(--ink-1)', fontWeight: 500 }}>{bank.short_name}</span>
-                  </div>
-                )}
-                {bank.account_number && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                    <span style={{ color: 'var(--ink-3)' }}>{t('checkout.bank.accountNumber')}</span>
-                    <span style={{ color: 'var(--ink-1)', fontWeight: 500 }}>{bank.account_number}</span>
-                  </div>
-                )}
-                {bank.account_name && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                    <span style={{ color: 'var(--ink-3)' }}>{t('checkout.bank.accountName')}</span>
-                    <span style={{ color: 'var(--ink-1)', fontWeight: 500 }}>{bank.account_name}</span>
-                  </div>
-                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                  <span style={{ color: 'var(--ink-3)' }}>{t('checkout.bank.accountNumber')}</span>
+                  <span style={{ color: 'var(--ink-1)', fontWeight: 500 }}>{payos!.accountNumber}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                  <span style={{ color: 'var(--ink-3)' }}>{t('checkout.bank.accountName')}</span>
+                  <span style={{ color: 'var(--ink-1)', fontWeight: 500 }}>{payos!.accountName}</span>
+                </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
                   <span style={{ color: 'var(--ink-3)' }}>{t('checkout.bank.amount')}</span>
                   <span style={{ color: 'var(--ink-1)', fontWeight: 500 }}>{formatVnd(order.amount)}</span>
                 </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                  <span style={{ color: 'var(--ink-3)' }}>{t('checkout.bank.note')}</span>
+                  <span style={{ fontFamily: 'monospace', color: 'var(--ink-1)', fontWeight: 500 }}>{payos!.description}</span>
+                </div>
               </div>
             )}
 
-            {/* Warning note + copy order code */}
+            {/* Order code copy */}
             <div
               style={{
                 background: 'var(--warning-soft)',
@@ -404,7 +479,7 @@ export default function CheckoutPage() {
               }}
             >
               <p style={{ fontSize: 12.5, color: 'var(--warning)', margin: 0, lineHeight: 1.55 }}>
-                {t('checkout.noteWarning')}
+                {t('checkout.exactAmountNotice')}
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <code style={{ fontFamily: 'monospace', fontSize: 13, color: 'var(--ink-1)', fontWeight: 600 }}>
@@ -421,10 +496,35 @@ export default function CheckoutPage() {
                 </button>
               </div>
             </div>
+
+            {/* Polling status zone */}
+            <div
+              data-testid="payos-status-zone"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '10px 14px',
+                background: 'var(--surface-2)',
+                borderRadius: 'var(--r-md)',
+              }}
+            >
+              <div
+                style={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: '50%',
+                  background: 'var(--accent)',
+                  animation: 'pulse 1.4s ease-in-out infinite',
+                }}
+              />
+              <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>
+                {t('checkout.statusWaiting')}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Cancel error message */}
         {cancelError && (
           <div
             data-testid="cancel-error"
@@ -442,7 +542,7 @@ export default function CheckoutPage() {
           </div>
         )}
 
-        {/* Action footer */}
+        {/* Action footer — no "Tôi đã thanh toán"; cancel is the only action */}
         <div style={{ display: 'flex', gap: 12, marginTop: 24, justifyContent: 'flex-end' }}>
           <button
             type="button"
@@ -450,20 +550,6 @@ export default function CheckoutPage() {
             onClick={() => setShowCancel(true)}
           >
             {t('checkout.action.cancel')}
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => navigate(`/courses/${order.course_id}`)}
-          >
-            {t('checkout.action.notPaidYet')}
-          </button>
-          <button
-            type="button"
-            className="btn btn-accent"
-            onClick={() => navigate(`/checkout/${order.id}/awaiting`)}
-          >
-            {t('checkout.action.iPaid')}
           </button>
         </div>
       </div>

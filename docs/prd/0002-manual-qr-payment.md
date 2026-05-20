@@ -284,7 +284,7 @@ Mục tiêu đo: median time-to-confirm, % đơn pending → cancelled, % đơn 
 | # | Question | Decision | Rationale |
 |---|----------|----------|-----------|
 | **D1** | Bank info config quản lý ra sao? | **Admin settings UI ngay** (`/admin/settings` tab Thanh toán) | Admin không cần biết SQL; QR sai → người vận hành tự sửa được. Tab khác thêm sau. |
-| **D2** | Đơn pending có TTL? | **Không TTL Phase 2** | Admin tự quản lý, đơn pending để mãi tới khi xử lý. Cron auto-cancel làm sau khi có volume. |
+| **D2** | Đơn pending có TTL? | ~~**Không TTL Phase 2**~~ — **Lifted by PRD-0005 (2026-05-19): TTL 24h, cron 30 phút** | Manual-flow rationale ("admin tự quản lý") không còn hợp lệ khi PayOS auto-confirm; orphan pending = noise. |
 | **D3** | Awaiting page polling hay realtime? | **Polling 30s** | 2 req/phút/Learner đang chờ — chấp nhận được volume Phase 2. Tránh phụ thuộc Realtime quota. |
 | **D4** | Hiển thị queue indicator (số đơn pending trước)? | **Không** | Copy "~6h" đủ. Hiện count có thể gây lo lắng nếu queue dài. Defer hẳn. |
 | **D5** | Admin confirm có gửi email cho Learner? | **Không (defer)** | Tuân thủ CLAUDE.md D-14 — email là low priority cho tới khi notification system có. |

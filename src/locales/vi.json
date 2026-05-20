@@ -12,6 +12,7 @@
     "myProfile": "Hồ sơ của tôi",
     "profile": "Hồ sơ",
     "orders": "Lịch sử đơn hàng",
+    "ordersUnreadAriaLabel": "Có cập nhật đơn hàng mới",
     "dashboard": "Bảng điều khiển",
     "creatorStudio": "Creator Studio",
     "creatorPayoutSettings": "Thông tin thanh toán",
@@ -189,8 +190,41 @@
       "creatorApplications": "Đơn đăng ký creator",
       "creatorFees": "Override creator",
       "tiers": "Gói tài khoản",
-      "reports": "Báo cáo",
-      "settings": "Cài đặt"
+      "payouts": "Chi trả creator",
+      "reports": "Báo cáo"
+    },
+    "payouts": {
+      "pageTitle": "Chi trả creator",
+      "pendingHeading": "Cần chi trả",
+      "exportCsv": "Xuất CSV",
+      "exporting": "Đang xuất…",
+      "empty": "Không có khoản chi trả nào đang chờ.",
+      "colCreator": "Creator",
+      "colBank": "Ngân hàng",
+      "colAccount": "Số tài khoản",
+      "colAmount": "Số tiền",
+      "colOrders": "Số đơn",
+      "colActions": "",
+      "markComplete": "Đánh dấu hoàn tất",
+      "missingPayoutInfo": {
+        "heading": "Chưa có thông tin thanh toán",
+        "body": "Các creator dưới đây có số dư chờ chi trả nhưng chưa cung cấp thông tin ngân hàng. Hãy liên hệ để hoàn tất.",
+        "colCreator": "Creator",
+        "colPendingBalance": "Số dư chờ"
+      },
+      "markCompleteDialog": {
+        "title": "Đánh dấu payout hoàn tất",
+        "body": "Nhập mã giao dịch ngân hàng đã chuyển thành công cho",
+        "referenceLabel": "Mã giao dịch ngân hàng",
+        "referencePlaceholder": "Ví dụ: FT26139ABC123",
+        "cancel": "Đóng",
+        "confirm": "Xác nhận",
+        "saving": "Đang lưu…",
+        "error": "Không thể đánh dấu hoàn tất. Vui lòng thử lại."
+      },
+      "exportError": "Không thể xuất CSV. Vui lòng thử lại.",
+      "actionSuccess": "Đã cập nhật payout",
+      "loadError": "Không thể tải danh sách payout."
     },
     "creatorApplications": {
       "pageTitle": "Đơn đăng ký creator",
@@ -346,18 +380,56 @@
       "pageTitle": "Đơn hàng",
       "tab": {
         "pending": "Đơn chờ duyệt",
+        "stale": "Cần can thiệp",
+        "refund": "Cần refund",
         "all": "Tất cả đơn"
+      },
+      "refund": {
+        "colPayer": "Người chuyển",
+        "colBank": "Ngân hàng",
+        "colAmount": "Số tiền",
+        "colPaidAt": "Ngày chuyển",
+        "actionMarkRefunded": "Đánh dấu hoàn tiền",
+        "dialogTitle": "Đánh dấu đã hoàn tiền",
+        "dialogBody": "Sau khi chuyển khoản hoàn tiền cho người mua, nhập mã giao dịch ngân hàng để hoàn tất.",
+        "referenceLabel": "Mã giao dịch hoàn tiền",
+        "referencePlaceholder": "Ví dụ: TF260519123456",
+        "cancel": "Huỷ",
+        "confirm": "Xác nhận",
+        "toastSuccess": "Đã đánh dấu hoàn tiền",
+        "errors": {
+          "referenceRequired": "Vui lòng nhập mã giao dịch",
+          "submitFailed": "Không thể đánh dấu hoàn tiền. Vui lòng thử lại."
+        }
+      },
+      "manualConfirm": {
+        "action": "Xác nhận thủ công",
+        "dialogTitle": "Xác nhận thanh toán thủ công",
+        "dialogBody": "Bạn đang xác nhận thủ công đơn",
+        "reasonLabel": "Lý do xác nhận thủ công",
+        "reasonPlaceholder": "Webhook PayOS không trả về dù bank statement confirm chuyển khoản OK",
+        "reasonRowLabel": "Lý do XN thủ công",
+        "cancel": "Huỷ",
+        "confirm": "Xác nhận",
+        "toastSuccess": "Đơn đã được xác nhận thủ công",
+        "errors": {
+          "reasonRequired": "Vui lòng nhập lý do"
+        }
       },
       "filter": {
         "all": "Tất cả trạng thái",
         "pending": "Đang chờ",
         "active": "Đã thanh toán",
+        "expired": "Hết hạn",
         "cancelled": "Đã huỷ"
       },
       "status": {
         "pending": "Chờ duyệt",
         "active": "Đã thanh toán",
-        "cancelled": "Đã huỷ"
+        "expired": "Hết hạn",
+        "cancelled": "Đã huỷ",
+        "refund_pending": "Đang hoàn tiền",
+        "refunded": "Đã hoàn tiền"
       },
       "searchPlaceholder": "Tìm theo mã đơn hoặc email…",
       "colCode": "Mã đơn",
@@ -368,7 +440,6 @@
       "colCreated": "Tạo lúc",
       "colStatus": "Trạng thái",
       "empty": "Không có đơn nào.",
-      "confirm": "Xác nhận",
       "cancel": "Huỷ đơn",
       "menu": "Mở menu",
       "actionSuccess": "Đã cập nhật đơn",
@@ -414,24 +485,6 @@
     "forbidden": {
       "title": "403 — Không có quyền truy cập",
       "body": "Bạn không có quyền truy cập trang này."
-    },
-    "settings": {
-      "title": "Cài đặt",
-      "payment": {
-        "tabLabel": "Thanh toán",
-        "cardTitle": "Thông tin chuyển khoản",
-        "bankShortName": "Mã ngân hàng (VietQR)",
-        "bin": "BIN ngân hàng (6 chữ số)",
-        "accountNumber": "Số tài khoản",
-        "accountName": "Tên chủ tài khoản",
-        "preview": "Xem trước mã QR",
-        "save": "Lưu",
-        "saved": "Đã lưu thông tin thanh toán",
-        "saveError": "Không thể lưu. Vui lòng thử lại.",
-        "validation": {
-          "binFormat": "BIN phải gồm đúng 6 chữ số."
-        }
-      }
     },
     "comingSoon": "Sắp ra mắt"
   },
@@ -500,6 +553,28 @@
         "heading": "Đơn nâng cấp đang chờ duyệt",
         "body": "Chúng tôi đang xem xét đơn của bạn. Bạn sẽ nhận được thông báo khi đơn được duyệt.",
         "btn": "Xem đơn"
+      }
+    },
+    "revenue": {
+      "tabLabel": "Doanh thu",
+      "pendingBalance": "Số dư chờ chi trả",
+      "lifetimeEarnings": "Tổng doanh thu",
+      "cadenceCaption": "Payout xử lý vào thứ Hai hàng tuần",
+      "recentEarnings": {
+        "heading": "Doanh thu gần đây",
+        "colCourse": "Khóa học",
+        "colBuyer": "Học viên",
+        "colAmount": "Bạn nhận",
+        "colDate": "Ngày",
+        "empty": "Chưa có doanh thu nào"
+      },
+      "payoutHistory": {
+        "heading": "Lịch sử payout",
+        "colDate": "Ngày",
+        "colAmount": "Số tiền",
+        "colBank": "Ngân hàng",
+        "colReference": "Mã giao dịch",
+        "empty": "Chưa có payout nào"
       }
     },
     "settings": {
@@ -1002,13 +1077,18 @@
         "all": "Tất cả",
         "active": "Đã thanh toán",
         "pending": "Đang chờ",
+        "expired": "Hết hạn",
         "cancelled": "Đã huỷ"
       },
       "status": {
         "active": "Đã thanh toán",
         "pending": "Đang chờ",
-        "cancelled": "Đã huỷ"
+        "expired": "Hết hạn",
+        "cancelled": "Đã huỷ",
+        "refund_pending": "Đang hoàn tiền",
+        "refunded": "Đã hoàn tiền"
       },
+      "refundPendingTooltip": "Admin sẽ chuyển khoản lại trong 3–7 ngày",
       "colCode": "Mã đơn",
       "colCourse": "Khoá học",
       "colAmount": "Số tiền",
@@ -1017,6 +1097,7 @@
       "free": "Miễn phí",
       "actionLearn": "Vào học",
       "actionCheckout": "Xem hướng dẫn thanh toán",
+      "actionReorder": "Mua lại",
       "actionShowReason": "Xem lý do",
       "actionHideReason": "Ẩn lý do",
       "cancelByOwner": "Bạn đã huỷ đơn này",
@@ -1044,23 +1125,24 @@
       "orderCode": "Mã đơn hàng"
     },
     "qr": {
-      "heading": "Quét để thanh toán",
-      "fallback": "Thông tin chuyển khoản"
+      "heading": "Quét mã QR để thanh toán",
+      "scanInstruction": "Quét mã QR bằng app ngân hàng của bạn"
     },
     "bank": {
-      "bankName": "Ngân hàng",
       "accountNumber": "Số tài khoản",
       "accountName": "Tên tài khoản",
       "amount": "Số tiền",
       "note": "Nội dung chuyển khoản"
     },
-    "noteWarning": "Vui lòng nhập đúng mã đơn hàng vào nội dung chuyển khoản để được xác nhận nhanh hơn.",
+    "exactAmountNotice": "Vui lòng chuyển đúng số tiền và giữ nguyên nội dung chuyển khoản. Đơn hàng sẽ tự động kích hoạt sau khi PayOS xác nhận giao dịch.",
+    "statusWaiting": "Đang chờ thanh toán…",
     "copyOrderCode": "Sao chép mã đơn",
     "copied": "Đã sao chép",
     "action": {
-      "iPaid": "Tôi đã thanh toán",
-      "notPaidYet": "Tôi chưa thanh toán",
       "cancel": "Huỷ đơn"
+    },
+    "payos": {
+      "error": "Không thể tạo mã thanh toán. Vui lòng thử lại sau hoặc liên hệ hỗ trợ."
     },
     "cancelDialog": {
       "title": "Huỷ đơn này?",
@@ -1070,17 +1152,7 @@
       "back": "Không, giữ lại"
     },
     "notFound": "Đơn hàng không tồn tại hoặc không thuộc về bạn.",
-    "loadingError": "Không thể tải thông tin đơn hàng.",
-    "awaiting": {
-      "title": "Đang chờ admin xác minh",
-      "body": "Chúng tôi đã ghi nhận thanh toán của bạn. Admin sẽ xác minh trong khoảng 6 giờ và mở khoá khoá học cho bạn.",
-      "orderCode": "Mã đơn hàng",
-      "course": "Khoá học",
-      "amount": "Số tiền",
-      "goHome": "Về trang chủ",
-      "viewOrders": "Xem trong lịch sử đơn",
-      "cancelledDefault": "Đơn hàng đã bị huỷ."
-    }
+    "loadingError": "Không thể tải thông tin đơn hàng."
   },
   "guidedPlayer": {
     "eyebrow": "BÀI {{current}} / {{total}}",

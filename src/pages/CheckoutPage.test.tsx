@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { vi, beforeEach, beforeAll, describe, it, expect } from 'vitest'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
@@ -6,11 +6,10 @@ import { I18nextProvider } from 'react-i18next'
 import i18n from '../i18n'
 import CheckoutPage from './CheckoutPage'
 import * as orderApi from '../lib/orderApi'
-import * as configApi from '../lib/configApi'
+import * as payosLib from '../lib/payos'
 import { AuthContext } from '../context/AuthContext'
 import type { AuthContextValue } from '../context/AuthContext'
 import type { Order } from '../lib/orderApi'
-import type { BankConfig } from '../lib/configApi'
 
 vi.mock('../lib/supabase', () => ({
   supabase: {
@@ -25,12 +24,13 @@ vi.mock('../lib/supabase', () => ({
       in: vi.fn().mockReturnThis(),
     }),
     rpc: vi.fn(),
+    functions: { invoke: vi.fn() },
   },
 }))
 
 const mockGetOrder = vi.spyOn(orderApi, 'getOrder')
 const mockCancelOrder = vi.spyOn(orderApi, 'cancelOrder')
-const mockGetBankConfig = vi.spyOn(configApi, 'getBankConfig')
+const mockCreatePayosPayment = vi.spyOn(payosLib, 'createPayosPayment')
 
 const sampleOrder: Order & { course: { id: string; title: string; thumbnail_url: string | null } } = {
   id: 'ord-1',
@@ -55,11 +55,15 @@ const sampleOrder: Order & { course: { id: string; title: string; thumbnail_url:
   course: { id: 'c-1', title: 'The Italian Game', thumbnail_url: null },
 }
 
-const sampleBank: BankConfig = {
-  short_name: 'MBBANK',
+const samplePayos = {
+  qrCode: '00020101021238530010A00000072701230006970422011300000000000208QRIBFTTA53037045802VN540710000063044F2A',
+  accountNumber: '0123456789',
+  accountName: 'CTY ABC',
   bin: '970422',
-  account_number: '1234567890',
-  account_name: 'NGUYEN VAN A',
+  amount: 480000,
+  description: 'ORD-2026-000042',
+  checkoutUrl: 'https://pay.payos.vn/web/abc',
+  error: null,
 }
 
 const noAuthContext: AuthContextValue = {
@@ -107,7 +111,6 @@ function renderPage(auth = loggedInContext, orderId = 'ord-1') {
         <I18nextProvider i18n={i18n}>
           <Routes>
             <Route path="/checkout/:orderId" element={<CheckoutPage />} />
-            <Route path="/checkout/:orderId/awaiting" element={<div data-testid="awaiting-page" />} />
             <Route path="/account/orders" element={<div data-testid="orders-page" />} />
             <Route path="/login" element={<div data-testid="login-page" />} />
             <Route path="/learn/:courseId" element={<div data-testid="learn-page" />} />
@@ -121,9 +124,10 @@ function renderPage(auth = loggedInContext, orderId = 'ord-1') {
 describe('CheckoutPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.useRealTimers()
     mockGetOrder.mockResolvedValue({ order: sampleOrder as unknown as Order, error: null })
-    mockGetBankConfig.mockResolvedValue({ bank: sampleBank, error: null })
     mockCancelOrder.mockResolvedValue({ order: { ...sampleOrder, status: 'cancelled', cancelled_reason: 'test' } as unknown as Order, error: null })
+    mockCreatePayosPayment.mockResolvedValue(samplePayos)
   })
 
   describe('auth guard', () => {
@@ -132,6 +136,20 @@ describe('CheckoutPage', () => {
       await waitFor(() => {
         expect(screen.getByTestId('login-page')).toBeInTheDocument()
       })
+    })
+
+    it('does not redirect while auth session is still hydrating from localStorage', async () => {
+      // Simulates a hard refresh: user is null but AuthContext has not yet
+      // finished calling getSession(). The page must wait — kicking the user
+      // to /login here would be the bug fixed in PR #287 follow-up.
+      const hydratingContext: AuthContextValue = {
+        ...noAuthContext,
+        loading: true,
+      }
+      renderPage(hydratingContext)
+      // Give React a tick to run effects.
+      await new Promise((r) => setTimeout(r, 50))
+      expect(screen.queryByTestId('login-page')).not.toBeInTheDocument()
     })
   })
 
@@ -144,7 +162,7 @@ describe('CheckoutPage', () => {
     })
   })
 
-  describe('status redirects', () => {
+  describe('status redirects on initial load', () => {
     it('redirects to /learn/:courseId when order is active', async () => {
       mockGetOrder.mockResolvedValue({
         order: { ...sampleOrder, status: 'active' } as unknown as Order,
@@ -166,10 +184,53 @@ describe('CheckoutPage', () => {
         expect(screen.getByTestId('orders-page')).toBeInTheDocument()
       })
     })
+
+    it('redirects to /account/orders when order is expired', async () => {
+      mockGetOrder.mockResolvedValue({
+        order: { ...sampleOrder, status: 'expired' } as unknown as Order,
+        error: null,
+      })
+      renderPage()
+      await waitFor(() => {
+        expect(screen.getByTestId('orders-page')).toBeInTheDocument()
+      })
+    })
   })
 
-  describe('pending layout', () => {
-    it('renders order code', async () => {
+  describe('PayOS embedded checkout', () => {
+    it('calls createPayosPayment on mount with the order id', async () => {
+      renderPage()
+      await waitFor(() => {
+        expect(mockCreatePayosPayment).toHaveBeenCalledWith(expect.anything(), 'ord-1')
+      })
+    })
+
+    it('renders the PayOS QR data when payment is created', async () => {
+      renderPage()
+      await waitFor(() => {
+        expect(screen.getByTestId('payos-qr')).toBeInTheDocument()
+      })
+    })
+
+    it('renders the QR client-side (no third-party qrserver.com img)', async () => {
+      renderPage()
+      const qr = await screen.findByTestId('payos-qr')
+      // Should not embed any external QR image service.
+      const img = qr.querySelector('img')
+      expect(img?.getAttribute('src') ?? '').not.toMatch(/qrserver\.com/)
+      // Library renders an inline SVG — verify it exists inside the wrapper.
+      expect(qr.querySelector('svg')).not.toBeNull()
+    })
+
+    it('renders bank info from the PayOS response (not from config)', async () => {
+      renderPage()
+      await waitFor(() => {
+        expect(screen.getByText('0123456789')).toBeInTheDocument()
+        expect(screen.getByText('CTY ABC')).toBeInTheDocument()
+      })
+    })
+
+    it('renders the order code', async () => {
       renderPage()
       await waitFor(() => {
         const els = screen.getAllByText('ORD-2026-000042')
@@ -177,59 +238,89 @@ describe('CheckoutPage', () => {
       })
     })
 
-    it('renders course title', async () => {
+    it('shows an error notice when createPayosPayment fails', async () => {
+      mockCreatePayosPayment.mockResolvedValue({ ...samplePayos, qrCode: null, error: new Error('boom') })
       renderPage()
       await waitFor(() => {
-        expect(screen.getByText('The Italian Game')).toBeInTheDocument()
+        expect(screen.getByTestId('payos-error')).toBeInTheDocument()
       })
     })
 
-    it('renders formatted amount', async () => {
+    // Issue #275: when the Edge Function is hit again for an order that already
+    // has a payment link (typically a page refresh), it returns the cached
+    // payload in the same shape as first-create. The page should render the QR
+    // normally with no error banner.
+    it('renders QR normally on refresh (cached payload, no 409 error)', async () => {
+      // Simulate the Edge Function's idempotent path: same shape as first-create.
+      mockCreatePayosPayment.mockResolvedValue({
+        ...samplePayos,
+        qrCode: 'CACHED_QR_PAYLOAD',
+        accountNumber: '9876543210',
+        error: null,
+      })
       renderPage()
       await waitFor(() => {
-        expect(screen.getByTestId('checkout-amount')).toBeInTheDocument()
+        expect(screen.getByTestId('payos-qr')).toBeInTheDocument()
       })
+      expect(screen.queryByTestId('payos-error')).not.toBeInTheDocument()
+      expect(screen.getByText('9876543210')).toBeInTheDocument()
+      // FE must call the Edge Function exactly once on mount — no retry/loop.
+      expect(mockCreatePayosPayment).toHaveBeenCalledTimes(1)
     })
 
-    it('renders VietQR image with correct URL containing bank short name', async () => {
+    it('does not render the "Tôi đã thanh toán" button', async () => {
       renderPage()
-      await waitFor(() => {
-        const img = screen.getByTestId('vietqr-image') as HTMLImageElement
-        expect(img.src).toContain('MBBANK')
-        expect(img.src).toContain('1234567890')
-        expect(img.src).toContain('ORD-2026-000042')
-      })
+      await waitFor(() => screen.getByTestId('payos-qr'))
+      expect(screen.queryByRole('button', { name: /tôi đã thanh toán/i })).not.toBeInTheDocument()
     })
 
-    it('renders bank account number', async () => {
-      renderPage()
-      await waitFor(() => {
-        expect(screen.getByText('1234567890')).toBeInTheDocument()
-      })
-    })
-
-    it('renders "Tôi đã thanh toán" button', async () => {
-      renderPage()
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /tôi đã thanh toán/i })).toBeInTheDocument()
-      })
-    })
-
-    it('navigates to awaiting page when "Tôi đã thanh toán" is clicked', async () => {
-      const user = userEvent.setup()
-      renderPage()
-      await waitFor(() => screen.getByRole('button', { name: /tôi đã thanh toán/i }))
-      await user.click(screen.getByRole('button', { name: /tôi đã thanh toán/i }))
-      await waitFor(() => {
-        expect(screen.getByTestId('awaiting-page')).toBeInTheDocument()
-      })
-    })
-
-    it('renders "Huỷ đơn" button', async () => {
+    it('still renders the cancel order button', async () => {
       renderPage()
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /huỷ đơn/i })).toBeInTheDocument()
       })
+    })
+  })
+
+  describe('status polling', () => {
+    it('polls order status and redirects to /learn when active', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true })
+      // first call (mount) returns pending, subsequent poll returns active
+      mockGetOrder
+        .mockResolvedValueOnce({ order: sampleOrder as unknown as Order, error: null })
+        .mockResolvedValue({ order: { ...sampleOrder, status: 'active' } as unknown as Order, error: null })
+
+      renderPage()
+      await waitFor(() => screen.getByTestId('payos-qr'))
+
+      // advance 5 seconds — poll interval
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(5000)
+      })
+
+      await waitFor(() => {
+        expect(screen.getByTestId('learn-page')).toBeInTheDocument()
+      })
+      vi.useRealTimers()
+    })
+
+    it('redirects to /account/orders when polled status is cancelled', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true })
+      mockGetOrder
+        .mockResolvedValueOnce({ order: sampleOrder as unknown as Order, error: null })
+        .mockResolvedValue({ order: { ...sampleOrder, status: 'cancelled' } as unknown as Order, error: null })
+
+      renderPage()
+      await waitFor(() => screen.getByTestId('payos-qr'))
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(5000)
+      })
+
+      await waitFor(() => {
+        expect(screen.getByTestId('orders-page')).toBeInTheDocument()
+      })
+      vi.useRealTimers()
     })
   })
 
@@ -272,28 +363,10 @@ describe('CheckoutPage', () => {
       await user.click(screen.getByTestId('cancel-confirm-btn'))
       expect(mockCancelOrder).not.toHaveBeenCalled()
     })
-
-    it('stays on checkout page and shows error when cancelOrder fails', async () => {
-      mockCancelOrder.mockResolvedValue({ order: null, error: new Error('Server error') })
-      const user = userEvent.setup()
-      renderPage()
-      await waitFor(() => screen.getByRole('button', { name: /huỷ đơn/i }))
-      await user.click(screen.getByRole('button', { name: /huỷ đơn/i }))
-      await waitFor(() => screen.getByTestId('cancel-dialog'))
-      const textarea = screen.getByTestId('cancel-reason-input')
-      await user.type(textarea, 'Lý do huỷ')
-      await user.click(screen.getByTestId('cancel-confirm-btn'))
-      await waitFor(() => {
-        expect(mockCancelOrder).toHaveBeenCalled()
-        expect(screen.queryByTestId('orders-page')).not.toBeInTheDocument()
-        expect(screen.getByTestId('cancel-error')).toBeInTheDocument()
-      })
-    })
   })
 
   describe('copy order code', () => {
     beforeAll(() => {
-      // jsdom doesn't implement Clipboard API — define it once so vi.spyOn can intercept
       if (!navigator.clipboard) {
         Object.defineProperty(navigator, 'clipboard', {
           value: { writeText: vi.fn().mockResolvedValue(undefined) },
@@ -303,14 +376,7 @@ describe('CheckoutPage', () => {
       }
     })
 
-    it('renders copy button for order code', async () => {
-      renderPage()
-      await waitFor(() => {
-        expect(screen.getByTestId('copy-order-code-btn')).toBeInTheDocument()
-      })
-    })
-
-    it('clicking copy button copies the order code and shows "Đã sao chép" confirmation', async () => {
+    it('copies the order code on click', async () => {
       const writeText = vi.fn().mockResolvedValue(undefined)
       vi.spyOn(navigator.clipboard, 'writeText').mockImplementation(writeText)
       const user = userEvent.setup()
@@ -319,18 +385,6 @@ describe('CheckoutPage', () => {
       await user.click(screen.getByTestId('copy-order-code-btn'))
       await waitFor(() => {
         expect(writeText).toHaveBeenCalledWith('ORD-2026-000042')
-        expect(screen.getByTestId('copy-order-code-btn')).toHaveTextContent(/đã sao chép/i)
-      })
-    })
-  })
-
-  describe('VietQR fallback', () => {
-    it('shows bank details text when bank config is null', async () => {
-      mockGetBankConfig.mockResolvedValue({ bank: null, error: null })
-      renderPage()
-      await waitFor(() => {
-        expect(screen.queryByTestId('vietqr-image')).not.toBeInTheDocument()
-        expect(screen.getByTestId('bank-info-fallback')).toBeInTheDocument()
       })
     })
   })

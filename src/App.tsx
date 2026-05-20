@@ -11,7 +11,7 @@ import AdminOrdersPage from './pages/admin/AdminOrdersPage'
 import AdminCreatorApplicationsPage from './pages/admin/AdminCreatorApplicationsPage'
 import AdminCreatorFeesPage from './pages/admin/AdminCreatorFeesPage'
 import AdminTiersPage from './pages/admin/AdminTiersPage'
-import AdminSettingsPage from './pages/admin/AdminSettingsPage'
+import AdminPayoutsPage from './pages/admin/AdminPayoutsPage'
 import AdminComingSoonPage from './pages/admin/AdminComingSoonPage'
 import ProtectedCreatorRoute from './components/creator/ProtectedCreatorRoute'
 import CreatorLayout from './components/creator/CreatorLayout'
@@ -37,7 +37,6 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import CheckEmailPage from './pages/CheckEmailPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import CheckoutPage from './pages/CheckoutPage'
-import CheckoutAwaitingPage from './pages/CheckoutAwaitingPage'
 
 function PublicShell() {
   return (
@@ -64,8 +63,8 @@ export default function App() {
             <Route path="creator-applications" element={<AdminCreatorApplicationsPage />} />
             <Route path="creators/fees" element={<AdminCreatorFeesPage />} />
             <Route path="tiers" element={<AdminTiersPage />} />
+            <Route path="payouts" element={<AdminPayoutsPage />} />
             <Route path="reports" element={<AdminReportsPage />} />
-            <Route path="settings" element={<AdminSettingsPage />} />
             <Route path="*" element={<AdminComingSoonPage />} />
           </Route>
         </Route>
@@ -102,7 +101,10 @@ export default function App() {
           <Route path="/register-business" element={<BecomeCreatorPage />} />
           <Route path="/courses/:courseId" element={<CourseDetailPage />} />
           <Route path="/checkout/:orderId" element={<CheckoutPage />} />
-          <Route path="/checkout/:orderId/awaiting" element={<CheckoutAwaitingPage />} />
+          {/* Awaiting page removed in slice 1b of PRD-0005 — embedded checkout polls
+              status inline. Keep alias redirect so old URLs from emails / pasted
+              links land on the new flow rather than 404. */}
+          <Route path="/checkout/:orderId/awaiting" element={<Navigate to="../" replace relative="path" />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/help" element={<HelpPage />} />

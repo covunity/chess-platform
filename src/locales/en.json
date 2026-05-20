@@ -7,6 +7,7 @@
     "logout": "Log out",
     "myProfile": "My profile",
     "orders": "Order history",
+    "ordersUnreadAriaLabel": "There are new order updates",
     "dashboard": "Dashboard",
     "creatorStudio": "Creator Studio",
     "admin": "Admin",
@@ -72,8 +73,7 @@
       "orders": "Orders",
       "users": "Users",
       "creatorApplications": "Creator applications",
-      "reports": "Reports",
-      "settings": "Settings"
+      "reports": "Reports"
     },
     "creatorApplications": {
       "pageTitle": "Creator applications",
@@ -101,18 +101,42 @@
       "pageTitle": "Orders",
       "tab": {
         "pending": "Pending",
+        "stale": "Needs attention",
+        "refund": "Needs refund",
         "all": "All orders"
+      },
+      "refund": {
+        "colPayer": "Payer",
+        "colBank": "Bank",
+        "colAmount": "Amount",
+        "colPaidAt": "Paid at",
+        "actionMarkRefunded": "Mark refunded",
+        "dialogTitle": "Mark as refunded",
+        "dialogBody": "After transferring the refund back to the buyer, enter the bank transaction reference to finalize.",
+        "referenceLabel": "Refund reference",
+        "referencePlaceholder": "e.g. TF260519123456",
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "toastSuccess": "Marked as refunded",
+        "errors": {
+          "referenceRequired": "Please enter a reference",
+          "submitFailed": "Couldn't mark as refunded. Please try again."
+        }
       },
       "filter": {
         "all": "All statuses",
         "pending": "Pending",
         "active": "Paid",
+        "expired": "Expired",
         "cancelled": "Cancelled"
       },
       "status": {
         "pending": "Pending",
         "active": "Paid",
-        "cancelled": "Cancelled"
+        "expired": "Expired",
+        "cancelled": "Cancelled",
+        "refund_pending": "Refund pending",
+        "refunded": "Refunded"
       },
       "searchPlaceholder": "Search by order code or email…",
       "colCode": "Order",
@@ -123,7 +147,6 @@
       "colCreated": "Created",
       "colStatus": "Status",
       "empty": "No orders.",
-      "confirm": "Confirm",
       "cancel": "Cancel order",
       "menu": "Open menu",
       "actionSuccess": "Order updated",
@@ -163,24 +186,6 @@
     "forbidden": {
       "title": "403 — Access Denied",
       "body": "You don't have permission to access this page."
-    },
-    "settings": {
-      "title": "Settings",
-      "payment": {
-        "tabLabel": "Payment",
-        "cardTitle": "Bank transfer details",
-        "bankShortName": "VietQR bank short name",
-        "bin": "Bank BIN (6 digits)",
-        "accountNumber": "Account number",
-        "accountName": "Account holder name",
-        "preview": "QR preview",
-        "save": "Save",
-        "saved": "Payment info saved",
-        "saveError": "Couldn't save. Please try again.",
-        "validation": {
-          "binFormat": "BIN must be exactly 6 digits."
-        }
-      }
     },
     "comingSoon": "Coming soon"
   },
@@ -701,13 +706,18 @@
         "all": "All",
         "active": "Paid",
         "pending": "Pending",
+        "expired": "Expired",
         "cancelled": "Cancelled"
       },
       "status": {
         "active": "Paid",
         "pending": "Pending",
-        "cancelled": "Cancelled"
+        "expired": "Expired",
+        "cancelled": "Cancelled",
+        "refund_pending": "Refund pending",
+        "refunded": "Refunded"
       },
+      "refundPendingTooltip": "Admin will transfer your refund back within 3–7 days",
       "colCode": "Order",
       "colCourse": "Course",
       "colAmount": "Amount",
@@ -716,6 +726,7 @@
       "free": "Free",
       "actionLearn": "Open course",
       "actionCheckout": "View payment instructions",
+      "actionReorder": "Buy again",
       "actionShowReason": "Show reason",
       "actionHideReason": "Hide reason",
       "cancelByOwner": "You cancelled this order",
@@ -743,23 +754,24 @@
       "orderCode": "Order code"
     },
     "qr": {
-      "heading": "Scan to pay",
-      "fallback": "Bank transfer details"
+      "heading": "Scan QR to pay",
+      "scanInstruction": "Scan the QR code with your banking app"
     },
     "bank": {
-      "bankName": "Bank",
       "accountNumber": "Account number",
       "accountName": "Account name",
       "amount": "Amount",
       "note": "Transfer note"
     },
-    "noteWarning": "Please enter the order code in the transfer note for faster confirmation.",
+    "exactAmountNotice": "Please transfer the exact amount and keep the note unchanged. Your order will auto-activate once PayOS confirms the transaction.",
+    "statusWaiting": "Waiting for payment…",
     "copyOrderCode": "Copy order code",
     "copied": "Copied",
     "action": {
-      "iPaid": "I have paid",
-      "notPaidYet": "I haven't paid yet",
       "cancel": "Cancel order"
+    },
+    "payos": {
+      "error": "Could not create a payment code. Please try again later or contact support."
     },
     "cancelDialog": {
       "title": "Cancel this order?",
@@ -769,17 +781,7 @@
       "back": "No, keep it"
     },
     "notFound": "Order not found or does not belong to you.",
-    "loadingError": "Unable to load order details.",
-    "awaiting": {
-      "title": "Awaiting admin verification",
-      "body": "We have recorded your payment. Admin will verify within approximately 6 hours and unlock the course for you.",
-      "orderCode": "Order code",
-      "course": "Course",
-      "amount": "Amount",
-      "goHome": "Go to homepage",
-      "viewOrders": "View order history",
-      "cancelledDefault": "Order has been cancelled."
-    }
+    "loadingError": "Unable to load order details."
   },
   "guidedPlayer": {
     "eyebrow": "LESSON {{current}} OF {{total}}",

@@ -9,11 +9,21 @@ import AdminOrdersPage from './AdminOrdersPage'
 const {
   mockListPendingOrders,
   mockListAllOrders,
+  mockListStalePendingOrders,
+  mockGetStalePendingOrderCount,
+  mockListRefundPendingOrders,
+  mockGetRefundPendingOrderCount,
+  mockMarkOrderRefunded,
   mockConfirmOrder,
   mockCancelOrder,
 } = vi.hoisted(() => ({
   mockListPendingOrders: vi.fn(),
   mockListAllOrders: vi.fn(),
+  mockListStalePendingOrders: vi.fn(),
+  mockGetStalePendingOrderCount: vi.fn(),
+  mockListRefundPendingOrders: vi.fn(),
+  mockGetRefundPendingOrderCount: vi.fn(),
+  mockMarkOrderRefunded: vi.fn(),
   mockConfirmOrder: vi.fn(),
   mockCancelOrder: vi.fn(),
 }))
@@ -21,7 +31,12 @@ const {
 vi.mock('../../lib/adminOrdersApi', () => ({
   listPendingOrders: mockListPendingOrders,
   listAllOrders: mockListAllOrders,
+  listStalePendingOrders: mockListStalePendingOrders,
   getPendingOrderCount: vi.fn().mockResolvedValue({ count: 0, error: null }),
+  getStalePendingOrderCount: mockGetStalePendingOrderCount,
+  listRefundPendingOrders: mockListRefundPendingOrders,
+  getRefundPendingOrderCount: mockGetRefundPendingOrderCount,
+  markOrderRefunded: mockMarkOrderRefunded,
 }))
 
 vi.mock('../../lib/orderApi', () => ({
@@ -73,6 +88,14 @@ describe('AdminOrdersPage', () => {
     vi.clearAllMocks()
     mockListPendingOrders.mockResolvedValue({ orders: [makeRow()], total: 1, error: null })
     mockListAllOrders.mockResolvedValue({ orders: [], total: 0, error: null })
+    mockListStalePendingOrders.mockResolvedValue({ orders: [], total: 0, error: null })
+    mockGetStalePendingOrderCount.mockResolvedValue({ count: 0, error: null })
+    mockListRefundPendingOrders.mockResolvedValue({ orders: [], total: 0, error: null })
+    mockGetRefundPendingOrderCount.mockResolvedValue({ count: 0, error: null })
+    mockMarkOrderRefunded.mockResolvedValue({
+      order: makeRow({ status: 'refunded' }),
+      error: null,
+    })
     mockConfirmOrder.mockResolvedValue({ order: makeRow({ status: 'active' }), error: null })
     mockCancelOrder.mockResolvedValue({ order: makeRow({ status: 'cancelled' }), error: null })
   })
@@ -102,31 +125,34 @@ describe('AdminOrdersPage', () => {
     })
   })
 
-  describe('confirm action', () => {
-    it('calls confirmOrder, shows success toast, and removes the row from the pending list', async () => {
+  // ── Issue #294: Pending tab no longer has inline 1-click confirm ──
+  //
+  // PRD-0005 D12b locks manual-confirm surface to the "Cần can thiệp" tab
+  // (created_at > 1h) to prevent admins from accidentally granting free
+  // access on in-flight orders (PayOS normally confirms in 5-30s). The
+  // legacy inline `confirm-btn-<id>` on Pending rows violated this and has
+  // been removed entirely. The canonical path is now the
+  // `manual-confirm-btn-<id>` + dialog on the stale tab.
+  describe('Pending tab: no inline confirm (#294)', () => {
+    it('does not render an inline confirm button on pending rows', async () => {
       renderPage()
       const row = await screen.findByTestId('order-row-ord-1')
-      await userEvent.click(within(row).getByTestId('confirm-btn-ord-1'))
-
-      await waitFor(() => {
-        expect(mockConfirmOrder).toHaveBeenCalledWith(expect.anything(), 'ord-1')
-      })
-      expect(await screen.findByTestId('orders-success-toast')).toBeInTheDocument()
-      // Optimistic: row leaves the pending tab once status becomes 'active'
-      await waitFor(() => {
-        expect(screen.queryByTestId('order-row-ord-1')).not.toBeInTheDocument()
-      })
+      expect(within(row).queryByTestId('confirm-btn-ord-1')).not.toBeInTheDocument()
     })
 
-    it('shows error toast when confirm fails', async () => {
-      mockConfirmOrder.mockResolvedValueOnce({ order: null, error: { message: 'forbidden' } })
+    it('does not render an inline confirm button on pending rows visible in the All tab', async () => {
+      const pendingRow = makeRow({ id: 'ord-all-pending', status: 'pending' })
+      mockListAllOrders.mockResolvedValueOnce({
+        orders: [pendingRow],
+        total: 1,
+        error: null,
+      })
       renderPage()
-      const row = await screen.findByTestId('order-row-ord-1')
-      await userEvent.click(within(row).getByTestId('confirm-btn-ord-1'))
+      await waitFor(() => screen.getByTestId('order-row-ord-1'))
+      await userEvent.click(screen.getByTestId('orders-tab-all'))
 
-      expect(await screen.findByTestId('orders-error-toast')).toBeInTheDocument()
-      // Row is preserved on failure
-      expect(screen.getByTestId('order-row-ord-1')).toBeInTheDocument()
+      const row = await screen.findByTestId('order-row-ord-all-pending')
+      expect(within(row).queryByTestId('confirm-btn-ord-all-pending')).not.toBeInTheDocument()
     })
   })
 
@@ -236,6 +262,418 @@ describe('AdminOrdersPage', () => {
         const lastCall = mockListAllOrders.mock.calls[mockListAllOrders.mock.calls.length - 1]
         expect(lastCall[1]).toMatchObject({ search: 'ORD-2026' })
       }, { timeout: 2000 })
+    })
+
+    // ── Issue #292: cancel_order must not be reachable from terminal states ──
+    //
+    // The kebab "Huỷ đơn" item was previously gated only by status !== 'cancelled',
+    // which left it clickable on refund_pending / refunded / expired rows. Clicking
+    // it on refund_pending flipped the row to cancelled, orphaning the refund
+    // obligation (learner had already transferred money). Hide the kebab for any
+    // status outside the allowlist (pending|active).
+    it.each([
+      ['refund_pending'],
+      ['refunded'],
+      ['expired'],
+      ['cancelled'],
+    ])('hides the kebab "Huỷ đơn" entry on %s rows in the All tab', async status => {
+      const terminalRow = makeRow({ id: `ord-${status}`, status })
+      mockListAllOrders.mockResolvedValueOnce({
+        orders: [terminalRow],
+        total: 1,
+        error: null,
+      })
+      renderPage()
+      await waitFor(() => screen.getByTestId('order-row-ord-1'))
+      await userEvent.click(screen.getByTestId('orders-tab-all'))
+
+      await screen.findByTestId(`order-row-ord-${status}`)
+      // Neither the kebab trigger nor the menu item should be in the DOM.
+      expect(screen.queryByTestId(`kebab-btn-ord-${status}`)).not.toBeInTheDocument()
+      expect(screen.queryByTestId(`cancel-menu-item-ord-${status}`)).not.toBeInTheDocument()
+    })
+
+    it('still shows the kebab "Huỷ đơn" entry on active rows in the All tab', async () => {
+      const activeRow = makeRow({ id: 'ord-active', status: 'active' })
+      mockListAllOrders.mockResolvedValueOnce({
+        orders: [activeRow],
+        total: 1,
+        error: null,
+      })
+      renderPage()
+      await waitFor(() => screen.getByTestId('order-row-ord-1'))
+      await userEvent.click(screen.getByTestId('orders-tab-all'))
+
+      const row = await screen.findByTestId('order-row-ord-active')
+      await userEvent.click(within(row).getByTestId('kebab-btn-ord-active'))
+      expect(screen.getByTestId('cancel-menu-item-ord-active')).toBeInTheDocument()
+    })
+  })
+
+  // ── Slice 4 of PRD-0005: "Cần can thiệp" tab ────────────────────────────
+  describe('Cần can thiệp (stale pending) tab', () => {
+    it('renders the tab with the count badge from getStalePendingOrderCount', async () => {
+      mockGetStalePendingOrderCount.mockResolvedValueOnce({ count: 2, error: null })
+      renderPage()
+
+      const tab = await screen.findByTestId('orders-tab-stale')
+      expect(tab).toBeInTheDocument()
+      // Counter rendered in the tab label (e.g. "Cần can thiệp (2)")
+      await waitFor(() => {
+        expect(tab.textContent).toMatch(/2/)
+      })
+    })
+
+    it('switching to the tab fetches stale pending orders', async () => {
+      const staleRow = makeRow({ id: 'ord-stale', code: 'ORD-2026-000900' })
+      mockListStalePendingOrders.mockResolvedValueOnce({
+        orders: [staleRow],
+        total: 1,
+        error: null,
+      })
+      renderPage()
+      await waitFor(() => screen.getByTestId('order-row-ord-1'))
+
+      await userEvent.click(screen.getByTestId('orders-tab-stale'))
+
+      await waitFor(() => {
+        expect(mockListStalePendingOrders).toHaveBeenCalled()
+      })
+      expect(screen.getByTestId('orders-tab-stale')).toHaveAttribute('aria-selected', 'true')
+      expect(await screen.findByTestId('order-row-ord-stale')).toBeInTheDocument()
+    })
+
+    it('clicking "Xác nhận thủ công" opens a dialog requiring a non-empty reason', async () => {
+      const staleRow = makeRow({ id: 'ord-stale' })
+      mockListStalePendingOrders.mockResolvedValueOnce({
+        orders: [staleRow],
+        total: 1,
+        error: null,
+      })
+      renderPage()
+      await waitFor(() => screen.getByTestId('order-row-ord-1'))
+      await userEvent.click(screen.getByTestId('orders-tab-stale'))
+
+      const row = await screen.findByTestId('order-row-ord-stale')
+      await userEvent.click(within(row).getByTestId('manual-confirm-btn-ord-stale'))
+
+      const dialog = await screen.findByTestId('manual-confirm-dialog')
+      const confirmBtn = within(dialog).getByTestId('manual-confirm-dialog-confirm')
+      expect(confirmBtn).toBeDisabled()
+
+      const textarea = within(dialog).getByTestId('manual-confirm-reason-textarea')
+      await userEvent.type(textarea, 'Bank statement OK; webhook missing')
+      expect(confirmBtn).toBeEnabled()
+    })
+
+    it('submitting the manual-confirm dialog calls confirm_order RPC with the typed reason and removes the row', async () => {
+      const staleRow = makeRow({ id: 'ord-stale' })
+      mockListStalePendingOrders.mockResolvedValueOnce({
+        orders: [staleRow],
+        total: 1,
+        error: null,
+      })
+      mockGetStalePendingOrderCount.mockResolvedValue({ count: 1, error: null })
+      renderPage()
+      await waitFor(() => screen.getByTestId('order-row-ord-1'))
+      await userEvent.click(screen.getByTestId('orders-tab-stale'))
+
+      const row = await screen.findByTestId('order-row-ord-stale')
+      await userEvent.click(within(row).getByTestId('manual-confirm-btn-ord-stale'))
+
+      const dialog = await screen.findByTestId('manual-confirm-dialog')
+      await userEvent.type(
+        within(dialog).getByTestId('manual-confirm-reason-textarea'),
+        'Bank statement OK'
+      )
+      await userEvent.click(within(dialog).getByTestId('manual-confirm-dialog-confirm'))
+
+      // Issue #293: the typed reason MUST be forwarded to the RPC so the DB
+      // captures `manual_confirm_reason` for audit. Previously the dialog text
+      // was console.info'd then discarded.
+      await waitFor(() => {
+        expect(mockConfirmOrder).toHaveBeenCalledWith(
+          expect.anything(),
+          'ord-stale',
+          'Bank statement OK'
+        )
+      })
+      expect(await screen.findByTestId('orders-success-toast')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.queryByTestId('order-row-ord-stale')).not.toBeInTheDocument()
+      })
+    })
+
+    it('renders the persisted manual_confirm_reason on rows that carry one (audit visibility, #293)', async () => {
+      // A previously manually-confirmed order surfaced in the All tab should
+      // show its reason inline so admins can audit why the override happened.
+      const confirmedRow = makeRow({
+        id: 'ord-mc-1',
+        status: 'active',
+        confirmed_at: '2026-05-19T08:00:00Z',
+        confirmed_by: 'admin-uid',
+        manual_confirm_reason: 'Bank statement OK; webhook missing',
+      })
+      mockListAllOrders.mockResolvedValueOnce({
+        orders: [confirmedRow],
+        total: 1,
+        error: null,
+      })
+      renderPage()
+      await waitFor(() => screen.getByTestId('order-row-ord-1'))
+      await userEvent.click(screen.getByTestId('orders-tab-all'))
+
+      const row = await screen.findByTestId('order-row-ord-mc-1')
+      const reasonEl = within(row).getByTestId('manual-confirm-reason-ord-mc-1')
+      expect(reasonEl).toBeInTheDocument()
+      expect(reasonEl.textContent).toMatch(/Bank statement OK; webhook missing/)
+    })
+
+    it('does not render a manual_confirm_reason element on rows without one', async () => {
+      const plainRow = makeRow({ id: 'ord-plain', status: 'active' })
+      mockListAllOrders.mockResolvedValueOnce({
+        orders: [plainRow],
+        total: 1,
+        error: null,
+      })
+      renderPage()
+      await waitFor(() => screen.getByTestId('order-row-ord-1'))
+      await userEvent.click(screen.getByTestId('orders-tab-all'))
+
+      await screen.findByTestId('order-row-ord-plain')
+      expect(screen.queryByTestId('manual-confirm-reason-ord-plain')).not.toBeInTheDocument()
+    })
+
+    it('stale row still exposes the kebab "Huỷ đơn" action', async () => {
+      const staleRow = makeRow({ id: 'ord-stale' })
+      mockListStalePendingOrders.mockResolvedValueOnce({
+        orders: [staleRow],
+        total: 1,
+        error: null,
+      })
+      renderPage()
+      await waitFor(() => screen.getByTestId('order-row-ord-1'))
+      await userEvent.click(screen.getByTestId('orders-tab-stale'))
+
+      const row = await screen.findByTestId('order-row-ord-stale')
+      await userEvent.click(within(row).getByTestId('kebab-btn-ord-stale'))
+      expect(screen.getByTestId('cancel-menu-item-ord-stale')).toBeInTheDocument()
+    })
+  })
+
+  // ── Slice 5 of PRD-0005: "Cần refund" tab ────────────────────────────
+  // ── Issue #296: stale counter must refresh when admin sits on the page ──
+  describe('Cần can thiệp counter refresh (#296)', () => {
+    it('re-fetches stale + refund counts when the tab becomes visible again', async () => {
+      // Initial mount returns 0 stale; after visibility flip we simulate an order
+      // crossing the 1h threshold by returning 1.
+      mockGetStalePendingOrderCount.mockResolvedValueOnce({ count: 0, error: null })
+      mockGetRefundPendingOrderCount.mockResolvedValueOnce({ count: 0, error: null })
+      renderPage()
+      await waitFor(() => screen.getByTestId('order-row-ord-1'))
+      expect(mockGetStalePendingOrderCount).toHaveBeenCalledTimes(1)
+      expect(mockGetRefundPendingOrderCount).toHaveBeenCalledTimes(1)
+
+      // Simulate the admin tab regaining focus.
+      mockGetStalePendingOrderCount.mockResolvedValueOnce({ count: 1, error: null })
+      mockGetRefundPendingOrderCount.mockResolvedValueOnce({ count: 0, error: null })
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        get: () => 'visible',
+      })
+      document.dispatchEvent(new Event('visibilitychange'))
+
+      await waitFor(() => {
+        expect(mockGetStalePendingOrderCount).toHaveBeenCalledTimes(2)
+      })
+      expect(mockGetRefundPendingOrderCount).toHaveBeenCalledTimes(2)
+      // Tab badge updates to the new count.
+      await waitFor(() => {
+        expect(screen.getByTestId('orders-tab-stale').textContent).toMatch(/1/)
+      })
+    })
+
+    it('does NOT re-fetch when document becomes hidden', async () => {
+      renderPage()
+      await waitFor(() => screen.getByTestId('order-row-ord-1'))
+      expect(mockGetStalePendingOrderCount).toHaveBeenCalledTimes(1)
+
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        get: () => 'hidden',
+      })
+      document.dispatchEvent(new Event('visibilitychange'))
+
+      // Give any spurious effect a chance to run.
+      await new Promise(r => setTimeout(r, 10))
+      expect(mockGetStalePendingOrderCount).toHaveBeenCalledTimes(1)
+    })
+
+    it('re-fetches stale count when admin clicks the "Cần can thiệp" tab', async () => {
+      renderPage()
+      await waitFor(() => screen.getByTestId('order-row-ord-1'))
+      const initialStale = mockGetStalePendingOrderCount.mock.calls.length
+
+      await userEvent.click(screen.getByTestId('orders-tab-stale'))
+
+      await waitFor(() => {
+        expect(mockGetStalePendingOrderCount.mock.calls.length).toBeGreaterThan(initialStale)
+      })
+    })
+
+    it('re-fetches refund count when admin clicks the "Cần refund" tab', async () => {
+      renderPage()
+      await waitFor(() => screen.getByTestId('order-row-ord-1'))
+      const initialRefund = mockGetRefundPendingOrderCount.mock.calls.length
+
+      await userEvent.click(screen.getByTestId('orders-tab-refund'))
+
+      await waitFor(() => {
+        expect(mockGetRefundPendingOrderCount.mock.calls.length).toBeGreaterThan(initialRefund)
+      })
+    })
+  })
+
+  describe('Cần refund (refund_pending) tab', () => {
+    const refundRow = makeRow({
+      id: 'ord-rp',
+      code: 'ORD-2026-000777',
+      status: 'refund_pending',
+      amount: 480000,
+      refund_due_to: {
+        payer_account: '0123456789',
+        payer_name: 'NGUYEN VAN A',
+        payer_bank: 'Vietcombank',
+        amount: '480000',
+        paid_at: '2026-05-18T10:00:00Z',
+      },
+    })
+
+    it('renders the tab with the count badge from getRefundPendingOrderCount', async () => {
+      mockGetRefundPendingOrderCount.mockResolvedValueOnce({ count: 3, error: null })
+      renderPage()
+
+      const tab = await screen.findByTestId('orders-tab-refund')
+      expect(tab).toBeInTheDocument()
+      await waitFor(() => {
+        expect(tab.textContent).toMatch(/3/)
+      })
+    })
+
+    it('switching to the tab fetches refund_pending orders and shows masked account + holder + bank', async () => {
+      mockListRefundPendingOrders.mockResolvedValueOnce({
+        orders: [refundRow],
+        total: 1,
+        error: null,
+      })
+      renderPage()
+      await waitFor(() => screen.getByTestId('order-row-ord-1'))
+
+      await userEvent.click(screen.getByTestId('orders-tab-refund'))
+
+      await waitFor(() => {
+        expect(mockListRefundPendingOrders).toHaveBeenCalled()
+      })
+      expect(screen.getByTestId('orders-tab-refund')).toHaveAttribute('aria-selected', 'true')
+      const row = await screen.findByTestId('order-row-ord-rp')
+      // Masked account = last 4 digits prefixed by dots
+      expect(within(row).getByText(/••••6789/)).toBeInTheDocument()
+      expect(within(row).getByText('NGUYEN VAN A')).toBeInTheDocument()
+      expect(within(row).getByText('Vietcombank')).toBeInTheDocument()
+      expect(within(row).getByText('ORD-2026-000777')).toBeInTheDocument()
+    })
+
+    it('clicking "Đánh dấu hoàn tiền" opens a dialog requiring a non-empty reference', async () => {
+      mockListRefundPendingOrders.mockResolvedValueOnce({
+        orders: [refundRow],
+        total: 1,
+        error: null,
+      })
+      renderPage()
+      await waitFor(() => screen.getByTestId('order-row-ord-1'))
+      await userEvent.click(screen.getByTestId('orders-tab-refund'))
+
+      const row = await screen.findByTestId('order-row-ord-rp')
+      await userEvent.click(within(row).getByTestId('mark-refunded-btn-ord-rp'))
+
+      const dialog = await screen.findByTestId('refund-dialog')
+      const confirmBtn = within(dialog).getByTestId('refund-dialog-confirm')
+      expect(confirmBtn).toBeDisabled()
+
+      const input = within(dialog).getByTestId('refund-reference-input')
+      await userEvent.type(input, 'TF260519123456')
+      expect(confirmBtn).toBeEnabled()
+    })
+
+    it('submitting the refund dialog calls mark_order_refunded RPC, removes the row, decrements counter', async () => {
+      mockListRefundPendingOrders.mockResolvedValueOnce({
+        orders: [refundRow],
+        total: 1,
+        error: null,
+      })
+      mockGetRefundPendingOrderCount.mockResolvedValueOnce({ count: 1, error: null })
+      // After the action, the counter refresh returns 0
+      mockGetRefundPendingOrderCount.mockResolvedValueOnce({ count: 0, error: null })
+      renderPage()
+      await waitFor(() => screen.getByTestId('order-row-ord-1'))
+      await userEvent.click(screen.getByTestId('orders-tab-refund'))
+
+      const row = await screen.findByTestId('order-row-ord-rp')
+      await userEvent.click(within(row).getByTestId('mark-refunded-btn-ord-rp'))
+
+      const dialog = await screen.findByTestId('refund-dialog')
+      await userEvent.type(
+        within(dialog).getByTestId('refund-reference-input'),
+        'TF260519123456'
+      )
+      await userEvent.click(within(dialog).getByTestId('refund-dialog-confirm'))
+
+      await waitFor(() => {
+        expect(mockMarkOrderRefunded).toHaveBeenCalledWith(
+          expect.anything(),
+          'ord-rp',
+          'TF260519123456'
+        )
+      })
+      expect(await screen.findByTestId('orders-success-toast')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.queryByTestId('order-row-ord-rp')).not.toBeInTheDocument()
+      })
+      // Counter refresh fires post-action
+      await waitFor(() => {
+        expect(mockGetRefundPendingOrderCount.mock.calls.length).toBeGreaterThanOrEqual(2)
+      })
+    })
+
+    it('shows error toast when mark_order_refunded fails', async () => {
+      mockListRefundPendingOrders.mockResolvedValueOnce({
+        orders: [refundRow],
+        total: 1,
+        error: null,
+      })
+      mockMarkOrderRefunded.mockResolvedValueOnce({
+        order: null,
+        error: { message: 'order not in refund_pending status' },
+      })
+      renderPage()
+      await waitFor(() => screen.getByTestId('order-row-ord-1'))
+      await userEvent.click(screen.getByTestId('orders-tab-refund'))
+
+      const row = await screen.findByTestId('order-row-ord-rp')
+      await userEvent.click(within(row).getByTestId('mark-refunded-btn-ord-rp'))
+      const dialog = await screen.findByTestId('refund-dialog')
+      await userEvent.type(
+        within(dialog).getByTestId('refund-reference-input'),
+        'TF260519123456'
+      )
+      await userEvent.click(within(dialog).getByTestId('refund-dialog-confirm'))
+
+      // Dialog stays open and the inline error is visible
+      await waitFor(() => {
+        expect(within(dialog).getByRole('alert')).toBeInTheDocument()
+      })
+      // Row still present
+      expect(screen.getByTestId('order-row-ord-rp')).toBeInTheDocument()
     })
   })
 })

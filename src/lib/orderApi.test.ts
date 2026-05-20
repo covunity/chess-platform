@@ -20,6 +20,7 @@ const sampleOrder = {
   cancelled_at: null,
   cancelled_by: null,
   cancelled_reason: null,
+  manual_confirm_reason: null,
   created_at: '2026-05-09T11:00:00Z',
   updated_at: '2026-05-09T12:00:00Z',
 }
@@ -50,23 +51,39 @@ describe('createOrder', () => {
 // ── confirmOrder ───────────────────────────────────────────────────────────
 
 describe('confirmOrder', () => {
-  it('calls confirm_order RPC with order id and returns the order', async () => {
+  it('calls confirm_order RPC with order id + reason and returns the order', async () => {
     const rpc = vi.fn().mockResolvedValue({ data: sampleOrder, error: null })
     const client = { rpc } as unknown as SupabaseClient
 
-    const { order, error } = await confirmOrder(client, 'ord-1')
+    const { order, error } = await confirmOrder(client, 'ord-1', 'bank statement OK')
     expect(error).toBeNull()
     expect(order?.status).toBe('active')
-    expect(rpc).toHaveBeenCalledWith('confirm_order', { p_order_id: 'ord-1' })
+    expect(rpc).toHaveBeenCalledWith('confirm_order', {
+      p_order_id: 'ord-1',
+      p_reason: 'bank statement OK',
+    })
   })
 
   it('forwards RPC error', async () => {
     const rpc = vi.fn().mockResolvedValue({ data: null, error: { message: 'forbidden', code: '42501' } })
     const client = { rpc } as unknown as SupabaseClient
 
-    const { order, error } = await confirmOrder(client, 'ord-1')
+    const { order, error } = await confirmOrder(client, 'ord-1', 'bank statement OK')
     expect(order).toBeNull()
     expect((error as { message?: string }).message).toBe('forbidden')
+  })
+
+  it('forwards reason_required errcode 22023 from RPC when reason is empty', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: null,
+      error: { message: 'reason_required', code: '22023' },
+    })
+    const client = { rpc } as unknown as SupabaseClient
+
+    const { order, error } = await confirmOrder(client, 'ord-1', '')
+    expect(order).toBeNull()
+    expect((error as { message?: string; code?: string }).message).toBe('reason_required')
+    expect((error as { code?: string }).code).toBe('22023')
   })
 })
 
@@ -95,6 +112,29 @@ describe('cancelOrder', () => {
     const { order, error } = await cancelOrder(client, 'ord-1', 'duplicate')
     expect(order).toBeNull()
     expect((error as { message?: string }).message).toBe('order_already_cancelled')
+  })
+
+  // ── Issue #292: status-allowlist guard from migration 062 ─────────────────
+  //
+  // cancel_order now refuses any status outside (pending|active) with a
+  // distinct message per terminal/in-flight state. The wrapper must forward
+  // each one unmodified so the UI can map to a user-facing toast.
+  it.each([
+    ['cannot_cancel_refund_pending_order'],
+    ['cannot_cancel_refunded_order'],
+    ['cannot_cancel_expired_order'],
+    ['order_already_cancelled'],
+  ])('forwards new status-guard error %s with errcode 22023', async message => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: null,
+      error: { message, code: '22023' },
+    })
+    const client = { rpc } as unknown as SupabaseClient
+
+    const { order, error } = await cancelOrder(client, 'ord-1', 'admin attempt')
+    expect(order).toBeNull()
+    expect((error as { message?: string; code?: string }).message).toBe(message)
+    expect((error as { message?: string; code?: string }).code).toBe('22023')
   })
 })
 

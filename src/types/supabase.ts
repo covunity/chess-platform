@@ -720,7 +720,7 @@ export type Database = {
       course_level: "beginner" | "intermediate" | "advanced"
       course_status: "draft" | "pending_review" | "published"
       lesson_type: "video" | "chess" | "puzzle"
-      order_status: "pending" | "active" | "cancelled"
+      order_status: "pending" | "active" | "cancelled" | "expired"
       report_reason: "inappropriate" | "spam" | "misleading"
       video_provider: "supabase" | "cloudflare"
       video_status: "idle" | "uploading" | "processing" | "ready" | "error"

@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase'
 import { getBookmarks } from '../lib/bookmarkApi'
 import { listPublishedCourses } from '../lib/coursesApi'
 import type { PublicCourse } from '../lib/coursesApi'
+import { hasUnreadOrderUpdates, readLastSeenOrdersAt } from '../lib/orderUpdatesApi'
 
 export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } = {}) {
   const { t } = useTranslation()
@@ -17,6 +18,9 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
   const [searchParams, setSearchParams] = useSearchParams()
   const searchRef = useRef<HTMLInputElement>(null)
   const [bookmarkCount, setBookmarkCount] = useState(0)
+  // PRD-0005 D12c — dot on /account/orders when any order has flipped
+  // to active / refunded / expired since the user last opened the page.
+  const [hasOrderUpdates, setHasOrderUpdates] = useState(false)
   const [overlayQuery, setOverlayQuery] = useState('')
   const [overlayResults, setOverlayResults] = useState<PublicCourse[]>([])
   const overlayRef = useRef<HTMLDivElement>(null)
@@ -68,6 +72,18 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
     getBookmarks(supabase, user.id).then(({ bookmarks }) => {
       setBookmarkCount(bookmarks?.length ?? 0)
     })
+  }, [user])
+
+  useEffect(() => {
+    if (!user) {
+      setHasOrderUpdates(false)
+      return
+    }
+    let cancelled = false
+    hasUnreadOrderUpdates(supabase, readLastSeenOrdersAt()).then(({ hasUpdates }) => {
+      if (!cancelled) setHasOrderUpdates(hasUpdates)
+    })
+    return () => { cancelled = true }
   }, [user])
 
   async function handleLogout() {
@@ -332,9 +348,32 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
                   className="nav-dropdown__item"
                   data-testid="nav-orders-link"
                   to="/account/orders"
-                  onClick={() => setMenuOpen(false)}
+                  onClick={() => {
+                    setMenuOpen(false)
+                    // Optimistic clear: the AccountOrdersPage mount writes
+                    // `last_seen_orders_at`, but in case that races with the
+                    // next TopNav render we hide the dot immediately so the
+                    // user gets instant feedback that their click registered.
+                    setHasOrderUpdates(false)
+                  }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}
                 >
-                  {t('nav.orders', 'Lịch sử đơn hàng')}
+                  <span>{t('nav.orders', 'Lịch sử đơn hàng')}</span>
+                  {hasOrderUpdates && (
+                    <span
+                      data-testid="topnav-orders-dot"
+                      aria-label={t('nav.ordersUnreadAriaLabel', 'Có cập nhật đơn hàng mới')}
+                      role="status"
+                      style={{
+                        display: 'inline-block',
+                        width: 8,
+                        height: 8,
+                        borderRadius: 999,
+                        background: 'var(--danger, #e54848)',
+                        flexShrink: 0,
+                      }}
+                    />
+                  )}
                 </Link>
                 {profile?.role === 'creator' && (
                   <Link
