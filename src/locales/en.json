@@ -71,9 +71,13 @@
       "overview": "Overview",
       "courseReview": "Course review",
       "orders": "Orders",
+      "vouchers": "Vouchers",
       "users": "Users",
       "creatorApplications": "Creator applications",
       "reports": "Reports"
+    },
+    "vouchers": {
+      "pageTitle": "Vouchers"
     },
     "creatorApplications": {
       "pageTitle": "Creator applications",

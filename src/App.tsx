@@ -9,6 +9,7 @@ import AdminUsersPage from './pages/admin/AdminUsersPage'
 import AdminReportsPage from './pages/admin/AdminReportsPage'
 import AdminOrdersPage from './pages/admin/AdminOrdersPage'
 import AdminCampaignsPage from './pages/admin/AdminCampaignsPage'
+import AdminVouchersPage from './pages/admin/AdminVouchersPage'
 import AdminCreatorApplicationsPage from './pages/admin/AdminCreatorApplicationsPage'
 import AdminCreatorFeesPage from './pages/admin/AdminCreatorFeesPage'
 import AdminTiersPage from './pages/admin/AdminTiersPage'
@@ -63,6 +64,7 @@ export default function App() {
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="orders" element={<AdminOrdersPage />} />
             <Route path="campaigns" element={<AdminCampaignsPage />} />
+            <Route path="vouchers" element={<AdminVouchersPage />} />
             <Route path="creator-applications" element={<AdminCreatorApplicationsPage />} />
             <Route path="creators/fees" element={<AdminCreatorFeesPage />} />
             <Route path="tiers" element={<AdminTiersPage />} />

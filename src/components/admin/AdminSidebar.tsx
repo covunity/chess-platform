@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { key: 'courseReview', to: '/admin/course-review' },
   { key: 'orders', to: '/admin/orders' },
   { key: 'campaigns', to: '/admin/campaigns' },
+  { key: 'vouchers', to: '/admin/vouchers' },
   { key: 'users', to: '/admin/users' },
   { key: 'creatorApplications', to: '/admin/creator-applications' },
   { key: 'creatorFees', to: '/admin/creators/fees' },
