@@ -38,6 +38,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import CheckEmailPage from './pages/CheckEmailPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import CheckoutPage from './pages/CheckoutPage'
+import ConfirmPurchasePage from './pages/ConfirmPurchasePage'
 
 function PublicShell() {
   return (
@@ -102,6 +103,7 @@ export default function App() {
           <Route path="/become-creator" element={<BecomeCreatorPage />} />
           <Route path="/register-business" element={<BecomeCreatorPage />} />
           <Route path="/courses/:courseId" element={<CourseDetailPage />} />
+          <Route path="/confirm-purchase/:courseId" element={<ConfirmPurchasePage />} />
           <Route path="/checkout/:orderId" element={<CheckoutPage />} />
           {/* Awaiting page removed in slice 1b of PRD-0005 — embedded checkout polls
               status inline. Keep alias redirect so old URLs from emails / pasted

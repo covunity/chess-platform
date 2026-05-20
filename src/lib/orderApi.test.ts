@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { createOrder, confirmOrder, cancelOrder, listMyOrders } from './orderApi'
+import { createOrder, confirmOrder, cancelOrder, listMyOrders, previewPurchase } from './orderApi'
 
 const sampleOrder = {
   id: 'ord-1',
@@ -21,6 +21,9 @@ const sampleOrder = {
   cancelled_by: null,
   cancelled_reason: null,
   manual_confirm_reason: null,
+  original_price: 480000,
+  campaign_id: null,
+  campaign_discount_amount: 0,
   created_at: '2026-05-09T11:00:00Z',
   updated_at: '2026-05-09T12:00:00Z',
 }
@@ -28,14 +31,28 @@ const sampleOrder = {
 // ── createOrder (existing — sanity) ────────────────────────────────────────
 
 describe('createOrder', () => {
-  it('calls create_order_with_fee_snapshot RPC with course id', async () => {
+  it('calls create_order_with_fee_snapshot RPC with course id and null voucher by default', async () => {
     const rpc = vi.fn().mockResolvedValue({ data: sampleOrder, error: null })
     const client = { rpc } as unknown as SupabaseClient
 
     const { order, error } = await createOrder(client, 'c-1')
     expect(error).toBeNull()
     expect(order?.id).toBe('ord-1')
-    expect(rpc).toHaveBeenCalledWith('create_order_with_fee_snapshot', { p_course_id: 'c-1' })
+    expect(rpc).toHaveBeenCalledWith('create_order_with_fee_snapshot', {
+      p_course_id: 'c-1',
+      p_voucher_code: null,
+    })
+  })
+
+  it('forwards voucher code when provided (slice 3b wiring)', async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: sampleOrder, error: null })
+    const client = { rpc } as unknown as SupabaseClient
+
+    await createOrder(client, 'c-1', 'WELCOME10')
+    expect(rpc).toHaveBeenCalledWith('create_order_with_fee_snapshot', {
+      p_course_id: 'c-1',
+      p_voucher_code: 'WELCOME10',
+    })
   })
 
   it('returns null order when RPC fails', async () => {
@@ -45,6 +62,74 @@ describe('createOrder', () => {
     const { order, error } = await createOrder(client, 'c-1')
     expect(order).toBeNull()
     expect(error).toBeTruthy()
+  })
+})
+
+// ── previewPurchase ───────────────────────────────────────────────────────
+// PRD-0006 §5.2. Slice 2 returns voucher fields as null/0 because the
+// voucher table doesn't exist yet — slice 3b wires them.
+
+describe('previewPurchase', () => {
+  it('calls preview_purchase RPC and returns the breakdown', async () => {
+    const breakdown = {
+      original_price: 1_000_000,
+      campaign_id: 'cmp-1',
+      campaign_name: 'Tết Sale',
+      campaign_discount_amount: 200_000,
+      voucher_id: null,
+      voucher_code: null,
+      voucher_discount_amount: 0,
+      final_price: 800_000,
+      platform_fee_pct: 20,
+      platform_fee_amount: 160_000,
+      creator_payout_amount: 640_000,
+    }
+    const rpc = vi.fn().mockResolvedValue({ data: breakdown, error: null })
+    const client = { rpc } as unknown as SupabaseClient
+
+    const { preview, error } = await previewPurchase(client, 'c-1')
+    expect(error).toBeNull()
+    expect(preview?.final_price).toBe(800_000)
+    expect(preview?.campaign_discount_amount).toBe(200_000)
+    expect(rpc).toHaveBeenCalledWith('preview_purchase', {
+      p_course_id: 'c-1',
+      p_voucher_code: null,
+    })
+  })
+
+  it('returns a breakdown with voucher fields null in slice 2', async () => {
+    const breakdown = {
+      original_price: 480_000,
+      campaign_id: null,
+      campaign_name: null,
+      campaign_discount_amount: 0,
+      voucher_id: null,
+      voucher_code: null,
+      voucher_discount_amount: 0,
+      final_price: 480_000,
+      platform_fee_pct: 20,
+      platform_fee_amount: 96_000,
+      creator_payout_amount: 384_000,
+    }
+    const rpc = vi.fn().mockResolvedValue({ data: breakdown, error: null })
+    const client = { rpc } as unknown as SupabaseClient
+
+    const { preview } = await previewPurchase(client, 'c-1')
+    expect(preview?.voucher_id).toBeNull()
+    expect(preview?.voucher_discount_amount).toBe(0)
+    expect(preview?.final_price).toBe(preview?.original_price)
+  })
+
+  it('surfaces course_not_found errcode from RPC', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: null,
+      error: { message: 'course_not_found', code: 'P0002' },
+    })
+    const client = { rpc } as unknown as SupabaseClient
+
+    const { preview, error } = await previewPurchase(client, 'c-missing')
+    expect(preview).toBeNull()
+    expect((error as { message?: string }).message).toBe('course_not_found')
   })
 })
 

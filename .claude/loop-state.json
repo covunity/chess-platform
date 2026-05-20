@@ -1,14 +1,30 @@
 {
   "active": true,
-  "workflow_instructions": "At the START of each new issue cycle (when LOOP_TICK fires): 1) invoke /clear to reset context window. 2) Read this file. 3) Check open PRs ready to merge. 4) Pick lowest eligible issue (ID>5, no blocked/human-in-the-loop/in-progress labels). 5) TDD workflow per .claude/skills/tdd.md. 6) QA per .agents/skills/qa/SKILL.md. 7) Open PR, monitor CI (poll every 2 min with mcp__github__pull_request_read get_check_runs), merge when green, close issue. 8) Set active:false, update this file.",
+  "workflow_instructions": "Back-to-back issue loop 304→310 (PRD-0006 voucher/campaign). On SessionStart resume: 1) Read this file. 2) Check open PRs from claude/resolve-issues-304-310-1CDY9 → main; merge any green ones first. 3) Look at `current` below: if `stage=implementing`, check git log for new commits or recheck the agent state; if `stage=qa`, spawn QA agent; if `stage=pr_open`, poll `mcp__github__pull_request_read get_check_runs` until conclusion known; if `stage=merging`, merge then close issue; if `stage=done` move to `next_issue`. 4) After each merge: reset branch to main (`git fetch origin main && git reset --hard origin/main && git push -f origin claude/resolve-issues-304-310-1CDY9`), then fan out next subagent. 5) Update this file at every state transition. 6) Stop when `next_issue > 310`.",
+  "branch": "claude/resolve-issues-304-310-1CDY9",
+  "issue_chain": [305, 306, 307, 308, 309, 310],
+  "blocked_by": {
+    "305": [],
+    "306": [305],
+    "307": [306],
+    "308": [307],
+    "309": [307],
+    "310": [308, 309]
+  },
   "last_completed": {
-    "issue": 199,
-    "pr": 214,
-    "merged_at": "2026-05-14T11:33:00Z"
+    "issue": 304,
+    "pr": 312,
+    "merged_at": "2026-05-20T15:35:47Z",
+    "main_sha": "6646185"
   },
   "current": {
-    "issue": 201,
-    "started_at": "2026-05-14T12:00:00Z"
+    "issue": 305,
+    "stage": "qa",
+    "impl_commit": "c3d1560",
+    "qa_agent_id": "a2c5d8aaa3ec15786",
+    "started_at": "2026-05-20T15:36:00Z",
+    "pr": null
   },
-  "next_action": "Implement issue #201 — Puzzle attempts API + best-attempts badge."
+  "next_issue": 306,
+  "next_action": "Wait for issue #305 implementation subagent to finish. Then: QA verify → create PR → wait CI green → merge → reset branch → start #306."
 }

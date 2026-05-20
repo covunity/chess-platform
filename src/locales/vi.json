@@ -1193,6 +1193,21 @@
   "campaign": {
     "badge": "Khuyến mại: {{name}}"
   },
+  "confirmPurchase": {
+    "title": "Xác nhận đơn hàng",
+    "summaryHeading": "Khoá học",
+    "breakdownHeading": "Chi tiết thanh toán",
+    "originalPrice": "Giá gốc",
+    "campaignDiscount": "Khuyến mại",
+    "campaignName": "Chương trình: {{name}}",
+    "total": "Tổng thanh toán",
+    "submit": "Đặt mua ngay",
+    "submitting": "Đang xử lý…",
+    "back": "Quay lại",
+    "notFound": "Khoá học không tồn tại hoặc chưa được xuất bản.",
+    "loadError": "Không thể tải thông tin đơn hàng. Vui lòng thử lại sau.",
+    "freeCourseToast": "Đã nhận khoá học miễn phí."
+  },
   "checkout": {
     "title": "Thanh toán",
     "summary": {

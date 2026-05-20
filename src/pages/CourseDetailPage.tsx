@@ -13,7 +13,7 @@ import { getUserReview, submitReview } from '../lib/reviewsApi'
 import type { Review } from '../lib/reviewsApi'
 import { listComments, createComment, reportComment, updateComment, deleteComment } from '../lib/commentsApi'
 import type { Comment, ReportReason } from '../lib/commentsApi'
-import { createOrder, getPendingOrderForCourse } from '../lib/orderApi'
+import { getPendingOrderForCourse } from '../lib/orderApi'
 import type { Order } from '../lib/orderApi'
 import { getActiveCampaignForCourse, computeCampaignDiscount } from '../lib/campaignsApi'
 import type { Campaign } from '../lib/campaignsApi'
@@ -1293,35 +1293,15 @@ export default function CourseDetailPage() {
       return
     }
 
-    // Paid course
+    // Paid course → confirm-purchase intermediate step (PRD-0006 §5.4).
+    // The confirm page calls preview_purchase + create_order_with_fee_snapshot
+    // and handles the campaign breakdown + free-after-discount path.
     if (!user) {
       navigate(`/login?redirect=/courses/${courseId}`)
       return
     }
 
-    setEnrolling(true)
-    const { order, error } = await createOrder(supabase, course.id)
-    setEnrolling(false)
-
-    if (order) {
-      navigate(`/checkout/${order.id}`)
-      return
-    }
-
-    if (error) {
-      const msg = (error as { message?: string }).message ?? ''
-      if (msg.includes('duplicate_pending_order')) {
-        const parts = msg.split(':')
-        const existingId = parts[1]?.trim()
-        if (existingId) {
-          navigate(`/checkout/${existingId}`)
-        } else {
-          // fallback: reload pending order
-          const { order: po } = await getPendingOrderForCourse(supabase, course.id, user!.id)
-          if (po) navigate(`/checkout/${po.id}`)
-        }
-      }
-    }
+    navigate(`/confirm-purchase/${courseId}`)
   }
 
   if (loading) {

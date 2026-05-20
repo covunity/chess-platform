@@ -133,6 +133,11 @@ function CheckoutStub() {
   return <div data-testid={`checkout-page-${orderId}`} />
 }
 
+function ConfirmPurchaseStub() {
+  const { courseId } = useParams<{ courseId: string }>()
+  return <div data-testid={`confirm-purchase-page-${courseId}`} />
+}
+
 function renderPage(auth = noAuthContext) {
   return render(
     <AuthContext.Provider value={auth}>
@@ -144,6 +149,7 @@ function renderPage(auth = noAuthContext) {
             <Route path="/signup" element={<div data-testid="signup-page" />} />
             <Route path="/login" element={<div data-testid="login-page" />} />
             <Route path="/checkout/:orderId" element={<CheckoutStub />} />
+            <Route path="/confirm-purchase/:courseId" element={<ConfirmPurchaseStub />} />
           </Routes>
         </I18nextProvider>
       </MemoryRouter>
@@ -796,37 +802,17 @@ describe('CourseDetailPage', () => {
       })
     })
 
-    it('clicking "Mua khoá học" when logged in calls createOrder and navigates to checkout', async () => {
+    it('clicking "Mua khoá học" when logged in navigates to /confirm-purchase/:courseId (PRD-0006)', async () => {
       const user = userEvent.setup()
-      mockCreateOrder.mockResolvedValue({
-        order: {
-          id: 'ord-99', course_id: 'c1', user_id: 'u99', status: 'pending',
-          amount: 480000, code: 'ORD-2026-000099',
-        } as never,
-        error: null,
-      })
       renderPage(loggedInContext)
       await waitFor(() => screen.getByRole('button', { name: /mua khóa học/i }))
       await user.click(screen.getByRole('button', { name: /mua khóa học/i }))
       await waitFor(() => {
-        expect(mockCreateOrder).toHaveBeenCalledWith(expect.anything(), 'c1')
-        expect(screen.getByTestId('checkout-page-ord-99')).toBeInTheDocument()
+        expect(screen.getByTestId('confirm-purchase-page-c1')).toBeInTheDocument()
       })
-    })
-
-    it('handles duplicate_pending_order error by navigating to the existing order checkout', async () => {
-      const user = userEvent.setup()
-      mockCreateOrder.mockResolvedValue({
-        order: null,
-        error: { message: 'duplicate_pending_order:ord-existing', code: 'P0001' },
-      })
-      renderPage(loggedInContext)
-      await waitFor(() => screen.getByRole('button', { name: /mua khóa học/i }))
-      await user.click(screen.getByRole('button', { name: /mua khóa học/i }))
-      await waitFor(() => {
-        expect(mockCreateOrder).toHaveBeenCalledTimes(1)
-        expect(screen.getByTestId('checkout-page-ord-existing')).toBeInTheDocument()
-      })
+      // Direct RPC call moved to the confirm page — CourseDetailPage no
+      // longer invokes createOrder.
+      expect(mockCreateOrder).not.toHaveBeenCalled()
     })
 
     it('shows pending order banner when user has pending order', async () => {

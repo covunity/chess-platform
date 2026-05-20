@@ -748,6 +748,21 @@
   "campaign": {
     "badge": "Promotion: {{name}}"
   },
+  "confirmPurchase": {
+    "title": "Confirm order",
+    "summaryHeading": "Course",
+    "breakdownHeading": "Payment breakdown",
+    "originalPrice": "Original price",
+    "campaignDiscount": "Promotion",
+    "campaignName": "Campaign: {{name}}",
+    "total": "Total",
+    "submit": "Place order",
+    "submitting": "Processing…",
+    "back": "Back",
+    "notFound": "Course not found or not published.",
+    "loadError": "Could not load order details. Please try again later.",
+    "freeCourseToast": "Free course enrolled."
+  },
   "checkout": {
     "title": "Payment",
     "summary": {

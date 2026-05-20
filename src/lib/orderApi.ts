@@ -28,6 +28,12 @@ export interface Order {
   cancelled_by: string | null
   cancelled_reason: string | null
   manual_confirm_reason: string | null
+  // PRD-0006 slice 2: campaign snapshot at order creation time.
+  // original_price = course price before discount. campaign_id /
+  // campaign_discount_amount mirror the applied campaign (null/0 when none).
+  original_price: number
+  campaign_id: string | null
+  campaign_discount_amount: number
   created_at: string
   updated_at: string
 }
@@ -38,13 +44,44 @@ export interface MyOrderRow extends Order {
 
 export async function createOrder(
   client: SupabaseClient,
-  courseId: string
+  courseId: string,
+  voucherCode: string | null = null
 ): Promise<{ order: Order | null; error: Error | null }> {
   const { data, error } = await client.rpc('create_order_with_fee_snapshot', {
     p_course_id: courseId,
+    p_voucher_code: voucherCode,
   })
 
   return { order: (data as Order) ?? null, error: error as Error | null }
+}
+
+// PRD-0006 slice 2: read-only breakdown for /confirm-purchase. Voucher slots
+// always null/0 in slice 2 — slice 3b wires them. See ADR-0007 for the
+// pro-rata math the server applies.
+export interface PurchasePreview {
+  original_price: number
+  campaign_id: string | null
+  campaign_name: string | null
+  campaign_discount_amount: number
+  voucher_id: string | null
+  voucher_code: string | null
+  voucher_discount_amount: number
+  final_price: number
+  platform_fee_pct: number
+  platform_fee_amount: number
+  creator_payout_amount: number
+}
+
+export async function previewPurchase(
+  client: SupabaseClient,
+  courseId: string,
+  voucherCode: string | null = null
+): Promise<{ preview: PurchasePreview | null; error: Error | null }> {
+  const { data, error } = await client.rpc('preview_purchase', {
+    p_course_id: courseId,
+    p_voucher_code: voucherCode,
+  })
+  return { preview: (data as PurchasePreview) ?? null, error: error as Error | null }
 }
 
 export async function confirmOrder(

@@ -259,4 +259,23 @@ describe('computeCampaignDiscount', () => {
       })
     ).toBe(80_000)
   })
+
+  // ADR-0007 worked example. Slice 2 only stamps the campaign leg of the
+  // formula — voucher leg lands in slice 3b. The fee then applies to the
+  // FINAL price (post-campaign) per the pro-rata model.
+  it('matches the ADR-0007 worked example for campaign + 20% tier', () => {
+    const discount = computeCampaignDiscount(1_000_000, {
+      ...sampleCampaign,
+      discount_type: 'percentage',
+      discount_value: 20,
+      max_discount_amount: null,
+    })
+    expect(discount).toBe(200_000)
+    const intermediate = 1_000_000 - discount
+    expect(intermediate).toBe(800_000)
+    // Without a voucher, final = intermediate. Fee on final.
+    const creator = Math.floor((intermediate * 80) / 100)
+    expect(creator).toBe(640_000)
+    expect(intermediate - creator).toBe(160_000)
+  })
 })
