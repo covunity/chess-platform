@@ -281,4 +281,263 @@ describe('ConfirmPurchasePage', () => {
     await waitFor(() => screen.getByTestId('confirm-back-link'))
     expect(screen.getByTestId('confirm-back-link')).toHaveAttribute('href', '/courses/c1')
   })
+
+  // ── Slice 3b: voucher input ────────────────────────────────────────────
+
+  const previewWithVoucher: PurchasePreview = {
+    original_price: 1_000_000,
+    campaign_id: null,
+    campaign_name: null,
+    campaign_discount_amount: 0,
+    voucher_id: 'v-1',
+    voucher_code: 'WELCOME10',
+    voucher_discount_amount: 100_000,
+    final_price: 900_000,
+    platform_fee_pct: 20,
+    platform_fee_amount: 180_000,
+    creator_payout_amount: 720_000,
+  }
+
+  const previewStacked: PurchasePreview = {
+    original_price: 1_000_000,
+    campaign_id: 'cmp-1',
+    campaign_name: 'Tết Sale 2026',
+    campaign_discount_amount: 200_000,
+    voucher_id: 'v-1',
+    voucher_code: 'WELCOME10',
+    voucher_discount_amount: 100_000,
+    final_price: 700_000,
+    platform_fee_pct: 20,
+    platform_fee_amount: 140_000,
+    creator_payout_amount: 560_000,
+  }
+
+  it('renders the voucher input field and apply button on initial mount', async () => {
+    renderPage()
+    await waitFor(() => screen.getByTestId('voucher-input'))
+    expect(screen.getByTestId('voucher-input')).toBeInTheDocument()
+    expect(screen.getByTestId('voucher-apply-btn')).toBeInTheDocument()
+    expect(screen.queryByTestId('voucher-applied-banner')).not.toBeInTheDocument()
+  })
+
+  it('normalises voucher input to uppercase + trim and forwards to previewPurchase', async () => {
+    const user = userEvent.setup()
+    // initial mount preview call
+    mockPreviewPurchase
+      .mockResolvedValueOnce({ preview: previewNoCampaign, error: null })
+      .mockResolvedValueOnce({ preview: previewWithVoucher, error: null })
+
+    renderPage()
+    await waitFor(() => screen.getByTestId('voucher-input'))
+
+    await user.type(screen.getByTestId('voucher-input'), '  welcome10  ')
+    await user.click(screen.getByTestId('voucher-apply-btn'))
+
+    await waitFor(() => {
+      // Second call passes the normalised code, not the raw textbox value.
+      expect(mockPreviewPurchase).toHaveBeenLastCalledWith(
+        expect.anything(),
+        'c1',
+        'WELCOME10'
+      )
+    })
+  })
+
+  it('renders the applied banner with code + discount amount after successful apply', async () => {
+    const user = userEvent.setup()
+    mockPreviewPurchase
+      .mockResolvedValueOnce({ preview: previewNoCampaign, error: null })
+      .mockResolvedValueOnce({ preview: previewWithVoucher, error: null })
+
+    renderPage()
+    await waitFor(() => screen.getByTestId('voucher-input'))
+
+    await user.type(screen.getByTestId('voucher-input'), 'WELCOME10')
+    await user.click(screen.getByTestId('voucher-apply-btn'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('voucher-applied-banner')).toBeInTheDocument()
+    })
+    const banner = screen.getByTestId('voucher-applied-banner')
+    expect(banner).toHaveTextContent(/WELCOME10/)
+    expect(banner).toHaveTextContent(/100\.000/)
+    // The voucher row is rendered in the breakdown.
+    expect(screen.getByTestId('confirm-voucher-discount')).toHaveTextContent(/100\.000/)
+    expect(screen.getByTestId('confirm-total-price')).toHaveTextContent(/900\.000/)
+  })
+
+  it('renders the full stacking breakdown when campaign + voucher both apply', async () => {
+    const user = userEvent.setup()
+    mockPreviewPurchase
+      .mockResolvedValueOnce({ preview: previewWithCampaign, error: null })
+      .mockResolvedValueOnce({ preview: previewStacked, error: null })
+
+    renderPage()
+    await waitFor(() => screen.getByTestId('voucher-input'))
+
+    await user.type(screen.getByTestId('voucher-input'), 'WELCOME10')
+    await user.click(screen.getByTestId('voucher-apply-btn'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('confirm-voucher-discount')).toBeInTheDocument()
+    })
+    // ADR-0007 worked example: 1,000,000 → -200,000 → 800,000 → -100,000 → 700,000.
+    expect(screen.getByTestId('confirm-original-price')).toHaveTextContent(/1\.000\.000/)
+    expect(screen.getByTestId('confirm-campaign-discount')).toHaveTextContent(/200\.000/)
+    expect(screen.getByTestId('confirm-subtotal-amount')).toHaveTextContent(/800\.000/)
+    expect(screen.getByTestId('confirm-voucher-discount')).toHaveTextContent(/100\.000/)
+    expect(screen.getByTestId('confirm-total-price')).toHaveTextContent(/700\.000/)
+  })
+
+  it('removes the applied voucher and restores the original preview', async () => {
+    const user = userEvent.setup()
+    mockPreviewPurchase
+      .mockResolvedValueOnce({ preview: previewNoCampaign, error: null })
+      .mockResolvedValueOnce({ preview: previewWithVoucher, error: null })
+      .mockResolvedValueOnce({ preview: previewNoCampaign, error: null })
+
+    renderPage()
+    await waitFor(() => screen.getByTestId('voucher-input'))
+
+    await user.type(screen.getByTestId('voucher-input'), 'WELCOME10')
+    await user.click(screen.getByTestId('voucher-apply-btn'))
+    await waitFor(() => screen.getByTestId('voucher-applied-banner'))
+
+    await user.click(screen.getByTestId('voucher-remove-btn'))
+    await waitFor(() => {
+      expect(screen.queryByTestId('voucher-applied-banner')).not.toBeInTheDocument()
+      expect(screen.getByTestId('voucher-input')).toBeInTheDocument()
+      expect(screen.queryByTestId('confirm-voucher-discount')).not.toBeInTheDocument()
+      expect(screen.getByTestId('confirm-total-price')).toHaveTextContent(/1\.000\.000/)
+    })
+    // Last preview call is the post-remove one with no voucher.
+    expect(mockPreviewPurchase).toHaveBeenLastCalledWith(expect.anything(), 'c1')
+  })
+
+  it.each([
+    ['voucher_not_found',           /không tồn tại/i],
+    ['voucher_inactive',            /ngưng kích hoạt/i],
+    ['voucher_expired',             /hết hạn/i],
+    ['voucher_quota_exceeded',      /hết lượt/i],
+    ['voucher_user_limit',          /số lần cho phép/i],
+    ['voucher_course_not_eligible', /không áp dụng/i],
+  ])('shows the Vietnamese error for %s', async (errcode, expectedPattern) => {
+    const user = userEvent.setup()
+    mockPreviewPurchase
+      .mockResolvedValueOnce({ preview: previewNoCampaign, error: null })
+      .mockResolvedValueOnce({
+        preview: null,
+        error: { message: errcode, code: '22023' } as unknown as Error,
+      })
+
+    renderPage()
+    await waitFor(() => screen.getByTestId('voucher-input'))
+
+    await user.type(screen.getByTestId('voucher-input'), 'BADCODE')
+    await user.click(screen.getByTestId('voucher-apply-btn'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('voucher-error')).toBeInTheDocument()
+    })
+    expect(screen.getByTestId('voucher-error').textContent).toMatch(expectedPattern)
+    // The applied banner must NOT show; the breakdown must NOT change.
+    expect(screen.queryByTestId('voucher-applied-banner')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('confirm-voucher-discount')).not.toBeInTheDocument()
+  })
+
+  it('submits with the applied voucher code', async () => {
+    const user = userEvent.setup()
+    mockPreviewPurchase
+      .mockResolvedValueOnce({ preview: previewNoCampaign, error: null })
+      .mockResolvedValueOnce({ preview: previewWithVoucher, error: null })
+    mockCreateOrder.mockResolvedValue({
+      order: { id: 'ord-new', course_id: 'c1', user_id: 'u-1', status: 'pending' } as Order,
+      error: null,
+    })
+
+    renderPage()
+    await waitFor(() => screen.getByTestId('voucher-input'))
+
+    await user.type(screen.getByTestId('voucher-input'), 'WELCOME10')
+    await user.click(screen.getByTestId('voucher-apply-btn'))
+    await waitFor(() => screen.getByTestId('voucher-applied-banner'))
+
+    await user.click(screen.getByTestId('confirm-submit-btn'))
+    await waitFor(() => {
+      expect(mockCreateOrder).toHaveBeenCalledWith(expect.anything(), 'c1', 'WELCOME10')
+      expect(screen.getByTestId('checkout-page-ord-new')).toBeInTheDocument()
+    })
+  })
+
+  // Free path stacking: voucher discount drives final_price to 0 →
+  // RPC returns status='active' + creates enrollment in same txn (D-05).
+  it('free path with voucher (final_price=0) redirects to /learn with toast', async () => {
+    const user = userEvent.setup()
+    const previewFreeViaVoucher: PurchasePreview = {
+      original_price: 100_000,
+      campaign_id: null,
+      campaign_name: null,
+      campaign_discount_amount: 0,
+      voucher_id: 'v-100',
+      voucher_code: 'FREE100',
+      voucher_discount_amount: 100_000,
+      final_price: 0,
+      platform_fee_pct: 0,
+      platform_fee_amount: 0,
+      creator_payout_amount: 0,
+    }
+    mockPreviewPurchase
+      .mockResolvedValueOnce({ preview: previewNoCampaign, error: null })
+      .mockResolvedValueOnce({ preview: previewFreeViaVoucher, error: null })
+    mockCreateOrder.mockResolvedValue({
+      order: { id: 'ord-free', course_id: 'c1', user_id: 'u-1', status: 'active' } as Order,
+      error: null,
+    })
+
+    renderPage()
+    await waitFor(() => screen.getByTestId('voucher-input'))
+
+    await user.type(screen.getByTestId('voucher-input'), 'FREE100')
+    await user.click(screen.getByTestId('voucher-apply-btn'))
+    await waitFor(() => screen.getByTestId('voucher-applied-banner'))
+    expect(screen.getByTestId('confirm-total-price')).toHaveTextContent(/^0\s/)
+
+    await user.click(screen.getByTestId('confirm-submit-btn'))
+    await waitFor(() => {
+      expect(mockCreateOrder).toHaveBeenCalledWith(expect.anything(), 'c1', 'FREE100')
+      expect(screen.getByTestId('learn-page-c1')).toBeInTheDocument()
+      expect(screen.getByTestId('free-course-toast')).toBeInTheDocument()
+    })
+  })
+
+  // Race condition surface: create_order's atomic re-validate raises
+  // voucher_quota_exceeded if another learner just grabbed the last seat
+  // between preview and submit. The page must show the voucher error AND
+  // drop the applied voucher so the learner can retry without it.
+  it('handles voucher_quota_exceeded at submit by showing the error and clearing the voucher', async () => {
+    const user = userEvent.setup()
+    mockPreviewPurchase
+      .mockResolvedValueOnce({ preview: previewNoCampaign, error: null })
+      .mockResolvedValueOnce({ preview: previewWithVoucher, error: null })
+      // After the race, the page re-fetches a clean preview.
+      .mockResolvedValueOnce({ preview: previewNoCampaign, error: null })
+    mockCreateOrder.mockResolvedValue({
+      order: null,
+      error: { message: 'voucher_quota_exceeded', code: '22023' } as unknown as Error,
+    })
+
+    renderPage()
+    await waitFor(() => screen.getByTestId('voucher-input'))
+
+    await user.type(screen.getByTestId('voucher-input'), 'LASTONE')
+    await user.click(screen.getByTestId('voucher-apply-btn'))
+    await waitFor(() => screen.getByTestId('voucher-applied-banner'))
+
+    await user.click(screen.getByTestId('confirm-submit-btn'))
+    await waitFor(() => {
+      expect(screen.getByTestId('voucher-error')).toBeInTheDocument()
+      expect(screen.queryByTestId('voucher-applied-banner')).not.toBeInTheDocument()
+    })
+    expect(screen.getByTestId('voucher-error').textContent).toMatch(/hết lượt/i)
+  })
 })

@@ -1294,6 +1294,8 @@
     "originalPrice": "Giá gốc",
     "campaignDiscount": "Khuyến mại",
     "campaignName": "Chương trình: {{name}}",
+    "subtotal": "Tạm tính",
+    "voucherDiscount": "Mã giảm giá",
     "total": "Tổng thanh toán",
     "submit": "Đặt mua ngay",
     "submitting": "Đang xử lý…",
@@ -1301,6 +1303,24 @@
     "notFound": "Khoá học không tồn tại hoặc chưa được xuất bản.",
     "loadError": "Không thể tải thông tin đơn hàng. Vui lòng thử lại sau.",
     "freeCourseToast": "Đã nhận khoá học miễn phí."
+  },
+  "voucher": {
+    "label": "Mã giảm giá",
+    "placeholder": "VD: WELCOME10",
+    "apply": "Áp dụng",
+    "applying": "Đang áp dụng…",
+    "applied": "Đã áp dụng mã {{code}} · giảm {{amount}}",
+    "remove": "Xoá",
+    "error": {
+      "notFound": "Mã giảm giá không tồn tại.",
+      "expired": "Mã giảm giá đã hết hạn.",
+      "inactive": "Mã giảm giá đã ngưng kích hoạt.",
+      "quotaExceeded": "Mã giảm giá đã hết lượt sử dụng.",
+      "userLimitReached": "Bạn đã dùng hết số lần cho phép với mã này.",
+      "courseNotEligible": "Mã giảm giá không áp dụng cho khoá học này.",
+      "invalidFormat": "Mã giảm giá không đúng định dạng.",
+      "generic": "Không thể áp dụng mã giảm giá. Vui lòng thử lại."
+    }
   },
   "checkout": {
     "title": "Thanh toán",

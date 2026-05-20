@@ -8,6 +8,8 @@ import {
   listVouchers,
   getVoucherUsages,
   formatVoucherDiscount,
+  computeVoucherDiscount,
+  voucherErrorKey,
   type Voucher,
   type VoucherUsage,
 } from './vouchersApi'
@@ -291,5 +293,116 @@ describe('formatVoucherDiscount', () => {
 
   it('renders fixed_amount with VND formatting', () => {
     expect(formatVoucherDiscount({ ...sampleVoucher, discount_type: 'fixed_amount', discount_value: 50000 })).toBe('-50.000₫')
+  })
+})
+
+// ── computeVoucherDiscount (PRD-0006 slice 3b) ─────────────────────────────
+// Pure mirror of SQL `_voucher_discount_amount` in migration 068. Keeps the
+// stacking math testable without a DB round trip; SQL is the source of truth.
+
+describe('computeVoucherDiscount', () => {
+  it('returns 0 for a null voucher', () => {
+    expect(computeVoucherDiscount(1_000_000, null)).toBe(0)
+  })
+
+  it('returns 0 when price is 0 or negative (free course)', () => {
+    expect(computeVoucherDiscount(0, { ...sampleVoucher })).toBe(0)
+  })
+
+  it('applies percentage discount with floor rounding', () => {
+    // 17% of 999 = 169.83 → floor 169
+    expect(
+      computeVoucherDiscount(999, {
+        discount_type: 'percentage',
+        discount_value: 17,
+        max_discount_amount: null,
+      })
+    ).toBe(169)
+  })
+
+  it('caps percentage discount at max_discount_amount when smaller', () => {
+    // 50% of 1_000_000 = 500_000, but cap=300_000
+    expect(
+      computeVoucherDiscount(1_000_000, {
+        discount_type: 'percentage',
+        discount_value: 50,
+        max_discount_amount: 300_000,
+      })
+    ).toBe(300_000)
+  })
+
+  it('applies fixed_amount discount, clamped at price', () => {
+    expect(
+      computeVoucherDiscount(80_000, {
+        discount_type: 'fixed_amount',
+        discount_value: 100_000,
+        max_discount_amount: null,
+      })
+    ).toBe(80_000)
+  })
+
+  // ADR-0007 worked example: campaign + voucher stacking.
+  // Course 1,000,000 ₫. Campaign -20% (=200,000). Voucher fixed -100,000.
+  // Intermediate = 800,000. Voucher = 100,000. Final = 700,000.
+  // Creator (80%) = floor(700,000 * 80/100) = 560,000. Platform = 140,000.
+  it('matches the ADR-0007 worked example for campaign + voucher stacking', () => {
+    const original = 1_000_000
+    const campaignDiscount = 200_000 // applied externally (computeCampaignDiscount)
+    const intermediate = original - campaignDiscount
+    const voucherDiscount = computeVoucherDiscount(intermediate, {
+      discount_type: 'fixed_amount',
+      discount_value: 100_000,
+      max_discount_amount: null,
+    })
+    expect(voucherDiscount).toBe(100_000)
+    const finalPrice = Math.max(intermediate - voucherDiscount, 0)
+    expect(finalPrice).toBe(700_000)
+    const creator = Math.floor((finalPrice * 80) / 100)
+    expect(creator).toBe(560_000)
+    expect(finalPrice - creator).toBe(140_000)
+  })
+
+  // ADR-0007 free-path edge: if voucher + campaign together exceed original
+  // price, final floors at 0. The voucher leg sees intermediate=0 and
+  // returns 0 (price <= 0 short-circuit), so no negative discount.
+  it('returns 0 when intermediate is already 0 (free path after campaign)', () => {
+    expect(
+      computeVoucherDiscount(0, {
+        discount_type: 'fixed_amount',
+        discount_value: 50_000,
+        max_discount_amount: null,
+      })
+    ).toBe(0)
+  })
+})
+
+// ── voucherErrorKey (PRD-0006 slice 3b) ────────────────────────────────────
+// Maps the 6 PG exception messages raised by _resolve_voucher_for_purchase
+// to i18n keys. Unknown messages fall through to a generic key — UI never
+// shows raw "voucher_..." strings.
+
+describe('voucherErrorKey', () => {
+  it.each([
+    ['voucher_not_found',           'voucher.error.notFound'],
+    ['voucher_inactive',            'voucher.error.inactive'],
+    ['voucher_expired',             'voucher.error.expired'],
+    ['voucher_quota_exceeded',      'voucher.error.quotaExceeded'],
+    ['voucher_user_limit',          'voucher.error.userLimitReached'],
+    ['voucher_course_not_eligible', 'voucher.error.courseNotEligible'],
+  ])('maps "%s" to i18n key "%s"', (message, expected) => {
+    expect(voucherErrorKey({ message })).toBe(expected)
+  })
+
+  it('falls back to voucher.error.generic for unknown messages', () => {
+    expect(voucherErrorKey({ message: 'something_else' })).toBe('voucher.error.generic')
+  })
+
+  it('falls back to voucher.error.generic for null / undefined error', () => {
+    expect(voucherErrorKey(null)).toBe('voucher.error.generic')
+    expect(voucherErrorKey(undefined)).toBe('voucher.error.generic')
+  })
+
+  it('matches when message wraps the code (PG often prefixes)', () => {
+    expect(voucherErrorKey({ message: 'ERROR: voucher_expired' })).toBe('voucher.error.expired')
   })
 })

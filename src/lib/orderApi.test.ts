@@ -63,6 +63,29 @@ describe('createOrder', () => {
     expect(order).toBeNull()
     expect(error).toBeTruthy()
   })
+
+  // PRD-0006 slice 3b: voucher errcodes raised by atomic re-validation in
+  // create_order_with_fee_snapshot bubble through unchanged so the page can
+  // toast the right i18n key.
+  it.each([
+    ['voucher_not_found'],
+    ['voucher_inactive'],
+    ['voucher_expired'],
+    ['voucher_quota_exceeded'],
+    ['voucher_user_limit'],
+    ['voucher_course_not_eligible'],
+  ])('forwards %s errcode unchanged when creating an order with a voucher', async message => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: null,
+      error: { message, code: '22023' },
+    })
+    const client = { rpc } as unknown as SupabaseClient
+
+    const { order, error } = await createOrder(client, 'c-1', 'BADCODE')
+    expect(order).toBeNull()
+    expect((error as { message?: string }).message).toBe(message)
+    expect((error as { code?: string }).code).toBe('22023')
+  })
 })
 
 // ── previewPurchase ───────────────────────────────────────────────────────
@@ -130,6 +153,32 @@ describe('previewPurchase', () => {
     const { preview, error } = await previewPurchase(client, 'c-missing')
     expect(preview).toBeNull()
     expect((error as { message?: string }).message).toBe('course_not_found')
+  })
+
+  // PRD-0006 slice 3b: 6 voucher errcodes raised by _resolve_voucher_for_purchase
+  // bubble through unchanged. The page maps them via voucherErrorKey.
+  it.each([
+    ['voucher_not_found'],
+    ['voucher_inactive'],
+    ['voucher_expired'],
+    ['voucher_quota_exceeded'],
+    ['voucher_user_limit'],
+    ['voucher_course_not_eligible'],
+  ])('forwards %s errcode unchanged when previewing with a voucher', async message => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: null,
+      error: { message, code: '22023' },
+    })
+    const client = { rpc } as unknown as SupabaseClient
+
+    const { preview, error } = await previewPurchase(client, 'c-1', 'BADCODE')
+    expect(preview).toBeNull()
+    expect((error as { message?: string }).message).toBe(message)
+    expect((error as { code?: string }).code).toBe('22023')
+    expect(rpc).toHaveBeenCalledWith('preview_purchase', {
+      p_course_id: 'c-1',
+      p_voucher_code: 'BADCODE',
+    })
   })
 })
 

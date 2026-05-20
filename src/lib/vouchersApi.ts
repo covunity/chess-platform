@@ -166,3 +166,51 @@ export function formatVoucherDiscount(v: Voucher): string {
   if (v.discount_type === 'percentage') return `-${v.discount_value}%`
   return `-${v.discount_value.toLocaleString('de-DE')}₫`
 }
+
+// PRD-0006 slice 3b: pure JS mirror of the SQL `_voucher_discount_amount`
+// helper in migration 068. The SQL function is the source of truth; this
+// JS twin exists so React components (e.g. the /confirm-purchase voucher
+// preview) and unit tests can reason about stacking math without a round
+// trip. Both use floor / integer arithmetic per ADR-0007.
+export function computeVoucherDiscount(
+  price: number,
+  voucher: Pick<Voucher, 'discount_type' | 'discount_value' | 'max_discount_amount'> | null
+): number {
+  if (!voucher || price <= 0) return 0
+  if (voucher.discount_type === 'percentage') {
+    const raw = Math.floor((price * voucher.discount_value) / 100)
+    if (voucher.max_discount_amount == null) return raw
+    return Math.min(raw, voucher.max_discount_amount)
+  }
+  // fixed_amount
+  return Math.min(voucher.discount_value, price)
+}
+
+// PRD-0006 slice 3b: maps voucher RPC error message (raised as PG exception
+// from create_order_with_fee_snapshot / preview_purchase) to the i18n key
+// the toast renders. Unknown / unexpected errors fall through to
+// voucher.error.generic so the UI never shows a raw "voucher_..." string.
+export type VoucherErrCode =
+  | 'voucher_not_found'
+  | 'voucher_inactive'
+  | 'voucher_expired'
+  | 'voucher_quota_exceeded'
+  | 'voucher_user_limit'
+  | 'voucher_course_not_eligible'
+
+const VOUCHER_ERR_I18N: Record<VoucherErrCode, string> = {
+  voucher_not_found:           'voucher.error.notFound',
+  voucher_inactive:            'voucher.error.inactive',
+  voucher_expired:             'voucher.error.expired',
+  voucher_quota_exceeded:      'voucher.error.quotaExceeded',
+  voucher_user_limit:          'voucher.error.userLimitReached',
+  voucher_course_not_eligible: 'voucher.error.courseNotEligible',
+}
+
+export function voucherErrorKey(error: { message?: string } | null | undefined): string {
+  const msg = error?.message ?? ''
+  for (const key of Object.keys(VOUCHER_ERR_I18N) as VoucherErrCode[]) {
+    if (msg.includes(key)) return VOUCHER_ERR_I18N[key]
+  }
+  return 'voucher.error.generic'
+}

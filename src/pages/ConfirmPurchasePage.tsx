@@ -7,9 +7,18 @@ import { getCourseDetail, checkUserEnrollment } from '../lib/coursesApi'
 import type { CourseDetail } from '../lib/coursesApi'
 import { getPendingOrderForCourse, previewPurchase, createOrder } from '../lib/orderApi'
 import type { PurchasePreview } from '../lib/orderApi'
+import { voucherErrorKey } from '../lib/vouchersApi'
 
 function formatVnd(n: number): string {
   return `${n.toLocaleString('vi-VN')} ₫`
+}
+
+// PRD-0006 slice 3b: voucher codes are constrained to ^[A-Z0-9]{6,20}$
+// (migration 065). Normalise client-side BEFORE hitting the RPC so users
+// can paste "  welcome10  " and still get a hit. The RPC normalises
+// defensively but doing it here keeps the request payload predictable.
+function normaliseVoucherCode(raw: string): string {
+  return raw.trim().toUpperCase()
 }
 
 export default function ConfirmPurchasePage() {
@@ -24,6 +33,15 @@ export default function ConfirmPurchasePage() {
   const [notFound, setNotFound] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState(false)
+
+  // Voucher state. `voucherInput` is the raw textbox; `appliedCode` is the
+  // normalised code that succeeded against preview_purchase — only this
+  // value is forwarded to createOrder. `voucherError` is the i18n key for
+  // the inline error banner under the input.
+  const [voucherInput, setVoucherInput] = useState('')
+  const [appliedCode, setAppliedCode] = useState<string | null>(null)
+  const [voucherApplying, setVoucherApplying] = useState(false)
+  const [voucherError, setVoucherError] = useState<string | null>(null)
 
   useEffect(() => {
     if (authLoading) return
@@ -67,16 +85,50 @@ export default function ConfirmPurchasePage() {
     return () => { cancelled = true }
   }, [authLoading, user, courseId, navigate])
 
+  async function handleApplyVoucher() {
+    if (!courseId || voucherApplying) return
+    const code = normaliseVoucherCode(voucherInput)
+    if (!code) {
+      setVoucherError('voucher.error.invalidFormat')
+      return
+    }
+
+    setVoucherApplying(true)
+    setVoucherError(null)
+    const { preview: p, error } = await previewPurchase(supabase, courseId, code)
+    setVoucherApplying(false)
+
+    if (error || !p) {
+      setVoucherError(voucherErrorKey(error as { message?: string } | null))
+      return
+    }
+
+    setPreview(p)
+    setAppliedCode(code)
+    setVoucherInput(code)
+  }
+
+  async function handleRemoveVoucher() {
+    if (!courseId) return
+    setAppliedCode(null)
+    setVoucherInput('')
+    setVoucherError(null)
+    const { preview: p } = await previewPurchase(supabase, courseId)
+    if (p) setPreview(p)
+  }
+
   async function handleSubmit() {
     if (!courseId || submitting) return
     setSubmitting(true)
     setSubmitError(false)
-    const { order, error } = await createOrder(supabase, courseId, null)
+    setVoucherError(null)
+    const { order, error } = await createOrder(supabase, courseId, appliedCode)
     setSubmitting(false)
 
     if (order) {
       // Free path (D-05): RPC returns an already-active order with the
-      // enrollment row in place. Skip /checkout entirely.
+      // enrollment row in place. Skip /checkout entirely. Applies whether
+      // the free path came from a 0₫ course or a 100% voucher (V-D5).
       if (order.status === 'active') {
         navigate(`/learn/${courseId}`, {
           replace: true,
@@ -96,6 +148,18 @@ export default function ConfirmPurchasePage() {
           navigate(`/checkout/${existingId}`, { replace: true })
           return
         }
+      }
+      // If atomic re-validation rejected the voucher (e.g. a quota race),
+      // surface the voucher-specific i18n key. Otherwise fall back to the
+      // generic submit error banner.
+      const voucherKey = voucherErrorKey(error as { message?: string } | null)
+      if (voucherKey !== 'voucher.error.generic') {
+        setVoucherError(voucherKey)
+        setAppliedCode(null)
+        // Re-fetch a clean preview so the breakdown drops the voucher row.
+        const { preview: p } = await previewPurchase(supabase, courseId)
+        if (p) setPreview(p)
+        return
       }
       setSubmitError(true)
     }
@@ -145,6 +209,11 @@ export default function ConfirmPurchasePage() {
   if (!course || !preview) return null
 
   const hasCampaign = preview.campaign_id != null && preview.campaign_discount_amount > 0
+  const hasVoucher = preview.voucher_id != null && preview.voucher_discount_amount > 0
+  // Subtotal = price after campaign, before voucher. Only shown when BOTH
+  // a campaign AND a voucher apply — otherwise the breakdown collapses to
+  // a 2- or 3-row layout (original → discount → total).
+  const showSubtotal = hasCampaign && hasVoucher
 
   return (
     <main style={{ padding: '48px 56px', minHeight: '100vh' }}>
@@ -285,6 +354,42 @@ export default function ConfirmPurchasePage() {
                 </div>
               )}
 
+              {showSubtotal && (
+                <div
+                  data-testid="confirm-subtotal-row"
+                  style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--ink-3)' }}
+                >
+                  <span>{t('confirmPurchase.subtotal')}</span>
+                  <span data-testid="confirm-subtotal-amount">
+                    {formatVnd(preview.original_price - preview.campaign_discount_amount)}
+                  </span>
+                </div>
+              )}
+
+              {hasVoucher && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+                    <span style={{ color: 'var(--ink-2)' }}>
+                      {t('confirmPurchase.voucherDiscount')}
+                    </span>
+                    <span
+                      data-testid="confirm-voucher-discount"
+                      style={{ color: 'var(--success)' }}
+                    >
+                      -{formatVnd(preview.voucher_discount_amount)}
+                    </span>
+                  </div>
+                  {preview.voucher_code && (
+                    <span
+                      data-testid="confirm-voucher-code-label"
+                      style={{ fontSize: 12, color: 'var(--ink-3)' }}
+                    >
+                      {preview.voucher_code}
+                    </span>
+                  )}
+                </div>
+              )}
+
               <div style={{ height: 1, background: 'var(--border)' }} />
 
               <div
@@ -303,6 +408,111 @@ export default function ConfirmPurchasePage() {
                   {formatVnd(preview.final_price)}
                 </span>
               </div>
+            </div>
+
+            {/* Voucher input — collapses to a banner once applied. */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {appliedCode && hasVoucher ? (
+                <div
+                  data-testid="voucher-applied-banner"
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '10px 14px',
+                    background: 'var(--success-soft, color-mix(in srgb, var(--success) 12%, transparent))',
+                    border: '1px solid var(--success)',
+                    borderRadius: 'var(--r-md)',
+                    fontSize: 13,
+                    color: 'var(--success)',
+                  }}
+                >
+                  <span>
+                    {t('voucher.applied', {
+                      code: appliedCode,
+                      amount: formatVnd(preview.voucher_discount_amount),
+                    })}
+                  </span>
+                  <button
+                    type="button"
+                    data-testid="voucher-remove-btn"
+                    onClick={handleRemoveVoucher}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--success)',
+                      fontSize: 13,
+                      textDecoration: 'underline',
+                      cursor: 'pointer',
+                      padding: 0,
+                    }}
+                  >
+                    {t('voucher.remove')}
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <label
+                    htmlFor="voucher-input"
+                    style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink-2)' }}
+                  >
+                    {t('voucher.label')}
+                  </label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      id="voucher-input"
+                      data-testid="voucher-input"
+                      type="text"
+                      value={voucherInput}
+                      onChange={e => {
+                        setVoucherInput(e.target.value.toUpperCase())
+                        if (voucherError) setVoucherError(null)
+                      }}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          void handleApplyVoucher()
+                        }
+                      }}
+                      placeholder={t('voucher.placeholder')}
+                      disabled={voucherApplying}
+                      maxLength={20}
+                      style={{
+                        flex: 1,
+                        padding: '8px 12px',
+                        fontSize: 14,
+                        fontFamily: 'monospace',
+                        background: 'var(--surface)',
+                        border: '1px solid var(--border)',
+                        borderRadius: 'var(--r-md)',
+                        color: 'var(--ink-1)',
+                        textTransform: 'uppercase',
+                      }}
+                    />
+                    <button
+                      type="button"
+                      data-testid="voucher-apply-btn"
+                      className="btn btn-secondary"
+                      onClick={handleApplyVoucher}
+                      disabled={voucherApplying || !voucherInput.trim()}
+                    >
+                      {voucherApplying ? t('voucher.applying') : t('voucher.apply')}
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {voucherError && (
+                <div
+                  data-testid="voucher-error"
+                  style={{
+                    fontSize: 13,
+                    color: 'var(--danger)',
+                  }}
+                >
+                  {t(voucherError)}
+                </div>
+              )}
             </div>
 
             {submitError && (

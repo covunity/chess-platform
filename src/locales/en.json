@@ -759,6 +759,8 @@
     "originalPrice": "Original price",
     "campaignDiscount": "Promotion",
     "campaignName": "Campaign: {{name}}",
+    "subtotal": "Subtotal",
+    "voucherDiscount": "Voucher",
     "total": "Total",
     "submit": "Place order",
     "submitting": "Processing…",
@@ -766,6 +768,24 @@
     "notFound": "Course not found or not published.",
     "loadError": "Could not load order details. Please try again later.",
     "freeCourseToast": "Free course enrolled."
+  },
+  "voucher": {
+    "label": "Voucher code",
+    "placeholder": "e.g. WELCOME10",
+    "apply": "Apply",
+    "applying": "Applying…",
+    "applied": "Voucher {{code}} applied · −{{amount}}",
+    "remove": "Remove",
+    "error": {
+      "notFound": "Voucher code not found.",
+      "expired": "Voucher has expired.",
+      "inactive": "Voucher is no longer active.",
+      "quotaExceeded": "Voucher has reached its usage quota.",
+      "userLimitReached": "You have reached the maximum number of uses for this voucher.",
+      "courseNotEligible": "This voucher does not apply to this course.",
+      "invalidFormat": "Voucher code format is invalid.",
+      "generic": "Could not apply voucher. Please try again."
+    }
   },
   "checkout": {
     "title": "Payment",

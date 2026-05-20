@@ -34,6 +34,11 @@ export interface Order {
   original_price: number
   campaign_id: string | null
   campaign_discount_amount: number
+  // PRD-0006 slice 3b: voucher snapshot. voucher_code persists if voucher row
+  // is later deleted (FK is ON DELETE SET NULL on voucher_id).
+  voucher_id: string | null
+  voucher_code: string | null
+  voucher_discount_amount: number
   created_at: string
   updated_at: string
 }
