@@ -270,6 +270,61 @@ describe('cancelOrder', () => {
     expect((error as { message?: string; code?: string }).message).toBe(message)
     expect((error as { message?: string; code?: string }).code).toBe('22023')
   })
+
+  // ── Issue #308 (slice 4): voucher quota refund on cancel ─────────────────
+  //
+  // Migration 069 extends cancel_order to refund voucher quota +
+  // delete voucher_usages atomically in the same transaction as the
+  // status flip. The JS wrapper is a thin forwarder and does NOT
+  // need to know about the new SQL side-effects, but these tests
+  // document the contract the server now upholds:
+  //
+  //   * The cancelled order returned still carries voucher_id +
+  //     voucher_code + voucher_discount_amount as a snapshot (ADR-0002
+  //     E-07 pattern). Cancellation does not blank the snapshot — it
+  //     only releases quota.
+  //   * No new errcodes are introduced; the voucher block is unconditional
+  //     and silent (no-op when voucher_id IS NULL).
+  //
+  // Behavior verified end-to-end in migration 069 header (7 scenarios).
+  it('returns cancelled order with voucher snapshot preserved (quota refunded server-side)', async () => {
+    const cancelled = {
+      ...sampleOrder,
+      status: 'cancelled' as const,
+      cancelled_reason: 'learner changed mind',
+      voucher_id: 'v-abc',
+      voucher_code: 'WELCOME10',
+      voucher_discount_amount: 50_000,
+    }
+    const rpc = vi.fn().mockResolvedValue({ data: cancelled, error: null })
+    const client = { rpc } as unknown as SupabaseClient
+
+    const { order, error } = await cancelOrder(client, 'ord-1', 'learner changed mind')
+    expect(error).toBeNull()
+    expect(order?.status).toBe('cancelled')
+    // Snapshot survives cancel: the order still records which voucher was used.
+    expect(order?.voucher_id).toBe('v-abc')
+    expect(order?.voucher_code).toBe('WELCOME10')
+    expect(order?.voucher_discount_amount).toBe(50_000)
+  })
+
+  it('cancel of an order without a voucher remains a no-op for the voucher block', async () => {
+    // Sanity: confirm the wrapper does not invent voucher params and that
+    // the returned order's voucher fields stay null. The SQL IF-guard in
+    // migration 069 short-circuits on NULL voucher_id, so no regression
+    // path for vanilla pending cancels.
+    const cancelled = { ...sampleOrder, status: 'cancelled' as const, voucher_id: null }
+    const rpc = vi.fn().mockResolvedValue({ data: cancelled, error: null })
+    const client = { rpc } as unknown as SupabaseClient
+
+    const { order, error } = await cancelOrder(client, 'ord-1', 'duplicate')
+    expect(error).toBeNull()
+    expect(order?.voucher_id).toBeNull()
+    expect(rpc).toHaveBeenCalledWith('cancel_order', {
+      p_order_id: 'ord-1',
+      p_reason: 'duplicate',
+    })
+  })
 })
 
 // ── getOrder ───────────────────────────────────────────────────────────────
