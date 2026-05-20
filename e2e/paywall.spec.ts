@@ -67,20 +67,21 @@ test('Learner with pending order is redirected to pending-order page on course d
   await expect(page).toHaveURL(new RegExp(`/courses/${COURSE_ID}.*pendingOrder=true`), { timeout: 10_000 })
 })
 
-// 4a-full: Learner clicks "Mua khoá học" → checkout page → awaiting page
-test('Learner can complete purchase flow: click buy → checkout → awaiting confirmation', async ({ page }) => {
+// 4a-full: Learner clicks "Mua khoá học" → /confirm-purchase intermediate page
+// PRD-0006 slice 2 (#305) inserted /confirm-purchase/:courseId between the CTA
+// and /checkout/:orderId so the learner can preview campaign + voucher breakdown
+// before the order row is created.
+test('Learner can complete purchase flow: click buy → confirm-purchase page', async ({ page }) => {
   await setAuthState(page, mockLearner)
   await mountSupabaseMocks(page, { user: mockLearner, isEnrolled: false, hasPendingOrder: false })
 
   await page.goto(`/courses/${COURSE_ID}`)
 
-  // Click the purchase CTA — it calls create_order_with_fee_snapshot RPC then navigates to /checkout/:id
   const ctaButton = page.locator('button.btn-accent').filter({ hasText: /[Mm]ua|purchase/i }).first()
   await expect(ctaButton).toBeVisible({ timeout: 10_000 })
   await ctaButton.click()
 
-  // Should navigate to checkout page for the created order
-  await expect(page).toHaveURL(new RegExp(`/checkout/${ORDER_ID}`), { timeout: 10_000 })
+  await expect(page).toHaveURL(new RegExp(`/confirm-purchase/${COURSE_ID}`), { timeout: 10_000 })
 })
 
 // 4b: Pending order banner visible on course detail page
