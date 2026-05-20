@@ -186,12 +186,86 @@
       "overview": "Tổng quan",
       "courseReview": "Duyệt khóa học",
       "orders": "Đơn hàng",
+      "campaigns": "Chiến dịch",
       "users": "Người dùng",
       "creatorApplications": "Đơn đăng ký creator",
       "creatorFees": "Override creator",
       "tiers": "Gói tài khoản",
       "payouts": "Chi trả creator",
       "reports": "Báo cáo"
+    },
+    "campaigns": {
+      "pageTitle": "Chiến dịch khuyến mại",
+      "intro": "Tạo và quản lý các chương trình khuyến mại tự động áp lên toàn bộ hoặc một tập khoá học. Chỉ 1 chiến dịch hoạt động tại 1 thời điểm.",
+      "createBtn": "Tạo chiến dịch mới",
+      "searchPlaceholder": "Tìm theo tên chiến dịch…",
+      "filter": {
+        "all": "Tất cả trạng thái",
+        "active": "Đang hoạt động",
+        "inactive": "Đã tắt"
+      },
+      "colName": "Tên",
+      "colDiscount": "Giảm",
+      "colScope": "Phạm vi",
+      "colDates": "Thời gian",
+      "colStatus": "Trạng thái",
+      "colOrders": "Đơn áp dụng",
+      "colActions": "",
+      "scopeAll": "Toàn bộ",
+      "scopeNCourses": "{{count}} khoá",
+      "status": {
+        "active": "Đang hoạt động",
+        "inactive": "Đã tắt"
+      },
+      "edit": "Chỉnh sửa",
+      "deactivate": "Tắt",
+      "empty": "Chưa có chiến dịch nào.",
+      "loadError": "Không thể tải danh sách chiến dịch.",
+      "actionDeactivateSuccess": "Đã tắt chiến dịch",
+      "actionDeactivateError": "Không thể tắt chiến dịch. Vui lòng thử lại.",
+      "form": {
+        "createTitle": "Tạo chiến dịch mới",
+        "editTitle": "Chỉnh sửa chiến dịch",
+        "nameLabel": "Tên chiến dịch",
+        "namePlaceholder": "Ví dụ: Tết Sale 2026",
+        "descriptionLabel": "Mô tả (tuỳ chọn)",
+        "descriptionPlaceholder": "Ngắn gọn, dành cho mục đích quản lý nội bộ.",
+        "discountTypeLabel": "Loại giảm giá",
+        "discountTypePercentage": "Phần trăm",
+        "discountTypeFixedAmount": "Số tiền cố định",
+        "discountValueLabel": "Giá trị",
+        "discountValuePercentHint": "Nhập số từ 0 đến 100.",
+        "discountValueFixedHint": "Nhập số tiền (VND).",
+        "maxDiscountLabel": "Giảm tối đa (tuỳ chọn)",
+        "maxDiscountHint": "Chỉ áp dụng cho loại phần trăm. Để trống nếu không giới hạn.",
+        "scopeLabel": "Phạm vi áp dụng",
+        "scopeAll": "Toàn bộ khoá học",
+        "scopeSome": "Chỉ một số khoá học",
+        "startsAtLabel": "Bắt đầu",
+        "endsAtLabel": "Kết thúc",
+        "save": "Lưu chiến dịch",
+        "saving": "Đang lưu…",
+        "cancel": "Huỷ",
+        "errors": {
+          "nameRequired": "Vui lòng nhập tên chiến dịch.",
+          "discountValueRequired": "Vui lòng nhập giá trị giảm giá.",
+          "discountValueNumeric": "Giá trị phải là số nguyên không âm.",
+          "discountValuePercentRange": "Phần trăm phải nằm trong khoảng 0–100.",
+          "maxDiscountNumeric": "Giảm tối đa phải là số nguyên dương.",
+          "startsAtRequired": "Vui lòng chọn thời điểm bắt đầu.",
+          "endsAtRequired": "Vui lòng chọn thời điểm kết thúc.",
+          "endsAfterStarts": "Thời điểm kết thúc phải sau thời điểm bắt đầu.",
+          "scopeSomeEmpty": "Vui lòng chọn ít nhất 1 khoá học hoặc đổi sang Toàn bộ.",
+          "overlap": "Khoảng thời gian này đã có chiến dịch khác. Hãy kết thúc chiến dịch hiện tại trước hoặc chọn ngày khác.",
+          "submitFailed": "Không thể lưu chiến dịch. Vui lòng thử lại."
+        }
+      },
+      "courseMultiSelect": {
+        "searchPlaceholder": "Tìm khoá học theo tên…",
+        "selectedCount": "Đã chọn: {{count}}",
+        "empty": "Không có khoá học nào.",
+        "truncated": "… và {{count}} khoá khác"
+      }
     },
     "payouts": {
       "pageTitle": "Chi trả creator",
@@ -1115,6 +1189,9 @@
     "business": "Doanh nghiệp",
     "athlete": "Vận động viên",
     "trainingCenter": "Trung tâm đào tạo"
+  },
+  "campaign": {
+    "badge": "Khuyến mại: {{name}}"
   },
   "checkout": {
     "title": "Thanh toán",

@@ -745,6 +745,9 @@
     "athlete": "Athlete",
     "trainingCenter": "Training Center"
   },
+  "campaign": {
+    "badge": "Promotion: {{name}}"
+  },
   "checkout": {
     "title": "Payment",
     "summary": {

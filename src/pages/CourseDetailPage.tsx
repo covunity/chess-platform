@@ -15,6 +15,8 @@ import { listComments, createComment, reportComment, updateComment, deleteCommen
 import type { Comment, ReportReason } from '../lib/commentsApi'
 import { createOrder, getPendingOrderForCourse } from '../lib/orderApi'
 import type { Order } from '../lib/orderApi'
+import { getActiveCampaignForCourse, computeCampaignDiscount } from '../lib/campaignsApi'
+import type { Campaign } from '../lib/campaignsApi'
 import { useAuth } from '../context/AuthContext'
 import ChessBoard from '../components/ChessBoard/ChessBoard'
 import PaywallSheet from '../components/PaywallSheet'
@@ -1189,6 +1191,7 @@ export default function CourseDetailPage() {
   const [enrolling, setEnrolling] = useState(false)
   const [userReview, setUserReview] = useState<Review | null>(null)
   const [pendingOrder, setPendingOrder] = useState<Order | null>(null)
+  const [campaign, setCampaign] = useState<Campaign | null>(null)
   const [displayedReviews, setDisplayedReviews] = useState<CourseDetail['reviews']>([])
   const [reviewPage, setReviewPage] = useState(1)
   const [reviewsLoadingMore, setReviewsLoadingMore] = useState(false)
@@ -1207,6 +1210,12 @@ export default function CourseDetailPage() {
         setReviewPage(1)
       }
       setLoading(false)
+    })
+    // Fetch the currently-active campaign that targets this course (slice 1 of
+    // PRD-0006). Null when there's no match; we render the price banner only
+    // when this resolves to a row. Failure → silently render base price.
+    getActiveCampaignForCourse(supabase, courseId).then(({ campaign: c }) => {
+      setCampaign(c)
     })
   }, [courseId])
 
@@ -1650,22 +1659,65 @@ export default function CourseDetailPage() {
             {/* Body */}
             <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
               {/* Price row */}
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-                <span
-                  data-testid="buy-card-price"
-                  style={{ fontFamily: 'var(--font-serif)', fontSize: 36, color: 'var(--ink-1)' }}
-                >
-                  {formatPrice(course.price)}
-                </span>
-                {course.original_price && course.original_price > course.price && (
-                  <span
-                    data-testid="buy-card-original-price"
-                    style={{ fontSize: 13, color: 'var(--ink-3)', textDecoration: 'line-through' }}
-                  >
-                    {formatPrice(course.original_price)}
-                  </span>
-                )}
-              </div>
+              {(() => {
+                const campaignDiscount = computeCampaignDiscount(course.price, campaign)
+                const campaignPrice = Math.max(course.price - campaignDiscount, 0)
+                const hasCampaign = campaign != null && campaignDiscount > 0
+
+                if (hasCampaign) {
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                        <span
+                          data-testid="campaign-discounted-price"
+                          style={{ fontFamily: 'var(--font-serif)', fontSize: 36, color: 'var(--ink-1)' }}
+                        >
+                          {formatPrice(campaignPrice)}
+                        </span>
+                        <span
+                          data-testid="campaign-strikethrough-price"
+                          style={{ fontSize: 13, color: 'var(--ink-3)', textDecoration: 'line-through' }}
+                        >
+                          {formatPrice(course.price)}
+                        </span>
+                      </div>
+                      <span
+                        data-testid="campaign-badge"
+                        className="pill"
+                        style={{
+                          alignSelf: 'flex-start',
+                          background: 'var(--accent-soft)',
+                          color: 'var(--accent-ink)',
+                          border: '1px solid var(--accent-border)',
+                          fontSize: 11.5,
+                          padding: '2px 10px',
+                        }}
+                      >
+                        {t('campaign.badge', { name: campaign.name })}
+                      </span>
+                    </div>
+                  )
+                }
+
+                return (
+                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                    <span
+                      data-testid="buy-card-price"
+                      style={{ fontFamily: 'var(--font-serif)', fontSize: 36, color: 'var(--ink-1)' }}
+                    >
+                      {formatPrice(course.price)}
+                    </span>
+                    {course.original_price && course.original_price > course.price && (
+                      <span
+                        data-testid="buy-card-original-price"
+                        style={{ fontSize: 13, color: 'var(--ink-3)', textDecoration: 'line-through' }}
+                      >
+                        {formatPrice(course.original_price)}
+                      </span>
+                    )}
+                  </div>
+                )
+              })()}
 
               {/* Promo line */}
               {course.promo_ends_at && (

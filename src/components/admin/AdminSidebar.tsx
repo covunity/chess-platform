@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { key: 'overview', to: '/admin/overview' },
   { key: 'courseReview', to: '/admin/course-review' },
   { key: 'orders', to: '/admin/orders' },
+  { key: 'campaigns', to: '/admin/campaigns' },
   { key: 'users', to: '/admin/users' },
   { key: 'creatorApplications', to: '/admin/creator-applications' },
   { key: 'creatorFees', to: '/admin/creators/fees' },

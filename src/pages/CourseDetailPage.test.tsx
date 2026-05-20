@@ -10,7 +10,9 @@ import * as enrollmentApi from '../lib/enrollmentApi'
 import * as reviewsApi from '../lib/reviewsApi'
 import * as commentsApi from '../lib/commentsApi'
 import * as orderApi from '../lib/orderApi'
+import * as campaignsApi from '../lib/campaignsApi'
 import type { CourseDetail } from '../lib/coursesApi'
+import type { Campaign } from '../lib/campaignsApi'
 import { AuthContext } from '../context/AuthContext'
 import type { AuthContextValue } from '../context/AuthContext'
 
@@ -43,6 +45,7 @@ const mockEnrollForFree = vi.spyOn(enrollmentApi, 'enrollForFree')
 const mockGetFirstLesson = vi.spyOn(enrollmentApi, 'getFirstLesson')
 const mockCreateOrder = vi.spyOn(orderApi, 'createOrder')
 const mockGetPendingOrderForCourse = vi.spyOn(orderApi, 'getPendingOrderForCourse')
+const mockGetActiveCampaignForCourse = vi.spyOn(campaignsApi, 'getActiveCampaignForCourse')
 
 const sampleCourse: CourseDetail = {
   id: 'c1',
@@ -162,6 +165,7 @@ describe('CourseDetailPage', () => {
     mockCreateOrder.mockResolvedValue({ order: null, error: null })
     mockGetPendingOrderForCourse.mockResolvedValue({ order: null, error: null })
     mockListReviews.mockResolvedValue({ reviews: [], total: 0, error: null })
+    mockGetActiveCampaignForCourse.mockResolvedValue({ campaign: null, error: null })
   })
 
   describe('loading state', () => {
@@ -278,6 +282,60 @@ describe('CourseDetailPage', () => {
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /thêm vào danh sách/i })).toBeInTheDocument()
       })
+    })
+  })
+
+  describe('active campaign banner (slice 1 of PRD-0006)', () => {
+    const activeCampaign: Campaign = {
+      id: 'cmp-1',
+      name: 'Tết Sale 2026',
+      description: null,
+      discount_type: 'percentage',
+      discount_value: 20,
+      max_discount_amount: null,
+      applicable_courses: null,
+      starts_at: '2026-01-15T00:00:00Z',
+      ends_at: '2026-02-15T00:00:00Z',
+      is_active: true,
+      created_by: 'admin-1',
+      created_at: '2026-01-10T00:00:00Z',
+      updated_at: '2026-01-10T00:00:00Z',
+    }
+
+    it('queries the active campaign for the course on mount', async () => {
+      mockGetCourseDetail.mockResolvedValue({ course: sampleCourse, error: null })
+      renderPage()
+      await waitFor(() => {
+        expect(mockGetActiveCampaignForCourse).toHaveBeenCalledWith(
+          expect.anything(),
+          'c1'
+        )
+      })
+    })
+
+    it('renders campaign price + strikethrough original price + badge when a campaign matches', async () => {
+      mockGetCourseDetail.mockResolvedValue({ course: sampleCourse, error: null })
+      mockGetActiveCampaignForCourse.mockResolvedValue({
+        campaign: activeCampaign,
+        error: null,
+      })
+      renderPage()
+      await waitFor(() => {
+        expect(screen.getByTestId('campaign-badge')).toBeInTheDocument()
+      })
+      expect(screen.getByTestId('campaign-badge')).toHaveTextContent(/Tết Sale 2026/)
+      // Original price (course.price = 480000) is shown as strikethrough.
+      expect(screen.getByTestId('campaign-strikethrough-price')).toBeInTheDocument()
+      // Discounted price = 480000 - floor(480000 * 20 / 100) = 384000
+      expect(screen.getByTestId('campaign-discounted-price')).toBeInTheDocument()
+    })
+
+    it('does not render a campaign badge when no campaign matches', async () => {
+      mockGetCourseDetail.mockResolvedValue({ course: sampleCourse, error: null })
+      mockGetActiveCampaignForCourse.mockResolvedValue({ campaign: null, error: null })
+      renderPage()
+      await waitFor(() => screen.getByTestId('buy-card-price'))
+      expect(screen.queryByTestId('campaign-badge')).not.toBeInTheDocument()
     })
   })
 
