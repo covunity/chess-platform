@@ -589,7 +589,10 @@
         "pending": "Đang chờ",
         "active": "Đã thanh toán",
         "expired": "Hết hạn",
-        "cancelled": "Đã huỷ"
+        "cancelled": "Đã huỷ",
+        "hasVoucher": "Có voucher",
+        "hasCampaign": "Có campaign",
+        "noDiscount": "Không discount"
       },
       "status": {
         "pending": "Chờ duyệt",
@@ -604,9 +607,21 @@
       "colLearner": "Học viên",
       "colCourse": "Khoá học",
       "colAmount": "Số tiền",
+      "colVoucher": "Voucher",
+      "colCampaign": "Khuyến mại",
       "colFeePayout": "Phí → Payout",
       "colCreated": "Tạo lúc",
       "colStatus": "Trạng thái",
+      "breakdown": {
+        "toggleShow": "Chi tiết",
+        "toggleHide": "Ẩn chi tiết",
+        "original": "Giá gốc",
+        "campaign": "Khuyến mại",
+        "voucher": "Mã giảm giá",
+        "final": "Tổng thanh toán",
+        "platformFee": "Hoa hồng nền tảng",
+        "creatorPayout": "Thu nhập creator"
+      },
       "empty": "Không có đơn nào.",
       "cancel": "Huỷ đơn",
       "menu": "Mở menu",

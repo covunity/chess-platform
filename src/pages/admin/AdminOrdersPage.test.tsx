@@ -65,6 +65,15 @@ function makeRow(overrides: Record<string, unknown> = {}) {
     cancelled_at: null,
     cancelled_by: null,
     cancelled_reason: null,
+    // PRD-0006 slice 5: snapshot fields populated by slice 2 + 3b RPCs.
+    // makeRow defaults to a "no discount" order; tests override per scenario.
+    original_price: 480000,
+    campaign_id: null,
+    campaign_discount_amount: 0,
+    voucher_id: null,
+    voucher_code: null,
+    voucher_discount_amount: 0,
+    campaign: null,
     created_at: '2026-05-09T11:00:00Z',
     updated_at: '2026-05-09T11:00:00Z',
     buyer: { id: 'u-1', name: 'Alice', email: 'alice@test.com', avatar_url: null },
@@ -674,6 +683,277 @@ describe('AdminOrdersPage', () => {
       })
       // Row still present
       expect(screen.getByTestId('order-row-ord-rp')).toBeInTheDocument()
+    })
+  })
+
+  // ── Slice 5 of PRD-0006: voucher + campaign visibility (#309) ─────────────
+  describe('voucher + campaign columns (#309)', () => {
+    it('renders "—" in both Voucher and Khuyến mại columns for a plain order', async () => {
+      renderPage()
+      const row = await screen.findByTestId('order-row-ord-1')
+      const voucherCell = within(row).getByTestId('order-voucher-cell-ord-1')
+      const campaignCell = within(row).getByTestId('order-campaign-cell-ord-1')
+      expect(voucherCell.textContent).toBe('—')
+      expect(campaignCell.textContent).toBe('—')
+    })
+
+    it('renders only the campaign name when only campaign_id is set', async () => {
+      const campaignRow = makeRow({
+        id: 'ord-cmp',
+        original_price: 500000,
+        amount: 400000,
+        campaign_id: 'cmp-1',
+        campaign_discount_amount: 100000,
+        campaign: { id: 'cmp-1', name: 'Tết Sale 2026' },
+      })
+      mockListPendingOrders.mockResolvedValueOnce({
+        orders: [campaignRow],
+        total: 1,
+        error: null,
+      })
+      renderPage()
+      const row = await screen.findByTestId('order-row-ord-cmp')
+      expect(within(row).getByTestId('order-voucher-cell-ord-cmp').textContent).toBe('—')
+      expect(within(row).getByTestId('order-campaign-cell-ord-cmp').textContent).toBe(
+        'Tết Sale 2026'
+      )
+    })
+
+    it('renders only the voucher code (mono) when only voucher_id is set', async () => {
+      const voucherRow = makeRow({
+        id: 'ord-vch',
+        original_price: 500000,
+        amount: 450000,
+        voucher_id: 'v-1',
+        voucher_code: 'WELCOME10',
+        voucher_discount_amount: 50000,
+      })
+      mockListPendingOrders.mockResolvedValueOnce({
+        orders: [voucherRow],
+        total: 1,
+        error: null,
+      })
+      renderPage()
+      const row = await screen.findByTestId('order-row-ord-vch')
+      const voucherCell = within(row).getByTestId('order-voucher-cell-ord-vch')
+      expect(voucherCell.textContent).toBe('WELCOME10')
+      // Voucher codes are font-mono for readability and to mirror the order code style
+      expect(voucherCell.querySelector('.font-mono')).not.toBeNull()
+      expect(within(row).getByTestId('order-campaign-cell-ord-vch').textContent).toBe('—')
+    })
+
+    it('renders both columns populated when both voucher and campaign apply', async () => {
+      const bothRow = makeRow({
+        id: 'ord-both',
+        original_price: 500000,
+        amount: 350000,
+        campaign_id: 'cmp-1',
+        campaign_discount_amount: 100000,
+        campaign: { id: 'cmp-1', name: 'Tết Sale 2026' },
+        voucher_id: 'v-1',
+        voucher_code: 'WELCOME10',
+        voucher_discount_amount: 50000,
+      })
+      mockListPendingOrders.mockResolvedValueOnce({
+        orders: [bothRow],
+        total: 1,
+        error: null,
+      })
+      renderPage()
+      const row = await screen.findByTestId('order-row-ord-both')
+      expect(within(row).getByTestId('order-voucher-cell-ord-both').textContent).toBe(
+        'WELCOME10'
+      )
+      expect(within(row).getByTestId('order-campaign-cell-ord-both').textContent).toBe(
+        'Tết Sale 2026'
+      )
+    })
+
+    // Migration 068 sets voucher_id ON DELETE SET NULL but the snapshot code
+    // text persists on the order. Admin must still see what code was used.
+    it('falls back to voucher_code snapshot when voucher_id is null but code text exists', async () => {
+      const deletedVoucherRow = makeRow({
+        id: 'ord-deleted-v',
+        original_price: 500000,
+        amount: 450000,
+        voucher_id: null,
+        voucher_code: 'GHOST10',
+        voucher_discount_amount: 50000,
+      })
+      mockListPendingOrders.mockResolvedValueOnce({
+        orders: [deletedVoucherRow],
+        total: 1,
+        error: null,
+      })
+      renderPage()
+      const row = await screen.findByTestId('order-row-ord-deleted-v')
+      expect(within(row).getByTestId('order-voucher-cell-ord-deleted-v').textContent).toBe(
+        'GHOST10'
+      )
+    })
+
+    it('hides the detail-toggle on rows without any discount', async () => {
+      renderPage()
+      const row = await screen.findByTestId('order-row-ord-1')
+      expect(within(row).queryByTestId('order-details-btn-ord-1')).not.toBeInTheDocument()
+    })
+
+    it('toggles a breakdown row showing original, campaign, voucher, final, fee, payout', async () => {
+      const bothRow = makeRow({
+        id: 'ord-both',
+        original_price: 500000,
+        amount: 350000,
+        platform_fee_amount: 70000,
+        creator_payout_amount: 280000,
+        campaign_id: 'cmp-1',
+        campaign_discount_amount: 100000,
+        campaign: { id: 'cmp-1', name: 'Tết Sale 2026' },
+        voucher_id: 'v-1',
+        voucher_code: 'WELCOME10',
+        voucher_discount_amount: 50000,
+      })
+      mockListPendingOrders.mockResolvedValueOnce({
+        orders: [bothRow],
+        total: 1,
+        error: null,
+      })
+      renderPage()
+      const row = await screen.findByTestId('order-row-ord-both')
+
+      // No drawer until toggled
+      expect(screen.queryByTestId('order-breakdown-ord-both')).not.toBeInTheDocument()
+
+      await userEvent.click(within(row).getByTestId('order-details-btn-ord-both'))
+
+      const drawer = await screen.findByTestId('order-breakdown-ord-both')
+      // Each breakdown row carries a stable test id for asserting values
+      expect(within(drawer).getByTestId('breakdown-original')).toHaveTextContent('500,000')
+      expect(within(drawer).getByTestId('breakdown-campaign')).toHaveTextContent('100,000')
+      expect(within(drawer).getByTestId('breakdown-campaign')).toHaveTextContent(
+        'Tết Sale 2026'
+      )
+      expect(within(drawer).getByTestId('breakdown-voucher')).toHaveTextContent('50,000')
+      expect(within(drawer).getByTestId('breakdown-voucher')).toHaveTextContent('WELCOME10')
+      expect(within(drawer).getByTestId('breakdown-final')).toHaveTextContent('350,000')
+      expect(within(drawer).getByTestId('breakdown-platform-fee')).toHaveTextContent('70,000')
+      expect(within(drawer).getByTestId('breakdown-creator-payout')).toHaveTextContent(
+        '280,000'
+      )
+    })
+
+    it('hides the campaign breakdown row when only a voucher was applied', async () => {
+      const voucherOnly = makeRow({
+        id: 'ord-vch-only',
+        original_price: 500000,
+        amount: 450000,
+        platform_fee_amount: 90000,
+        creator_payout_amount: 360000,
+        voucher_id: 'v-1',
+        voucher_code: 'WELCOME10',
+        voucher_discount_amount: 50000,
+      })
+      mockListPendingOrders.mockResolvedValueOnce({
+        orders: [voucherOnly],
+        total: 1,
+        error: null,
+      })
+      renderPage()
+      const row = await screen.findByTestId('order-row-ord-vch-only')
+      await userEvent.click(within(row).getByTestId('order-details-btn-ord-vch-only'))
+
+      const drawer = await screen.findByTestId('order-breakdown-ord-vch-only')
+      expect(within(drawer).queryByTestId('breakdown-campaign')).not.toBeInTheDocument()
+      expect(within(drawer).getByTestId('breakdown-voucher')).toHaveTextContent('WELCOME10')
+    })
+  })
+
+  describe('discount filter chips (#309)', () => {
+    it('renders the three chips only on the All tab', async () => {
+      renderPage()
+      await waitFor(() => screen.getByTestId('order-row-ord-1'))
+
+      // Pending tab: chips not visible
+      expect(screen.queryByTestId('discount-filter-hasVoucher')).not.toBeInTheDocument()
+
+      await userEvent.click(screen.getByTestId('orders-tab-all'))
+
+      expect(await screen.findByTestId('discount-filter-hasVoucher')).toBeInTheDocument()
+      expect(screen.getByTestId('discount-filter-hasCampaign')).toBeInTheDocument()
+      expect(screen.getByTestId('discount-filter-noDiscount')).toBeInTheDocument()
+    })
+
+    it('clicking "Có voucher" forwards discountFilter=hasVoucher to listAllOrders', async () => {
+      renderPage()
+      await waitFor(() => screen.getByTestId('order-row-ord-1'))
+      await userEvent.click(screen.getByTestId('orders-tab-all'))
+      await waitFor(() => expect(mockListAllOrders).toHaveBeenCalled())
+
+      mockListAllOrders.mockResolvedValueOnce({ orders: [], total: 0, error: null })
+      await userEvent.click(screen.getByTestId('discount-filter-hasVoucher'))
+
+      await waitFor(() => {
+        expect(mockListAllOrders).toHaveBeenLastCalledWith(
+          expect.anything(),
+          expect.objectContaining({ discountFilter: 'hasVoucher' })
+        )
+      })
+    })
+
+    it('clicking "Có campaign" forwards discountFilter=hasCampaign', async () => {
+      renderPage()
+      await waitFor(() => screen.getByTestId('order-row-ord-1'))
+      await userEvent.click(screen.getByTestId('orders-tab-all'))
+      await waitFor(() => expect(mockListAllOrders).toHaveBeenCalled())
+
+      mockListAllOrders.mockResolvedValueOnce({ orders: [], total: 0, error: null })
+      await userEvent.click(screen.getByTestId('discount-filter-hasCampaign'))
+
+      await waitFor(() => {
+        expect(mockListAllOrders).toHaveBeenLastCalledWith(
+          expect.anything(),
+          expect.objectContaining({ discountFilter: 'hasCampaign' })
+        )
+      })
+    })
+
+    it('clicking "Không discount" forwards discountFilter=noDiscount', async () => {
+      renderPage()
+      await waitFor(() => screen.getByTestId('order-row-ord-1'))
+      await userEvent.click(screen.getByTestId('orders-tab-all'))
+      await waitFor(() => expect(mockListAllOrders).toHaveBeenCalled())
+
+      mockListAllOrders.mockResolvedValueOnce({ orders: [], total: 0, error: null })
+      await userEvent.click(screen.getByTestId('discount-filter-noDiscount'))
+
+      await waitFor(() => {
+        expect(mockListAllOrders).toHaveBeenLastCalledWith(
+          expect.anything(),
+          expect.objectContaining({ discountFilter: 'noDiscount' })
+        )
+      })
+    })
+
+    it('clicking an active chip again clears the filter (toggle off)', async () => {
+      renderPage()
+      await waitFor(() => screen.getByTestId('order-row-ord-1'))
+      await userEvent.click(screen.getByTestId('orders-tab-all'))
+      await waitFor(() => expect(mockListAllOrders).toHaveBeenCalled())
+
+      await userEvent.click(screen.getByTestId('discount-filter-hasVoucher'))
+      await waitFor(() => {
+        expect(mockListAllOrders).toHaveBeenLastCalledWith(
+          expect.anything(),
+          expect.objectContaining({ discountFilter: 'hasVoucher' })
+        )
+      })
+
+      mockListAllOrders.mockResolvedValueOnce({ orders: [], total: 0, error: null })
+      await userEvent.click(screen.getByTestId('discount-filter-hasVoucher'))
+
+      await waitFor(() => {
+        const last = mockListAllOrders.mock.calls[mockListAllOrders.mock.calls.length - 1]
+        expect(last[1].discountFilter).toBeUndefined()
+      })
     })
   })
 })

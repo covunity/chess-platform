@@ -99,6 +99,8 @@ describe('listAllOrders', () => {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       or: vi.fn().mockReturnThis(),
+      is: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
       order: vi.fn().mockReturnThis(),
       range: vi.fn().mockResolvedValue({ data, count: total, error }),
     }
@@ -144,6 +146,52 @@ describe('listAllOrders', () => {
     await listAllOrders(client, { status: 'pending', search: 'ORD-2026', page: 1, pageSize: 20 })
     expect(chain.eq).toHaveBeenCalledWith('status', 'pending')
     expect(chain.or).toHaveBeenCalled()
+  })
+
+  // ── Slice 5 of PRD-0006: voucher + campaign visibility ───────────────────
+  // The admin orders projection must include the voucher/campaign snapshot
+  // columns and the campaign name (via nested select) so the UI can render
+  // the new Voucher/Khuyến mại columns + the breakdown drawer without an
+  // extra round-trip per row.
+  it('selects voucher + campaign snapshot columns and joins campaign name', async () => {
+    const chain = makeChain([sampleRow], 1)
+    const client = { from: vi.fn().mockReturnValue(chain) } as unknown as SupabaseClient
+
+    await listAllOrders(client, { page: 1, pageSize: 20 })
+
+    const selectCall = chain.select.mock.calls[0][0] as string
+    expect(selectCall).toContain('original_price')
+    expect(selectCall).toContain('campaign_id')
+    expect(selectCall).toContain('campaign_discount_amount')
+    expect(selectCall).toContain('voucher_id')
+    expect(selectCall).toContain('voucher_code')
+    expect(selectCall).toContain('voucher_discount_amount')
+    expect(selectCall).toContain('campaign:campaign_id(id, name)')
+  })
+
+  it('applies hasVoucher discount filter (voucher_id IS NOT NULL)', async () => {
+    const chain = makeChain([sampleRow], 1)
+    const client = { from: vi.fn().mockReturnValue(chain) } as unknown as SupabaseClient
+
+    await listAllOrders(client, { discountFilter: 'hasVoucher', page: 1, pageSize: 20 })
+    expect(chain.not).toHaveBeenCalledWith('voucher_id', 'is', null)
+  })
+
+  it('applies hasCampaign discount filter (campaign_id IS NOT NULL)', async () => {
+    const chain = makeChain([sampleRow], 1)
+    const client = { from: vi.fn().mockReturnValue(chain) } as unknown as SupabaseClient
+
+    await listAllOrders(client, { discountFilter: 'hasCampaign', page: 1, pageSize: 20 })
+    expect(chain.not).toHaveBeenCalledWith('campaign_id', 'is', null)
+  })
+
+  it('applies noDiscount filter (voucher_id IS NULL AND campaign_id IS NULL)', async () => {
+    const chain = makeChain([sampleRow], 1)
+    const client = { from: vi.fn().mockReturnValue(chain) } as unknown as SupabaseClient
+
+    await listAllOrders(client, { discountFilter: 'noDiscount', page: 1, pageSize: 20 })
+    expect(chain.is).toHaveBeenCalledWith('voucher_id', null)
+    expect(chain.is).toHaveBeenCalledWith('campaign_id', null)
   })
 })
 

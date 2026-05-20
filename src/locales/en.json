@@ -132,7 +132,10 @@
         "pending": "Pending",
         "active": "Paid",
         "expired": "Expired",
-        "cancelled": "Cancelled"
+        "cancelled": "Cancelled",
+        "hasVoucher": "Has voucher",
+        "hasCampaign": "Has campaign",
+        "noDiscount": "No discount"
       },
       "status": {
         "pending": "Pending",
@@ -147,9 +150,21 @@
       "colLearner": "Learner",
       "colCourse": "Course",
       "colAmount": "Amount",
+      "colVoucher": "Voucher",
+      "colCampaign": "Campaign",
       "colFeePayout": "Fee → Payout",
       "colCreated": "Created",
       "colStatus": "Status",
+      "breakdown": {
+        "toggleShow": "Details",
+        "toggleHide": "Hide details",
+        "original": "Original price",
+        "campaign": "Campaign",
+        "voucher": "Voucher",
+        "final": "Total paid",
+        "platformFee": "Platform fee",
+        "creatorPayout": "Creator earnings"
+      },
       "empty": "No orders.",
       "cancel": "Cancel order",
       "menu": "Open menu",

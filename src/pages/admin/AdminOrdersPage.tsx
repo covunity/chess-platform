@@ -10,6 +10,7 @@ import {
   getRefundPendingOrderCount,
   markOrderRefunded,
   type AdminOrderRow,
+  type DiscountFilter,
 } from '../../lib/adminOrdersApi'
 import { confirmOrder, cancelOrder } from '../../lib/orderApi'
 import type { OrderStatus } from '../../lib/orderApi'
@@ -300,6 +301,12 @@ export default function AdminOrdersPage() {
   const [statusFilter, setStatusFilter] = useState<'' | OrderStatus>('')
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebounce(search, 300)
+  // PRD-0006 slice 5: discount-visibility chips on All tab. Single-value
+  // (chips are mutually exclusive — a row can't both have-voucher AND
+  // have-no-discount). Clicking the active chip clears the filter.
+  const [discountFilter, setDiscountFilter] = useState<DiscountFilter | null>(null)
+  // PRD-0006 slice 5: per-row inline breakdown expansion. Keyed by order id.
+  const [expandedRowId, setExpandedRowId] = useState<string | null>(null)
 
   // Cancel dialog state
   const [cancelTarget, setCancelTarget] = useState<AdminOrderRow | null>(null)
@@ -363,12 +370,18 @@ export default function AdminOrdersPage() {
         if (!cancelled) { setOrders(rows); setTotal(tot); setLoading(false) }
       })
     } else {
-      listAllOrders(supabase, { status: statusFilter || undefined, search: debouncedSearch || undefined, page, pageSize: PAGE_SIZE }).then(({ orders: rows, total: tot }) => {
+      listAllOrders(supabase, {
+        status: statusFilter || undefined,
+        search: debouncedSearch || undefined,
+        discountFilter: discountFilter ?? undefined,
+        page,
+        pageSize: PAGE_SIZE,
+      }).then(({ orders: rows, total: tot }) => {
         if (!cancelled) { setOrders(rows); setTotal(tot); setLoading(false) }
       })
     }
     return () => { cancelled = true }
-  }, [tab, page, statusFilter, debouncedSearch])
+  }, [tab, page, statusFilter, debouncedSearch, discountFilter])
 
   // Fetch both admin counters on mount and again whenever the tab regains
   // focus. Issue #296: an order can cross the 1h stale threshold while the
@@ -489,6 +502,8 @@ export default function AdminOrdersPage() {
       t('admin.orders.colLearner'),
       t('admin.orders.colCourse'),
       t('admin.orders.colAmount'),
+      t('admin.orders.colVoucher'),
+      t('admin.orders.colCampaign'),
       t('admin.orders.colFeePayout'),
       t('admin.orders.colCreated'),
     ]
@@ -609,6 +624,32 @@ export default function AdminOrdersPage() {
               style={{ width: 280, height: 36 }}
               aria-label={t('admin.orders.searchPlaceholder')}
             />
+            <div className="flex items-center gap-2">
+              {(['hasVoucher', 'hasCampaign', 'noDiscount'] as const).map(key => {
+                const isActive = discountFilter === key
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    data-testid={`discount-filter-${key}`}
+                    onClick={() => {
+                      setDiscountFilter(isActive ? null : key)
+                      setPage(1)
+                    }}
+                    className="btn btn-sm"
+                    aria-pressed={isActive}
+                    style={{
+                      background: isActive ? 'var(--ink-1)' : 'transparent',
+                      color: isActive ? 'var(--ink-on-accent)' : 'var(--ink-2)',
+                      border: '1px solid var(--border)',
+                      height: 36,
+                    }}
+                  >
+                    {t(`admin.orders.filter.${key}`)}
+                  </button>
+                )
+              })}
+            </div>
           </>
         )}
       </div>
@@ -703,9 +744,15 @@ export default function AdminOrdersPage() {
                   )
                 })
               ) : (
-                orders.map(o => {
+                orders.flatMap(o => {
                   const isPending = o.status === 'pending'
-                  return (
+                  const hasDiscount = o.campaign_id !== null || o.voucher_id !== null ||
+                    (o.voucher_code !== null && o.voucher_code !== '')
+                  const isExpanded = expandedRowId === o.id
+                  const voucherDisplay = o.voucher_code ?? null
+                  const campaignName = o.campaign?.name ?? null
+                  const breakdownColspan = tab === 'all' ? 10 : 9
+                  return [
                     <tr
                       key={o.id}
                       data-testid={`order-row-${o.id}`}
@@ -756,6 +803,23 @@ export default function AdminOrdersPage() {
                       <td style={{ padding: '14px 16px', textAlign: 'right' }} className="text-(--ink-1) font-medium">
                         {formatVnd(o.amount)}
                       </td>
+                      <td
+                        style={{ padding: '14px 16px' }}
+                        className="text-(--ink-2)"
+                        data-testid={`order-voucher-cell-${o.id}`}
+                      >
+                        {voucherDisplay
+                          ? <span className="font-mono">{voucherDisplay}</span>
+                          : '—'}
+                      </td>
+                      <td
+                        style={{ padding: '14px 16px', maxWidth: 180 }}
+                        className="text-(--ink-2) truncate"
+                        data-testid={`order-campaign-cell-${o.id}`}
+                        title={campaignName ?? undefined}
+                      >
+                        {campaignName ?? '—'}
+                      </td>
                       <td style={{ padding: '14px 16px' }} className="text-(--ink-3)" >
                         {`${Math.round(o.platform_fee_amount / 1000)}k → ${Math.round(o.creator_payout_amount / 1000)}k`}
                       </td>
@@ -775,6 +839,21 @@ export default function AdminOrdersPage() {
                       )}
                       <td style={{ padding: '14px 16px', textAlign: 'right' }}>
                         <div className="flex items-center justify-end gap-2 relative">
+                          {hasDiscount && (
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-sm"
+                              data-testid={`order-details-btn-${o.id}`}
+                              onClick={() => setExpandedRowId(isExpanded ? null : o.id)}
+                              style={{ height: 26, padding: '0 10px', fontSize: 11.5 }}
+                              aria-expanded={isExpanded}
+                              aria-controls={`order-breakdown-${o.id}`}
+                            >
+                              {isExpanded
+                                ? t('admin.orders.breakdown.toggleHide')
+                                : t('admin.orders.breakdown.toggleShow')}
+                            </button>
+                          )}
                           {/*
                             Issue #294: the legacy inline 1-click "Xác nhận"
                             button on the Pending tab (and on pending rows in
@@ -857,8 +936,120 @@ export default function AdminOrdersPage() {
                           )}
                         </div>
                       </td>
-                    </tr>
-                  )
+                    </tr>,
+                    isExpanded && hasDiscount ? (
+                      <tr
+                        key={`${o.id}-breakdown`}
+                        data-testid={`order-breakdown-${o.id}`}
+                        id={`order-breakdown-${o.id}`}
+                        className="border-b border-(--border) last:border-0"
+                      >
+                        <td
+                          colSpan={breakdownColspan}
+                          style={{
+                            padding: '12px 24px 18px',
+                            background: 'var(--surface-2, var(--surface))',
+                          }}
+                        >
+                          <div
+                            className="grid"
+                            style={{
+                              gridTemplateColumns: 'minmax(180px, 220px) 1fr',
+                              rowGap: 6,
+                              fontSize: 12.5,
+                              maxWidth: 520,
+                            }}
+                          >
+                            <div className="text-(--ink-3)" data-testid="breakdown-original-label">
+                              {t('admin.orders.breakdown.original')}
+                            </div>
+                            <div
+                              className="text-(--ink-1)"
+                              data-testid="breakdown-original"
+                              style={{ textAlign: 'right' }}
+                            >
+                              {formatVnd(o.original_price)}
+                            </div>
+
+                            {o.campaign_id !== null && (
+                              <div
+                                data-testid="breakdown-campaign"
+                                style={{ display: 'contents' }}
+                              >
+                                <div className="text-(--ink-3)">
+                                  {t('admin.orders.breakdown.campaign')}
+                                  {campaignName && (
+                                    <span className="text-(--ink-2)">
+                                      {' '}· {campaignName}
+                                    </span>
+                                  )}
+                                </div>
+                                <div
+                                  style={{ textAlign: 'right', color: 'var(--danger)' }}
+                                >
+                                  −{formatVnd(o.campaign_discount_amount)}
+                                </div>
+                              </div>
+                            )}
+
+                            {(o.voucher_id !== null || (o.voucher_code !== null && o.voucher_code !== '')) && (
+                              <div
+                                data-testid="breakdown-voucher"
+                                style={{ display: 'contents' }}
+                              >
+                                <div className="text-(--ink-3)">
+                                  {t('admin.orders.breakdown.voucher')}
+                                  {voucherDisplay && (
+                                    <span className="font-mono text-(--ink-2)">
+                                      {' '}· {voucherDisplay}
+                                    </span>
+                                  )}
+                                </div>
+                                <div
+                                  style={{ textAlign: 'right', color: 'var(--danger)' }}
+                                >
+                                  −{formatVnd(o.voucher_discount_amount)}
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="text-(--ink-2) font-medium" style={{ paddingTop: 6, borderTop: '1px solid var(--border)' }}>
+                              {t('admin.orders.breakdown.final')}
+                            </div>
+                            <div
+                              className="text-(--ink-1) font-semibold"
+                              data-testid="breakdown-final"
+                              style={{ textAlign: 'right', paddingTop: 6, borderTop: '1px solid var(--border)' }}
+                            >
+                              {formatVnd(o.amount)}
+                            </div>
+
+                            <div className="text-(--ink-3)">
+                              {t('admin.orders.breakdown.platformFee')}
+                            </div>
+                            <div
+                              className="text-(--ink-2)"
+                              data-testid="breakdown-platform-fee"
+                              style={{ textAlign: 'right' }}
+                            >
+                              {formatVnd(o.platform_fee_amount)}
+                            </div>
+
+                            <div className="text-(--ink-3)">
+                              {t('admin.orders.breakdown.creatorPayout')}
+                            </div>
+                            <div
+                              className="text-(--ink-2)"
+                              data-testid="breakdown-creator-payout"
+                              style={{ textAlign: 'right' }}
+                            >
+                              {formatVnd(o.creator_payout_amount)}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : null,
+                  ]
                 })
               )}
             </tbody>

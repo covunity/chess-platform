@@ -16,8 +16,16 @@ export interface RefundDueTo {
 export interface AdminOrderRow extends Order {
   buyer: { id: string; name: string | null; email: string; avatar_url: string | null } | null
   course: { id: string; title: string } | null
+  // PRD-0006 slice 5: campaign name pulled in via nested select so the
+  // Khuyến mại column + breakdown drawer render without a second fetch.
+  // Null when no campaign was applied OR when the campaign row has been
+  // deleted (orders.campaign_id is ON DELETE SET NULL — discount amount
+  // remains on the order, but the joined name disappears).
+  campaign: { id: string; name: string } | null
   refund_due_to?: RefundDueTo | null
 }
+
+export type DiscountFilter = 'hasVoucher' | 'hasCampaign' | 'noDiscount'
 
 export interface ListResult {
   orders: AdminOrderRow[]
@@ -30,8 +38,11 @@ const SELECT_COLUMNS = `
   platform_fee_pct, platform_fee_amount, creator_payout_amount, creator_payout,
   account_tier_code, confirmed_at, confirmed_by, cancelled_at, cancelled_by, cancelled_reason,
   manual_confirm_reason, created_at, updated_at,
+  original_price, campaign_id, campaign_discount_amount,
+  voucher_id, voucher_code, voucher_discount_amount,
   buyer:user_id(id, name, email, avatar_url),
-  course:course_id(id, title)
+  course:course_id(id, title),
+  campaign:campaign_id(id, name)
 `
 
 function escapeIlike(s: string): string {
@@ -62,9 +73,15 @@ export async function listPendingOrders(
 
 export async function listAllOrders(
   client: SupabaseClient,
-  options: { status?: OrderStatus; search?: string; page?: number; pageSize?: number } = {}
+  options: {
+    status?: OrderStatus
+    search?: string
+    discountFilter?: DiscountFilter
+    page?: number
+    pageSize?: number
+  } = {}
 ): Promise<ListResult> {
-  const { status, search, page = 1, pageSize = 20 } = options
+  const { status, search, discountFilter, page = 1, pageSize = 20 } = options
   const from = (page - 1) * pageSize
   const to = from + pageSize - 1
 
@@ -79,6 +96,17 @@ export async function listAllOrders(
   if (search && search.trim()) {
     const term = escapeIlike(search.trim())
     query = query.or(`code.ilike.%${term}%,buyer.email.ilike.%${term}%`)
+  }
+
+  // PRD-0006 slice 5: discount visibility chips. Multiple filters cannot
+  // stack (a row can't simultaneously have-voucher AND have-no-discount),
+  // so only one mode is active at a time.
+  if (discountFilter === 'hasVoucher') {
+    query = query.not('voucher_id', 'is', null)
+  } else if (discountFilter === 'hasCampaign') {
+    query = query.not('campaign_id', 'is', null)
+  } else if (discountFilter === 'noDiscount') {
+    query = query.is('voucher_id', null).is('campaign_id', null)
   }
 
   const { data, count, error } = await query
