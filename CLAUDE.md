@@ -107,13 +107,16 @@ Key rules (always apply, no need to open the file):
 ### Course status flow
 
 ```
-draft → pending_review → published
-                       → rejected   ← terminal; Creator must create a new course
-published → draft  (Creator withdraws)
+draft ↔ published   (creator self-publish; no admin gate — see ADR-0008)
 ```
 
-- Rejected courses **cannot** be resubmitted. Creator starts over.
-- Admin must provide a rejection reason.
+- Creator clicks **Publish** → course is immediately visible to learners.
+- Creator may withdraw a published course back to `draft` at any time.
+- There is **no `pending_review` and no `rejected` state.** The
+  Phase 1 admin review gate was removed pre-launch (ADR-0008).
+- Content quality post-publish is handled by the learner-driven
+  `reports` moderation queue at `/admin/reports`, not by a pre-publish
+  gate.
 
 ### Lesson types
 
@@ -155,7 +158,7 @@ Platform fee stored per tier in `account_tiers.platform_fee_pct`. The global `co
 |---|----------|
 | D-01 | React 18 + Vite — not Next.js. SSR not needed. |
 | D-02 | react-i18next from day one, Vietnamese only. No hardcoded strings. |
-| D-03 | Rejected courses cannot be resubmitted. Creator starts over. |
+| D-03 | ~~Rejected courses cannot be resubmitted. Creator starts over.~~ **Lifted by ADR-0008** — admin review gate removed entirely; the `rejected` state no longer exists. |
 | D-04 | Comments have **no reply threading** — each comment is independent. |
 | D-05 | Free course (price=0) auto-activates instantly, same order tracking as paid. |
 | D-06 | Free preview = Creator flags an existing video lesson, not a separate upload. |
