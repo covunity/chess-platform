@@ -16,6 +16,12 @@ vi.mock('./lib/coursesApi', () => ({
   listPublishedCourses: vi.fn().mockResolvedValue({ courses: [], error: null }),
 }))
 
+vi.mock('./lib/campaignsApi', () => ({
+  getCurrentActiveCampaign: vi.fn().mockResolvedValue({ campaign: null, error: null }),
+  campaignAppliesToCourse: vi.fn().mockReturnValue(false),
+  computeCampaignDiscount: vi.fn().mockReturnValue(0),
+}))
+
 describe('App', () => {
   it('renders without crashing', () => {
     render(

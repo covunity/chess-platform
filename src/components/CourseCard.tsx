@@ -1,6 +1,11 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { PublicCourse } from '../lib/coursesApi'
+import {
+  campaignAppliesToCourse,
+  computeCampaignDiscount,
+  type Campaign,
+} from '../lib/campaignsApi'
 import ChessBoard from './ChessBoard/ChessBoard'
 
 const INITIAL_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
@@ -29,7 +34,13 @@ function Badge({ label, color, testId }: { label: string; color: string; testId?
   )
 }
 
-export default function CourseCard({ course }: { course: PublicCourse }) {
+export default function CourseCard({
+  course,
+  activeCampaign = null,
+}: {
+  course: PublicCourse
+  activeCampaign?: Campaign | null
+}) {
   const { t } = useTranslation()
 
   const thirtyDaysAgo = new Date()
@@ -68,6 +79,20 @@ export default function CourseCard({ course }: { course: PublicCourse }) {
   const priceDisplay = course.price === 0
     ? t('home.free')
     : `${(course.price / 1000).toFixed(0)}k ₫`
+
+  const campaignApplies =
+    course.price > 0 && campaignAppliesToCourse(activeCampaign, course.id)
+  const campaignDiscount = campaignApplies
+    ? computeCampaignDiscount(course.price, activeCampaign)
+    : 0
+  const hasCampaign = campaignApplies && campaignDiscount > 0
+  const discountedPrice = hasCampaign ? course.price - campaignDiscount : course.price
+  const discountedPriceDisplay = `${(discountedPrice / 1000).toFixed(0)}k ₫`
+  const discountBadgeLabel = hasCampaign && activeCampaign
+    ? activeCampaign.discount_type === 'percentage'
+      ? t('campaign.card.discountPercent', { value: activeCampaign.discount_value })
+      : t('campaign.card.discountFixed', { value: Math.round(campaignDiscount / 1000) })
+    : null
 
   const firstTag = course.tags[0]
 
@@ -149,22 +174,63 @@ export default function CourseCard({ course }: { course: PublicCourse }) {
         </p>
 
         {/* Footer */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto', gap: 8 }}>
           <span
             className="pill"
             style={{ background: 'transparent', border: '1px solid var(--border)' }}
           >
             {levelLabel}
           </span>
-          <span
-            style={{
-              fontSize: 15,
-              fontWeight: 600,
-              color: course.price === 0 ? 'var(--success)' : 'var(--ink-1)',
-            }}
-          >
-            {priceDisplay}
-          </span>
+          {hasCampaign ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              {discountBadgeLabel && (
+                <span
+                  data-testid="card-discount-badge"
+                  style={{
+                    fontSize: 10.5,
+                    fontWeight: 600,
+                    padding: '1px 6px',
+                    borderRadius: 'var(--r-sm)',
+                    background: 'var(--accent-soft)',
+                    color: 'var(--accent-ink)',
+                    border: '1px solid var(--accent-border)',
+                  }}
+                >
+                  {discountBadgeLabel}
+                </span>
+              )}
+              <span
+                data-testid="card-strikethrough-price"
+                style={{
+                  fontSize: 12,
+                  color: 'var(--ink-3)',
+                  textDecoration: 'line-through',
+                }}
+              >
+                {priceDisplay}
+              </span>
+              <span
+                data-testid="card-discounted-price"
+                style={{
+                  fontSize: 15,
+                  fontWeight: 600,
+                  color: 'var(--accent)',
+                }}
+              >
+                {discountedPriceDisplay}
+              </span>
+            </div>
+          ) : (
+            <span
+              style={{
+                fontSize: 15,
+                fontWeight: 600,
+                color: course.price === 0 ? 'var(--success)' : 'var(--ink-1)',
+              }}
+            >
+              {priceDisplay}
+            </span>
+          )}
         </div>
       </div>
     </article>

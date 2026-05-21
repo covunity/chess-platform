@@ -5,6 +5,7 @@ import { vi } from 'vitest'
 import i18n from '../i18n'
 import CourseCard from './CourseCard'
 import { listPublishedCourses, type PublicCourse } from '../lib/coursesApi'
+import type { Campaign } from '../lib/campaignsApi'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 const freeCourse: PublicCourse = {
@@ -32,14 +33,31 @@ const paidCourse: PublicCourse = {
   enrollment_count: 50,
 }
 
-function renderCard(course: PublicCourse) {
+function renderCard(course: PublicCourse, activeCampaign: Campaign | null = null) {
   return render(
     <MemoryRouter>
       <I18nextProvider i18n={i18n}>
-        <CourseCard course={course} />
+        <CourseCard course={course} activeCampaign={activeCampaign} />
       </I18nextProvider>
     </MemoryRouter>
   )
+}
+
+const platformWideCampaign: Campaign = {
+  id: 'cmp-1',
+  name: 'Tết Sale 2026',
+  description: null,
+  discount_type: 'percentage',
+  discount_value: 20,
+  max_discount_amount: null,
+  applicable_courses: null,
+  starts_at: '2026-01-15T00:00:00Z',
+  ends_at: '2026-02-15T00:00:00Z',
+  is_active: true,
+  created_by: 'admin-1',
+  created_at: '2026-01-10T00:00:00Z',
+  updated_at: '2026-01-10T00:00:00Z',
+  orders_count: 0,
 }
 
 describe('CourseCard', () => {
@@ -160,6 +178,41 @@ describe('CourseCard', () => {
       expect(screen.queryByTestId('badge-new')).not.toBeInTheDocument()
       expect(screen.queryByTestId('badge-free')).not.toBeInTheDocument()
       expect(screen.queryByTestId('badge-bestseller')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('campaign discount', () => {
+    it('does NOT render strikethrough when activeCampaign is null', () => {
+      renderCard(paidCourse, null)
+      expect(screen.queryByTestId('card-strikethrough-price')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('card-discount-badge')).not.toBeInTheDocument()
+    })
+
+    it('renders strikethrough + discounted price + discount badge when campaign applies to paid course', () => {
+      renderCard(paidCourse, platformWideCampaign)
+      const strikethrough = screen.getByTestId('card-strikethrough-price')
+      const discounted = screen.getByTestId('card-discounted-price')
+      expect(strikethrough).toBeInTheDocument()
+      expect(strikethrough.textContent).toMatch(/480/)
+      expect(discounted).toBeInTheDocument()
+      // 20% off 480_000 = 96_000 discount → final 384_000 → "384k"
+      expect(discounted.textContent).toMatch(/384/)
+      expect(screen.getByTestId('card-discount-badge')).toBeInTheDocument()
+    })
+
+    it('does NOT render strikethrough for free course even if campaign is active', () => {
+      renderCard(freeCourse, platformWideCampaign)
+      expect(screen.queryByTestId('card-strikethrough-price')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('card-discount-badge')).not.toBeInTheDocument()
+      // Free badge still wins
+      expect(screen.getByTestId('badge-free')).toBeInTheDocument()
+    })
+
+    it('does NOT render discount when campaign does not target this course', () => {
+      const targeted: Campaign = { ...platformWideCampaign, applicable_courses: ['other-id'] }
+      renderCard(paidCourse, targeted)
+      expect(screen.queryByTestId('card-strikethrough-price')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('card-discount-badge')).not.toBeInTheDocument()
     })
   })
 })

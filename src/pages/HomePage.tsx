@@ -3,10 +3,25 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { listPublishedCourses } from '../lib/coursesApi'
+import { getCurrentActiveCampaign } from '../lib/campaignsApi'
+import type { Campaign } from '../lib/campaignsApi'
 import type { PublicCourse, SortOption } from '../lib/coursesApi'
 import type { CourseLevel } from '../lib/creatorApi'
 import CourseCard from '../components/CourseCard'
+import CampaignBanner from '../components/CampaignBanner'
 import ChessBoard from '../components/ChessBoard/ChessBoard'
+
+function dismissedKey(id: string): string {
+  return `dismissed:campaign:${id}`
+}
+
+function isCampaignDismissed(id: string): boolean {
+  try {
+    return localStorage.getItem(dismissedKey(id)) === 'true'
+  } catch {
+    return false
+  }
+}
 
 const INITIAL_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
@@ -45,6 +60,8 @@ export default function HomePage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [courses, setCourses] = useState<PublicCourse[]>([])
   const [loading, setLoading] = useState(true)
+  const [activeCampaign, setActiveCampaign] = useState<Campaign | null>(null)
+  const [bannerDismissed, setBannerDismissed] = useState(false)
 
   const level = (searchParams.get('level') ?? 'all') as CourseLevel | 'all'
   const tag = searchParams.get('tag') ?? ''
@@ -62,6 +79,25 @@ export default function HomePage() {
       setLoading(false)
     })
   }, [q, level, tag, sort])
+
+  // Campaign fetch — independent of course filters so the banner doesn't
+  // flicker on filter changes. Resolves anon-safe via campaigns RLS policy.
+  useEffect(() => {
+    getCurrentActiveCampaign(supabase).then(({ campaign }) => {
+      setActiveCampaign(campaign)
+      if (campaign) setBannerDismissed(isCampaignDismissed(campaign.id))
+    })
+  }, [])
+
+  function handleDismissBanner() {
+    if (!activeCampaign) return
+    try {
+      localStorage.setItem(dismissedKey(activeCampaign.id), 'true')
+    } catch {
+      // ignore — private mode etc.
+    }
+    setBannerDismissed(true)
+  }
 
   function setLevel(val: CourseLevel | 'all') {
     setSearchParams(prev => {
@@ -87,6 +123,9 @@ export default function HomePage() {
 
   return (
     <main>
+      {activeCampaign && !bannerDismissed && (
+        <CampaignBanner campaign={activeCampaign} onDismiss={handleDismissBanner} />
+      )}
       {/* Hero */}
       <section
         style={{
@@ -404,7 +443,9 @@ export default function HomePage() {
               </button>
             </div>
           ) : (
-            courses.map(course => <CourseCard key={course.id} course={course} />)
+            courses.map(course => (
+              <CourseCard key={course.id} course={course} activeCampaign={activeCampaign} />
+            ))
           )}
         </div>
       </section>

@@ -5,6 +5,8 @@ import {
   updateCampaign,
   deactivateCampaign,
   getActiveCampaignForCourse,
+  getCurrentActiveCampaign,
+  campaignAppliesToCourse,
   listCampaigns,
   listAdminCourses,
   computeCampaignDiscount,
@@ -152,6 +154,72 @@ describe('getActiveCampaignForCourse', () => {
     const { campaign, error } = await getActiveCampaignForCourse(client, 'course-42')
     expect(campaign).toBeNull()
     expect(error).toBeNull()
+  })
+})
+
+// ── getCurrentActiveCampaign ───────────────────────────────────────────────
+
+describe('getCurrentActiveCampaign', () => {
+  it('queries campaigns table with is_active + time-window filters and returns the row', async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({ data: sampleCampaign, error: null })
+    const limit = vi.fn().mockReturnValue({ maybeSingle })
+    const gte = vi.fn().mockReturnValue({ limit })
+    const lte = vi.fn().mockReturnValue({ gte })
+    const eq = vi.fn().mockReturnValue({ lte })
+    const select = vi.fn().mockReturnValue({ eq })
+    const client = { from: vi.fn().mockReturnValue({ select }) } as unknown as SupabaseClient
+
+    const { campaign, error } = await getCurrentActiveCampaign(client)
+
+    expect(error).toBeNull()
+    expect(campaign?.id).toBe('cmp-1')
+    expect(client.from).toHaveBeenCalledWith('campaigns')
+    expect(select).toHaveBeenCalledWith('*')
+    expect(eq).toHaveBeenCalledWith('is_active', true)
+    expect(lte).toHaveBeenCalledWith('starts_at', expect.any(String))
+    expect(gte).toHaveBeenCalledWith('ends_at', expect.any(String))
+    expect(limit).toHaveBeenCalledWith(1)
+    expect(maybeSingle).toHaveBeenCalled()
+  })
+
+  it('returns null when no active campaign matches', async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null })
+    const limit = vi.fn().mockReturnValue({ maybeSingle })
+    const gte = vi.fn().mockReturnValue({ limit })
+    const lte = vi.fn().mockReturnValue({ gte })
+    const eq = vi.fn().mockReturnValue({ lte })
+    const select = vi.fn().mockReturnValue({ eq })
+    const client = { from: vi.fn().mockReturnValue({ select }) } as unknown as SupabaseClient
+
+    const { campaign, error } = await getCurrentActiveCampaign(client)
+    expect(campaign).toBeNull()
+    expect(error).toBeNull()
+  })
+})
+
+// ── campaignAppliesToCourse ────────────────────────────────────────────────
+
+describe('campaignAppliesToCourse', () => {
+  it('returns false when campaign is null', () => {
+    expect(campaignAppliesToCourse(null, 'c-1')).toBe(false)
+  })
+
+  it('returns true when applicable_courses is null (platform-wide)', () => {
+    expect(
+      campaignAppliesToCourse({ ...sampleCampaign, applicable_courses: null }, 'c-1')
+    ).toBe(true)
+  })
+
+  it('returns true when courseId is in applicable_courses array', () => {
+    expect(
+      campaignAppliesToCourse({ ...sampleCampaign, applicable_courses: ['c-1', 'c-2'] }, 'c-1')
+    ).toBe(true)
+  })
+
+  it('returns false when courseId is not in applicable_courses array', () => {
+    expect(
+      campaignAppliesToCourse({ ...sampleCampaign, applicable_courses: ['c-2', 'c-3'] }, 'c-1')
+    ).toBe(false)
   })
 })
 

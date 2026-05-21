@@ -92,6 +92,36 @@ export async function getActiveCampaignForCourse(
   return { campaign: (data as Campaign) ?? null, error: error as Error | null }
 }
 
+// Anon-safe lookup for the single currently-active campaign. The migration-064
+// exclusion constraint guarantees ≤1 active campaign at any moment; `.limit(1)`
+// keeps the client defensive. RLS on `campaigns` (064) lets anon SELECT when
+// `is_active=true AND now() BETWEEN starts_at AND ends_at` — no auth needed.
+export async function getCurrentActiveCampaign(
+  client: SupabaseClient
+): Promise<{ campaign: Campaign | null; error: Error | null }> {
+  const nowIso = new Date().toISOString()
+  const { data, error } = await client
+    .from('campaigns')
+    .select('*')
+    .eq('is_active', true)
+    .lte('starts_at', nowIso)
+    .gte('ends_at', nowIso)
+    .limit(1)
+    .maybeSingle()
+  return { campaign: (data as Campaign) ?? null, error: error as Error | null }
+}
+
+// Pure helper: does this campaign apply to the given course id?
+// `applicable_courses === null` means platform-wide. Otherwise must be in array.
+export function campaignAppliesToCourse(
+  campaign: Campaign | null,
+  courseId: string
+): boolean {
+  if (!campaign) return false
+  if (campaign.applicable_courses === null) return true
+  return campaign.applicable_courses.includes(courseId)
+}
+
 export interface ListCampaignsOptions {
   status?: 'all' | 'active' | 'inactive'
   search?: string

@@ -765,7 +765,19 @@
     "trainingCenter": "Training Center"
   },
   "campaign": {
-    "badge": "Promotion: {{name}}"
+    "badge": "Promotion: {{name}}",
+    "card": {
+      "discountPercent": "-{{value}}%",
+      "discountFixed": "-{{value}}k"
+    },
+    "banner": {
+      "scopeAll": "all courses",
+      "scopeCount": "{{count}} courses",
+      "discountPercent": "{{value}}% off",
+      "discountFixed": "{{value}}₫ off",
+      "endsAt": "ends {{date}}",
+      "dismiss": "Dismiss"
+    }
   },
   "confirmPurchase": {
     "title": "Confirm order",

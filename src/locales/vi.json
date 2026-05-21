@@ -1300,7 +1300,19 @@
     "trainingCenter": "Trung tâm đào tạo"
   },
   "campaign": {
-    "badge": "Khuyến mại: {{name}}"
+    "badge": "Khuyến mại: {{name}}",
+    "card": {
+      "discountPercent": "-{{value}}%",
+      "discountFixed": "-{{value}}k"
+    },
+    "banner": {
+      "scopeAll": "tất cả khoá học",
+      "scopeCount": "{{count}} khoá học",
+      "discountPercent": "Giảm {{value}}%",
+      "discountFixed": "Giảm {{value}}₫",
+      "endsAt": "đến hết {{date}}",
+      "dismiss": "Đóng"
+    }
   },
   "confirmPurchase": {
     "title": "Xác nhận đơn hàng",

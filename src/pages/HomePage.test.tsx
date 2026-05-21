@@ -6,7 +6,9 @@ import { I18nextProvider } from 'react-i18next'
 import i18n from '../i18n'
 import HomePage from './HomePage'
 import * as coursesApi from '../lib/coursesApi'
+import * as campaignsApi from '../lib/campaignsApi'
 import type { PublicCourse } from '../lib/coursesApi'
+import type { Campaign } from '../lib/campaignsApi'
 
 vi.mock('../lib/supabase', () => ({
   supabase: {
@@ -24,6 +26,24 @@ vi.mock('../lib/supabase', () => ({
 }))
 
 const mockListPublishedCourses = vi.spyOn(coursesApi, 'listPublishedCourses')
+const mockGetCurrentActiveCampaign = vi.spyOn(campaignsApi, 'getCurrentActiveCampaign')
+
+const sampleCampaign: Campaign = {
+  id: 'cmp-home-1',
+  name: 'Tết Sale 2026',
+  description: null,
+  discount_type: 'percentage',
+  discount_value: 20,
+  max_discount_amount: null,
+  applicable_courses: null,
+  starts_at: '2026-01-15T00:00:00Z',
+  ends_at: '2026-02-15T00:00:00Z',
+  is_active: true,
+  created_by: 'admin-1',
+  created_at: '2026-01-10T00:00:00Z',
+  updated_at: '2026-01-10T00:00:00Z',
+  orders_count: 0,
+}
 
 const sampleCourses: PublicCourse[] = [
   {
@@ -75,6 +95,10 @@ function renderHome(path = '/') {
 describe('HomePage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    localStorage.clear()
+    // Default: no active campaign — keeps existing tests unaffected by the
+    // new banner data-fetch.
+    mockGetCurrentActiveCampaign.mockResolvedValue({ campaign: null, error: null })
   })
 
   describe('hero section', () => {
@@ -184,6 +208,59 @@ describe('HomePage', () => {
       await waitFor(() => {
         expect(screen.getByRole('combobox')).toBeInTheDocument()
       })
+    })
+  })
+
+  describe('campaign banner', () => {
+    it('renders banner when an active campaign exists and is not dismissed', async () => {
+      mockListPublishedCourses.mockResolvedValue({ courses: sampleCourses, error: null })
+      mockGetCurrentActiveCampaign.mockResolvedValue({ campaign: sampleCampaign, error: null })
+      renderHome()
+      await waitFor(() => {
+        expect(screen.getByTestId('campaign-banner')).toBeInTheDocument()
+      })
+    })
+
+    it('does NOT render banner when no active campaign', async () => {
+      mockListPublishedCourses.mockResolvedValue({ courses: sampleCourses, error: null })
+      mockGetCurrentActiveCampaign.mockResolvedValue({ campaign: null, error: null })
+      renderHome()
+      await waitFor(() => {
+        expect(screen.getByText('Khai cuộc cho người mới')).toBeInTheDocument()
+      })
+      expect(screen.queryByTestId('campaign-banner')).not.toBeInTheDocument()
+    })
+
+    it('does NOT render banner when the user has already dismissed this campaign', async () => {
+      localStorage.setItem(`dismissed:campaign:${sampleCampaign.id}`, 'true')
+      mockListPublishedCourses.mockResolvedValue({ courses: sampleCourses, error: null })
+      mockGetCurrentActiveCampaign.mockResolvedValue({ campaign: sampleCampaign, error: null })
+      renderHome()
+      await waitFor(() => {
+        expect(screen.getByText('Khai cuộc cho người mới')).toBeInTheDocument()
+      })
+      expect(screen.queryByTestId('campaign-banner')).not.toBeInTheDocument()
+    })
+
+    it('renders banner for a NEW campaign id even when an older campaign was dismissed', async () => {
+      localStorage.setItem('dismissed:campaign:cmp-old', 'true')
+      mockListPublishedCourses.mockResolvedValue({ courses: sampleCourses, error: null })
+      mockGetCurrentActiveCampaign.mockResolvedValue({ campaign: sampleCampaign, error: null })
+      renderHome()
+      await waitFor(() => {
+        expect(screen.getByTestId('campaign-banner')).toBeInTheDocument()
+      })
+    })
+
+    it('clicking close hides the banner and persists in localStorage', async () => {
+      mockListPublishedCourses.mockResolvedValue({ courses: sampleCourses, error: null })
+      mockGetCurrentActiveCampaign.mockResolvedValue({ campaign: sampleCampaign, error: null })
+      const user = userEvent.setup()
+      renderHome()
+      await waitFor(() => screen.getByTestId('campaign-banner'))
+      await user.click(screen.getByRole('button', { name: /đóng/i }))
+      expect(screen.queryByTestId('campaign-banner')).not.toBeInTheDocument()
+      expect(localStorage.getItem(`dismissed:campaign:${sampleCampaign.id}`)).toBe('true')
     })
   })
 })
