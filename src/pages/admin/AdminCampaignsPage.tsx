@@ -384,8 +384,12 @@ export default function AdminCampaignsPage() {
                           )}
                         </span>
                       </td>
-                      <td style={{ padding: '14px 16px' }} className="text-(--ink-2)">
-                        0
+                      <td
+                        style={{ padding: '14px 16px' }}
+                        className="text-(--ink-2)"
+                        data-testid={`admin-campaigns-orders-count-${c.id}`}
+                      >
+                        {c.orders_count.toLocaleString('vi-VN')}
                       </td>
                       <td style={{ padding: '14px 16px', textAlign: 'right' }}>
                         <div className="flex items-center justify-end gap-2">

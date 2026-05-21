@@ -17,6 +17,14 @@ export interface Campaign {
   created_by: string
   created_at: string
   updated_at: string
+  /**
+   * Count of `orders` where `campaign_id = campaign.id` AND status is one of
+   * ('active', 'refund_pending', 'refunded') — i.e. orders that contributed
+   * (or will contribute, pending refund settlement) to revenue. Populated by
+   * the `list_campaigns_with_orders_count` RPC; defaults to 0 on rows fetched
+   * via other paths (e.g. create/update RPCs that return a single row).
+   */
+  orders_count: number
 }
 
 export interface CampaignInput {
@@ -93,28 +101,30 @@ export async function listCampaigns(
   client: SupabaseClient,
   options: ListCampaignsOptions
 ): Promise<{ campaigns: Campaign[]; error: Error | null }> {
-  let chain = client
-    .from('campaigns')
-    .select(
-      'id, name, description, discount_type, discount_value, max_discount_amount, applicable_courses, starts_at, ends_at, is_active, created_by, created_at, updated_at'
-    ) as unknown as {
-    eq: (col: string, val: unknown) => typeof chain
-    ilike: (col: string, val: string) => typeof chain
-    order: (col: string, opts: { ascending: boolean }) => Promise<{
-      data: Campaign[] | null
-      count: number | null
-      error: Error | null
-    }>
-  }
+  // Routes through the `list_campaigns_with_orders_count` RPC (migration 071)
+  // so the admin table can render a real `Số đơn` column without an N+1 fan-out
+  // from the client. The RPC aggregates the orders count server-side, filtered
+  // to revenue-bearing statuses (`active`, `refund_pending`, `refunded`).
+  const trimmedSearch = options.search?.trim() ?? ''
+  const p_status =
+    options.status === 'active' || options.status === 'inactive' ? options.status : null
+  const p_search = trimmedSearch.length > 0 ? trimmedSearch : null
 
-  if (options.status === 'active') chain = chain.eq('is_active', true)
-  if (options.status === 'inactive') chain = chain.eq('is_active', false)
-  if (options.search && options.search.trim()) {
-    chain = chain.ilike('name', `%${options.search.trim()}%`)
-  }
+  const { data, error } = await client.rpc('list_campaigns_with_orders_count', {
+    p_status,
+    p_search,
+  })
 
-  const { data, error } = await chain.order('created_at', { ascending: false })
-  return { campaigns: (data as Campaign[]) ?? [], error: error as Error | null }
+  // The RPC returns `orders_count` per row. Default to 0 if a stale proxy or
+  // alternate code path drops the field so the UI never renders `undefined`.
+  const rows = ((data as Array<Partial<Campaign> & { orders_count?: number | string }>) ?? []).map(
+    row => ({
+      ...row,
+      orders_count: Number(row.orders_count ?? 0),
+    })
+  ) as Campaign[]
+
+  return { campaigns: rows, error: error as Error | null }
 }
 
 // Lightweight course list for the multi-select picker. Admin policy on

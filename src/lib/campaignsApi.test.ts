@@ -25,6 +25,7 @@ const sampleCampaign: Campaign = {
   created_by: 'admin-1',
   created_at: '2026-01-10T00:00:00Z',
   updated_at: '2026-01-10T00:00:00Z',
+  orders_count: 0,
 }
 
 // ── createCampaign ─────────────────────────────────────────────────────────
@@ -157,42 +158,81 @@ describe('getActiveCampaignForCourse', () => {
 // ── listCampaigns ──────────────────────────────────────────────────────────
 
 describe('listCampaigns', () => {
-  it('lists all campaigns ordered by created_at desc', async () => {
-    const order = vi.fn().mockResolvedValue({
-      data: [sampleCampaign],
-      count: 1,
+  it('calls list_campaigns_with_orders_count RPC and returns rows with orders_count', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: [{ ...sampleCampaign, orders_count: 3 }],
       error: null,
     })
-    const select = vi.fn().mockReturnValue({ order })
-    const client = { from: vi.fn().mockReturnValue({ select }) } as unknown as SupabaseClient
+    const client = { rpc } as unknown as SupabaseClient
 
     const { campaigns, error } = await listCampaigns(client, {})
     expect(error).toBeNull()
     expect(campaigns).toHaveLength(1)
-    expect(client.from).toHaveBeenCalledWith('campaigns')
-    expect(order).toHaveBeenCalledWith('created_at', { ascending: false })
+    expect(campaigns[0].orders_count).toBe(3)
+    expect(rpc).toHaveBeenCalledWith('list_campaigns_with_orders_count', {
+      p_status: null,
+      p_search: null,
+    })
   })
 
-  it('filters by is_active when status=active', async () => {
-    const eq = vi.fn().mockReturnThis()
-    const order = vi.fn().mockResolvedValue({ data: [sampleCampaign], count: 1, error: null })
-    const chain = { eq, order }
-    const select = vi.fn().mockReturnValue(chain)
-    const client = { from: vi.fn().mockReturnValue({ select }) } as unknown as SupabaseClient
+  it('passes status=active filter through to the RPC', async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: [sampleCampaign], error: null })
+    const client = { rpc } as unknown as SupabaseClient
 
     await listCampaigns(client, { status: 'active' })
-    expect(eq).toHaveBeenCalledWith('is_active', true)
+    expect(rpc).toHaveBeenCalledWith('list_campaigns_with_orders_count', {
+      p_status: 'active',
+      p_search: null,
+    })
   })
 
-  it('filters by name via ilike when search is provided', async () => {
-    const ilike = vi.fn().mockReturnThis()
-    const order = vi.fn().mockResolvedValue({ data: [], count: 0, error: null })
-    const chain = { ilike, order }
-    const select = vi.fn().mockReturnValue(chain)
-    const client = { from: vi.fn().mockReturnValue({ select }) } as unknown as SupabaseClient
+  it('passes status=inactive filter through to the RPC', async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: [], error: null })
+    const client = { rpc } as unknown as SupabaseClient
 
-    await listCampaigns(client, { search: 'Tết' })
-    expect(ilike).toHaveBeenCalledWith('name', '%Tết%')
+    await listCampaigns(client, { status: 'inactive' })
+    expect(rpc).toHaveBeenCalledWith('list_campaigns_with_orders_count', {
+      p_status: 'inactive',
+      p_search: null,
+    })
+  })
+
+  it('passes search through to the RPC (trimmed)', async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: [], error: null })
+    const client = { rpc } as unknown as SupabaseClient
+
+    await listCampaigns(client, { search: '  Tết  ' })
+    expect(rpc).toHaveBeenCalledWith('list_campaigns_with_orders_count', {
+      p_status: null,
+      p_search: 'Tết',
+    })
+  })
+
+  it('defaults orders_count to 0 when the RPC omits it', async () => {
+    // Defensive — the RPC always returns 0 via COALESCE, but in case a stale
+    // proxy or alternate path drops the field, the client should not break.
+    const withoutCount: Record<string, unknown> = { ...sampleCampaign }
+    delete withoutCount.orders_count
+    const rpc = vi.fn().mockResolvedValue({
+      data: [withoutCount],
+      error: null,
+    })
+    const client = { rpc } as unknown as SupabaseClient
+
+    const { campaigns } = await listCampaigns(client, {})
+    expect(campaigns[0].orders_count).toBe(0)
+  })
+
+  it('surfaces RPC errors', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: null,
+      error: { message: 'boom' },
+    })
+    const client = { rpc } as unknown as SupabaseClient
+
+    const { campaigns, error } = await listCampaigns(client, {})
+    expect(campaigns).toEqual([])
+    expect((error as { message: string }).message).toBe('boom')
   })
 })
 

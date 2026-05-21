@@ -51,6 +51,7 @@ const sampleCampaign: Campaign = {
   created_by: 'admin-1',
   created_at: '2026-01-10T00:00:00Z',
   updated_at: '2026-01-10T00:00:00Z',
+  orders_count: 0,
 }
 
 const courseList: CoursePickerRow[] = [
@@ -97,6 +98,28 @@ describe('AdminCampaignsPage', () => {
     expect(screen.getByTestId('admin-campaigns-row-cmp-1')).toHaveTextContent(
       /Tết Sale 2026/
     )
+  })
+
+  it('renders orders_count from the API in the Số đơn column', async () => {
+    // Regression for issue #320: the column used to literally render `0`.
+    // Now it must reflect the server-side aggregate from
+    // list_campaigns_with_orders_count.
+    mockListCampaigns.mockResolvedValue({
+      campaigns: [
+        { ...sampleCampaign, id: 'cmp-with-orders', orders_count: 3 },
+        { ...sampleCampaign, id: 'cmp-zero-orders', orders_count: 0 },
+      ],
+      error: null,
+    })
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-campaigns-orders-count-cmp-with-orders')).toHaveTextContent(
+        '3'
+      )
+    })
+    expect(
+      screen.getByTestId('admin-campaigns-orders-count-cmp-zero-orders')
+    ).toHaveTextContent('0')
   })
 
   it('filters by status when the dropdown changes', async () => {
