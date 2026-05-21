@@ -92,6 +92,13 @@
       "refreshCountdown": "Can refresh in {{secs}}s",
       "refreshError": "Could not refresh. Please try again.",
       "loadError": "Could not load analytics.",
+      "banner": {
+        "stale": "Latest snapshot is from {{date}}. Click \"Refresh\" to update."
+      },
+      "toast": {
+        "refreshErrorTitle": "Refresh failed",
+        "refreshErrorBody": "{{message}}"
+      },
       "noSnapshotYet": "No analytics snapshot yet. Click \"Refresh\" to compute the first one.",
       "noSnapshotForRange": "No data for this time range yet.",
       "financial": {

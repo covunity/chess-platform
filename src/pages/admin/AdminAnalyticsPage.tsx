@@ -5,6 +5,7 @@ import {
   fetchLatestContentSnapshots,
   fetchLatestFinancialSnapshots,
   fetchLatestUserSnapshots,
+  isSnapshotStale,
   recomputeAnalyticsSnapshot,
   type AnalyticsSnapshotRow,
   type ContentPayload,
@@ -234,7 +235,18 @@ export default function AdminAnalyticsPage() {
     setCooldown(REFRESH_COOLDOWN_SECS)
     const { error } = await recomputeAnalyticsSnapshot(supabase)
     if (error) {
-      setRefreshError(t('admin.analytics.refreshError'))
+      // Surface the RPC error message verbatim (PRD-0008 §4 P4 US4.2 — "a
+      // toast surfaces the error"). Fall back to the generic copy if the
+      // error object has no message.
+      const message = (error as { message?: string }).message
+      setRefreshError(
+        message
+          ? t('admin.analytics.toast.refreshErrorBody', { message })
+          : t('admin.analytics.refreshError')
+      )
+      // Cancel the 30s cooldown so the admin can retry immediately —
+      // PRD-0008 §4 P4 US4.2 ("the refresh button re-enables").
+      setCooldown(0)
       setRefreshing(false)
       return
     }
@@ -280,6 +292,36 @@ export default function AdminAnalyticsPage() {
     if (stamps.length === 0) return null
     return stamps.reduce((max, s) => (s > max ? s : max), stamps[0])
   }, [snapshots])
+
+  // Latest snapshot_date across any of the three categories — they all share
+  // the same date in practice (single RPC writes everything for v_today), but
+  // defensive max is cheap and right.
+  const latestSnapshotDate = useMemo(() => {
+    const dates: string[] = []
+    for (const r of RANGES) {
+      const f = snapshots[r]?.snapshot_date
+      const c = contentSnapshots[r]?.snapshot_date
+      const u = userSnapshots[r]?.snapshot_date
+      if (typeof f === 'string') dates.push(f)
+      if (typeof c === 'string') dates.push(c)
+      if (typeof u === 'string') dates.push(u)
+    }
+    if (dates.length === 0) return null
+    return dates.reduce((max, s) => (s > max ? s : max), dates[0])
+  }, [snapshots, contentSnapshots, userSnapshots])
+
+  const isStale = isSnapshotStale(latestSnapshotDate)
+
+  // Banner date copy — format the snapshot_date (`YYYY-MM-DD`) as `DD/MM`
+  // (PRD-0008 §4 P4 US4.1).
+  const staleBannerDate = useMemo(() => {
+    if (!latestSnapshotDate) return ''
+    // snapshot_date is `YYYY-MM-DD`; split is sufficient (no JS Date parsing
+    // ambiguity, no TZ offset surprise).
+    const parts = latestSnapshotDate.split('-')
+    if (parts.length !== 3) return latestSnapshotDate
+    return `${parts[2]}/${parts[1]}`
+  }, [latestSnapshotDate])
 
   const refreshLabel = cooldown > 0
     ? t('admin.analytics.refreshCountdown', { secs: cooldown })
@@ -352,6 +394,30 @@ export default function AdminAnalyticsPage() {
       </div>
 
       <div className="flex-1 px-6 pb-6 pt-4 overflow-auto">
+        {/* Stale-snapshot banner (PRD-0008 §4 P4 US4.1). Renders when the
+            most recent snapshot_date is before today's date in ICT.
+            Uses the existing `pill-warning` token (var(--warning) +
+            var(--warning-soft)) so no hex is introduced. The KPI cards
+            below still render the older snapshot's data — the banner is
+            additive context, not a blank-screen state. */}
+        {isStale && (
+          <div
+            role="status"
+            data-testid="admin-analytics-stale-banner"
+            className="pill pill-warning"
+            style={{
+              height: 'auto',
+              padding: '8px 14px',
+              borderRadius: 'var(--r-md)',
+              fontSize: 13,
+              marginBottom: 16,
+              display: 'block',
+            }}
+          >
+            {t('admin.analytics.banner.stale', { date: staleBannerDate })}
+          </div>
+        )}
+
         {loadError && (
           <div
             role="alert"

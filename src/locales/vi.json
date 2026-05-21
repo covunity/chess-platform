@@ -382,6 +382,13 @@
       "refreshCountdown": "Có thể làm mới sau {{secs}}s",
       "refreshError": "Không thể làm mới. Vui lòng thử lại.",
       "loadError": "Không thể tải dữ liệu phân tích.",
+      "banner": {
+        "stale": "Snapshot mới nhất từ ngày {{date}}. Bấm \"Làm mới\" để cập nhật."
+      },
+      "toast": {
+        "refreshErrorTitle": "Làm mới thất bại",
+        "refreshErrorBody": "{{message}}"
+      },
       "noSnapshotYet": "Chưa có dữ liệu phân tích. Bấm \"Làm mới\" để tạo bản tổng hợp đầu tiên.",
       "noSnapshotForRange": "Chưa có dữ liệu cho khoảng thời gian này.",
       "financial": {

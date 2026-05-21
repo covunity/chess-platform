@@ -293,6 +293,34 @@ export async function fetchLatestUserSnapshots(
   return { snapshots, error: null }
 }
 
+// ── isSnapshotStale ─────────────────────────────────────────────────────────
+// Returns true when the snapshot's `snapshot_date` (a plain `YYYY-MM-DD` DATE
+// from Postgres, computed in ICT — see migration 074/075/076/077:
+// `(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date`) is BEFORE today's date in
+// ICT. This is the trigger for the yellow stale banner on the dashboard
+// (PRD-0008 §4 P4 US4.1). The function is pure so it can be unit-tested without
+// mocking `Date.now()` at the consumer.
+//
+// `now` defaults to `new Date()` — pass an explicit Date in tests for
+// determinism.
+export function todayInIctIso(now: Date = new Date()): string {
+  // Format `YYYY-MM-DD` as observed in the `Asia/Ho_Chi_Minh` zone using the
+  // `en-CA` locale (renders ISO-style `YYYY-MM-DD`). This avoids manual UTC
+  // arithmetic + DST corner cases (Vietnam has no DST, but the formatter is
+  // still the safest path).
+  return now.toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' })
+}
+
+export function isSnapshotStale(
+  snapshotDate: string | undefined | null,
+  now: Date = new Date()
+): boolean {
+  if (!snapshotDate) return false // no snapshot at all → empty-state, not stale
+  const today = todayInIctIso(now)
+  // String comparison is safe because both sides are `YYYY-MM-DD` ISO dates.
+  return snapshotDate < today
+}
+
 // ── recomputeAnalyticsSnapshot ──────────────────────────────────────────────
 // Calls the admin-only RPC that upserts today's snapshot rows. Invoked by the
 // "Làm mới" button. The 30-second client-side cooldown lives in the page, not

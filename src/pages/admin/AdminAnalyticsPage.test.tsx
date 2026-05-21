@@ -634,6 +634,120 @@ describe('AdminAnalyticsPage', () => {
     })
   })
 
+  // ── Slice 5 (#332) — Stale-snapshot banner + RPC error toast ───────────
+
+  it('renders the stale-snapshot banner with DD/MM date when the snapshot is from a previous day', async () => {
+    // Stub only `Date` (not other timers — fake timers break waitFor + the
+    // jsdom mutation observer). 2026-05-22 ICT (16:00 UTC = 23:00 ICT) → the
+    // sample fixture's snapshot_date `2026-05-21` is strictly older → stale.
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-05-22T16:00:00Z'))
+
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-analytics-stale-banner')).toBeInTheDocument()
+    })
+    // Banner text contains snapshot date formatted as DD/MM ("21/05").
+    expect(screen.getByTestId('admin-analytics-stale-banner')).toHaveTextContent(
+      /21\/05/
+    )
+    // KPI cards STILL render the older snapshot's data — banner is additive,
+    // not a blanking-out state. PRD-0008 §4 P4 US4.1 acceptance criterion.
+    const revenue = screen.getByTestId('admin-analytics-kpi-revenue')
+    expect(within(revenue).getByTestId('kpi-value')).toHaveTextContent(/12\.500\.000/)
+  })
+
+  it('does NOT render the stale banner when the snapshot_date matches today in ICT', async () => {
+    // Sample fixture snapshot_date 2026-05-21. Pin wall clock to that day
+    // in ICT — no banner expected.
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-05-21T05:00:00Z')) // 12:00 ICT
+
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-analytics-kpi-revenue')).toBeInTheDocument()
+    })
+    expect(
+      screen.queryByTestId('admin-analytics-stale-banner')
+    ).not.toBeInTheDocument()
+  })
+
+  it('clears the stale banner after a successful recompute (without page reload)', async () => {
+    // Initial fetch returns yesterday's snapshot (stale). After user clicks
+    // Refresh, the next fetch returns today's snapshot — banner should
+    // disappear without a page reload.
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-05-22T16:00:00Z')) // 23:00 ICT
+
+    const fresh = JSON.parse(JSON.stringify(sample)) as FinancialSnapshotsByRange
+    for (const r of ['7d', 'mtd', 'last_month', 'all_time'] as const) {
+      const row = fresh[r]
+      if (row) row.snapshot_date = '2026-05-22'
+    }
+    const freshContent = JSON.parse(JSON.stringify(contentSample))
+    for (const r of ['7d', 'mtd', 'last_month', 'all_time'] as const) {
+      const row = freshContent[r]
+      if (row) row.snapshot_date = '2026-05-22'
+    }
+    const freshUsers = JSON.parse(JSON.stringify(usersSample))
+    for (const r of ['7d', 'mtd', 'last_month', 'all_time'] as const) {
+      const row = freshUsers[r]
+      if (row) row.snapshot_date = '2026-05-22'
+    }
+
+    // First call (mount) — stale fixture (default beforeEach).
+    // Second call (post-recompute reload) — fresh.
+    mockFetch
+      .mockResolvedValueOnce({ snapshots: sample, error: null })
+      .mockResolvedValue({ snapshots: fresh, error: null })
+    mockFetchContent
+      .mockResolvedValueOnce({ snapshots: contentSample, error: null })
+      .mockResolvedValue({ snapshots: freshContent, error: null })
+    mockFetchUsers
+      .mockResolvedValueOnce({ snapshots: usersSample, error: null })
+      .mockResolvedValue({ snapshots: freshUsers, error: null })
+
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime.bind(vi) })
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-analytics-stale-banner')).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByTestId('admin-analytics-refresh-btn'))
+
+    await waitFor(() => {
+      expect(
+        screen.queryByTestId('admin-analytics-stale-banner')
+      ).not.toBeInTheDocument()
+    })
+  })
+
+  it('re-enables the refresh button + surfaces the RPC error message on rejection', async () => {
+    // RPC returns an error → the page must:
+    //   1. Render the error message (PRD-0008 §4 P4 US4.2 toast surface).
+    //   2. Cancel the 30s cooldown so the admin can retry immediately.
+    mockRecompute.mockResolvedValue({ error: new Error('database is paused') })
+
+    const user = userEvent.setup()
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-analytics-refresh-btn')).toBeInTheDocument()
+    })
+    const btn = screen.getByTestId('admin-analytics-refresh-btn')
+    await user.click(btn)
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-analytics-refresh-error')).toBeInTheDocument()
+    })
+    // The error message from the RPC propagates verbatim into the surfaced text.
+    expect(screen.getByTestId('admin-analytics-refresh-error')).toHaveTextContent(
+      /database is paused/
+    )
+    // Button is re-enabled (not stuck in countdown). The label must NOT be the
+    // 30s countdown — i.e., the cooldown has been cancelled.
+    expect(btn).not.toBeDisabled()
+    expect(btn.textContent ?? '').not.toMatch(/30/)
+  })
+
   it('does not call the orders table directly — only reads analytics_snapshots via the api helper', async () => {
     // The whole point of ADR-0009: no live aggregate query on `orders` from the
     // page. The page MUST use `fetchLatestFinancialSnapshots` and nothing else.

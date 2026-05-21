@@ -4,7 +4,9 @@ import {
   fetchLatestContentSnapshots,
   fetchLatestFinancialSnapshots,
   fetchLatestUserSnapshots,
+  isSnapshotStale,
   recomputeAnalyticsSnapshot,
+  todayInIctIso,
   type AnalyticsSnapshotRow,
   type ContentPayload,
   type ContentSnapshotRow,
@@ -360,5 +362,51 @@ describe('recomputeAnalyticsSnapshot', () => {
 
     const { error } = await recomputeAnalyticsSnapshot(client)
     expect((error as { message: string }).message).toBe('forbidden')
+  })
+})
+
+// ── isSnapshotStale + todayInIctIso ─────────────────────────────────────────
+// PRD-0008 §4 P4 US4.1 — the stale-snapshot banner trigger.
+// Snapshot `snapshot_date` is a Postgres DATE produced from
+// `(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date` (migration 077 line ~80).
+// The FE must compare to today's date AS OBSERVED IN ICT, otherwise UTC-late
+// (UTC 17:00+ on the day) renders would incorrectly mark today's snapshot as
+// stale.
+
+describe('todayInIctIso', () => {
+  it('returns the YYYY-MM-DD date in ICT regardless of UTC clock', () => {
+    // 2026-05-21 16:59 UTC → 2026-05-21 23:59 ICT (still today in ICT).
+    const beforeIctMidnight = new Date('2026-05-21T16:59:00Z')
+    expect(todayInIctIso(beforeIctMidnight)).toBe('2026-05-21')
+
+    // 2026-05-21 17:00 UTC → 2026-05-22 00:00 ICT (tomorrow in ICT).
+    const justAfterIctMidnight = new Date('2026-05-21T17:00:00Z')
+    expect(todayInIctIso(justAfterIctMidnight)).toBe('2026-05-22')
+  })
+})
+
+describe('isSnapshotStale', () => {
+  it('returns false when the snapshot date equals today in ICT', () => {
+    const now = new Date('2026-05-21T10:00:00Z') // 17:00 ICT — same day
+    expect(isSnapshotStale('2026-05-21', now)).toBe(false)
+  })
+
+  it('returns true when the snapshot date is older than today in ICT', () => {
+    const now = new Date('2026-05-21T10:00:00Z')
+    expect(isSnapshotStale('2026-05-20', now)).toBe(true)
+    expect(isSnapshotStale('2026-05-15', now)).toBe(true)
+  })
+
+  it('returns false when there is no snapshot date (empty-state, not stale)', () => {
+    expect(isSnapshotStale(undefined)).toBe(false)
+    expect(isSnapshotStale(null)).toBe(false)
+    expect(isSnapshotStale('')).toBe(false)
+  })
+
+  it('handles the UTC-to-ICT rollover correctly (stale check at 17:30 UTC)', () => {
+    // 2026-05-21 17:30 UTC → 2026-05-22 00:30 ICT. A snapshot dated
+    // 2026-05-21 is from "yesterday" in ICT terms and IS stale.
+    const ictNextDay = new Date('2026-05-21T17:30:00Z')
+    expect(isSnapshotStale('2026-05-21', ictNextDay)).toBe(true)
   })
 })

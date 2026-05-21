@@ -212,6 +212,18 @@ describe('Migration 077 — analytics_snapshots users section', () => {
     expect(codeOnly).toMatch(/COALESCE\(\s*jsonb_agg/i)
   })
 
+  // ── 90-day retention sweep (PRD-0008 §3 "Snapshots older than 90 days are
+  //    removed". Originally added in migration 074; must be carried forward
+  //    by each CREATE OR REPLACE of the RPC body so cron + manual force_now
+  //    keep pruning stale rows.) ─────────────────────────────────────────────
+  it('runs a DELETE FROM analytics_snapshots for rows older than 90 days inside the RPC body', () => {
+    // The DELETE must reference the snapshot_date < (now() - interval '90 days')
+    // predicate. Comparison is against a date cast (snapshot_date is DATE).
+    expect(codeOnly).toMatch(
+      /DELETE\s+FROM\s+(public\.)?analytics_snapshots[\s\S]*?snapshot_date\s*<[\s\S]*?'90 days'/i
+    )
+  })
+
   it('wraps in BEGIN/COMMIT', () => {
     expect(sql).toMatch(/^\s*BEGIN\s*;/im)
     expect(sql).toMatch(/COMMIT\s*;\s*$/m)
