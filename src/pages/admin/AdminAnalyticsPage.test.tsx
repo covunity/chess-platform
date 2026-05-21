@@ -10,6 +10,8 @@ import type {
   ContentSnapshotRow,
   ContentSnapshotsByRange,
   FinancialSnapshotsByRange,
+  UsersSnapshotRow,
+  UsersSnapshotsByRange,
 } from '../../lib/analyticsApi'
 
 // Recharts measures the parent DOM node to decide its render size. jsdom
@@ -34,9 +36,10 @@ beforeAll(() => {
   }
 })
 
-const { mockFetch, mockFetchContent, mockRecompute } = vi.hoisted(() => ({
+const { mockFetch, mockFetchContent, mockFetchUsers, mockRecompute } = vi.hoisted(() => ({
   mockFetch: vi.fn(),
   mockFetchContent: vi.fn(),
+  mockFetchUsers: vi.fn(),
   mockRecompute: vi.fn(),
 }))
 
@@ -48,6 +51,7 @@ vi.mock('../../lib/analyticsApi', async () => {
     ...actual,
     fetchLatestFinancialSnapshots: mockFetch,
     fetchLatestContentSnapshots: mockFetchContent,
+    fetchLatestUserSnapshots: mockFetchUsers,
     recomputeAnalyticsSnapshot: mockRecompute,
   }
 })
@@ -226,11 +230,78 @@ const contentSample: ContentSnapshotsByRange = {
   }),
 }
 
+// ── Users snapshots fixture ─────────────────────────────────────────────────
+function usersRow(
+  time_range: 'mtd' | 'last_month' | '7d' | 'all_time',
+  payload: UsersSnapshotRow['payload']
+): UsersSnapshotRow {
+  return {
+    snapshot_date: '2026-05-21',
+    time_range,
+    category: 'users',
+    payload,
+    computed_at: '2026-05-21T00:05:00Z',
+  }
+}
+
+const usersSample: UsersSnapshotsByRange = {
+  '7d': usersRow('7d', {
+    kpis: {
+      new_signups:     { value: 12, delta_pct: 50.0 },
+      active_users:    { value: 8,  delta_pct: 14.3 },
+      conversion_rate: { value: 0.25, numerator: 3, denominator: 12, delta_pct: 5.0 },
+    },
+    signup_trend: [
+      { bucket: '2026-05-15', value: 2 },
+      { bucket: '2026-05-16', value: 5 },
+    ],
+    top_buyers: [
+      { user_id: 'b1', name: 'Khách Sớm',  spend: 1_200_000, order_count: 2 },
+    ],
+  }),
+  mtd: usersRow('mtd', {
+    kpis: {
+      new_signups:     { value: 42,    delta_pct: 8.0 },
+      active_users:    { value: 31,    delta_pct: 4.5 },
+      conversion_rate: { value: 0.286, numerator: 12, denominator: 42, delta_pct: 11.0 },
+    },
+    signup_trend: [
+      { bucket: '2026-05-15', value: 7 },
+      { bucket: '2026-05-16', value: 9 },
+    ],
+    top_buyers: [
+      { user_id: 'b-paid', name: 'Khách trả tiền', spend: 850_000, order_count: 3 },
+      { user_id: 'b-free', name: 'Khách miễn phí', spend: 0,       order_count: 5 },
+    ],
+  }),
+  last_month: usersRow('last_month', {
+    kpis: {
+      new_signups:     { value: 0, delta_pct: 0 },
+      active_users:    { value: 0, delta_pct: 0 },
+      conversion_rate: { value: 0, numerator: 0, denominator: 0, delta_pct: 0 },
+    },
+    signup_trend: [],
+    top_buyers: [],
+  }),
+  all_time: usersRow('all_time', {
+    kpis: {
+      new_signups:     { value: 250, delta_pct: null },
+      active_users:    { value: 180, delta_pct: null },
+      conversion_rate: { value: 0.3, numerator: 75, denominator: 250, delta_pct: null },
+    },
+    signup_trend: [{ bucket: '2026-04', value: 100 }, { bucket: '2026-05', value: 150 }],
+    top_buyers: [
+      { user_id: 'at-b1', name: 'Khách lâu năm', spend: 9_000_000, order_count: 25 },
+    ],
+  }),
+}
+
 describe('AdminAnalyticsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockFetch.mockResolvedValue({ snapshots: sample, error: null })
     mockFetchContent.mockResolvedValue({ snapshots: contentSample, error: null })
+    mockFetchUsers.mockResolvedValue({ snapshots: usersSample, error: null })
     mockRecompute.mockResolvedValue({ error: null })
   })
 
@@ -486,6 +557,80 @@ describe('AdminAnalyticsPage', () => {
       // zero new-course buckets — completion_top is duplicated across
       // ranges per ADR-0009.
       expect(screen.getByTestId('admin-analytics-completion-bar')).toBeInTheDocument()
+    })
+  })
+
+  // ── Slice 4 (#331) — Users section ──────────────────────────────────────
+
+  it('renders the Users section heading + three users KPI cards (mtd defaults)', async () => {
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-analytics-users-section')).toBeInTheDocument()
+    })
+    const newSignups = screen.getByTestId('admin-analytics-kpi-new-signups')
+    expect(within(newSignups).getByTestId('kpi-value')).toHaveTextContent('42')
+    expect(within(newSignups).getByTestId('kpi-delta')).toHaveTextContent(/8,0/)
+
+    const activeUsers = screen.getByTestId('admin-analytics-kpi-active-users')
+    expect(within(activeUsers).getByTestId('kpi-value')).toHaveTextContent('31')
+
+    const conversion = screen.getByTestId('admin-analytics-kpi-conversion-rate')
+    // 0.286 → "28,6%"
+    expect(within(conversion).getByTestId('kpi-value')).toHaveTextContent(/28,6%/)
+    // N/M caption surfaces the numerator + denominator.
+    expect(
+      within(conversion).getByTestId('admin-analytics-conversion-fraction')
+    ).toHaveTextContent(/12\s*\/\s*42/)
+  })
+
+  it('renders the signup trend chart for the selected range', async () => {
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-analytics-users-section')).toBeInTheDocument()
+    })
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-analytics-signup-trend')).toBeInTheDocument()
+    })
+  })
+
+  it('renders the top-10 buyers table sorted by spend (free claimer below paying customer)', async () => {
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-analytics-top-buyers')).toBeInTheDocument()
+    })
+    // mtd fixture: u-paid (850k) then u-free (0). The free claimer's
+    // higher order_count (5 vs 3) must NOT bump it above the paying user.
+    const rows = screen.getAllByTestId('admin-analytics-top-buyers-row')
+    expect(rows).toHaveLength(2)
+    expect(within(rows[0]).getByText('Khách trả tiền')).toBeInTheDocument()
+    expect(within(rows[1]).getByText('Khách miễn phí')).toBeInTheDocument()
+  })
+
+  it('switching to last_month with zero new signups renders signup-trend + top-buyers empty states', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-analytics-range-selector')).toBeInTheDocument()
+    })
+    await user.click(screen.getByTestId('admin-analytics-range-last_month'))
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-analytics-signup-trend-empty')).toBeInTheDocument()
+    })
+    expect(screen.getByTestId('admin-analytics-top-buyers-empty')).toBeInTheDocument()
+  })
+
+  it('renders "—" delta for all_time conversion rate (no comparable prior period)', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-analytics-range-selector')).toBeInTheDocument()
+    })
+    await user.click(screen.getByTestId('admin-analytics-range-all_time'))
+    await waitFor(() => {
+      const conv = screen.getByTestId('admin-analytics-kpi-conversion-rate')
+      // all_time conversion 0.3 → "30,0%"
+      expect(within(conv).getByTestId('kpi-value')).toHaveTextContent(/30,0%/)
+      expect(within(conv).getByTestId('kpi-delta')).toHaveTextContent('—')
     })
   })
 

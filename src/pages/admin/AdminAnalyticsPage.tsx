@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import {
   fetchLatestContentSnapshots,
   fetchLatestFinancialSnapshots,
+  fetchLatestUserSnapshots,
   recomputeAnalyticsSnapshot,
   type AnalyticsSnapshotRow,
   type ContentPayload,
@@ -12,6 +13,9 @@ import {
   type FinancialPayload,
   type FinancialSnapshotsByRange,
   type TimeRange,
+  type UsersPayload,
+  type UsersSnapshotRow,
+  type UsersSnapshotsByRange,
 } from '../../lib/analyticsApi'
 
 // Lazy-load Recharts (and the chart components that depend on it) so the
@@ -142,6 +146,7 @@ export default function AdminAnalyticsPage() {
   const { t } = useTranslation()
   const [snapshots, setSnapshots] = useState<FinancialSnapshotsByRange>({})
   const [contentSnapshots, setContentSnapshots] = useState<ContentSnapshotsByRange>({})
+  const [userSnapshots, setUserSnapshots] = useState<UsersSnapshotsByRange>({})
   const [range, setRange] = useState<TimeRange>('mtd')
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -155,18 +160,21 @@ export default function AdminAnalyticsPage() {
   // get 0 rows. Financial + content fire in parallel; either failing reports
   // the same load-error banner.
   const reload = useCallback(async () => {
-    const [financialResult, contentResult] = await Promise.all([
+    const [financialResult, contentResult, usersResult] = await Promise.all([
       fetchLatestFinancialSnapshots(supabase),
       fetchLatestContentSnapshots(supabase),
+      fetchLatestUserSnapshots(supabase),
     ])
-    if (financialResult.error || contentResult.error) {
+    if (financialResult.error || contentResult.error || usersResult.error) {
       setLoadError(t('admin.analytics.loadError'))
       setSnapshots({})
       setContentSnapshots({})
+      setUserSnapshots({})
     } else {
       setLoadError(null)
       setSnapshots(financialResult.snapshots)
       setContentSnapshots(contentResult.snapshots)
+      setUserSnapshots(usersResult.snapshots)
     }
     setLoading(false)
   }, [t])
@@ -174,19 +182,22 @@ export default function AdminAnalyticsPage() {
   useEffect(() => {
     let cancelled = false
     void (async () => {
-      const [financialResult, contentResult] = await Promise.all([
+      const [financialResult, contentResult, usersResult] = await Promise.all([
         fetchLatestFinancialSnapshots(supabase),
         fetchLatestContentSnapshots(supabase),
+        fetchLatestUserSnapshots(supabase),
       ])
       if (cancelled) return
-      if (financialResult.error || contentResult.error) {
+      if (financialResult.error || contentResult.error || usersResult.error) {
         setLoadError(t('admin.analytics.loadError'))
         setSnapshots({})
         setContentSnapshots({})
+        setUserSnapshots({})
       } else {
         setLoadError(null)
         setSnapshots(financialResult.snapshots)
         setContentSnapshots(contentResult.snapshots)
+        setUserSnapshots(usersResult.snapshots)
       }
       setLoading(false)
     })()
@@ -244,6 +255,20 @@ export default function AdminAnalyticsPage() {
   const byLevel = contentPayload?.by_level ?? []
   const byLanguage = contentPayload?.by_language ?? []
   const completionTop = contentPayload?.completion_top ?? []
+
+  const currentUsers: UsersSnapshotRow | undefined = userSnapshots[range]
+  const usersPayload = currentUsers?.payload as UsersPayload | undefined
+  const usersKpis = usersPayload?.kpis
+  const signupTrend = usersPayload?.signup_trend ?? []
+  const topBuyers = usersPayload?.top_buyers ?? []
+  // Conversion rate: payload.value is a 0..1 ratio. Format as `12,3%`
+  // (one decimal, vi-VN locale uses `,` as decimal separator).
+  const conversionPercent = usersKpis
+    ? (usersKpis.conversion_rate.value * 100).toLocaleString('vi-VN', {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+      }) + '%'
+    : '—'
 
   const lastUpdated = useMemo(() => {
     // Show the freshest computed_at across the four range rows; they all
@@ -653,6 +678,146 @@ export default function AdminAnalyticsPage() {
                   kind="completion-bar"
                   data={completionTop}
                   emptyLabel={t('admin.analytics.content.emptyRange')}
+                />
+              </Suspense>
+            </div>
+          </section>
+        )}
+
+        {/* Users section — PRD-0008 P3 US3.1–US3.3 */}
+        {!loading && currentUsers && usersKpis && (
+          <section
+            data-testid="admin-analytics-users-section"
+            style={{ marginTop: 32 }}
+          >
+            <h2
+              className="text-base font-semibold text-(--ink-1) mb-3"
+              style={{ letterSpacing: '-0.005em' }}
+            >
+              {t('admin.analytics.users.sectionTitle')}
+            </h2>
+
+            <div
+              className="grid"
+              style={{
+                gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                gap: 16,
+              }}
+            >
+              <KpiCard
+                testId="admin-analytics-kpi-new-signups"
+                label={t('admin.analytics.users.kpiNewSignups')}
+                display={formatCount(usersKpis.new_signups.value)}
+                delta={usersKpis.new_signups.delta_pct}
+                noneLabel={t('admin.analytics.financial.deltaNone')}
+              />
+              <KpiCard
+                testId="admin-analytics-kpi-active-users"
+                label={t('admin.analytics.users.kpiActiveUsers')}
+                display={formatCount(usersKpis.active_users.value)}
+                delta={usersKpis.active_users.delta_pct}
+                noneLabel={t('admin.analytics.financial.deltaNone')}
+              />
+              {/* Conversion: big number is the percentage; the secondary
+                  N/M caption sits below the value, derived from the
+                  numerator/denominator carried on the payload per
+                  PRD-0008 §5.4. */}
+              <div
+                data-testid="admin-analytics-kpi-conversion-rate"
+                className="card"
+                style={{
+                  padding: 20,
+                  borderRadius: 'var(--r-lg)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8,
+                  minWidth: 0,
+                }}
+              >
+                <div
+                  className="text-(--ink-3) uppercase"
+                  style={{ fontSize: 11.5, letterSpacing: '0.06em', fontWeight: 500 }}
+                >
+                  {t('admin.analytics.users.kpiConversionRate')}
+                </div>
+                <div
+                  data-testid="kpi-value"
+                  className="text-(--ink-1)"
+                  style={{
+                    fontSize: 26,
+                    fontWeight: 600,
+                    letterSpacing: '-0.01em',
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {conversionPercent}
+                </div>
+                <div
+                  data-testid="admin-analytics-conversion-fraction"
+                  className="text-(--ink-3)"
+                  style={{ fontSize: 12 }}
+                >
+                  {t('admin.analytics.users.conversionFraction', {
+                    num: formatCount(usersKpis.conversion_rate.numerator),
+                    denom: formatCount(usersKpis.conversion_rate.denominator),
+                  })}
+                </div>
+                <DeltaPill
+                  value={usersKpis.conversion_rate.delta_pct}
+                  noneLabel={t('admin.analytics.financial.deltaNone')}
+                />
+              </div>
+            </div>
+
+            {/* Signup trend chart */}
+            <div
+              className="card"
+              style={{ padding: 20, borderRadius: 'var(--r-lg)', marginTop: 24 }}
+            >
+              <h3
+                className="text-(--ink-1) mb-3"
+                style={{ fontSize: 14, fontWeight: 600, letterSpacing: '-0.005em' }}
+              >
+                {t('admin.analytics.users.trendTitle')}
+              </h3>
+              <Suspense
+                fallback={
+                  <div className="text-(--ink-3) text-sm" style={{ padding: '24px 0' }}>
+                    {t('admin.analytics.financial.chartLoading')}
+                  </div>
+                }
+              >
+                <AnalyticsCharts
+                  kind="signup-trend"
+                  data={signupTrend}
+                  emptyLabel={t('admin.analytics.users.emptyRange')}
+                  title={t('admin.analytics.users.trendTitle')}
+                />
+              </Suspense>
+            </div>
+
+            {/* Top buyers leaderboard */}
+            <div
+              className="card"
+              style={{ padding: 20, borderRadius: 'var(--r-lg)', marginTop: 24 }}
+            >
+              <h3
+                className="text-(--ink-1) mb-3"
+                style={{ fontSize: 14, fontWeight: 600, letterSpacing: '-0.005em' }}
+              >
+                {t('admin.analytics.users.topBuyersTitle')}
+              </h3>
+              <Suspense
+                fallback={
+                  <div className="text-(--ink-3) text-sm" style={{ padding: '24px 0' }}>
+                    {t('admin.analytics.financial.chartLoading')}
+                  </div>
+                }
+              >
+                <AnalyticsCharts
+                  kind="top-buyers"
+                  rows={topBuyers}
+                  emptyLabel={t('admin.analytics.users.emptyRange')}
                 />
               </Suspense>
             </div>

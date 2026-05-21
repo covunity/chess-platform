@@ -19,6 +19,8 @@ import type {
   LanguageBucketRow,
   LevelBucketRow,
   RevenueTrendPoint,
+  SignupTrendPoint,
+  TopBuyerRow,
   TopCourseRow,
   TopCreatorRow,
 } from '../../lib/analyticsApi'
@@ -83,6 +85,19 @@ interface CompletionBarProps {
   emptyLabel: string
 }
 
+interface SignupTrendProps {
+  kind: 'signup-trend'
+  data: SignupTrendPoint[]
+  emptyLabel: string
+  title: string
+}
+
+interface TopBuyersProps {
+  kind: 'top-buyers'
+  rows: TopBuyerRow[]
+  emptyLabel: string
+}
+
 export type AnalyticsChartProps =
   | RevenueTrendProps
   | TopCoursesProps
@@ -90,6 +105,8 @@ export type AnalyticsChartProps =
   | LevelDonutProps
   | LanguagePieProps
   | CompletionBarProps
+  | SignupTrendProps
+  | TopBuyersProps
 
 /**
  * Single lazy-loaded entry point for all chart + leaderboard renderers.
@@ -116,7 +133,13 @@ export default function AnalyticsCharts(props: AnalyticsChartProps) {
   if (props.kind === 'language-pie') {
     return <LanguagePie {...props} />
   }
-  return <CompletionBar {...props} />
+  if (props.kind === 'completion-bar') {
+    return <CompletionBar {...props} />
+  }
+  if (props.kind === 'signup-trend') {
+    return <SignupTrendChart {...props} />
+  }
+  return <TopBuyersTable {...props} />
 }
 
 // ── Revenue trend line ──────────────────────────────────────────────────────
@@ -468,6 +491,164 @@ function LanguagePie({ data, emptyLabel, languageLabels }: LanguagePieProps) {
         </PieChart>
       </ResponsiveContainer>
     </div>
+  )
+}
+
+// ── Signup trend line ──────────────────────────────────────────────────────
+// Same shape as RevenueTrendChart but counting people, not money. Daily
+// buckets for 7d/mtd/last_month; monthly for all_time. The Y-axis is a plain
+// count formatter (no VND tick rendering).
+function formatSignupTick(value: number): string {
+  if (value >= 1_000) return `${Math.round(value / 100) / 10}K`
+  return String(value)
+}
+
+function SignupTrendChart({ data, emptyLabel, title }: SignupTrendProps) {
+  const hasData = data.length > 0 && data.some(d => d.value > 0)
+
+  if (!hasData) {
+    return (
+      <div
+        data-testid="admin-analytics-signup-trend-empty"
+        className="text-(--ink-3) text-sm"
+        style={{ padding: '24px 0' }}
+      >
+        {emptyLabel}
+      </div>
+    )
+  }
+
+  return (
+    <div
+      data-testid="admin-analytics-signup-trend"
+      aria-label={title}
+      style={{ width: '100%', height: 280 }}
+    >
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data} margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
+          <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+          <XAxis
+            dataKey="bucket"
+            stroke="var(--ink-3)"
+            fontSize={11}
+            tickLine={false}
+          />
+          <YAxis
+            stroke="var(--ink-3)"
+            fontSize={11}
+            tickLine={false}
+            tickFormatter={formatSignupTick}
+            width={48}
+            allowDecimals={false}
+          />
+          <Tooltip
+            formatter={(v: unknown) => formatCount(Number(v ?? 0))}
+            contentStyle={{
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--r-md)',
+              color: 'var(--ink-1)',
+            }}
+            labelStyle={{ color: 'var(--ink-2)' }}
+          />
+          <Line
+            type="monotone"
+            dataKey="value"
+            stroke="var(--accent)"
+            strokeWidth={2}
+            dot={{ fill: 'var(--accent)', r: 3 }}
+            activeDot={{ r: 5 }}
+            isAnimationActive={false}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
+// ── Top 10 buyers ──────────────────────────────────────────────────────────
+// Sorted by spend DESC at the RPC layer (migration 077). A free-claim-only
+// row (spend = 0) appears at the bottom but is never displaced by a paying
+// customer above. The `order_count` column is informational — the sort is
+// always on spend per CONTEXT.md "Leaderboards" → "Top buyers".
+function TopBuyersTable({ rows, emptyLabel }: TopBuyersProps) {
+  const { t } = useTranslation()
+
+  if (rows.length === 0) {
+    return (
+      <div
+        data-testid="admin-analytics-top-buyers-empty"
+        className="text-(--ink-3) text-sm"
+        style={{ padding: '24px 0' }}
+      >
+        {emptyLabel}
+      </div>
+    )
+  }
+
+  return (
+    <table
+      data-testid="admin-analytics-top-buyers"
+      className="w-full text-sm"
+      style={{ borderCollapse: 'collapse' }}
+    >
+      <thead>
+        <tr style={{ borderBottom: '1px solid var(--border)' }}>
+          <th
+            className="text-(--ink-3) text-left"
+            style={{ padding: '8px 12px', fontWeight: 500, width: 40 }}
+          >
+            {t('admin.analytics.users.colRank')}
+          </th>
+          <th
+            className="text-(--ink-3) text-left"
+            style={{ padding: '8px 12px', fontWeight: 500 }}
+          >
+            {t('admin.analytics.users.colBuyer')}
+          </th>
+          <th
+            className="text-(--ink-3) text-right"
+            style={{ padding: '8px 12px', fontWeight: 500 }}
+          >
+            {t('admin.analytics.users.colSpend')}
+          </th>
+          <th
+            className="text-(--ink-3) text-right"
+            style={{ padding: '8px 12px', fontWeight: 500, width: 80 }}
+          >
+            {t('admin.analytics.users.colOrders')}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row, idx) => (
+          <tr
+            key={row.user_id}
+            data-testid="admin-analytics-top-buyers-row"
+            style={{ borderBottom: '1px solid var(--border)' }}
+          >
+            <td className="text-(--ink-3)" style={{ padding: '8px 12px' }}>
+              {idx + 1}
+            </td>
+            <td className="text-(--ink-1)" style={{ padding: '8px 12px' }}>
+              {row.name}
+            </td>
+            <td
+              className="text-(--ink-1) text-right"
+              style={{ padding: '8px 12px', fontVariantNumeric: 'tabular-nums' }}
+            >
+              {formatVnd(row.spend)}
+            </td>
+            <td
+              className="text-(--ink-2) text-right"
+              style={{ padding: '8px 12px', fontVariantNumeric: 'tabular-nums' }}
+            >
+              {formatCount(row.order_count)}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   )
 }
 

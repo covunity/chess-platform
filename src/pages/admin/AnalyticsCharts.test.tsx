@@ -261,6 +261,105 @@ describe('AnalyticsCharts — CompletionBar', () => {
   })
 })
 
+describe('AnalyticsCharts — SignupTrendChart', () => {
+  it('renders the empty-state when data is empty', () => {
+    renderWithI18n(
+      <AnalyticsCharts
+        kind="signup-trend"
+        data={[]}
+        emptyLabel="Không có dữ liệu cho kỳ này"
+        title="Biểu đồ đăng ký"
+      />
+    )
+    expect(screen.getByTestId('admin-analytics-signup-trend-empty')).toBeInTheDocument()
+  })
+
+  it('renders the empty-state when all values are 0', () => {
+    renderWithI18n(
+      <AnalyticsCharts
+        kind="signup-trend"
+        data={[
+          { bucket: '2026-05-15', value: 0 },
+          { bucket: '2026-05-16', value: 0 },
+        ]}
+        emptyLabel="Không có dữ liệu cho kỳ này"
+        title="Biểu đồ đăng ký"
+      />
+    )
+    expect(screen.getByTestId('admin-analytics-signup-trend-empty')).toBeInTheDocument()
+    expect(screen.queryByTestId('admin-analytics-signup-trend')).not.toBeInTheDocument()
+  })
+
+  it('renders the line chart container when at least one bucket has signups', () => {
+    renderWithI18n(
+      <AnalyticsCharts
+        kind="signup-trend"
+        data={[
+          { bucket: '2026-05-15', value: 0 },
+          { bucket: '2026-05-16', value: 7 },
+        ]}
+        emptyLabel="empty"
+        title="Biểu đồ đăng ký"
+      />
+    )
+    expect(screen.getByTestId('admin-analytics-signup-trend')).toBeInTheDocument()
+  })
+})
+
+describe('AnalyticsCharts — TopBuyersTable', () => {
+  it('renders the empty state when rows are empty', () => {
+    renderWithI18n(
+      <AnalyticsCharts
+        kind="top-buyers"
+        rows={[]}
+        emptyLabel="Không có dữ liệu cho kỳ này"
+      />
+    )
+    expect(screen.getByTestId('admin-analytics-top-buyers-empty')).toBeInTheDocument()
+  })
+
+  it('renders rows with rank, name, VND-formatted spend, and order count', () => {
+    renderWithI18n(
+      <AnalyticsCharts
+        kind="top-buyers"
+        rows={[
+          { user_id: 'u1', name: 'Khách Anh',  spend: 850_000, order_count: 3 },
+          { user_id: 'u2', name: 'Khách Bình', spend: 450_000, order_count: 2 },
+        ]}
+        emptyLabel="empty"
+      />
+    )
+    const rows = screen.getAllByTestId('admin-analytics-top-buyers-row')
+    expect(rows).toHaveLength(2)
+    expect(within(rows[0]).getByText('Khách Anh')).toBeInTheDocument()
+    expect(within(rows[0]).getByText(/850\.000/)).toBeInTheDocument()
+    expect(within(rows[0]).getByText('3')).toBeInTheDocument()
+    expect(within(rows[1]).getByText('Khách Bình')).toBeInTheDocument()
+  })
+
+  it('respects the input ordering — does NOT re-sort by order_count (sort is by spend at the RPC layer)', () => {
+    // A free-claim-only user (spend = 0, many orders) MUST NOT displace a
+    // paying customer above. The RPC sorts by spend DESC; the FE trusts it.
+    renderWithI18n(
+      <AnalyticsCharts
+        kind="top-buyers"
+        rows={[
+          { user_id: 'u-paid', name: 'Khách trả tiền', spend: 100_000, order_count: 1 },
+          { user_id: 'u-free', name: 'Khách miễn phí', spend: 0,       order_count: 5 },
+        ]}
+        emptyLabel="empty"
+      />
+    )
+    const rows = screen.getAllByTestId('admin-analytics-top-buyers-row')
+    expect(rows).toHaveLength(2)
+    // Paying customer is rank 1 even though they have fewer orders.
+    expect(within(rows[0]).getByText('Khách trả tiền')).toBeInTheDocument()
+    // Free claimer is rank 2 with 0 VND spend.
+    expect(within(rows[1]).getByText('Khách miễn phí')).toBeInTheDocument()
+    expect(within(rows[1]).getByText(/0/)).toBeInTheDocument()
+  })
+})
+
 describe('AnalyticsCharts — TopCreatorsTable', () => {
   it('renders the empty state when rows are empty', () => {
     renderWithI18n(

@@ -422,6 +422,20 @@
           "en": "Tiếng Anh"
         },
         "emptyRange": "Không có dữ liệu cho kỳ này"
+      },
+      "users": {
+        "sectionTitle": "Người dùng",
+        "kpiNewSignups": "Đăng ký mới",
+        "kpiActiveUsers": "Người dùng đang học",
+        "kpiConversionRate": "Tỉ lệ chuyển đổi",
+        "conversionFraction": "{{num}}/{{denom}}",
+        "trendTitle": "Biểu đồ đăng ký",
+        "topBuyersTitle": "Top 10 khách hàng theo chi tiêu",
+        "colRank": "#",
+        "colBuyer": "Khách hàng",
+        "colSpend": "Chi tiêu",
+        "colOrders": "Số đơn",
+        "emptyRange": "Không có dữ liệu cho kỳ này"
       }
     },
     "payouts": {

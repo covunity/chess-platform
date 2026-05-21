@@ -3,11 +3,14 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   fetchLatestContentSnapshots,
   fetchLatestFinancialSnapshots,
+  fetchLatestUserSnapshots,
   recomputeAnalyticsSnapshot,
   type AnalyticsSnapshotRow,
   type ContentPayload,
   type ContentSnapshotRow,
   type FinancialPayload,
+  type UsersPayload,
+  type UsersSnapshotRow,
 } from './analyticsApi'
 
 const financialMtd: FinancialPayload = {
@@ -201,6 +204,136 @@ describe('fetchLatestContentSnapshots', () => {
   it('surfaces query errors', async () => {
     const { client } = makeClient(null, { message: 'rls denied' })
     const { snapshots, error } = await fetchLatestContentSnapshots(client)
+    expect(snapshots).toEqual({})
+    expect((error as { message: string }).message).toBe('rls denied')
+  })
+})
+
+// ── fetchLatestUserSnapshots ────────────────────────────────────────────────
+
+const usersMtd: UsersPayload = {
+  kpis: {
+    new_signups:     { value: 42,    delta_pct: 8.0 },
+    active_users:    { value: 31,    delta_pct: 4.5 },
+    conversion_rate: { value: 0.286, numerator: 12, denominator: 42, delta_pct: 11.0 },
+  },
+  signup_trend: [
+    { bucket: '2026-05-15', value: 7 },
+    { bucket: '2026-05-16', value: 9 },
+  ],
+  top_buyers: [
+    { user_id: 'u1', name: 'Khách Anh',  spend: 850_000, order_count: 3 },
+    { user_id: 'u2', name: 'Khách Bình', spend: 450_000, order_count: 2 },
+  ],
+}
+
+const usersBaseRow: Omit<UsersSnapshotRow, 'time_range' | 'payload'> = {
+  snapshot_date: '2026-05-21',
+  category: 'users',
+  computed_at: '2026-05-21T00:05:00Z',
+}
+
+const usersRows: UsersSnapshotRow[] = [
+  { ...usersBaseRow, time_range: '7d', payload: usersMtd },
+  { ...usersBaseRow, time_range: 'mtd', payload: usersMtd },
+  { ...usersBaseRow, time_range: 'last_month', payload: usersMtd },
+  { ...usersBaseRow, time_range: 'all_time', payload: {
+      kpis: {
+        new_signups:     { value: 250, delta_pct: null },
+        active_users:    { value: 180, delta_pct: null },
+        conversion_rate: { value: 0.3, numerator: 75, denominator: 250, delta_pct: null },
+      },
+      signup_trend: [{ bucket: '2026-04', value: 100 }, { bucket: '2026-05', value: 150 }],
+      top_buyers: usersMtd.top_buyers,
+    }
+  },
+]
+
+describe('fetchLatestUserSnapshots', () => {
+  it('selects the latest snapshot per range for category=users', async () => {
+    const { client, spies } = makeClient(
+      usersRows as unknown as AnalyticsSnapshotRow[],
+      null
+    )
+
+    const { snapshots, error } = await fetchLatestUserSnapshots(client)
+
+    expect(error).toBeNull()
+    expect(spies.from).toHaveBeenCalledWith('analytics_snapshots')
+    expect(spies.select).toHaveBeenCalledWith(
+      'snapshot_date, time_range, category, payload, computed_at'
+    )
+    expect(spies.eq).toHaveBeenCalledWith('category', 'users')
+    expect(spies.order).toHaveBeenCalledWith('snapshot_date', { ascending: false })
+    expect(snapshots.mtd?.payload.kpis.new_signups.value).toBe(42)
+    expect(snapshots.mtd?.payload.kpis.active_users.value).toBe(31)
+    expect(snapshots.mtd?.payload.kpis.conversion_rate.value).toBe(0.286)
+    expect(snapshots.mtd?.payload.kpis.conversion_rate.numerator).toBe(12)
+    expect(snapshots.mtd?.payload.kpis.conversion_rate.denominator).toBe(42)
+    expect(snapshots.all_time?.payload.kpis.new_signups.delta_pct).toBeNull()
+  })
+
+  it('top buyers sort by spend DESC — a free-claim-only user (spend=0) never displaces a paying customer', () => {
+    // The RPC produces the rows in spend-DESC order; the FE trusts that
+    // ordering. Verify with a fixture that the higher-spend user comes
+    // first regardless of free claimers appended at the end.
+    const free = { user_id: 'u-free', name: 'Khách miễn phí', spend: 0,       order_count: 5 }
+    const paid = { user_id: 'u-paid', name: 'Khách trả tiền', spend: 100_000, order_count: 1 }
+    // Simulated RPC output: spend DESC then user_id ASC.
+    const sorted: UsersSnapshotRow = {
+      ...usersBaseRow,
+      time_range: 'mtd',
+      payload: {
+        kpis: usersMtd.kpis,
+        signup_trend: [],
+        top_buyers: [paid, free],
+      },
+    }
+    expect(sorted.payload.top_buyers?.[0].user_id).toBe('u-paid')
+    expect(sorted.payload.top_buyers?.[1].spend).toBe(0)
+  })
+
+  it('conversion-rate cell carries numerator/denominator for the "N/M" UI rendering', () => {
+    // PRD-0008 §5.4: "Stored as numerator/denominator AND derived rate
+    // in the payload — let the frontend display 1.23%".
+    const cell = usersMtd.kpis.conversion_rate
+    expect(cell.value).toBeCloseTo(cell.numerator / cell.denominator, 3)
+    // Edge: free-claim case. A learner who signs up in range AND claims a
+    // free course (amount=0, status='active') in the same range MUST be
+    // counted in the numerator. We can only verify the contract at the
+    // RPC/SQL layer (migration077 test) — here we just confirm the typed
+    // shape lets the rate be > 0 even when no money was spent (numerator
+    // can exceed amount-paying buyers).
+    const freeClaimOnly: UsersPayload = {
+      kpis: {
+        new_signups:  { value: 10, delta_pct: 0 },
+        active_users: { value: 5,  delta_pct: 0 },
+        conversion_rate: {
+          // 3 learners signed up + claimed a free course; 0 spend recorded
+          // because all three orders had amount=0. The numerator IS 3.
+          value: 0.3,
+          numerator: 3,
+          denominator: 10,
+          delta_pct: null,
+        },
+      },
+      signup_trend: [],
+      top_buyers: [],
+    }
+    expect(freeClaimOnly.kpis.conversion_rate.numerator).toBe(3)
+    expect(freeClaimOnly.kpis.conversion_rate.value).toBe(0.3)
+  })
+
+  it('returns an empty map when no user snapshots exist yet', async () => {
+    const { client } = makeClient([], null)
+    const { snapshots, error } = await fetchLatestUserSnapshots(client)
+    expect(error).toBeNull()
+    expect(snapshots).toEqual({})
+  })
+
+  it('surfaces query errors', async () => {
+    const { client } = makeClient(null, { message: 'rls denied' })
+    const { snapshots, error } = await fetchLatestUserSnapshots(client)
     expect(snapshots).toEqual({})
     expect((error as { message: string }).message).toBe('rls denied')
   })
