@@ -146,6 +146,8 @@ export default function AdminCampaignsPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+  const [deactivateTarget, setDeactivateTarget] = useState<Campaign | null>(null)
+  const [deactivating, setDeactivating] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -221,9 +223,12 @@ export default function AdminCampaignsPage() {
     setRefetchKey(k => k + 1)
   }
 
-  async function handleDeactivate(c: Campaign) {
-    if (!window.confirm(t('admin.campaigns.confirmDeactivate'))) return
-    const { error } = await deactivateCampaign(supabase, c.id)
+  async function confirmDeactivate() {
+    if (!deactivateTarget) return
+    setDeactivating(true)
+    const { error } = await deactivateCampaign(supabase, deactivateTarget.id)
+    setDeactivating(false)
+    setDeactivateTarget(null)
     if (error) {
       setToast(t('admin.campaigns.actionDeactivateError'))
       return
@@ -399,7 +404,7 @@ export default function AdminCampaignsPage() {
                               type="button"
                               className="btn btn-ghost btn-sm"
                               data-testid={`admin-campaigns-deactivate-${c.id}`}
-                              onClick={() => handleDeactivate(c)}
+                              onClick={() => setDeactivateTarget(c)}
                               style={{ color: 'var(--danger)' }}
                             >
                               {t('admin.campaigns.deactivate')}
@@ -642,6 +647,55 @@ export default function AdminCampaignsPage() {
                   {saving ? t('admin.campaigns.form.saving') : t('admin.campaigns.form.save')}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deactivateTarget && (
+        <div
+          className="fixed inset-0 flex items-center justify-center"
+          style={{ background: 'rgba(20,22,26,0.4)', zIndex: 60 }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="admin-campaigns-deactivate-title"
+          data-testid="admin-campaigns-deactivate-dialog"
+        >
+          <div
+            className="card"
+            style={{ width: 480, padding: 24, borderRadius: 'var(--r-lg)' }}
+          >
+            <h2
+              id="admin-campaigns-deactivate-title"
+              className="text-lg font-semibold text-(--ink-1) mb-2"
+            >
+              {t('admin.campaigns.deactivateDialogTitle', { name: deactivateTarget.name })}
+            </h2>
+            <p className="text-sm text-(--ink-2)" style={{ lineHeight: 1.55, marginBottom: 20 }}>
+              {t('admin.campaigns.confirmDeactivate')}
+            </p>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                data-testid="admin-campaigns-deactivate-cancel"
+                onClick={() => setDeactivateTarget(null)}
+                disabled={deactivating}
+              >
+                {t('admin.campaigns.deactivateDialogCancel')}
+              </button>
+              <button
+                type="button"
+                className="btn btn-sm"
+                data-testid="admin-campaigns-deactivate-confirm"
+                onClick={confirmDeactivate}
+                disabled={deactivating}
+                style={{ background: 'var(--danger)', color: '#fff' }}
+              >
+                {deactivating
+                  ? t('admin.campaigns.deactivateDialogPending')
+                  : t('admin.campaigns.deactivateDialogConfirm')}
+              </button>
             </div>
           </div>
         </div>

@@ -243,29 +243,34 @@ describe('AdminCampaignsPage', () => {
     )
   })
 
-  it('deactivates an active campaign after the admin confirms the irreversible prompt', async () => {
+  it('deactivates an active campaign after the admin confirms the irreversible dialog', async () => {
     const user = userEvent.setup()
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
     renderPage()
     await waitFor(() => screen.getByTestId('admin-campaigns-row-cmp-1'))
     await user.click(screen.getByTestId('admin-campaigns-deactivate-cmp-1'))
+
+    const dialog = await screen.findByTestId('admin-campaigns-deactivate-dialog')
+    expect(dialog).toHaveTextContent(/không thể bật lại/i)
+    expect(mockDeactivateCampaign).not.toHaveBeenCalled()
+
+    await user.click(screen.getByTestId('admin-campaigns-deactivate-confirm'))
     await waitFor(() => {
       expect(mockDeactivateCampaign).toHaveBeenCalledWith(expect.anything(), 'cmp-1')
     })
-    expect(confirmSpy).toHaveBeenCalledWith(
-      expect.stringMatching(/không thể bật lại/i)
-    )
-    confirmSpy.mockRestore()
   })
 
-  it('does not deactivate the campaign when the admin cancels the confirm dialog', async () => {
+  it('does not deactivate the campaign when the admin cancels the dialog', async () => {
     const user = userEvent.setup()
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
     renderPage()
     await waitFor(() => screen.getByTestId('admin-campaigns-row-cmp-1'))
     await user.click(screen.getByTestId('admin-campaigns-deactivate-cmp-1'))
-    expect(confirmSpy).toHaveBeenCalled()
+
+    await screen.findByTestId('admin-campaigns-deactivate-dialog')
+    await user.click(screen.getByTestId('admin-campaigns-deactivate-cancel'))
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('admin-campaigns-deactivate-dialog')).not.toBeInTheDocument()
+    })
     expect(mockDeactivateCampaign).not.toHaveBeenCalled()
-    confirmSpy.mockRestore()
   })
 })
