@@ -125,8 +125,6 @@ export default function BoardAuthoringSurface({
 
   // ── Move handler ──────────────────────────────────────────────────────────
 
-  const allowVariations = import.meta.env.VITE_ALLOW_VARIATIONS === 'true'
-
   const handleMove = useCallback((from: string, to: string): boolean => {
     const fen = store.getState().tree
       ? (() => {
@@ -142,22 +140,9 @@ export default function BoardAuthoringSurface({
       return false
     }
 
-    // Phase 1 flag: block moves that would create a second branch
-    if (!allowVariations) {
-      const node = (() => {
-        const nm = new Map<string, PgnNode>()
-        function w(n: PgnNode) { nm.set(n.id, n); for (const c of n.children) w(c) }
-        w(store.getState().tree)
-        return nm.get(store.getState().currentNodeId)
-      })()
-      const wouldBranch = node && node.children.length > 0 &&
-        !node.children.some((c) => c.from === from && c.to === to)
-      if (wouldBranch) return false
-    }
-
     store.getState().applyMove(from, to)
     return true
-  }, [store, allowVariations])
+  }, [store])
 
   const handlePromotionPick = (piece: PromotionPiece) => {
     if (!pendingPromotion) return

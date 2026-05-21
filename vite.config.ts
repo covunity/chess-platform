@@ -9,10 +9,5 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
     exclude: ['node_modules', 'e2e/**', 'supabase/functions/**'],
-    // VariationPanel gates the promote action behind this flag in production
-    // (feature still in flight). Tests assume the action is wired, so opt in.
-    env: {
-      VITE_ALLOW_VARIATIONS: 'true',
-    },
   },
 })

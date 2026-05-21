@@ -363,8 +363,7 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
             padding: '4px 0',
           }}
         >
-          {import.meta.env.VITE_ALLOW_VARIATIONS === 'true' && (
-            <button
+          <button
               type="button"
               data-testid="ctx-promote-btn"
               disabled={contextMenu.isMain}
@@ -386,7 +385,6 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
             >
               {t('creator.lessonEditor.promoteVariation')}
             </button>
-          )}
           <button
             type="button"
             data-testid="ctx-delete-btn"
