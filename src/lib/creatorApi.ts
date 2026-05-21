@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-export type CourseStatus  = 'draft' | 'pending_review' | 'published'
+export type CourseStatus  = 'draft' | 'published'
 export type CourseLevel   = 'beginner' | 'intermediate' | 'advanced'
 export type LessonType    = 'video' | 'chess' | 'puzzle'
 export type VideoProvider = 'supabase' | 'cloudflare'
@@ -531,21 +531,6 @@ export async function unpublishCourse(
     .update({ status: 'draft' })
     .eq('id', courseId)
     .eq('status', 'published')
-    .select()
-    .single()
-
-  return { course: (data as Course) ?? null, error: error as Error | null }
-}
-
-export async function submitCourseForReview(
-  client: SupabaseClient,
-  courseId: string
-): Promise<{ course: Course | null; error: Error | null }> {
-  const { data, error } = await client
-    .from('courses')
-    .update({ status: 'pending_review' })
-    .eq('id', courseId)
-    .eq('status', 'draft')
     .select()
     .single()
 

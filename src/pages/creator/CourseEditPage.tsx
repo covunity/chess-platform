@@ -322,7 +322,6 @@ const REASON_LABEL: Record<string, string> = {
 
 const STATUS_DOT: Partial<Record<CourseStatus, string>> = {
   draft: 'var(--ink-4)',
-  pending_review: 'var(--warning)',
   published: 'var(--success)',
 }
 

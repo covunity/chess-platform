@@ -18,7 +18,6 @@ import {
   unpublishCourse,
   fetchCreatorKpis,
   fetchCoursesWithStats,
-  submitCourseForReview,
   duplicateCourse,
 } from './creatorApi'
 import type { CourseStatus, CreateCourseInput, CreateChapterInput, CreateLessonInput } from './creatorApi'
@@ -820,29 +819,3 @@ describe('duplicateCourse', () => {
   })
 })
 
-// ── submitCourseForReview ─────────────────────────────────────────────────
-
-describe('submitCourseForReview', () => {
-  it('returns updated course with pending_review status on success', async () => {
-    const updated = { id: 'c1', status: 'pending_review' as CourseStatus }
-    const client = makeClient({ data: updated, error: null })
-    const result = await submitCourseForReview(client as never, 'c1')
-    expect(result.course?.status).toBe('pending_review')
-    expect(result.error).toBeNull()
-  })
-
-  it('returns error when course is not in draft status', async () => {
-    const client = makeClient({ data: null, error: new Error('no rows updated') })
-    const result = await submitCourseForReview(client as never, 'c1')
-    expect(result.course).toBeNull()
-    expect(result.error).toBeInstanceOf(Error)
-  })
-
-  it('calls update with pending_review status and draft eq filter', async () => {
-    const chain = makeChain({ data: { id: 'c1', status: 'pending_review' }, error: null })
-    const client = { from: vi.fn(() => chain) }
-    await submitCourseForReview(client as never, 'c1')
-    expect(client.from).toHaveBeenCalledWith('courses')
-    expect(chain.update).toHaveBeenCalledWith({ status: 'pending_review' })
-  })
-})

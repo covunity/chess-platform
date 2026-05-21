@@ -14,7 +14,6 @@ const {
   mockFetchCoursesWithStats,
   mockListChapters,
   mockUpdateLesson,
-  mockSubmitCourseForReview,
   mockDuplicateCourse,
   mockGetMyLatestAccountApplication,
 } = vi.hoisted(() => ({
@@ -25,7 +24,6 @@ const {
   mockFetchCoursesWithStats: vi.fn(),
   mockListChapters: vi.fn(),
   mockUpdateLesson: vi.fn(),
-  mockSubmitCourseForReview: vi.fn(),
   mockDuplicateCourse: vi.fn(),
   mockGetMyLatestAccountApplication: vi.fn(),
 }))
@@ -38,7 +36,6 @@ vi.mock('../../lib/creatorApi', () => ({
   fetchCoursesWithStats: mockFetchCoursesWithStats,
   listChapters: mockListChapters,
   updateLesson: mockUpdateLesson,
-  submitCourseForReview: mockSubmitCourseForReview,
   duplicateCourse: mockDuplicateCourse,
 }))
 
@@ -123,7 +120,6 @@ describe('CreatorStudioPage', () => {
     ])
     mockListChapters.mockResolvedValue({ chapters: [], error: null })
     mockUpdateLesson.mockResolvedValue({ lesson: null, error: null })
-    mockSubmitCourseForReview.mockResolvedValue({ course: null, error: null })
     mockDuplicateCourse.mockResolvedValue({ course: null, error: null })
     mockGetMyLatestAccountApplication.mockResolvedValue({ application: null, error: null })
     mockFetchCreatorWallet.mockResolvedValue({
@@ -194,6 +190,13 @@ describe('CreatorStudioPage', () => {
       expect(screen.getByTestId('filter-published')).toBeInTheDocument()
       expect(screen.getByTestId('filter-draft')).toBeInTheDocument()
     })
+  })
+
+  // ADR-0008: the pre-publish review gate has been removed.
+  it('does NOT render the pending-review status filter', async () => {
+    renderPage()
+    await waitFor(() => expect(screen.getByTestId('filter-all')).toBeInTheDocument())
+    expect(screen.queryByTestId('filter-pending-review')).not.toBeInTheDocument()
   })
 
   it('renders course rows after loading', async () => {

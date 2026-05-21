@@ -184,7 +184,6 @@
     "sidebar": {
       "eyebrow": "ADMIN",
       "overview": "Tổng quan",
-      "courseReview": "Duyệt khóa học",
       "orders": "Đơn hàng",
       "campaigns": "Chiến dịch",
       "vouchers": "Voucher",
@@ -699,7 +698,6 @@
         "heading": "Tất cả khóa học",
         "filterAll": "Tất cả",
         "filterPublished": "Đã xuất bản",
-        "filterPendingReview": "Chờ duyệt",
         "filterDraft": "Nháp",
         "export": "Xuất",
         "colCourse": "Khóa học",
@@ -715,7 +713,6 @@
       },
       "status": {
         "published": "Đã xuất bản",
-        "pending_review": "Chờ duyệt",
         "draft": "Nháp"
       },
       "builderHeading": "Course builder",
@@ -862,17 +859,14 @@
       },
       "publish": {
         "publish": "Xuất bản",
-        "submitForReview": "Gửi duyệt",
-        "pendingReview": "Chờ duyệt",
         "unpublish": "Gỡ xuất bản",
-        "tooltipTitle": "Cần hoàn thiện trước khi gửi duyệt:",
+        "tooltipTitle": "Cần hoàn thiện trước khi xuất bản:",
         "reasonTitle": "Thiếu tiêu đề",
         "reasonDescription": "Thiếu mô tả khóa học",
         "reasonThumbnail": "Thiếu ảnh bìa",
         "reasonPrice": "Thiếu giá",
         "reasonChapters": "Cần ít nhất 1 chương",
         "reasonLessons": "Cần ít nhất 1 bài học có nội dung",
-        "toastSubmitted": "Khóa học đã được gửi để duyệt!",
         "toastPublished": "Khóa học đã được xuất bản!",
         "toastUnpublished": "Đã gỡ xuất bản khóa học."
       }
@@ -900,7 +894,6 @@
       "pgnInvalid": "PGN không hợp lệ",
       "pgnCharCount": "{{used}} / {{max}} ký tự",
       "saveDraft": "Lưu nháp",
-      "submitForReview": "Gửi duyệt",
       "previewHeading": "Xem trước",
       "previewMoveCounter": "Nước {{current}} / {{total}}",
       "previewRuntime": "{{duration}} thời lượng",

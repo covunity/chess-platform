@@ -57,14 +57,11 @@ describe("LessonEditor", () => {
       expect(screen.getByRole("button", { name: /lưu nháp/i })).toBeInTheDocument();
     });
 
-    it("renders Submit for review button when onSubmitForReview is provided", () => {
-      renderEditor({ lesson: DEFAULT_LESSON, onSave: vi.fn(), onSubmitForReview: vi.fn() });
-      expect(screen.getByRole("button", { name: /gửi duyệt/i })).toBeInTheDocument();
-    });
-
-    it("hides Submit for review button when onSubmitForReview is not provided", () => {
+    // ADR-0008: Submit-for-review button removed — creators self-publish.
+    it("does NOT render a Submit-for-review button", () => {
       renderEditor({ lesson: DEFAULT_LESSON, onSave: vi.fn() });
       expect(screen.queryByRole("button", { name: /gửi duyệt/i })).not.toBeInTheDocument();
+      expect(screen.queryByTestId("lesson-editor-submit-review-btn")).not.toBeInTheDocument();
     });
 
     it("renders the variation panel for chess lessons", () => {

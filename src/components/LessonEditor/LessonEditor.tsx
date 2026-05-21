@@ -46,7 +46,6 @@ export interface LessonEditorProps {
   onSave: (data: Pick<Lesson, "pgn_data" | "board_perspective" | "is_free_preview" | "title" | "description" | "has_rewind_mode">) => void;
   chapterLessons?: Array<{ id: string; title: string; type: LessonType }>;
   onSelectLesson?: (id: string) => void;
-  onSubmitForReview?: () => void;
   showSidebar?: boolean;
   saveLabel?: string;
   saveRef?: RefObject<(() => void) | null>;
@@ -73,7 +72,7 @@ function formatDuration(seconds: number | undefined | null): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectLesson, onSubmitForReview, showSidebar = true, saveRef, editorAdvanced = false }: LessonEditorProps) {
+export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectLesson, showSidebar = true, saveRef, editorAdvanced = false }: LessonEditorProps) {
   const { t } = useTranslation();
   const tabLabels: Record<LessonType, string> = {
     video: t('creator.lessonEditor.tabVideo'),
@@ -522,16 +521,6 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
             >
               {t('creator.lessonEditor.saveDraft')}
             </button>
-            {onSubmitForReview && (
-              <button
-                type="button"
-                data-testid="lesson-editor-submit-review-btn"
-                className="btn btn-accent btn-sm"
-                onClick={onSubmitForReview}
-              >
-                {t('creator.lessonEditor.submitForReview')}
-              </button>
-            )}
           </div>
         )}
       </div>

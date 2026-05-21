@@ -7,7 +7,7 @@ import { getPendingOrderCount } from '../../lib/adminOrdersApi'
 
 const NAV_ITEMS = [
   { key: 'overview', to: '/admin/overview' },
-  { key: 'courseReview', to: '/admin/course-review' },
+  // ADR-0008: course-review gate removed — creators self-publish.
   { key: 'orders', to: '/admin/orders' },
   { key: 'campaigns', to: '/admin/campaigns' },
   { key: 'vouchers', to: '/admin/vouchers' },

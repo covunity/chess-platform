@@ -69,7 +69,6 @@
     "sidebar": {
       "eyebrow": "ADMIN",
       "overview": "Overview",
-      "courseReview": "Course review",
       "orders": "Orders",
       "vouchers": "Vouchers",
       "users": "Users",
@@ -231,7 +230,6 @@
         "heading": "All courses",
         "filterAll": "All",
         "filterPublished": "Published",
-        "filterPendingReview": "Pending review",
         "filterDraft": "Draft",
         "export": "Export",
         "colCourse": "Course",
@@ -247,7 +245,6 @@
       },
       "status": {
         "published": "Published",
-        "pending_review": "Pending review",
         "draft": "Draft"
       },
       "duplicateToast": "Course duplicated",
@@ -369,7 +366,6 @@
       "pgnInvalid": "Invalid PGN",
       "pgnCharCount": "{{used}} / {{max}} chars",
       "saveDraft": "Save draft",
-      "submitForReview": "Submit for review",
       "previewHeading": "Preview",
       "previewMoveCounter": "Move {{current}} of {{total}}",
       "previewRuntime": "{{duration}} runtime",

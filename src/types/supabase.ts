@@ -718,7 +718,7 @@ export type Database = {
     }
     Enums: {
       course_level: "beginner" | "intermediate" | "advanced"
-      course_status: "draft" | "pending_review" | "published"
+      course_status: "draft" | "published"
       lesson_type: "video" | "chess" | "puzzle"
       order_status: "pending" | "active" | "cancelled" | "expired"
       report_reason: "inappropriate" | "spam" | "misleading"

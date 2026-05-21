@@ -22,7 +22,6 @@ type DashboardTab = 'courses' | 'revenue'
 
 const STATUS_PILL: Record<CourseStatus, string> = {
   published: 'pill pill-success',
-  pending_review: 'pill pill-warning',
   draft: 'pill',
 }
 
@@ -288,7 +287,6 @@ export default function CreatorStudioPage() {
   const filters: { key: StatusFilter; label: string; testid: string }[] = [
     { key: 'all',            label: t('creator.studio.table.filterAll'),            testid: 'filter-all' },
     { key: 'published',      label: t('creator.studio.table.filterPublished'),      testid: 'filter-published' },
-    { key: 'pending_review', label: t('creator.studio.table.filterPendingReview'), testid: 'filter-pending-review' },
     { key: 'draft',          label: t('creator.studio.table.filterDraft'),          testid: 'filter-draft' },
   ]
 

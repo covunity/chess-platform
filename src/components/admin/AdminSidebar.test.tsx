@@ -76,11 +76,17 @@ describe('AdminSidebar', () => {
   it('renders all nav items', () => {
     renderSidebar()
     expect(screen.getByRole('link', { name: /tổng quan/i })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /duyệt khóa học/i })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /đơn hàng/i })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /người dùng/i })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /báo cáo/i })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /chi trả creator/i })).toBeInTheDocument()
+  })
+
+  // ADR-0008: creator self-publish — the admin course-review gate is gone.
+  it('does NOT render the course-review nav item', () => {
+    renderSidebar()
+    expect(screen.queryByRole('link', { name: /duyệt khóa học/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /duyệt khoá học/i })).not.toBeInTheDocument()
   })
 
   it('marks Users link as active at /admin/users', () => {

@@ -144,8 +144,8 @@ Base `.btn`: height `var(--d-row)`, padding `0 18px`, radius `var(--r-md)`, font
 | `.pill` | neutral (`--surface-2`) | Tags, lesson duration, level |
 | `.pill-accent` | teal soft | Active/current state, `is_free_preview` |
 | `.pill-success` | green | `published`, completed, paid, free preview |
-| `.pill-warning` | amber | `pending_review`, awaiting payment |
-| `.pill-danger` | red | `rejected`, error states |
+| `.pill-warning` | amber | Awaiting payment |
+| `.pill-danger` | red | Error states |
 
 Height: 22px, padding: `0 8px`, font-size: 11.5px, font-weight: 500, border-radius: 999px.
 
@@ -282,7 +282,7 @@ TopNav (no search)
     │   Metrics: Total students, Gross revenue, Your payout (80%), Avg. rating
     ├── Courses table: status tab pills + table
     │   Columns: Course (MiniBoard 40px + name) | Status pill | Students | Revenue | Rating | ⋯
-    │   Status → pill class: published=success, pending_review=warning, draft=neutral
+    │   Status → pill class: published=success, draft=neutral
     └── Course builder (3-column, 560px height, card)
         Left 260px (var(--surface-2)): lesson tree with chapter headers + lesson rows
           Active lesson: accent-soft bg + 2px accent left border
