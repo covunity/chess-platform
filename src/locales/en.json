@@ -75,6 +75,34 @@
       "creatorApplications": "Creator applications",
       "reports": "Reports"
     },
+    "analytics": {
+      "pageTitle": "Analytics",
+      "intro": "Overview of financial, content and user metrics. Auto-refreshed daily at 00:05 ICT.",
+      "rangeLabel": "Time range",
+      "range": {
+        "7d": "Last 7 days",
+        "mtd": "Month to date",
+        "last_month": "Last month",
+        "all_time": "All time"
+      },
+      "lastUpdated": "Last updated: {{at}}",
+      "lastUpdatedUnknown": "No data yet",
+      "refreshBtn": "Refresh",
+      "refreshing": "Refreshing…",
+      "refreshCountdown": "Can refresh in {{secs}}s",
+      "refreshError": "Could not refresh. Please try again.",
+      "loadError": "Could not load analytics.",
+      "noSnapshotYet": "No analytics snapshot yet. Click \"Refresh\" to compute the first one.",
+      "noSnapshotForRange": "No data for this time range yet.",
+      "financial": {
+        "sectionTitle": "Financial",
+        "kpiRevenue": "Revenue",
+        "kpiOrders": "Orders",
+        "kpiPlatformFee": "Platform fee",
+        "kpiCreatorPayout": "Creator payout",
+        "deltaNone": "—"
+      }
+    },
     "vouchers": {
       "pageTitle": "Vouchers"
     },

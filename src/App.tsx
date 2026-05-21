@@ -14,6 +14,7 @@ import AdminCreatorApplicationsPage from './pages/admin/AdminCreatorApplications
 import AdminCreatorFeesPage from './pages/admin/AdminCreatorFeesPage'
 import AdminTiersPage from './pages/admin/AdminTiersPage'
 import AdminPayoutsPage from './pages/admin/AdminPayoutsPage'
+import AdminAnalyticsPage from './pages/admin/AdminAnalyticsPage'
 import AdminComingSoonPage from './pages/admin/AdminComingSoonPage'
 import ProtectedCreatorRoute from './components/creator/ProtectedCreatorRoute'
 import CreatorLayout from './components/creator/CreatorLayout'
@@ -60,7 +61,8 @@ export default function App() {
         {/* Admin section — own layout, no TopNav/Footer */}
         <Route path="/admin" element={<ProtectedAdminRoute />}>
           <Route element={<AdminLayout />}>
-            <Route index element={<Navigate to="users" replace />} />
+            <Route index element={<Navigate to="overview" replace />} />
+            <Route path="overview" element={<AdminAnalyticsPage />} />
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="orders" element={<AdminOrdersPage />} />
             <Route path="campaigns" element={<AdminCampaignsPage />} />

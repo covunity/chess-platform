@@ -365,6 +365,34 @@
         }
       }
     },
+    "analytics": {
+      "pageTitle": "Phân tích",
+      "intro": "Tổng quan tài chính, nội dung và người dùng. Dữ liệu được tổng hợp tự động lúc 00:05 mỗi ngày (giờ Việt Nam).",
+      "rangeLabel": "Khoảng thời gian",
+      "range": {
+        "7d": "7 ngày qua",
+        "mtd": "Tháng này",
+        "last_month": "Tháng trước",
+        "all_time": "Toàn thời gian"
+      },
+      "lastUpdated": "Cập nhật lần cuối: {{at}}",
+      "lastUpdatedUnknown": "Chưa có dữ liệu",
+      "refreshBtn": "Làm mới",
+      "refreshing": "Đang làm mới…",
+      "refreshCountdown": "Có thể làm mới sau {{secs}}s",
+      "refreshError": "Không thể làm mới. Vui lòng thử lại.",
+      "loadError": "Không thể tải dữ liệu phân tích.",
+      "noSnapshotYet": "Chưa có dữ liệu phân tích. Bấm \"Làm mới\" để tạo bản tổng hợp đầu tiên.",
+      "noSnapshotForRange": "Chưa có dữ liệu cho khoảng thời gian này.",
+      "financial": {
+        "sectionTitle": "Tài chính",
+        "kpiRevenue": "Doanh thu",
+        "kpiOrders": "Số đơn",
+        "kpiPlatformFee": "Phí nền tảng",
+        "kpiCreatorPayout": "Tiền creator được nhận",
+        "deltaNone": "—"
+      }
+    },
     "payouts": {
       "pageTitle": "Chi trả creator",
       "pendingHeading": "Cần chi trả",
