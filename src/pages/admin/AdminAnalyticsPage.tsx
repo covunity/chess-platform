@@ -2,9 +2,13 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
 import {
+  fetchLatestContentSnapshots,
   fetchLatestFinancialSnapshots,
   recomputeAnalyticsSnapshot,
   type AnalyticsSnapshotRow,
+  type ContentPayload,
+  type ContentSnapshotRow,
+  type ContentSnapshotsByRange,
   type FinancialPayload,
   type FinancialSnapshotsByRange,
   type TimeRange,
@@ -137,6 +141,7 @@ function KpiCard({ testId, label, display, delta, noneLabel }: KpiCardProps) {
 export default function AdminAnalyticsPage() {
   const { t } = useTranslation()
   const [snapshots, setSnapshots] = useState<FinancialSnapshotsByRange>({})
+  const [contentSnapshots, setContentSnapshots] = useState<ContentSnapshotsByRange>({})
   const [range, setRange] = useState<TimeRange>('mtd')
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -147,15 +152,21 @@ export default function AdminAnalyticsPage() {
 
   // Initial + post-refresh fetch. RLS on analytics_snapshots makes this a
   // safe call — non-admins (defence in depth beyond ProtectedAdminRoute)
-  // get 0 rows.
+  // get 0 rows. Financial + content fire in parallel; either failing reports
+  // the same load-error banner.
   const reload = useCallback(async () => {
-    const { snapshots: rows, error } = await fetchLatestFinancialSnapshots(supabase)
-    if (error) {
+    const [financialResult, contentResult] = await Promise.all([
+      fetchLatestFinancialSnapshots(supabase),
+      fetchLatestContentSnapshots(supabase),
+    ])
+    if (financialResult.error || contentResult.error) {
       setLoadError(t('admin.analytics.loadError'))
       setSnapshots({})
+      setContentSnapshots({})
     } else {
       setLoadError(null)
-      setSnapshots(rows)
+      setSnapshots(financialResult.snapshots)
+      setContentSnapshots(contentResult.snapshots)
     }
     setLoading(false)
   }, [t])
@@ -163,14 +174,19 @@ export default function AdminAnalyticsPage() {
   useEffect(() => {
     let cancelled = false
     void (async () => {
-      const { snapshots: rows, error } = await fetchLatestFinancialSnapshots(supabase)
+      const [financialResult, contentResult] = await Promise.all([
+        fetchLatestFinancialSnapshots(supabase),
+        fetchLatestContentSnapshots(supabase),
+      ])
       if (cancelled) return
-      if (error) {
+      if (financialResult.error || contentResult.error) {
         setLoadError(t('admin.analytics.loadError'))
         setSnapshots({})
+        setContentSnapshots({})
       } else {
         setLoadError(null)
-        setSnapshots(rows)
+        setSnapshots(financialResult.snapshots)
+        setContentSnapshots(contentResult.snapshots)
       }
       setLoading(false)
     })()
@@ -221,6 +237,13 @@ export default function AdminAnalyticsPage() {
   const revenueTrend = payload?.revenue_trend ?? []
   const topCourses = payload?.top_courses ?? []
   const topCreators = payload?.top_creators ?? []
+
+  const currentContent: ContentSnapshotRow | undefined = contentSnapshots[range]
+  const contentPayload = currentContent?.payload as ContentPayload | undefined
+  const contentKpis = contentPayload?.kpis
+  const byLevel = contentPayload?.by_level ?? []
+  const byLanguage = contentPayload?.by_language ?? []
+  const completionTop = contentPayload?.completion_top ?? []
 
   const lastUpdated = useMemo(() => {
     // Show the freshest computed_at across the four range rows; they all
@@ -498,6 +521,140 @@ export default function AdminAnalyticsPage() {
                   />
                 </Suspense>
               </div>
+            </div>
+          </section>
+        )}
+
+        {/* Content section — PRD-0008 P2 US2.1–US2.3 */}
+        {!loading && currentContent && contentKpis && (
+          <section
+            data-testid="admin-analytics-content-section"
+            style={{ marginTop: 32 }}
+          >
+            <h2
+              className="text-base font-semibold text-(--ink-1) mb-3"
+              style={{ letterSpacing: '-0.005em' }}
+            >
+              {t('admin.analytics.content.sectionTitle')}
+            </h2>
+
+            <div
+              className="grid"
+              style={{
+                gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                gap: 16,
+              }}
+            >
+              <KpiCard
+                testId="admin-analytics-kpi-new-courses"
+                label={t('admin.analytics.content.kpiNewCourses')}
+                display={formatCount(contentKpis.new_courses.value)}
+                delta={contentKpis.new_courses.delta_pct}
+                noneLabel={t('admin.analytics.financial.deltaNone')}
+              />
+              <KpiCard
+                testId="admin-analytics-kpi-published-courses"
+                label={t('admin.analytics.content.kpiPublishedCourses')}
+                display={formatCount(contentKpis.published_courses.value)}
+                delta={contentKpis.published_courses.delta_pct}
+                noneLabel={t('admin.analytics.financial.deltaNone')}
+              />
+              <KpiCard
+                testId="admin-analytics-kpi-total-enrollments"
+                label={t('admin.analytics.content.kpiTotalEnrollments')}
+                display={formatCount(contentKpis.total_enrollments.value)}
+                delta={contentKpis.total_enrollments.delta_pct}
+                noneLabel={t('admin.analytics.financial.deltaNone')}
+              />
+            </div>
+
+            {/* Distribution charts — donut by level + pie by language */}
+            <div
+              className="grid"
+              style={{
+                gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                gap: 16,
+                marginTop: 24,
+              }}
+            >
+              <div className="card" style={{ padding: 20, borderRadius: 'var(--r-lg)' }}>
+                <h3
+                  className="text-(--ink-1) mb-3"
+                  style={{ fontSize: 14, fontWeight: 600, letterSpacing: '-0.005em' }}
+                >
+                  {t('admin.analytics.content.byLevelTitle')}
+                </h3>
+                <Suspense
+                  fallback={
+                    <div className="text-(--ink-3) text-sm" style={{ padding: '24px 0' }}>
+                      {t('admin.analytics.financial.chartLoading')}
+                    </div>
+                  }
+                >
+                  <AnalyticsCharts
+                    kind="level-donut"
+                    data={byLevel}
+                    emptyLabel={t('admin.analytics.content.emptyRange')}
+                    levelLabels={{
+                      beginner: t('admin.analytics.content.level.beginner'),
+                      intermediate: t('admin.analytics.content.level.intermediate'),
+                      advanced: t('admin.analytics.content.level.advanced'),
+                    }}
+                  />
+                </Suspense>
+              </div>
+
+              <div className="card" style={{ padding: 20, borderRadius: 'var(--r-lg)' }}>
+                <h3
+                  className="text-(--ink-1) mb-3"
+                  style={{ fontSize: 14, fontWeight: 600, letterSpacing: '-0.005em' }}
+                >
+                  {t('admin.analytics.content.byLanguageTitle')}
+                </h3>
+                <Suspense
+                  fallback={
+                    <div className="text-(--ink-3) text-sm" style={{ padding: '24px 0' }}>
+                      {t('admin.analytics.financial.chartLoading')}
+                    </div>
+                  }
+                >
+                  <AnalyticsCharts
+                    kind="language-pie"
+                    data={byLanguage}
+                    emptyLabel={t('admin.analytics.content.emptyRange')}
+                    languageLabels={{
+                      vi: t('admin.analytics.content.language.vi'),
+                      en: t('admin.analytics.content.language.en'),
+                    }}
+                  />
+                </Suspense>
+              </div>
+            </div>
+
+            {/* Completion bar — range-independent (ADR-0009) */}
+            <div
+              className="card"
+              style={{ padding: 20, borderRadius: 'var(--r-lg)', marginTop: 24 }}
+            >
+              <h3
+                className="text-(--ink-1) mb-3"
+                style={{ fontSize: 14, fontWeight: 600, letterSpacing: '-0.005em' }}
+              >
+                {t('admin.analytics.content.completionTopTitle')}
+              </h3>
+              <Suspense
+                fallback={
+                  <div className="text-(--ink-3) text-sm" style={{ padding: '24px 0' }}>
+                    {t('admin.analytics.financial.chartLoading')}
+                  </div>
+                }
+              >
+                <AnalyticsCharts
+                  kind="completion-bar"
+                  data={completionTop}
+                  emptyLabel={t('admin.analytics.content.emptyRange')}
+                />
+              </Suspense>
             </div>
           </section>
         )}

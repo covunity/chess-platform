@@ -1,9 +1,12 @@
 import { describe, it, expect, vi } from 'vitest'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
+  fetchLatestContentSnapshots,
   fetchLatestFinancialSnapshots,
   recomputeAnalyticsSnapshot,
   type AnalyticsSnapshotRow,
+  type ContentPayload,
+  type ContentSnapshotRow,
   type FinancialPayload,
 } from './analyticsApi'
 
@@ -101,6 +104,103 @@ describe('fetchLatestFinancialSnapshots', () => {
   it('surfaces query errors', async () => {
     const { client } = makeClient(null, { message: 'rls denied' })
     const { snapshots, error } = await fetchLatestFinancialSnapshots(client)
+    expect(snapshots).toEqual({})
+    expect((error as { message: string }).message).toBe('rls denied')
+  })
+})
+
+// ── fetchLatestContentSnapshots ─────────────────────────────────────────────
+
+const contentMtd: ContentPayload = {
+  kpis: {
+    new_courses:       { value: 5,   delta_pct: 25.0 },
+    published_courses: { value: 3,   delta_pct: -10.0 },
+    total_enrollments: { value: 124, delta_pct: 18.2 },
+  },
+  by_level: [
+    { level: 'beginner',     count: 12 },
+    { level: 'intermediate', count: 6 },
+    { level: 'advanced',     count: 2 },
+  ],
+  by_language: [
+    { language: 'vi', count: 18 },
+    { language: 'en', count: 2 },
+  ],
+  completion_top: [
+    { course_id: 'c1', title: 'Khai cuộc Sicilian', completion_rate: 0.62, enrollment_count: 87 },
+    { course_id: 'c2', title: 'Tàn cuộc cơ bản',    completion_rate: 0.51, enrollment_count: 40 },
+  ],
+}
+
+const contentBaseRow: Omit<ContentSnapshotRow, 'time_range' | 'payload'> = {
+  snapshot_date: '2026-05-21',
+  category: 'content',
+  computed_at: '2026-05-21T00:05:00Z',
+}
+
+const contentRows: ContentSnapshotRow[] = [
+  { ...contentBaseRow, time_range: '7d', payload: contentMtd },
+  { ...contentBaseRow, time_range: 'mtd', payload: contentMtd },
+  { ...contentBaseRow, time_range: 'last_month', payload: contentMtd },
+  { ...contentBaseRow, time_range: 'all_time', payload: {
+      kpis: {
+        new_courses:       { value: 99, delta_pct: null },
+        published_courses: { value: 60, delta_pct: null },
+        total_enrollments: { value: 1_500, delta_pct: null },
+      },
+      by_level: [{ level: 'beginner', count: 99 }],
+      by_language: [{ language: 'vi', count: 99 }],
+      completion_top: contentMtd.completion_top,
+    }
+  },
+]
+
+describe('fetchLatestContentSnapshots', () => {
+  it('selects the latest snapshot per range for category=content', async () => {
+    const { client, spies } = makeClient(
+      contentRows as unknown as AnalyticsSnapshotRow[],
+      null
+    )
+
+    const { snapshots, error } = await fetchLatestContentSnapshots(client)
+
+    expect(error).toBeNull()
+    expect(spies.from).toHaveBeenCalledWith('analytics_snapshots')
+    expect(spies.select).toHaveBeenCalledWith(
+      'snapshot_date, time_range, category, payload, computed_at'
+    )
+    expect(spies.eq).toHaveBeenCalledWith('category', 'content')
+    expect(spies.order).toHaveBeenCalledWith('snapshot_date', { ascending: false })
+    expect(snapshots.mtd?.payload.kpis.new_courses.value).toBe(5)
+    expect(snapshots.mtd?.payload.by_level?.length).toBe(3)
+    expect(snapshots.all_time?.payload.kpis.published_courses.delta_pct).toBeNull()
+  })
+
+  it('returns the same completion_top across all four ranges (range-independent per ADR-0009)', async () => {
+    const { client } = makeClient(
+      contentRows as unknown as AnalyticsSnapshotRow[],
+      null
+    )
+    const { snapshots } = await fetchLatestContentSnapshots(client)
+    const top7d = snapshots['7d']?.payload.completion_top
+    const topMtd = snapshots.mtd?.payload.completion_top
+    const topLastMonth = snapshots.last_month?.payload.completion_top
+    // Same array identity isn't required (it's JSON-decoded per row),
+    // but the contents must match.
+    expect(top7d).toEqual(topMtd)
+    expect(topMtd).toEqual(topLastMonth)
+  })
+
+  it('returns an empty map when no content snapshots exist yet', async () => {
+    const { client } = makeClient([], null)
+    const { snapshots, error } = await fetchLatestContentSnapshots(client)
+    expect(error).toBeNull()
+    expect(snapshots).toEqual({})
+  })
+
+  it('surfaces query errors', async () => {
+    const { client } = makeClient(null, { message: 'rls denied' })
+    const { snapshots, error } = await fetchLatestContentSnapshots(client)
     expect(snapshots).toEqual({})
     expect((error as { message: string }).message).toBe('rls denied')
   })

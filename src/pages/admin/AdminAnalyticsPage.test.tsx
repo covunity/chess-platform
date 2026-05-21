@@ -7,6 +7,8 @@ import i18n from '../../i18n'
 import AdminAnalyticsPage from './AdminAnalyticsPage'
 import type {
   AnalyticsSnapshotRow,
+  ContentSnapshotRow,
+  ContentSnapshotsByRange,
   FinancialSnapshotsByRange,
 } from '../../lib/analyticsApi'
 
@@ -32,8 +34,9 @@ beforeAll(() => {
   }
 })
 
-const { mockFetch, mockRecompute } = vi.hoisted(() => ({
+const { mockFetch, mockFetchContent, mockRecompute } = vi.hoisted(() => ({
   mockFetch: vi.fn(),
+  mockFetchContent: vi.fn(),
   mockRecompute: vi.fn(),
 }))
 
@@ -44,6 +47,7 @@ vi.mock('../../lib/analyticsApi', async () => {
   return {
     ...actual,
     fetchLatestFinancialSnapshots: mockFetch,
+    fetchLatestContentSnapshots: mockFetchContent,
     recomputeAnalyticsSnapshot: mockRecompute,
   }
 })
@@ -142,10 +146,91 @@ function renderPage() {
   )
 }
 
+// ── Content snapshots fixture ───────────────────────────────────────────────
+function contentRow(
+  time_range: 'mtd' | 'last_month' | '7d' | 'all_time',
+  payload: ContentSnapshotRow['payload']
+): ContentSnapshotRow {
+  return {
+    snapshot_date: '2026-05-21',
+    time_range,
+    category: 'content',
+    payload,
+    computed_at: '2026-05-21T00:05:00Z',
+  }
+}
+
+const completionTopSample = [
+  { course_id: 'cmp1', title: 'Khoá top 1', completion_rate: 0.62, enrollment_count: 87 },
+  { course_id: 'cmp2', title: 'Khoá top 2', completion_rate: 0.5,  enrollment_count: 1 },
+]
+
+const contentSample: ContentSnapshotsByRange = {
+  '7d': contentRow('7d', {
+    kpis: {
+      new_courses:       { value: 2,  delta_pct: 100.0 },
+      published_courses: { value: 1,  delta_pct: 0.0 },
+      total_enrollments: { value: 14, delta_pct: 16.7 },
+    },
+    by_level: [
+      { level: 'beginner', count: 2 },
+    ],
+    by_language: [
+      { language: 'vi', count: 2 },
+    ],
+    completion_top: completionTopSample,
+  }),
+  mtd: contentRow('mtd', {
+    kpis: {
+      new_courses:       { value: 5,   delta_pct: 25.0 },
+      published_courses: { value: 3,   delta_pct: -10.0 },
+      total_enrollments: { value: 124, delta_pct: 18.2 },
+    },
+    by_level: [
+      { level: 'beginner',     count: 12 },
+      { level: 'intermediate', count: 6 },
+      { level: 'advanced',     count: 2 },
+    ],
+    by_language: [
+      { language: 'vi', count: 18 },
+      { language: 'en', count: 2 },
+    ],
+    completion_top: completionTopSample,
+  }),
+  last_month: contentRow('last_month', {
+    kpis: {
+      new_courses:       { value: 0, delta_pct: 0 },
+      published_courses: { value: 0, delta_pct: 0 },
+      total_enrollments: { value: 0, delta_pct: 0 },
+    },
+    by_level: [],
+    by_language: [],
+    completion_top: completionTopSample,
+  }),
+  all_time: contentRow('all_time', {
+    kpis: {
+      new_courses:       { value: 99,    delta_pct: null },
+      published_courses: { value: 60,    delta_pct: null },
+      total_enrollments: { value: 1_500, delta_pct: null },
+    },
+    by_level: [
+      { level: 'beginner',     count: 60 },
+      { level: 'intermediate', count: 30 },
+      { level: 'advanced',     count: 9 },
+    ],
+    by_language: [
+      { language: 'vi', count: 80 },
+      { language: 'en', count: 19 },
+    ],
+    completion_top: completionTopSample,
+  }),
+}
+
 describe('AdminAnalyticsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockFetch.mockResolvedValue({ snapshots: sample, error: null })
+    mockFetchContent.mockResolvedValue({ snapshots: contentSample, error: null })
     mockRecompute.mockResolvedValue({ error: null })
   })
 
@@ -333,6 +418,74 @@ describe('AdminAnalyticsPage', () => {
     // all_time row's top_courses includes "Bộ sưu tập".
     await waitFor(() => {
       expect(screen.getByText('Bộ sưu tập')).toBeInTheDocument()
+    })
+  })
+
+  // ── Slice 3 (#330) — Content section ────────────────────────────────────
+
+  it('renders the Content section heading + three content KPI cards (mtd defaults)', async () => {
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-analytics-content-section')).toBeInTheDocument()
+    })
+    const newCourses = screen.getByTestId('admin-analytics-kpi-new-courses')
+    expect(within(newCourses).getByTestId('kpi-value')).toHaveTextContent('5')
+    expect(within(newCourses).getByTestId('kpi-delta')).toHaveTextContent(/25,0/)
+
+    const pubCourses = screen.getByTestId('admin-analytics-kpi-published-courses')
+    expect(within(pubCourses).getByTestId('kpi-value')).toHaveTextContent('3')
+    expect(within(pubCourses).getByTestId('kpi-delta')).toHaveAttribute(
+      'data-direction',
+      'down'
+    )
+
+    const enrollments = screen.getByTestId('admin-analytics-kpi-total-enrollments')
+    expect(within(enrollments).getByTestId('kpi-value')).toHaveTextContent('124')
+  })
+
+  it('renders donut by level + pie by language for the selected range', async () => {
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-analytics-content-section')).toBeInTheDocument()
+    })
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-analytics-level-donut')).toBeInTheDocument()
+    })
+    expect(screen.getByTestId('admin-analytics-language-pie')).toBeInTheDocument()
+  })
+
+  it('renders the completion top-10 horizontal bar chart (range-independent)', async () => {
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-analytics-completion-bar')).toBeInTheDocument()
+    })
+  })
+
+  it('switching to last_month with zero new courses renders donut + pie empty states', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-analytics-range-selector')).toBeInTheDocument()
+    })
+    await user.click(screen.getByTestId('admin-analytics-range-last_month'))
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-analytics-level-donut-empty')).toBeInTheDocument()
+    })
+    expect(screen.getByTestId('admin-analytics-language-pie-empty')).toBeInTheDocument()
+  })
+
+  it('completion bar persists across range changes (range-independent)', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-analytics-completion-bar')).toBeInTheDocument()
+    })
+    await user.click(screen.getByTestId('admin-analytics-range-last_month'))
+    await waitFor(() => {
+      // The completion bar must still render even though last_month has
+      // zero new-course buckets — completion_top is duplicated across
+      // ranges per ADR-0009.
+      expect(screen.getByTestId('admin-analytics-completion-bar')).toBeInTheDocument()
     })
   })
 

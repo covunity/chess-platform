@@ -146,6 +146,121 @@ describe('AnalyticsCharts — TopCoursesTable', () => {
   })
 })
 
+describe('AnalyticsCharts — LevelDonut', () => {
+  const levelLabels = {
+    beginner: 'Người mới',
+    intermediate: 'Trung cấp',
+    advanced: 'Cao cấp',
+  }
+
+  it('renders the empty-state when data is empty', () => {
+    renderWithI18n(
+      <AnalyticsCharts
+        kind="level-donut"
+        data={[]}
+        emptyLabel="Không có dữ liệu cho kỳ này"
+        levelLabels={levelLabels}
+      />
+    )
+    expect(screen.getByTestId('admin-analytics-level-donut-empty')).toHaveTextContent(
+      'Không có dữ liệu cho kỳ này'
+    )
+  })
+
+  it('renders the empty-state when all bucket counts are 0', () => {
+    renderWithI18n(
+      <AnalyticsCharts
+        kind="level-donut"
+        data={[
+          { level: 'beginner', count: 0 },
+          { level: 'intermediate', count: 0 },
+        ]}
+        emptyLabel="Không có dữ liệu cho kỳ này"
+        levelLabels={levelLabels}
+      />
+    )
+    expect(screen.getByTestId('admin-analytics-level-donut-empty')).toBeInTheDocument()
+    expect(screen.queryByTestId('admin-analytics-level-donut')).not.toBeInTheDocument()
+  })
+
+  it('renders the donut when at least one bucket is non-zero', () => {
+    renderWithI18n(
+      <AnalyticsCharts
+        kind="level-donut"
+        data={[
+          { level: 'beginner', count: 12 },
+          { level: 'intermediate', count: 6 },
+          { level: 'advanced', count: 2 },
+        ]}
+        emptyLabel="empty"
+        levelLabels={levelLabels}
+      />
+    )
+    expect(screen.getByTestId('admin-analytics-level-donut')).toBeInTheDocument()
+    expect(screen.queryByTestId('admin-analytics-level-donut-empty')).not.toBeInTheDocument()
+  })
+})
+
+describe('AnalyticsCharts — LanguagePie', () => {
+  const languageLabels = { vi: 'Tiếng Việt', en: 'Tiếng Anh' }
+
+  it('renders the empty-state when data is empty', () => {
+    renderWithI18n(
+      <AnalyticsCharts
+        kind="language-pie"
+        data={[]}
+        emptyLabel="Không có dữ liệu cho kỳ này"
+        languageLabels={languageLabels}
+      />
+    )
+    expect(screen.getByTestId('admin-analytics-language-pie-empty')).toBeInTheDocument()
+  })
+
+  it('renders the pie when at least one bucket is non-zero', () => {
+    renderWithI18n(
+      <AnalyticsCharts
+        kind="language-pie"
+        data={[
+          { language: 'vi', count: 18 },
+          { language: 'en', count: 2 },
+        ]}
+        emptyLabel="empty"
+        languageLabels={languageLabels}
+      />
+    )
+    expect(screen.getByTestId('admin-analytics-language-pie')).toBeInTheDocument()
+  })
+})
+
+describe('AnalyticsCharts — CompletionBar', () => {
+  it('renders the empty-state when data is empty', () => {
+    renderWithI18n(
+      <AnalyticsCharts
+        kind="completion-bar"
+        data={[]}
+        emptyLabel="Không có dữ liệu cho kỳ này"
+      />
+    )
+    expect(screen.getByTestId('admin-analytics-completion-bar-empty')).toBeInTheDocument()
+  })
+
+  it('renders the bar chart when given rows (no minimum-enrollment threshold)', () => {
+    // A course with one enrollee + 5/10 lessons → completion_rate = 0.5.
+    // The chart must render it without any threshold filtering.
+    renderWithI18n(
+      <AnalyticsCharts
+        kind="completion-bar"
+        data={[
+          { course_id: 'a', title: 'Khoá 1', completion_rate: 0.5, enrollment_count: 1 },
+          { course_id: 'b', title: 'Khoá 2', completion_rate: 0.3, enrollment_count: 87 },
+        ]}
+        emptyLabel="empty"
+      />
+    )
+    expect(screen.getByTestId('admin-analytics-completion-bar')).toBeInTheDocument()
+  })
+})
+
 describe('AnalyticsCharts — TopCreatorsTable', () => {
   it('renders the empty state when rows are empty', () => {
     renderWithI18n(

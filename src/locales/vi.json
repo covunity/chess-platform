@@ -403,6 +403,25 @@
         "colPayout": "Tiền creator được nhận",
         "emptyRange": "Không có dữ liệu cho kỳ này",
         "chartLoading": "Đang tải biểu đồ…"
+      },
+      "content": {
+        "sectionTitle": "Nội dung",
+        "kpiNewCourses": "Tổng khoá học mới",
+        "kpiPublishedCourses": "Khoá publish trong kỳ",
+        "kpiTotalEnrollments": "Lượt enrollment trong kỳ",
+        "byLevelTitle": "Phân bổ theo cấp độ",
+        "byLanguageTitle": "Phân bổ theo ngôn ngữ",
+        "completionTopTitle": "Top 10 khoá học theo tỉ lệ hoàn thành",
+        "level": {
+          "beginner": "Người mới",
+          "intermediate": "Trung cấp",
+          "advanced": "Cao cấp"
+        },
+        "language": {
+          "vi": "Tiếng Việt",
+          "en": "Tiếng Anh"
+        },
+        "emptyRange": "Không có dữ liệu cho kỳ này"
       }
     },
     "payouts": {

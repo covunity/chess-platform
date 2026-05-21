@@ -101,6 +101,25 @@
         "kpiPlatformFee": "Platform fee",
         "kpiCreatorPayout": "Creator payout",
         "deltaNone": "—"
+      },
+      "content": {
+        "sectionTitle": "Content",
+        "kpiNewCourses": "New courses",
+        "kpiPublishedCourses": "Published in range",
+        "kpiTotalEnrollments": "Enrollments in range",
+        "byLevelTitle": "By level",
+        "byLanguageTitle": "By language",
+        "completionTopTitle": "Top 10 courses by completion rate",
+        "level": {
+          "beginner": "Beginner",
+          "intermediate": "Intermediate",
+          "advanced": "Advanced"
+        },
+        "language": {
+          "vi": "Vietnamese",
+          "en": "English"
+        },
+        "emptyRange": "No data for this time range"
       }
     },
     "vouchers": {
