@@ -222,6 +222,7 @@ export default function AdminCampaignsPage() {
   }
 
   async function handleDeactivate(c: Campaign) {
+    if (!window.confirm(t('admin.campaigns.confirmDeactivate'))) return
     const { error } = await deactivateCampaign(supabase, c.id)
     if (error) {
       setToast(t('admin.campaigns.actionDeactivateError'))
@@ -393,14 +394,6 @@ export default function AdminCampaignsPage() {
                       </td>
                       <td style={{ padding: '14px 16px', textAlign: 'right' }}>
                         <div className="flex items-center justify-end gap-2">
-                          <button
-                            type="button"
-                            className="btn btn-secondary btn-sm"
-                            data-testid={`admin-campaigns-edit-${c.id}`}
-                            onClick={() => openEdit(c)}
-                          >
-                            {t('admin.campaigns.edit')}
-                          </button>
                           {c.is_active && (
                             <button
                               type="button"
@@ -412,6 +405,14 @@ export default function AdminCampaignsPage() {
                               {t('admin.campaigns.deactivate')}
                             </button>
                           )}
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            data-testid={`admin-campaigns-edit-${c.id}`}
+                            onClick={() => openEdit(c)}
+                          >
+                            {t('admin.campaigns.edit')}
+                          </button>
                         </div>
                       </td>
                     </tr>

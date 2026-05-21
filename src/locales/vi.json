@@ -219,11 +219,12 @@
         "inactive": "Đã tắt"
       },
       "edit": "Chỉnh sửa",
-      "deactivate": "Tắt",
+      "deactivate": "Ngừng chiến dịch",
+      "confirmDeactivate": "Bạn có chắc chắn muốn ngừng chiến dịch này? Sau khi ngừng, chiến dịch không thể bật lại. Nếu muốn dùng lại, bạn cần tạo chiến dịch mới.",
       "empty": "Chưa có chiến dịch nào.",
       "loadError": "Không thể tải danh sách chiến dịch.",
-      "actionDeactivateSuccess": "Đã tắt chiến dịch",
-      "actionDeactivateError": "Không thể tắt chiến dịch. Vui lòng thử lại.",
+      "actionDeactivateSuccess": "Đã ngừng chiến dịch",
+      "actionDeactivateError": "Không thể ngừng chiến dịch. Vui lòng thử lại.",
       "form": {
         "createTitle": "Tạo chiến dịch mới",
         "editTitle": "Chỉnh sửa chiến dịch",
