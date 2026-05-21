@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
 import {
@@ -9,6 +9,12 @@ import {
   type FinancialSnapshotsByRange,
   type TimeRange,
 } from '../../lib/analyticsApi'
+
+// Lazy-load Recharts (and the chart components that depend on it) so the
+// learner-facing routes never pull recharts (~95 KB gzipped) into their
+// bundle. The build splits this into its own chunk thanks to the dynamic
+// import; see CONTEXT.md "Chart library" + PRD-0008 §5.5.
+const AnalyticsCharts = lazy(() => import('./AnalyticsCharts'))
 
 const RANGES: readonly TimeRange[] = ['7d', 'mtd', 'last_month', 'all_time'] as const
 const REFRESH_COOLDOWN_SECS = 30
@@ -210,7 +216,11 @@ export default function AdminAnalyticsPage() {
   }
 
   const current: AnalyticsSnapshotRow | undefined = snapshots[range]
-  const kpis = (current?.payload as FinancialPayload | undefined)?.kpis
+  const payload = current?.payload as FinancialPayload | undefined
+  const kpis = payload?.kpis
+  const revenueTrend = payload?.revenue_trend ?? []
+  const topCourses = payload?.top_courses ?? []
+  const topCreators = payload?.top_creators ?? []
 
   const lastUpdated = useMemo(() => {
     // Show the freshest computed_at across the four range rows; they all
@@ -391,6 +401,103 @@ export default function AdminAnalyticsPage() {
                 delta={kpis.creator_payout.delta_pct}
                 noneLabel={t('admin.analytics.financial.deltaNone')}
               />
+            </div>
+
+            {/* Revenue trend chart */}
+            <div
+              className="card"
+              style={{ padding: 20, borderRadius: 'var(--r-lg)', marginTop: 24 }}
+            >
+              <h3
+                className="text-(--ink-1) mb-3"
+                style={{ fontSize: 14, fontWeight: 600, letterSpacing: '-0.005em' }}
+              >
+                {t('admin.analytics.financial.trendTitle')}
+              </h3>
+              <Suspense
+                fallback={
+                  <div
+                    data-testid="admin-analytics-charts-loading"
+                    className="text-(--ink-3) text-sm"
+                    style={{ padding: '24px 0' }}
+                  >
+                    {t('admin.analytics.financial.chartLoading')}
+                  </div>
+                }
+              >
+                <AnalyticsCharts
+                  kind="revenue-trend"
+                  data={revenueTrend}
+                  emptyLabel={t('admin.analytics.financial.emptyRange')}
+                  title={t('admin.analytics.financial.trendTitle')}
+                />
+              </Suspense>
+            </div>
+
+            {/* Leaderboards */}
+            <div
+              className="grid"
+              style={{
+                gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                gap: 16,
+                marginTop: 24,
+              }}
+            >
+              <div
+                className="card"
+                style={{ padding: 20, borderRadius: 'var(--r-lg)' }}
+              >
+                <h3
+                  className="text-(--ink-1) mb-3"
+                  style={{ fontSize: 14, fontWeight: 600, letterSpacing: '-0.005em' }}
+                >
+                  {t('admin.analytics.financial.topCoursesTitle')}
+                </h3>
+                <Suspense
+                  fallback={
+                    <div
+                      className="text-(--ink-3) text-sm"
+                      style={{ padding: '24px 0' }}
+                    >
+                      {t('admin.analytics.financial.chartLoading')}
+                    </div>
+                  }
+                >
+                  <AnalyticsCharts
+                    kind="top-courses"
+                    rows={topCourses}
+                    emptyLabel={t('admin.analytics.financial.emptyRange')}
+                  />
+                </Suspense>
+              </div>
+
+              <div
+                className="card"
+                style={{ padding: 20, borderRadius: 'var(--r-lg)' }}
+              >
+                <h3
+                  className="text-(--ink-1) mb-3"
+                  style={{ fontSize: 14, fontWeight: 600, letterSpacing: '-0.005em' }}
+                >
+                  {t('admin.analytics.financial.topCreatorsTitle')}
+                </h3>
+                <Suspense
+                  fallback={
+                    <div
+                      className="text-(--ink-3) text-sm"
+                      style={{ padding: '24px 0' }}
+                    >
+                      {t('admin.analytics.financial.chartLoading')}
+                    </div>
+                  }
+                >
+                  <AnalyticsCharts
+                    kind="top-creators"
+                    rows={topCreators}
+                    emptyLabel={t('admin.analytics.financial.emptyRange')}
+                  />
+                </Suspense>
+              </div>
             </div>
           </section>
         )}

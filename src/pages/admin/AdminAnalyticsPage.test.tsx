@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { I18nextProvider } from 'react-i18next'
 import i18n from '../../i18n'
@@ -9,6 +9,28 @@ import type {
   AnalyticsSnapshotRow,
   FinancialSnapshotsByRange,
 } from '../../lib/analyticsApi'
+
+// Recharts measures the parent DOM node to decide its render size. jsdom
+// returns 0 by default; stub clientWidth/clientHeight + ResizeObserver so
+// the Suspense-loaded chart actually mounts.
+beforeAll(() => {
+  Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
+    configurable: true,
+    value: 600,
+  })
+  Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+    configurable: true,
+    value: 280,
+  })
+  if (!('ResizeObserver' in globalThis)) {
+    ;(globalThis as unknown as { ResizeObserver: typeof ResizeObserver }).ResizeObserver =
+      class {
+        observe = vi.fn()
+        unobserve = vi.fn()
+        disconnect = vi.fn()
+      } as unknown as typeof ResizeObserver
+  }
+})
 
 const { mockFetch, mockRecompute } = vi.hoisted(() => ({
   mockFetch: vi.fn(),
@@ -46,6 +68,19 @@ const sample: FinancialSnapshotsByRange = {
       platform_fee: { value: 1_000_000, delta_pct: 25.0 },
       creator_payout: { value: 4_000_000, delta_pct: 25.0 },
     },
+    revenue_trend: [
+      { bucket: '2026-05-15', value: 0 },
+      { bucket: '2026-05-16', value: 1_200_000 },
+      { bucket: '2026-05-17', value: 800_000 },
+    ],
+    top_courses: [
+      { course_id: 'a', title: 'Khai cuộc Sicilian', revenue: 3_200_000 },
+      { course_id: 'b', title: 'Tàn cuộc cơ bản', revenue: 1_800_000 },
+    ],
+    top_creators: [
+      { creator_id: 'c1', name: 'GM Anh', revenue: 2_400_000 },
+      { creator_id: 'c2', name: 'IM Bình', revenue: 1_600_000 },
+    ],
   }),
   mtd: row('mtd', {
     kpis: {
@@ -54,6 +89,16 @@ const sample: FinancialSnapshotsByRange = {
       platform_fee: { value: 2_500_000, delta_pct: 12.4 },
       creator_payout: { value: 10_000_000, delta_pct: 12.4 },
     },
+    revenue_trend: [
+      { bucket: '2026-05-01', value: 500_000 },
+      { bucket: '2026-05-02', value: 1_500_000 },
+    ],
+    top_courses: [
+      { course_id: 'm1', title: 'Mẹo cờ vua', revenue: 7_500_000 },
+    ],
+    top_creators: [
+      { creator_id: 'mc1', name: 'GM Cường', revenue: 6_000_000 },
+    ],
   }),
   last_month: row('last_month', {
     kpis: {
@@ -62,6 +107,9 @@ const sample: FinancialSnapshotsByRange = {
       platform_fee: { value: 1_800_000, delta_pct: 5.0 },
       creator_payout: { value: 7_200_000, delta_pct: 5.0 },
     },
+    revenue_trend: [{ bucket: '2026-04-10', value: 250_000 }],
+    top_courses: [],
+    top_creators: [],
   }),
   all_time: row('all_time', {
     kpis: {
@@ -70,6 +118,17 @@ const sample: FinancialSnapshotsByRange = {
       platform_fee: { value: 19_800_000, delta_pct: null },
       creator_payout: { value: 79_200_000, delta_pct: null },
     },
+    revenue_trend: [
+      { bucket: '2026-03', value: 30_000_000 },
+      { bucket: '2026-04', value: 35_000_000 },
+      { bucket: '2026-05', value: 34_000_000 },
+    ],
+    top_courses: [
+      { course_id: 'at1', title: 'Bộ sưu tập', revenue: 99_000_000 },
+    ],
+    top_creators: [
+      { creator_id: 'atc1', name: 'GM Tổng', revenue: 79_200_000 },
+    ],
   }),
 }
 
@@ -208,6 +267,72 @@ describe('AdminAnalyticsPage', () => {
     renderPage()
     await waitFor(() => {
       expect(screen.getByTestId('admin-analytics-load-error')).toBeInTheDocument()
+    })
+  })
+
+  // ── Slice 2 (#329) — trend chart + leaderboards ─────────────────────────
+
+  it('renders the revenue trend chart for the selected range', async () => {
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-analytics-kpi-revenue')).toBeInTheDocument()
+    })
+    // Default range is mtd; mtd has non-zero trend points.
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-analytics-revenue-trend')).toBeInTheDocument()
+    })
+  })
+
+  it('renders top courses + top creators tables from the snapshot payload', async () => {
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-analytics-kpi-revenue')).toBeInTheDocument()
+    })
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-analytics-top-courses')).toBeInTheDocument()
+    })
+    expect(screen.getByTestId('admin-analytics-top-creators')).toBeInTheDocument()
+
+    // mtd: 1 course + 1 creator row.
+    const courseRows = screen.getAllByTestId('admin-analytics-top-courses-row')
+    expect(courseRows).toHaveLength(1)
+    expect(within(courseRows[0]).getByText('Mẹo cờ vua')).toBeInTheDocument()
+
+    const creatorRows = screen.getAllByTestId('admin-analytics-top-creators-row')
+    expect(creatorRows).toHaveLength(1)
+    expect(within(creatorRows[0]).getByText('GM Cường')).toBeInTheDocument()
+  })
+
+  it('switching to last_month with empty leaderboards renders the empty-state messages', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-analytics-range-selector')).toBeInTheDocument()
+    })
+    await user.click(screen.getByTestId('admin-analytics-range-last_month'))
+    await waitFor(() => {
+      expect(
+        screen.getByTestId('admin-analytics-top-courses-empty')
+      ).toBeInTheDocument()
+    })
+    expect(
+      screen.getByTestId('admin-analytics-top-creators-empty')
+    ).toBeInTheDocument()
+  })
+
+  it('switching to all_time uses monthly buckets in the trend chart payload', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-analytics-range-selector')).toBeInTheDocument()
+    })
+    await user.click(screen.getByTestId('admin-analytics-range-all_time'))
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-analytics-revenue-trend')).toBeInTheDocument()
+    })
+    // all_time row's top_courses includes "Bộ sưu tập".
+    await waitFor(() => {
+      expect(screen.getByText('Bộ sưu tập')).toBeInTheDocument()
     })
   })
 

@@ -390,7 +390,19 @@
         "kpiOrders": "Số đơn",
         "kpiPlatformFee": "Phí nền tảng",
         "kpiCreatorPayout": "Tiền creator được nhận",
-        "deltaNone": "—"
+        "deltaNone": "—",
+        "trendTitle": "Biểu đồ doanh thu",
+        "trendAxisRevenue": "Doanh thu (VND)",
+        "trendAxisDate": "Thời gian",
+        "topCoursesTitle": "Top 10 khoá học theo doanh thu",
+        "topCreatorsTitle": "Top 10 creator theo doanh thu",
+        "colRank": "#",
+        "colCourse": "Khoá học",
+        "colCreator": "Creator",
+        "colRevenue": "Doanh thu",
+        "colPayout": "Tiền creator được nhận",
+        "emptyRange": "Không có dữ liệu cho kỳ này",
+        "chartLoading": "Đang tải biểu đồ…"
       }
     },
     "payouts": {

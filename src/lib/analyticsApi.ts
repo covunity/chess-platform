@@ -23,13 +23,35 @@ export interface FinancialKpis {
   creator_payout: KpiValue
 }
 
+export interface RevenueTrendPoint {
+  /** ISO bucket key — `YYYY-MM-DD` for daily ranges (7d / mtd / last_month),
+   *  `YYYY-MM` for the monthly all_time range. The frontend renders this
+   *  string as-is on the X axis; it does not parse + reformat. */
+  bucket: string
+  value: number
+}
+
+export interface TopCourseRow {
+  course_id: string
+  title: string
+  revenue: number
+}
+
+export interface TopCreatorRow {
+  creator_id: string
+  name: string
+  /** SUM(orders.creator_payout_amount) — what the creator actually earns,
+   *  not gross learner-paid amount. See CONTEXT.md "Leaderboards" notes. */
+  revenue: number
+}
+
 export interface FinancialPayload {
   kpis: FinancialKpis
-  // Trend + leaderboards land in later slices; the type stays narrow until
-  // the RPC actually populates them so consumers can't read undefined.
-  revenue_trend?: Array<{ bucket: string; value: number }>
-  top_courses?: Array<{ course_id: string; title: string; revenue: number }>
-  top_creators?: Array<{ creator_id: string; name: string; revenue: number }>
+  /** Daily for 7d/mtd/last_month, monthly for all_time. Buckets are
+   *  precomputed by the RPC so the FE never aggregates client-side. */
+  revenue_trend?: RevenueTrendPoint[]
+  top_courses?: TopCourseRow[]
+  top_creators?: TopCreatorRow[]
 }
 
 export interface AnalyticsSnapshotRow {
