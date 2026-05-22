@@ -198,7 +198,7 @@ export default function AdminCreatorFeesPage() {
         </div>
       </div>
 
-      <p className="px-6 pt-4 text-sm text-(--ink-2)" style={{ lineHeight: 1.55, maxWidth: 720 }}>
+      <p className="px-6 pt-4 text-sm text-(--ink-2)" style={{ lineHeight: 1.55 }}>
         {t('admin.creatorFees.intro')}
       </p>
 

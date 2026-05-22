@@ -132,7 +132,7 @@ export default function AdminTiersPage() {
         </h1>
       </div>
 
-      <p className="px-6 pt-4 text-sm text-(--ink-2)" style={{ lineHeight: 1.55, maxWidth: 720 }}>
+      <p className="px-6 pt-4 text-sm text-(--ink-2)" style={{ lineHeight: 1.55 }}>
         {t('admin.tiers.intro')}
       </p>
 

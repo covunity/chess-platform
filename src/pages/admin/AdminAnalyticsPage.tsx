@@ -409,7 +409,7 @@ export default function AdminAnalyticsPage() {
 
       <p
         className="px-6 pt-4 text-sm text-(--ink-2)"
-        style={{ lineHeight: 1.55, maxWidth: 720 }}
+        style={{ lineHeight: 1.55 }}
       >
         {t('admin.analytics.intro')}
       </p>
