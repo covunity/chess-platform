@@ -348,14 +348,30 @@ function TopCreatorsTable({ rows, emptyLabel }: TopCreatorsProps) {
   )
 }
 
+// ── Chart palette ──────────────────────────────────────────────────────────
+// Categorical chart colors defined as CSS custom properties in index.css
+// (--chart-1 … --chart-8). Series cycle through this array via index % len
+// so the same level / language / row index always renders the same color
+// across renders.
+const CHART_PALETTE = [
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-5)',
+  'var(--chart-6)',
+  'var(--chart-7)',
+  'var(--chart-8)',
+] as const
+
 // ── Donut by course level ──────────────────────────────────────────────────
-// Recharts renders a "donut" by setting `innerRadius` on a <Pie>. We thread
-// a palette of CSS-custom-property colors through `<Cell fill>` so the chart
-// respects the design-system "no hex colors" rule.
+// Recharts renders a "donut" by setting `innerRadius` on a <Pie>. Each slice
+// pulls a color from CHART_PALETTE so the three levels stay visually
+// distinct (no hardcoded hex — every value is a CSS custom property).
 const LEVEL_COLORS = [
-  'var(--accent)',
-  'var(--accent-strong)',
-  'var(--ink-3)',
+  'var(--chart-5)',  // green   — beginner
+  'var(--chart-1)',  // teal    — intermediate
+  'var(--chart-3)',  // magenta — advanced
 ] as const
 
 function formatCount(n: number): string {
@@ -428,8 +444,8 @@ function LevelDonut({ data, emptyLabel, levelLabels }: LevelDonutProps) {
 
 // ── Pie by language ────────────────────────────────────────────────────────
 const LANGUAGE_COLORS = [
-  'var(--accent)',
-  'var(--accent-strong)',
+  'var(--chart-2)',  // indigo — vi
+  'var(--chart-4)',  // orange — en
 ] as const
 
 function LanguagePie({ data, emptyLabel, languageLabels }: LanguagePieProps) {
@@ -554,9 +570,9 @@ function SignupTrendChart({ data, emptyLabel, title }: SignupTrendProps) {
           <Line
             type="monotone"
             dataKey="value"
-            stroke="var(--accent)"
+            stroke="var(--chart-2)"
             strokeWidth={2}
-            dot={{ fill: 'var(--accent)', r: 3 }}
+            dot={{ fill: 'var(--chart-2)', r: 3 }}
             activeDot={{ r: 5 }}
             isAnimationActive={false}
           />
@@ -723,10 +739,16 @@ function CompletionBar({ data, emptyLabel }: CompletionBarProps) {
           />
           <Bar
             dataKey="pct"
-            fill="var(--accent)"
             isAnimationActive={false}
             radius={[0, 4, 4, 0]}
-          />
+          >
+            {rendered.map((_, idx) => (
+              <Cell
+                key={idx}
+                fill={CHART_PALETTE[idx % CHART_PALETTE.length]}
+              />
+            ))}
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </div>
