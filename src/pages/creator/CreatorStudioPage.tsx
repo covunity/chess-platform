@@ -519,7 +519,7 @@ export default function CreatorStudioPage() {
                         height: 26,
                         fontSize: 11.5,
                         background: filter === key ? 'var(--ink-1)' : 'transparent',
-                        color: filter === key ? '#fff' : 'var(--ink-3)',
+                        color: filter === key ? 'var(--on-ink-1)' : 'var(--ink-3)',
                         borderRadius: 999,
                         padding: '0 10px',
                       }}

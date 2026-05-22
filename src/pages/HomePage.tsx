@@ -364,7 +364,7 @@ export default function HomePage() {
                   cursor: 'pointer',
                   border: 'none',
                   background: level === lvl.key ? 'var(--ink-1)' : 'var(--surface-2)',
-                  color: level === lvl.key ? '#fff' : 'var(--ink-2)',
+                  color: level === lvl.key ? 'var(--on-ink-1)' : 'var(--ink-2)',
                   transition: 'background 0.15s',
                 }}
               >

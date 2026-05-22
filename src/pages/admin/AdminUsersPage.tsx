@@ -20,7 +20,7 @@ function RolePill({ role, t }: { role: UserRole; t: (k: string) => string }) {
   const baseStyle: CSSProperties = { whiteSpace: 'nowrap' }
   const style: CSSProperties =
     role === 'admin'
-      ? { ...baseStyle, background: 'var(--ink-1)', color: '#fff' }
+      ? { ...baseStyle, background: 'var(--ink-1)', color: 'var(--on-ink-1)' }
       : baseStyle
   return (
     <span className={ROLE_PILL_CLASS[role]} style={style}>

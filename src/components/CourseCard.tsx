@@ -111,16 +111,15 @@ export default function CourseCard({
 
         {firstTag && (
           <span
+            className="thumbnail-tag"
             style={{
               position: 'absolute',
               bottom: 8,
               left: 8,
-              background: 'rgba(255,255,255,0.92)',
               borderRadius: 999,
               padding: '2px 10px',
               fontSize: 11.5,
               fontWeight: 500,
-              color: 'var(--ink-2)',
               zIndex: 1,
             }}
           >
