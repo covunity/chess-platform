@@ -8,6 +8,7 @@ import { getBookmarks } from '../lib/bookmarkApi'
 import { listPublishedCourses } from '../lib/coursesApi'
 import type { PublicCourse } from '../lib/coursesApi'
 import { hasUnreadOrderUpdates, readLastSeenOrdersAt } from '../lib/orderUpdatesApi'
+import ThemeToggle from './ThemeToggle'
 
 export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } = {}) {
   const { t } = useTranslation()
@@ -275,6 +276,7 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
       </div>}
 
       <div className="flex items-center" style={{ marginLeft: 'auto', gap: 8 }}>
+        <ThemeToggle />
         {/* Bell icon */}
         {/* <button
           type="button"

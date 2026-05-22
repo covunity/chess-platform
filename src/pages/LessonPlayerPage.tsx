@@ -17,6 +17,7 @@ import type { BookmarkRow } from '../lib/bookmarkApi'
 import { parsePgn } from '../utils/parsePgn'
 import GuidedChessPlayer from '../components/GuidedChessPlayer/GuidedChessPlayer'
 import PaywallSheet from '../components/PaywallSheet'
+import ThemeToggle from '../components/ThemeToggle'
 
 type LoadState = 'loading' | 'redirect-course' | 'redirect-lesson' | 'ready'
 
@@ -604,6 +605,7 @@ export default function LessonPlayerPage() {
           </nav>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+            <ThemeToggle />
             <button
               data-testid="header-bookmark-btn"
               data-bookmarked={currentBookmark ? 'true' : 'false'}

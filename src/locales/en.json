@@ -955,6 +955,10 @@
     "viewerEndMove": "Last move",
     "flipBoardAria": "Flip board"
   },
+  "theme": {
+    "switchToDark": "Switch to dark mode",
+    "switchToLight": "Switch to light mode"
+  },
   "errors": {
     "chapterLimitReached": "You have reached the chapter limit for your current account tier."
   }

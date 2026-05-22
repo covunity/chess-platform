@@ -1,6 +1,7 @@
 import { Navigate, Outlet, Routes, Route } from 'react-router-dom'
 import './i18n'
 import { AuthProvider } from './context/AuthContext'
+import { ThemeProvider } from './context/ThemeContext'
 import TopNav from './components/TopNav'
 import Footer from './components/Footer'
 import ProtectedAdminRoute from './components/admin/ProtectedAdminRoute'
@@ -56,8 +57,9 @@ function PublicShell() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Routes>
+    <ThemeProvider>
+      <AuthProvider>
+        <Routes>
         {/* Admin section — own layout, no TopNav/Footer */}
         <Route path="/admin" element={<ProtectedAdminRoute />}>
           <Route element={<AdminLayout />}>
@@ -118,7 +120,8 @@ export default function App() {
           <Route path="/help" element={<HelpPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
-      </Routes>
-    </AuthProvider>
+        </Routes>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }

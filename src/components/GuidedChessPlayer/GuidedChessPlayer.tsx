@@ -866,12 +866,12 @@ export default function GuidedChessPlayer({
               data-testid="puzzle-gave-up-complete"
               role="alert"
               style={{
-                background: 'var(--amber-2, #fef3c7)',
-                border: '1px solid var(--amber-6, #d97706)',
+                background: 'var(--warning-soft)',
+                border: '1px solid var(--warning)',
                 borderRadius: 'var(--r-sm)',
                 padding: '10px 14px',
                 fontSize: 13,
-                color: 'var(--amber-9, #92400e)',
+                color: 'var(--warning)',
                 marginBottom: 8,
               }}
             >
@@ -885,12 +885,12 @@ export default function GuidedChessPlayer({
               data-testid="puzzle-mistake-banner"
               role="alert"
               style={{
-                background: 'var(--red-2, #fee2e2)',
-                border: '1px solid var(--red-6, #f87171)',
+                background: 'var(--danger-soft)',
+                border: '1px solid var(--danger)',
                 borderRadius: 'var(--r-sm)',
                 padding: '10px 14px',
                 fontSize: 13,
-                color: 'var(--red-9, #991b1b)',
+                color: 'var(--danger)',
                 marginBottom: 8,
               }}
             >

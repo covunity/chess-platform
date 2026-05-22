@@ -1513,6 +1513,10 @@
     "wrongMoveBanner": "Nước sai. Hãy thử lại.",
     "flipBoardAria": "Lật bàn cờ"
   },
+  "theme": {
+    "switchToDark": "Chuyển sang chế độ tối",
+    "switchToLight": "Chuyển sang chế độ sáng"
+  },
   "errors": {
     "chapterLimitReached": "Bạn đã đạt giới hạn số chương cho gói tài khoản hiện tại.",
     "lessonLimitReached": "Bạn đã đạt giới hạn số bài học trên mỗi khoá học cho gói tài khoản hiện tại.",
