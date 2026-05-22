@@ -371,9 +371,17 @@ $$;
 REVOKE ALL ON FUNCTION public._analytics_delta_pct(bigint, bigint) FROM public;
 
 -- ── 6. pg_cron daily schedule ────────────────────────────────────────────
--- Same pattern as expire_stale_orders (migration 054). The job runs at
--- 00:05 ICT every day, regardless of the postgres server's local clock.
--- pg_cron supports the `CRON_TZ=...` prefix per cron job since 1.5.
+-- Runs at 00:05 ICT every day. Supabase ships an older pg_cron that
+-- does not accept the `CRON_TZ=...` per-job prefix (added in pg_cron
+-- 1.5), so we schedule in UTC instead: ICT is UTC+7, so 00:05 ICT
+-- equals 17:05 UTC of the previous calendar day → cron expression
+-- `5 17 * * *`.
+--
+-- The snapshot_date stamped on each row is computed inside the
+-- function as `(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date`, so the
+-- ICT calendar day is preserved regardless of when (in UTC) the cron
+-- actually fires. Same for all `date_trunc(..., now() AT TIME ZONE
+-- 'Asia/Ho_Chi_Minh')` ranges below — they remain anchored to ICT.
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 
 DO $$
@@ -384,7 +392,7 @@ BEGIN
 
   PERFORM cron.schedule(
     'compute_analytics_snapshot_daily',
-    'CRON_TZ=Asia/Ho_Chi_Minh 5 0 * * *',
+    '5 17 * * *',
     $cron$ SELECT public.compute_analytics_snapshot(false); $cron$
   );
 END $$;

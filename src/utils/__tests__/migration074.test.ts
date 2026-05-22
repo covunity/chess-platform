@@ -131,13 +131,19 @@ describe('Migration 074 — analytics_snapshots foundation', () => {
     expect(codeOnly).toMatch(/SUM\s*\(\s*creator_payout_amount\s*\)/i)
   })
 
-  it('schedules a pg_cron job named compute_analytics_snapshot_daily at 5 0 * * * ICT', () => {
+  it('schedules a pg_cron job named compute_analytics_snapshot_daily at 17:05 UTC (= 00:05 ICT)', () => {
     expect(codeOnly).toMatch(/cron\.schedule\s*\(\s*'compute_analytics_snapshot_daily'/i)
-    // 00:05 ICT = 17:05 UTC the previous day, but the issue spec asks for
-    // the ICT-local cron string `5 0 * * *` written with the timezone via
-    // pg_cron's documented `5 0 * * *` form + `cron.timezone` GUC, or via
-    // `CRON_TZ`. We accept either spelling.
-    expect(codeOnly).toMatch(/(5\s+0\s+\*\s+\*\s+\*|CRON_TZ=Asia\/Ho_Chi_Minh\s+5\s+0\s+\*\s+\*\s+\*)/)
+    // Supabase ships a pg_cron version that does not accept the
+    // `CRON_TZ=` per-job prefix. We schedule in UTC instead: 00:05 ICT
+    // = 17:05 UTC the previous day → expression `5 17 * * *`. The
+    // snapshot's `snapshot_date` is computed inside the function via
+    // `(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date`, so the ICT
+    // calendar day is preserved regardless of cron's UTC firing time.
+    expect(codeOnly).toMatch(/cron\.schedule\s*\([^)]*?'5\s+17\s+\*\s+\*\s+\*'/i)
+    // CRON_TZ form must NOT appear (incompatible with shipped pg_cron).
+    expect(codeOnly).not.toMatch(/CRON_TZ=/)
+    // The ICT timezone string still appears in the function body via
+    // AT TIME ZONE, so we keep an assertion that ICT is referenced.
     expect(codeOnly).toMatch(/Asia\/Ho_Chi_Minh/)
   })
 
