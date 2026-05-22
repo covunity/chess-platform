@@ -961,5 +961,40 @@
   },
   "errors": {
     "chapterLimitReached": "You have reached the chapter limit for your current account tier."
+  },
+  "video": {
+    "errors": {
+      "notReady": "Video is not ready yet.",
+      "loadFailed": "Failed to load video.",
+      "playbackFailed": "Cannot play video. Please try again.",
+      "unsupportedProvider": "Video provider is not supported."
+    },
+    "validate": {
+      "invalidFormat": "Only {{ext}} format is supported.",
+      "emptyFile": "File is empty.",
+      "tooLarge": "File exceeds {{max}}."
+    },
+    "upload": {
+      "errors": {
+        "notAuthorized": "Your account does not have video upload permission. Contact admin for creator access.",
+        "fileTooLarge": "File exceeds {{max}}.",
+        "invalidFormat": "Only {{ext}} format is supported.",
+        "bucketNotFound": "Video storage bucket not found. Contact admin.",
+        "serverError": "Storage server error. Please try again later.",
+        "networkError": "Connection lost. Check your network and try again.",
+        "generic": "Video upload failed. Please try again.",
+        "loginRequired": "You must be logged in to upload video.",
+        "signedUrlFailed": "Failed to generate signed URL."
+      }
+    },
+    "bunny": {
+      "errors": {
+        "initUploadFailed": "Cannot initialise upload. Please try again.",
+        "notAuthorized": "Your account does not have video upload permission. Contact admin for creator access.",
+        "fileTooLarge": "File exceeds the allowed limit.",
+        "playbackFailed": "Cannot play video. Please try again.",
+        "deleteFailed": "Video deletion failed. Please try again."
+      }
+    }
   }
 }

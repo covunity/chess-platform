@@ -1,4 +1,5 @@
 import * as tus from 'tus-js-client'
+import i18n from '../../i18n'
 import { supabase } from '../supabase'
 import type {
   PlaybackInfo,
@@ -30,33 +31,31 @@ function friendlyUploadError(err: unknown): Error {
   const raw = err instanceof Error ? err.message : String(err)
 
   if (/row-level security/i.test(raw) || /response code:\s*40[13]/i.test(raw)) {
-    return new Error(
-      'Tài khoản chưa có quyền upload video. Liên hệ admin để được cấp quyền creator.',
-    )
+    return new Error(i18n.t('video.upload.errors.notAuthorized'))
   }
   if (/response code:\s*413/i.test(raw) || /payload too large/i.test(raw) || /exceeded the maximum/i.test(raw)) {
-    return new Error(`File vượt quá ${VIDEO_LIMITS.maxBytesLabel}.`)
+    return new Error(i18n.t('video.upload.errors.fileTooLarge', { max: VIDEO_LIMITS.maxBytesLabel }))
   }
   if (/response code:\s*415/i.test(raw) || /mime type .* is not supported/i.test(raw)) {
-    return new Error(`Chỉ hỗ trợ định dạng ${VIDEO_LIMITS.allowedExtensionsLabel}.`)
+    return new Error(i18n.t('video.upload.errors.invalidFormat', { ext: VIDEO_LIMITS.allowedExtensionsLabel }))
   }
   if (/response code:\s*404/i.test(raw) || /bucket not found/i.test(raw)) {
-    return new Error('Không tìm thấy bucket lưu video. Liên hệ admin.')
+    return new Error(i18n.t('video.upload.errors.bucketNotFound'))
   }
   if (/response code:\s*5\d\d/i.test(raw)) {
-    return new Error('Máy chủ lưu trữ đang lỗi. Vui lòng thử lại sau.')
+    return new Error(i18n.t('video.upload.errors.serverError'))
   }
   if (/network|failed to fetch|load failed|networkerror/i.test(raw)) {
-    return new Error('Mất kết nối. Kiểm tra mạng và thử lại.')
+    return new Error(i18n.t('video.upload.errors.networkError'))
   }
-  return new Error('Upload video thất bại. Vui lòng thử lại.')
+  return new Error(i18n.t('video.upload.errors.generic'))
 }
 
 export const supabaseProvider: VideoProvider = {
   name: 'supabase',
 
   async upload(file, lessonId, cb): Promise<UploadHandle> {
-    const validation = validateVideoFile(file)
+    const validation = await validateVideoFile(file)
     if (!validation.ok) {
       cb.onError(new Error(validation.reason))
       return { abort: () => {} }
@@ -64,7 +63,7 @@ export const supabaseProvider: VideoProvider = {
 
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
-      cb.onError(new Error('Bạn cần đăng nhập để upload video.'))
+      cb.onError(new Error(i18n.t('video.upload.errors.loginRequired')))
       return { abort: () => {} }
     }
 
@@ -115,12 +114,13 @@ export const supabaseProvider: VideoProvider = {
     }
   },
 
-  async getPlaybackInfo(providerId: string): Promise<PlaybackInfo> {
+  // opts.lessonId intentionally ignored — the object path (providerId) is self-contained.
+  async getPlaybackInfo(providerId: string, _opts?: { lessonId?: string }): Promise<PlaybackInfo> {
     const { data, error } = await supabase
       .storage
       .from(BUCKET)
       .createSignedUrl(providerId, SIGNED_URL_TTL_SEC)
-    if (error || !data) throw error ?? new Error('Không thể tạo signed URL.')
+    if (error || !data) throw error ?? new Error(i18n.t('video.upload.errors.signedUrlFailed'))
     return {
       url: data.signedUrl,
       format: 'mp4',

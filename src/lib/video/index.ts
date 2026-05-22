@@ -1,10 +1,11 @@
-import { cloudflareProvider } from './cloudflareProvider'
+import { bunnyProvider } from './bunnyProvider'
 import { supabaseProvider } from './supabaseProvider'
 import type { VideoProvider, VideoProviderName } from './types'
 
 const PROVIDERS: Record<VideoProviderName, VideoProvider> = {
   supabase: supabaseProvider,
-  cloudflare: cloudflareProvider,
+  cloudflare: supabaseProvider, // legacy rows — fall back to supabase until migrated
+  bunny: bunnyProvider,
 }
 
 const ENV_NAME = (import.meta.env.VITE_VIDEO_PROVIDER ?? 'supabase') as VideoProviderName

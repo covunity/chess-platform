@@ -1,8 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { VideoFormat } from '../lib/video/types'
 
-// Minimal type for the lazy-loaded hls.js module. The package itself is not
-// installed in Phase 1; Phase 2 will `npm install hls.js` and replace this.
+// Minimal type for the lazy-loaded hls.js module.
 interface HlsInstance {
   loadSource(url: string): void
   attachMedia(video: HTMLMediaElement): void
@@ -48,14 +47,9 @@ export default function VideoView({
       if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = url
       } else {
-        // Lazy-load hls.js only when the browser actually needs it. Phase 1
-        // ships only the Supabase Storage MP4 path so this branch is dormant
-        // and hls.js is not in package.json yet. The /* @vite-ignore */ comment
-        // prevents Vite from trying to pre-bundle it.
-        // hls.js is intentionally not in package.json in Phase 1; the dynamic
-        // specifier is hidden from the static checker via a variable.
-        const hlsModuleName = 'hls.js'
-        import(/* @vite-ignore */ hlsModuleName)
+        // Lazy-load hls.js only when the browser actually needs it
+        // (i.e. when the browser does not natively support HLS — Safari does).
+        import('hls.js')
           .then((mod: { default: HlsCtor }) => {
             if (cancelled) return
             const Hls = mod.default

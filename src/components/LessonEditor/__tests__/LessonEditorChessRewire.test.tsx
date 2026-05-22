@@ -12,13 +12,20 @@ import { render as rtlRender, screen, fireEvent, waitFor } from '@testing-librar
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi } from 'vitest'
 import { I18nextProvider } from 'react-i18next'
+import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import i18n from '../../../i18n'
 import LessonEditor from '../LessonEditor'
 
 vi.mock('chessground')
 
 function render(ui: React.ReactNode) {
-  return rtlRender(<I18nextProvider i18n={i18n}>{ui}</I18nextProvider>)
+  const router = createMemoryRouter([
+    {
+      path: '/',
+      element: <I18nextProvider i18n={i18n}>{ui}</I18nextProvider>,
+    },
+  ])
+  return rtlRender(<RouterProvider router={router} />)
 }
 
 const DEFAULT_CHESS_LESSON = {

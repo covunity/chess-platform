@@ -11,6 +11,7 @@ import type { PlayerLesson } from '../lib/lessonPlayerApi'
 import { getPendingOrderForCourse } from '../lib/orderApi'
 import { canAccessLesson } from '../lib/accessControl'
 import VideoView from '../components/VideoView'
+import BunnyVideoPlayer from '../components/BunnyVideoPlayer'
 import type { CourseDetail, CourseDetailChapter } from '../lib/coursesApi'
 import { addBookmark, deleteBookmark, getBookmarkForLesson, resolveBookmark } from '../lib/bookmarkApi'
 import type { BookmarkRow } from '../lib/bookmarkApi'
@@ -84,6 +85,14 @@ function LockIcon() {
   )
 }
 
+function TickIcon() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="3,8 7,12 13,4" />
+    </svg>
+  )
+}
+
 function lessonTypeIcon(type: string) {
   if (type === 'video') return <VideoIcon />
   return <ChessIcon />
@@ -99,13 +108,14 @@ interface SidebarProps {
   isAdmin: boolean
   isCourseCreator: boolean
   onLockedLessonClick: () => void
+  completedLessonIds: Set<string>
 }
 
-function PlayerSidebar({ course, currentLessonId, expandedChapters, onToggleChapter, onSelectLesson, isEnrolled, isAdmin, isCourseCreator, onLockedLessonClick }: SidebarProps) {
+function PlayerSidebar({ course, currentLessonId, expandedChapters, onToggleChapter, onSelectLesson, isEnrolled, isAdmin, isCourseCreator, onLockedLessonClick, completedLessonIds }: SidebarProps) {
   const { t } = useTranslation()
   const totalLessons = course.chapters.reduce((sum, ch) => sum + ch.lessons.length, 0)
 
-  const completedLessons = 0
+  const completedLessons = completedLessonIds.size
 
   return (
     <aside
@@ -173,7 +183,7 @@ function PlayerSidebar({ course, currentLessonId, expandedChapters, onToggleChap
       <div style={{ flex: 1, overflowY: 'auto' }}>
         {course.chapters.map((chapter: CourseDetailChapter) => {
           const isExpanded = expandedChapters.has(chapter.id)
-          const completedInChapter = 0
+          const completedInChapter = chapter.lessons.filter(l => completedLessonIds.has(l.id)).length
           return (
             <div key={chapter.id}>
               <button
@@ -234,11 +244,13 @@ function PlayerSidebar({ course, currentLessonId, expandedChapters, onToggleChap
                       alignItems: 'center',
                       justifyContent: 'center',
                       flexShrink: 0,
-                      background: isCurrent ? 'transparent' : 'var(--surface-2)',
-                      border: isCurrent ? '2px solid var(--accent)' : 'none',
-                      color: 'var(--ink-4)',
+                      background: completedLessonIds.has(lesson.id)
+                        ? 'var(--success)'
+                        : isCurrent ? 'transparent' : 'var(--surface-2)',
+                      border: isCurrent && !completedLessonIds.has(lesson.id) ? '2px solid var(--accent)' : 'none',
+                      color: completedLessonIds.has(lesson.id) ? 'var(--ink-on-accent)' : 'var(--ink-4)',
                     }}>
-                      {isLocked ? <LockIcon /> : lessonTypeIcon(lesson.type)}
+                      {isLocked ? <LockIcon /> : completedLessonIds.has(lesson.id) ? <TickIcon /> : lessonTypeIcon(lesson.type)}
                     </span>
                     <span style={{
                       flex: 1,
@@ -282,10 +294,12 @@ export default function LessonPlayerPage() {
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set())
   const initializedCourseRef = useRef<string | null>(null)
   const [showToast, setShowToast] = useState(false)
-  const [playerState, setPlayerState] = useState<{ lessonId: string; lesson: PlayerLesson; videoUrl: string | null; videoFormat: 'mp4' | 'hls'; videoError: string | null; videoCompleted: boolean } | null>(null)
+  const [completedLessonIds, setCompletedLessonIds] = useState<Set<string>>(new Set())
+  const [playerState, setPlayerState] = useState<{ lessonId: string; lesson: PlayerLesson; videoUrl: string | null; videoFormat: 'mp4' | 'hls'; videoEmbedUrl: string | null; videoError: string | null; videoCompleted: boolean } | null>(null)
   const playerLesson = playerState?.lessonId === currentLessonId ? playerState.lesson : null
   const videoUrl = playerState?.lessonId === currentLessonId ? playerState.videoUrl : null
   const videoFormat = playerState?.lessonId === currentLessonId ? playerState.videoFormat : 'mp4'
+  const videoEmbedUrl = playerState?.lessonId === currentLessonId ? playerState.videoEmbedUrl : null
   const videoError = playerState?.lessonId === currentLessonId ? playerState.videoError : null
   const videoCompleted = playerState?.lessonId === currentLessonId ? playerState.videoCompleted : false
   const [fetchedBookmark, setFetchedBookmark] = useState<{ lessonId: string; bookmark: BookmarkRow | null } | null>(null)
@@ -427,6 +441,23 @@ export default function LessonPlayerPage() {
     navigate(`/learn/${courseId}/${newLessonId}`, { replace: true })
   }
 
+  // Fetch completed lesson IDs for this course once the page is ready
+  useEffect(() => {
+    if (loadState !== 'ready' || !user || !courseId) return
+    let cancelled = false
+    void (async () => {
+      const { data } = await supabase
+        .from('lesson_progress')
+        .select('lesson_id')
+        .eq('user_id', user.id)
+        .eq('course_id', courseId)
+        .eq('completed', true)
+      if (cancelled || !data) return
+      setCompletedLessonIds(new Set((data as { lesson_id: string }[]).map(r => r.lesson_id)))
+    })()
+    return () => { cancelled = true }
+  }, [loadState, user, courseId])
+
   // Load bookmark state when lesson changes
   useEffect(() => {
     if (loadState !== 'ready' || !user || !currentLessonId) return
@@ -449,12 +480,12 @@ export default function LessonPlayerPage() {
     getLessonForPlayer(supabase, currentLessonId).then(({ lesson: pl }) => {
       if (cancelled || !pl) return
       if (pl.type === 'video') {
-        getVideoPlaybackInfo(supabase, pl.id).then(({ url, format, error }) => {
+        getVideoPlaybackInfo(supabase, pl.id).then(({ url, format, embedUrl, error }) => {
           if (cancelled) return
-          setPlayerState({ lessonId: currentLessonId, lesson: pl, videoUrl: error ? null : url, videoFormat: format ?? 'mp4', videoError: error ? error.message : null, videoCompleted: false })
+          setPlayerState({ lessonId: currentLessonId, lesson: pl, videoUrl: error ? null : url, videoFormat: format ?? 'mp4', videoEmbedUrl: error ? null : (embedUrl ?? null), videoError: error ? error.message : null, videoCompleted: false })
         })
       } else {
-        setPlayerState({ lessonId: currentLessonId, lesson: pl, videoUrl: null, videoFormat: 'mp4', videoError: null, videoCompleted: false })
+        setPlayerState({ lessonId: currentLessonId, lesson: pl, videoUrl: null, videoFormat: 'mp4', videoEmbedUrl: null, videoError: null, videoCompleted: false })
       }
     })
     return () => { cancelled = true }
@@ -491,6 +522,12 @@ export default function LessonPlayerPage() {
 
   async function handleLessonComplete() {
     if (!user || !courseId || !currentLessonId || adminWatermark) return
+    setCompletedLessonIds(prev => {
+      if (prev.has(currentLessonId)) return prev
+      const next = new Set(prev)
+      next.add(currentLessonId)
+      return next
+    })
     await markLessonCompleted(supabase, {
       courseId,
       lessonId: currentLessonId,
@@ -504,6 +541,12 @@ export default function LessonPlayerPage() {
       setPlayerState(prev => prev ? { ...prev, videoCompleted: true } : prev)
       handleLessonComplete()
     }
+  }
+
+  function handleBunnyPlayerComplete() {
+    if (videoCompleted) return
+    setPlayerState(prev => prev ? { ...prev, videoCompleted: true } : prev)
+    handleLessonComplete()
   }
 
   if (loadState === 'loading') {
@@ -539,6 +582,7 @@ export default function LessonPlayerPage() {
         isAdmin={adminWatermark}
         isCourseCreator={isCourseCreator}
         onLockedLessonClick={() => setShowSidebarPaywall(true)}
+        completedLessonIds={completedLessonIds}
       />
 
       {/* Right side */}
@@ -742,17 +786,20 @@ export default function LessonPlayerPage() {
               ) : videoUrl ? (
                 <>
                   <div style={{ position: 'relative', borderRadius: 'var(--r-lg)', overflow: 'hidden', background: '#0F1114', aspectRatio: '16/9', boxShadow: 'var(--sh-2)' }}>
-                    <VideoView
-                      url={videoUrl}
-                      format={videoFormat}
-                      controls
-                      style={{ width: '100%', height: '100%', display: 'block' }}
-                      onTimeUpdate={handleVideoTimeUpdate}
-                    />
-                    {videoCompleted && (
-                      <div style={{ position: 'absolute', top: 12, right: 12, background: 'var(--success)', color: 'var(--ink-on-accent)', fontSize: 11.5, fontWeight: 500, padding: '4px 10px', borderRadius: 99, display: 'flex', alignItems: 'center', gap: 5 }}>
-                        <span>✓</span> {t('player.markedComplete', 'Đã hoàn thành')}
-                      </div>
+                    {videoEmbedUrl ? (
+                      <BunnyVideoPlayer
+                        embedUrl={videoEmbedUrl}
+                        onComplete={handleBunnyPlayerComplete}
+                        style={{ width: '100%', height: '100%' }}
+                      />
+                    ) : (
+                      <VideoView
+                        url={videoUrl!}
+                        format={videoFormat}
+                        controls
+                        style={{ width: '100%', height: '100%', display: 'block' }}
+                        onTimeUpdate={handleVideoTimeUpdate}
+                      />
                     )}
                   </div>
                   <div>

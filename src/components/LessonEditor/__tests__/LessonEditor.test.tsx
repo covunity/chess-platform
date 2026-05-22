@@ -6,11 +6,23 @@
  * PGN textarea tests for advanced mode are deferred to the follow-up #198 test suite.
  */
 import { vi } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 
 vi.mock('chessground')
+
+// Stub VideoLessonEditor — renders a minimal drop-zone placeholder and
+// exposes onIsUploadingChange so tests can drive the upload state directly.
+let capturedOnIsUploadingChange: ((v: boolean) => void) | undefined
+vi.mock('../VideoLessonEditor', () => ({
+  default: (props: { onIsUploadingChange?: (v: boolean) => void; lesson: unknown; onLessonChange: unknown }) => {
+    capturedOnIsUploadingChange = props.onIsUploadingChange
+    return <div data-testid="video-lesson-editor-stub" />
+  },
+}))
+
 import userEvent from "@testing-library/user-event";
 import { I18nextProvider } from "react-i18next";
+import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import i18n from "../../../i18n";
 import LessonEditor, { type LessonEditorProps } from "../LessonEditor";
 
@@ -24,11 +36,17 @@ const DEFAULT_LESSON = {
 };
 
 function renderEditor(props: LessonEditorProps) {
-  return render(
-    <I18nextProvider i18n={i18n}>
-      <LessonEditor {...props} />
-    </I18nextProvider>
-  );
+  const router = createMemoryRouter([
+    {
+      path: '/',
+      element: (
+        <I18nextProvider i18n={i18n}>
+          <LessonEditor {...props} />
+        </I18nextProvider>
+      ),
+    },
+  ]);
+  return render(<RouterProvider router={router} />);
 }
 
 describe("LessonEditor", () => {
@@ -254,6 +272,94 @@ describe("LessonEditor", () => {
       expect(onSave).toHaveBeenCalledWith(
         expect.objectContaining({ has_rewind_mode: false })
       );
+    });
+  });
+
+  describe("save while upload in progress", () => {
+    const VIDEO_LESSON = {
+      ...DEFAULT_LESSON,
+      type: "video" as const,
+      video_status: "idle" as const,
+    };
+
+    it("does NOT call onSave when video upload is in progress", async () => {
+      const user = userEvent.setup();
+      const onSave = vi.fn();
+      renderEditor({ lesson: VIDEO_LESSON, onSave });
+
+      // Switch to video tab
+      await user.click(screen.getByTestId("lesson-type-tab-video"));
+
+      // Trigger uploading state via the captured callback
+      await act(async () => {
+        capturedOnIsUploadingChange?.(true);
+      });
+
+      const saveBtn = screen.getByRole("button", { name: /lưu nháp/i });
+      await user.click(saveBtn);
+
+      expect(onSave).not.toHaveBeenCalled();
+    });
+
+    it("shows warning banner when Save is clicked while upload is in progress", async () => {
+      vi.useFakeTimers();
+      try {
+        const onSave = vi.fn();
+        renderEditor({ lesson: VIDEO_LESSON, onSave });
+
+        // Switch to video tab
+        await act(async () => { fireEvent.click(screen.getByTestId("lesson-type-tab-video")); });
+
+        await act(async () => {
+          capturedOnIsUploadingChange?.(true);
+        });
+
+        await act(async () => { fireEvent.click(screen.getByRole("button", { name: /lưu nháp/i })); });
+
+        expect(screen.getByTestId("save-while-uploading-warning")).toBeInTheDocument();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("warning banner disappears after 4 seconds", async () => {
+      vi.useFakeTimers();
+      try {
+        const onSave = vi.fn();
+        renderEditor({ lesson: VIDEO_LESSON, onSave });
+
+        await act(async () => { fireEvent.click(screen.getByTestId("lesson-type-tab-video")); });
+
+        await act(async () => {
+          capturedOnIsUploadingChange?.(true);
+        });
+
+        await act(async () => { fireEvent.click(screen.getByRole("button", { name: /lưu nháp/i })); });
+
+        expect(screen.getByTestId("save-while-uploading-warning")).toBeInTheDocument();
+
+        await act(async () => {
+          vi.advanceTimersByTime(4000);
+        });
+
+        expect(screen.queryByTestId("save-while-uploading-warning")).not.toBeInTheDocument();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("calls onSave normally when no upload is in progress", async () => {
+      const user = userEvent.setup();
+      const onSave = vi.fn();
+      renderEditor({ lesson: VIDEO_LESSON, onSave });
+
+      await user.click(screen.getByTestId("lesson-type-tab-video"));
+
+      const saveBtn = screen.getByRole("button", { name: /lưu nháp/i });
+      await user.click(saveBtn);
+
+      expect(onSave).toHaveBeenCalled();
+      expect(screen.queryByTestId("save-while-uploading-warning")).not.toBeInTheDocument();
     });
   });
 });

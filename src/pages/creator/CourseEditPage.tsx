@@ -811,6 +811,14 @@ export default function CourseEditPage() {
                     .flatMap(ch => ch.lessons ?? [])
                     .find(l => l.id === selectedLesson.rewind_source_id)?.title ?? null
                 : null,
+              // Video fields — must be forwarded so VideoLessonEditor shows the
+              // existing video instead of defaulting to the idle/empty state.
+              video_status: selectedLesson.video_status,
+              video_provider: selectedLesson.video_provider,
+              video_provider_id: selectedLesson.video_provider_id,
+              video_filename: selectedLesson.video_filename,
+              video_size_bytes: selectedLesson.video_size_bytes,
+              duration_seconds: selectedLesson.duration_seconds,
             }}
             chapterLessons={selectedChapterLessons}
             onSelectLesson={id => {

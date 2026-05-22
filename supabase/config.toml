@@ -366,6 +366,15 @@ authorization_url_path = "/oauth/consent"
 # Allow dynamic client registration
 allow_dynamic_registration = false
 
+[functions.bunny-webhook]
+verify_jwt = false
+
+# verify_jwt=false because anonymous callers send the anon key JWT (not a user JWT),
+# and the gateway would 401 them before the function runs. The function authenticates
+# callers itself and enforces the access matrix (free_preview, enrollment, admin, creator).
+[functions.get-video-playback]
+verify_jwt = false
+
 [functions.payos-webhook]
 verify_jwt = false
 

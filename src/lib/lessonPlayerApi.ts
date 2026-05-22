@@ -1,4 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import i18n from '../i18n'
+import { bunnyProvider } from './video/bunnyProvider'
 
 export interface PlayerLesson {
   id: string
@@ -58,6 +60,7 @@ export async function getLessonForPlayer(
 export interface GetVideoPlaybackInfoResult {
   url: string | null
   format: 'mp4' | 'hls'
+  embedUrl: string | null
   error: Error | null
 }
 
@@ -69,16 +72,16 @@ export async function getVideoPlaybackInfo(
 
   if (rpcError) {
     const msg = (rpcError as { message?: string; code?: string }).message ?? 'Không thể tải video.'
-    return { url: null, format: 'mp4', error: new Error(msg) }
+    return { url: null, format: 'mp4', embedUrl: null, error: new Error(msg) }
   }
 
   const row = Array.isArray(rows) && rows.length > 0 ? rows[0] as Record<string, string> : null
   if (!row) {
-    return { url: null, format: 'mp4', error: new Error('Bài học chưa có video.') }
+    return { url: null, format: 'mp4', embedUrl: null, error: new Error('Bài học chưa có video.') }
   }
 
   if (row.video_status !== 'ready') {
-    return { url: null, format: 'mp4', error: new Error('Video chưa sẵn sàng.') }
+    return { url: null, format: 'mp4', embedUrl: null, error: new Error(i18n.t('video.errors.notReady')) }
   }
 
   if (row.video_provider === 'supabase') {
@@ -87,12 +90,22 @@ export async function getVideoPlaybackInfo(
       .from('lesson-videos')
       .createSignedUrl(row.video_provider_id, 4 * 3600)
     if (error || !data) {
-      return { url: null, format: 'mp4', error: new Error((error as { message?: string })?.message ?? 'Không thể tải video.') }
+      return { url: null, format: 'mp4', embedUrl: null, error: new Error((error as { message?: string })?.message ?? i18n.t('video.errors.loadFailed')) }
     }
-    return { url: data.signedUrl, format: 'mp4', error: null }
+    return { url: data.signedUrl, format: 'mp4', embedUrl: null, error: null }
   }
 
-  return { url: null, format: 'mp4', error: new Error('Video provider chưa được hỗ trợ.') }
+  if (row.video_provider === 'bunny') {
+    try {
+      const info = await bunnyProvider.getPlaybackInfo(row.video_provider_id, { lessonId })
+      return { url: info.url, format: info.format, embedUrl: info.embedUrl ?? null, error: null }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : i18n.t('video.errors.playbackFailed')
+      return { url: null, format: 'hls', embedUrl: null, error: new Error(msg) }
+    }
+  }
+
+  return { url: null, format: 'mp4', embedUrl: null, error: new Error(i18n.t('video.errors.unsupportedProvider')) }
 }
 
 // ── Resume position ───────────────────────────────────────────────────────────

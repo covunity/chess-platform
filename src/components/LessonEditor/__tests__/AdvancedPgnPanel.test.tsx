@@ -10,6 +10,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 vi.mock('chessground')
 import userEvent from '@testing-library/user-event'
 import { I18nextProvider } from 'react-i18next'
+import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import i18n from '../../../i18n'
 import LessonEditor from '../LessonEditor'
 import type { LessonEditorProps } from '../LessonEditor'
@@ -25,11 +26,17 @@ const DEFAULT_LESSON = {
 }
 
 function renderEditor(props: LessonEditorProps) {
-  return render(
-    <I18nextProvider i18n={i18n}>
-      <LessonEditor {...props} />
-    </I18nextProvider>
-  )
+  const router = createMemoryRouter([
+    {
+      path: '/',
+      element: (
+        <I18nextProvider i18n={i18n}>
+          <LessonEditor {...props} />
+        </I18nextProvider>
+      ),
+    },
+  ])
+  return render(<RouterProvider router={router} />)
 }
 
 // ── Advanced PGN panel visibility ─────────────────────────────────────────────

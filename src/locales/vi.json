@@ -1523,5 +1523,40 @@
     "tierDowngradeBlocked": "Không thể đổi tier: có khóa học đang vượt giới hạn số chương của tier mới.",
     "tierDowngradeBlockedWithCourses": "Không thể đổi tier: các khoá học sau vượt giới hạn số chương: {{courses}}.",
     "andMore": "... và {{count}} khoá khác"
+  },
+  "video": {
+    "errors": {
+      "notReady": "Video chưa sẵn sàng.",
+      "loadFailed": "Không thể tải video.",
+      "playbackFailed": "Không thể phát video. Vui lòng thử lại.",
+      "unsupportedProvider": "Video provider chưa được hỗ trợ."
+    },
+    "validate": {
+      "invalidFormat": "Chỉ hỗ trợ định dạng {{ext}}.",
+      "emptyFile": "File rỗng.",
+      "tooLarge": "File vượt quá {{max}}."
+    },
+    "upload": {
+      "errors": {
+        "notAuthorized": "Tài khoản chưa có quyền upload video. Liên hệ admin để được cấp quyền creator.",
+        "fileTooLarge": "File vượt quá {{max}}.",
+        "invalidFormat": "Chỉ hỗ trợ định dạng {{ext}}.",
+        "bucketNotFound": "Không tìm thấy bucket lưu video. Liên hệ admin.",
+        "serverError": "Máy chủ lưu trữ đang lỗi. Vui lòng thử lại sau.",
+        "networkError": "Mất kết nối. Kiểm tra mạng và thử lại.",
+        "generic": "Upload video thất bại. Vui lòng thử lại.",
+        "loginRequired": "Bạn cần đăng nhập để upload video.",
+        "signedUrlFailed": "Không thể tạo signed URL."
+      }
+    },
+    "bunny": {
+      "errors": {
+        "initUploadFailed": "Không thể khởi tạo upload. Vui lòng thử lại.",
+        "notAuthorized": "Tài khoản chưa có quyền upload video. Liên hệ admin để được cấp quyền creator.",
+        "fileTooLarge": "File vượt quá giới hạn cho phép.",
+        "playbackFailed": "Không thể phát video. Vui lòng thử lại.",
+        "deleteFailed": "Xóa video thất bại. Vui lòng thử lại."
+      }
+    }
   }
 }

@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { vi, beforeEach } from 'vitest'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { I18nextProvider } from 'react-i18next'
 import i18n from '../../i18n'
 import CourseEditPage from './CourseEditPage'
@@ -108,13 +108,13 @@ const mockChapters = [
 ]
 
 function renderPage(courseId = 'c1') {
+  const router = createMemoryRouter(
+    [{ path: '/creator/courses/:courseId/edit', element: <CourseEditPage /> }],
+    { initialEntries: [`/creator/courses/${courseId}/edit`] }
+  )
   return render(
     <I18nextProvider i18n={i18n}>
-      <MemoryRouter initialEntries={[`/creator/courses/${courseId}/edit`]}>
-        <Routes>
-          <Route path="/creator/courses/:courseId/edit" element={<CourseEditPage />} />
-        </Routes>
-      </MemoryRouter>
+      <RouterProvider router={router} />
     </I18nextProvider>
   )
 }

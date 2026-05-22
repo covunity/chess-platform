@@ -102,9 +102,29 @@ Each file uses `DO $$ ... $$` blocks with `ASSERT` and `RAISE NOTICE 'PASS: ...'
 
 > **Note**: Scripts that test RPCs (change-tier, application-approve/supersede) call `set_config('request.jwt.claims', ...)` to simulate `auth.uid()`. They require the corresponding migrations to be applied and write+delete their own test data.
 
+## Video provider
+
+Lesson video uploads and playback are handled by a pluggable provider. The active provider is selected at build time via:
+
+```
+VITE_VIDEO_PROVIDER=supabase   # default — Supabase Storage (dev, CI, local)
+VITE_VIDEO_PROVIDER=bunny      # Bunny Stream (production)
+```
+
+**Dev / CI default**: `VITE_VIDEO_PROVIDER` is not set, so new uploads go to Supabase Storage automatically. No change needed for local development.
+
+**Production cutover**: set `VITE_VIDEO_PROVIDER=bunny` in your Vercel project's environment variables and redeploy. See [`docs/setup/bunny-stream.md`](docs/setup/bunny-stream.md) for full setup instructions.
+
+**Roll-back**: flip `VITE_VIDEO_PROVIDER` back to `supabase` in Vercel and redeploy. New uploads will go to Supabase Storage immediately; existing Bunny-hosted videos continue to play until Bunny recovers.
+
+> Existing DB rows with `video_provider='cloudflare'` are handled automatically — they fall back to the Supabase Storage player.
+
+---
+
 ## Deployment
 
 Pushes to `main` automatically deploy to Vercel via GitHub Actions. Set the following environment variables in your Vercel project settings:
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
+- `VITE_VIDEO_PROVIDER` (set to `bunny` for production; omit or set to `supabase` for dev/staging)

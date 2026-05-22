@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { clearLessonVideo, setLessonVideo, setLessonVideoStatus } from '../../lib/creatorApi'
 import type { VideoStatus } from '../../lib/creatorApi'
@@ -19,6 +19,7 @@ export interface VideoLessonEditorLesson {
 export interface VideoLessonEditorProps {
   lesson: VideoLessonEditorLesson
   onLessonChange: (next: Partial<VideoLessonEditorLesson>) => void
+  onIsUploadingChange?: (isUploading: boolean) => void
 }
 
 type LocalState =
@@ -71,14 +72,27 @@ async function readVideoDuration(file: File): Promise<number | null> {
 export default function VideoLessonEditor({
   lesson,
   onLessonChange,
+  onIsUploadingChange,
 }: VideoLessonEditorProps) {
   const [state, setState] = useState<LocalState>(() =>
     lesson.video_status === 'ready' ? { kind: 'ready' } : { kind: 'idle' }
   )
+  const [showSuccess, setShowSuccess] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
+  // Prevent accidental tab close while uploading
+  useEffect(() => {
+    if (state.kind !== 'uploading') return
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [state.kind])
+
   const startUpload = async (file: File) => {
-    const v = validateVideoFile(file)
+    const v = await validateVideoFile(file)
     if (!v.ok) {
       setState({ kind: 'error', message: v.reason })
       return
@@ -91,6 +105,7 @@ export default function VideoLessonEditor({
     onLessonChange({ video_status: 'uploading', video_filename: file.name, video_size_bytes: file.size })
 
     setState({ kind: 'uploading', filename: file.name, size: file.size, pct: 0, speed: 0, handle: null })
+    onIsUploadingChange?.(true)
 
     const duration = await readVideoDuration(file)
 
@@ -123,11 +138,15 @@ export default function VideoLessonEditor({
           duration_seconds: duration ?? 0,
         })
         setState({ kind: 'ready' })
+        onIsUploadingChange?.(false)
+        setShowSuccess(true)
+        setTimeout(() => setShowSuccess(false), 3000)
       },
       onError: async (err) => {
         await setLessonVideoStatus(supabase, lesson.id, 'error', err.message)
         onLessonChange({ video_status: 'error' })
         setState({ kind: 'error', message: err.message || 'Upload thất bại.' })
+        onIsUploadingChange?.(false)
       },
     })
 
@@ -140,6 +159,7 @@ export default function VideoLessonEditor({
     await setLessonVideoStatus(supabase, lesson.id, 'idle')
     onLessonChange({ video_status: 'idle' })
     setState({ kind: 'idle' })
+    onIsUploadingChange?.(false)
   }
 
   const handleDelete = async () => {
@@ -320,6 +340,23 @@ export default function VideoLessonEditor({
               Xóa
             </button>
           </div>
+        </div>
+      )}
+
+      {showSuccess && (
+        <div role="status" data-testid="upload-success-toast" style={{
+          background: 'var(--success-soft)',
+          color: 'var(--success)',
+          border: '1px solid var(--success)',
+          borderRadius: 'var(--r-md)',
+          padding: '10px 14px',
+          fontSize: 13,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+        }}>
+          <span>✓</span>
+          Upload video thành công!
         </div>
       )}
 

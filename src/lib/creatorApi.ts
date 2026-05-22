@@ -3,7 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 export type CourseStatus  = 'draft' | 'published'
 export type CourseLevel   = 'beginner' | 'intermediate' | 'advanced'
 export type LessonType    = 'video' | 'chess' | 'puzzle'
-export type VideoProvider = 'supabase' | 'cloudflare'
+export type VideoProvider = 'supabase' | 'cloudflare' | 'bunny'
 export type VideoStatus   = 'idle' | 'uploading' | 'processing' | 'ready' | 'error'
 
 export interface Course {

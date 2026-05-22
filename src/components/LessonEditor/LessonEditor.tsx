@@ -10,6 +10,10 @@ import VariationPanel from "./VariationPanel";
 import ImportFromPgnModal from "./AdvancedPgnPanel/ImportFromPgnModal";
 import PuzzleEditorPanel from "./PuzzleEditorPanel";
 import VideoLessonEditor from "./VideoLessonEditor";
+import BunnyVideoPlayer from "../BunnyVideoPlayer";
+import VideoView from "../VideoView";
+import { getVideoPlaybackInfo } from "../../lib/lessonPlayerApi";
+import { supabase } from "../../lib/supabase";
 import type { VideoStatus } from "../../lib/creatorApi";
 import type { VideoProviderName } from "../../lib/video/types";
 
@@ -124,7 +128,33 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
     video_size_bytes: lesson.video_size_bytes ?? null,
   }));
 
+  const [isVideoUploading, setIsVideoUploading] = useState(false);
+  const [showUploadWarnOnSave, setShowUploadWarnOnSave] = useState(false);
+
+  // Preview panel state for video lessons
+  const [previewInfo, setPreviewInfo] = useState<{ url: string; format: 'mp4' | 'hls'; embedUrl?: string | null } | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
+  // Reset preview when video changes
+  useEffect(() => {
+    setPreviewInfo(null);
+  }, [videoLesson.id, videoLesson.video_status]);
+
+  const handlePreviewPlay = async () => {
+    if (previewLoading) return;
+    setPreviewLoading(true);
+    const { url, format, embedUrl, error } = await getVideoPlaybackInfo(supabase, videoLesson.id);
+    setPreviewLoading(false);
+    if (error || !url) return;
+    setPreviewInfo({ url, format, embedUrl });
+  };
+
   const handleSave = () => {
+    if (isVideoUploading) {
+      setShowUploadWarnOnSave(true);
+      setTimeout(() => setShowUploadWarnOnSave(false), 4000);
+      return;
+    }
     // For chess lessons, serialize the treeStore back to PGN; for others use the pgn state
     const isChessLesson = (activeTab === 'chess');
     let pgnToSave = pgn;
@@ -458,6 +488,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
               key={lesson.id}
               lesson={videoLesson}
               onLessonChange={(patch) => setVideoLesson((prev) => ({ ...prev, ...patch }))}
+              onIsUploadingChange={setIsVideoUploading}
             />
           </>
         ) : activeTab === "puzzle" ? (
@@ -513,14 +544,23 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
 
         {/* Action buttons — shown when parent does not supply a saveRef */}
         {!saveRef && (
-          <div style={{ marginTop: "auto", display: "flex", gap: 8 }}>
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={handleSave}
-            >
-              {t('creator.lessonEditor.saveDraft')}
-            </button>
+          <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 6 }}>
+            {showUploadWarnOnSave && (
+              <div role="alert" data-testid="save-while-uploading-warning" style={{
+                fontSize: 12, color: 'var(--warning)', padding: '4px 0'
+              }}>
+                ⚠ Video đang upload, vui lòng chờ trước khi lưu.
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={handleSave}
+              >
+                {t('creator.lessonEditor.saveDraft')}
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -568,6 +608,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
             </div>
             <div
               data-testid="video-preview-frame"
+              onClick={videoLesson.video_status === "ready" && !previewInfo && !previewLoading ? handlePreviewPlay : undefined}
               style={{
                 position: "relative",
                 width: "100%",
@@ -579,43 +620,66 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                cursor: videoLesson.video_status === "ready" && !previewInfo && !previewLoading ? "pointer" : "default",
               }}
             >
-              <div
-                style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: "50%",
-                  background: videoLesson.video_status === "ready" ? "rgba(255,255,255,0.95)" : "var(--surface-2)",
-                  color: "var(--ink-1)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 20,
-                  opacity: videoLesson.video_status === "ready" ? 1 : 0.6,
-                }}
-                aria-hidden
-              >
-                ▶
-              </div>
-              {videoLesson.video_status !== "ready" && (
+              {previewInfo ? (
+                previewInfo.embedUrl ? (
+                  <BunnyVideoPlayer embedUrl={previewInfo.embedUrl} style={{ width: '100%', height: '100%' }} />
+                ) : (
+                  <VideoView url={previewInfo.url} format={previewInfo.format} controls style={{ width: '100%', height: '100%' }} />
+                )
+              ) : previewLoading ? (
                 <div
+                  data-testid="video-preview-loading"
                   style={{
-                    position: "absolute",
-                    bottom: 12,
-                    left: 12,
-                    right: 12,
-                    fontSize: 12,
-                    color: "var(--ink-3)",
-                    textAlign: "center",
+                    width: 36,
+                    height: 36,
+                    border: '4px solid rgba(255,255,255,0.2)',
+                    borderTopColor: 'rgba(255,255,255,0.9)',
+                    borderRadius: '50%',
+                    animation: 'spin 0.8s linear infinite',
                   }}
-                >
-                  {videoLesson.video_status === "uploading"
-                    ? t('creator.lessonEditor.videoUploading')
-                    : videoLesson.video_status === "processing"
-                      ? t('creator.lessonEditor.videoProcessing')
-                      : t('creator.lessonEditor.videoEmpty')}
-                </div>
+                />
+              ) : (
+                <>
+                  <div
+                    style={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: "50%",
+                      background: videoLesson.video_status === "ready" ? "rgba(255,255,255,0.95)" : "var(--surface-2)",
+                      color: "var(--ink-1)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 20,
+                      opacity: videoLesson.video_status === "ready" ? 1 : 0.6,
+                    }}
+                    aria-hidden
+                  >
+                    ▶
+                  </div>
+                  {videoLesson.video_status !== "ready" && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: 12,
+                        left: 12,
+                        right: 12,
+                        fontSize: 12,
+                        color: "var(--ink-3)",
+                        textAlign: "center",
+                      }}
+                    >
+                      {videoLesson.video_status === "uploading"
+                        ? t('creator.lessonEditor.videoUploading')
+                        : videoLesson.video_status === "processing"
+                          ? t('creator.lessonEditor.videoProcessing')
+                          : t('creator.lessonEditor.videoEmpty')}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -624,6 +688,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
           <VariationPanel store={treeStoreRef.current} />
         )}
       </div>
+
     </div>
   );
 }
