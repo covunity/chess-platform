@@ -114,6 +114,7 @@
         "kpiNewCourses": "New courses",
         "kpiPublishedCourses": "Published in range",
         "kpiTotalEnrollments": "Enrollments in range",
+        "kpiTotalEnrollmentsInfo": "Count of rows in the enrollments table whose enrolled_at falls within the selected range. Includes free-course auto-enrollments (created when their order is set to active).",
         "byLevelTitle": "By level",
         "byLanguageTitle": "By language",
         "completionTopTitle": "Top 10 courses by completion rate",
@@ -126,6 +127,21 @@
           "vi": "Vietnamese",
           "en": "English"
         },
+        "emptyRange": "No data for this time range"
+      },
+      "users": {
+        "sectionTitle": "Users",
+        "kpiNewSignups": "New signups",
+        "kpiActiveUsers": "Active users",
+        "kpiConversionRate": "Conversion rate",
+        "kpiConversionRateInfo": "Of all learners that signed up in the selected range (denominator), what percentage placed at least one order with status='active' and confirmed_at in the same range (numerator). Free orders (amount=0) also count as conversions. The N/M caption below shows the actual numerator / denominator.",
+        "conversionFraction": "{{num}}/{{denom}}",
+        "trendTitle": "Signup trend",
+        "topBuyersTitle": "Top 10 buyers by spend",
+        "colRank": "#",
+        "colBuyer": "Buyer",
+        "colSpend": "Spend",
+        "colOrders": "Orders",
         "emptyRange": "No data for this time range"
       }
     },

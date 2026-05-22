@@ -103,15 +103,51 @@ function DeltaPill({ value, noneLabel }: DeltaProps) {
   )
 }
 
+// Small (i) icon with a CSS-hover tooltip describing the calculation
+// behind a KPI. Keyboard-accessible via tabIndex + focus-visible. The
+// `aria-label` carries the full description for screen readers.
+function InfoTooltip({ text, testId }: { text: string; testId?: string }) {
+  return (
+    <span
+      className="info-tooltip"
+      tabIndex={0}
+      role="button"
+      aria-label={text}
+      data-testid={testId}
+    >
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="16" x2="12" y2="12" />
+        <line x1="12" y1="8" x2="12.01" y2="8" />
+      </svg>
+      <span className="info-tooltip__bubble" role="tooltip">
+        {text}
+      </span>
+    </span>
+  )
+}
+
 interface KpiCardProps {
   testId: string
   label: string
   display: string
   delta: number | null
   noneLabel: string
+  info?: string
+  infoTestId?: string
 }
 
-function KpiCard({ testId, label, display, delta, noneLabel }: KpiCardProps) {
+function KpiCard({ testId, label, display, delta, noneLabel, info, infoTestId }: KpiCardProps) {
   return (
     <div
       data-testid={testId}
@@ -127,9 +163,16 @@ function KpiCard({ testId, label, display, delta, noneLabel }: KpiCardProps) {
     >
       <div
         className="text-(--ink-3) uppercase"
-        style={{ fontSize: 11.5, letterSpacing: '0.06em', fontWeight: 500 }}
+        style={{
+          fontSize: 11.5,
+          letterSpacing: '0.06em',
+          fontWeight: 500,
+          display: 'flex',
+          alignItems: 'center',
+        }}
       >
         {label}
+        {info ? <InfoTooltip text={info} testId={infoTestId} /> : null}
       </div>
       <div
         data-testid="kpi-value"
@@ -656,6 +699,8 @@ export default function AdminAnalyticsPage() {
                 display={formatCount(contentKpis.total_enrollments.value)}
                 delta={contentKpis.total_enrollments.delta_pct}
                 noneLabel={t('admin.analytics.financial.deltaNone')}
+                info={t('admin.analytics.content.kpiTotalEnrollmentsInfo')}
+                infoTestId="admin-analytics-kpi-total-enrollments-info"
               />
             </div>
 
@@ -802,9 +847,19 @@ export default function AdminAnalyticsPage() {
               >
                 <div
                   className="text-(--ink-3) uppercase"
-                  style={{ fontSize: 11.5, letterSpacing: '0.06em', fontWeight: 500 }}
+                  style={{
+                    fontSize: 11.5,
+                    letterSpacing: '0.06em',
+                    fontWeight: 500,
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
                 >
                   {t('admin.analytics.users.kpiConversionRate')}
+                  <InfoTooltip
+                    text={t('admin.analytics.users.kpiConversionRateInfo')}
+                    testId="admin-analytics-kpi-conversion-rate-info"
+                  />
                 </div>
                 <div
                   data-testid="kpi-value"
