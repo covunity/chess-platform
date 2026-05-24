@@ -35,9 +35,27 @@ export default function SignUpPage() {
     // On success the browser is redirected to the provider — no need to clear state.
   }
 
+  function translateServerError(message: string): string {
+    const lower = message.toLowerCase()
+    if (lower.includes('already registered') || lower.includes('already been registered')) {
+      return t('auth.serverError.emailAlreadyRegistered')
+    }
+    if (lower.includes('failed to fetch') || lower.includes('networkerror') || lower.includes('network')) {
+      return t('auth.serverError.networkError')
+    }
+    if (lower.includes('too many requests') || lower.includes('rate limit')) {
+      return t('auth.serverError.tooManyRequests')
+    }
+    return message
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    const fieldErrors = validateSignUp(name, email, password, confirmPassword, tos)
+    setErrors({})
+    setServerError('')
+
+    const trimmedEmail = email.trim()
+    const fieldErrors = validateSignUp(name, trimmedEmail, password, confirmPassword, tos)
     if (Object.keys(fieldErrors).length > 0) {
       const translated: Record<string, string> = {}
       for (const [k, v] of Object.entries(fieldErrors)) {
@@ -47,17 +65,17 @@ export default function SignUpPage() {
       return
     }
 
-    setErrors({})
-    setServerError('')
     setSubmitting(true)
 
     try {
-      const { error } = await signUp(name, email, password)
+      const { error } = await signUp(name, trimmedEmail, password)
       if (error) {
-        setServerError(error.message)
+        setServerError(translateServerError(error.message))
         return
       }
       navigate('/check-email')
+    } catch {
+      setServerError(t('auth.serverError.networkError'))
     } finally {
       setSubmitting(false)
     }

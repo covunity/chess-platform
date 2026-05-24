@@ -28,9 +28,10 @@ export function validateSignUp(
     errors.name = 'validation.nameTooLong'
   }
 
-  if (!email.trim()) {
+  const trimmedEmail = email.trim()
+  if (!trimmedEmail) {
     errors.email = 'validation.required'
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
     errors.email = 'validation.emailInvalid'
   }
 
@@ -60,9 +61,10 @@ export function validateSignUp(
 export function validateLogin(email: string, password: string): LoginErrors {
   const errors: LoginErrors = {}
 
-  if (!email.trim()) {
+  const trimmedEmail = email.trim()
+  if (!trimmedEmail) {
     errors.email = 'validation.required'
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
     errors.email = 'validation.emailInvalid'
   }
 
@@ -74,8 +76,9 @@ export function validateLogin(email: string, password: string): LoginErrors {
 }
 
 export function validateEmail(email: string): { email?: string } {
-  if (!email.trim()) return { email: 'validation.required' }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { email: 'validation.emailInvalid' }
+  const trimmed = email.trim()
+  if (!trimmed) return { email: 'validation.required' }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return { email: 'validation.emailInvalid' }
   return {}
 }
 

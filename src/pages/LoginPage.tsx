@@ -38,9 +38,30 @@ export default function LoginPage() {
     }
   }
 
+  function translateServerError(message: string): string {
+    const lower = message.toLowerCase()
+    if (lower.includes('invalid login credentials') || lower.includes('invalid_credentials')) {
+      return t('auth.serverError.invalidCredentials')
+    }
+    if (lower.includes('email not confirmed')) {
+      return t('auth.serverError.emailNotConfirmed')
+    }
+    if (lower.includes('failed to fetch') || lower.includes('networkerror') || lower.includes('network')) {
+      return t('auth.serverError.networkError')
+    }
+    if (lower.includes('too many requests') || lower.includes('rate limit')) {
+      return t('auth.serverError.tooManyRequests')
+    }
+    return message
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    const fieldErrors = validateLogin(email, password)
+    setErrors({})
+    setServerError('')
+
+    const trimmedEmail = email.trim()
+    const fieldErrors = validateLogin(trimmedEmail, password)
     if (Object.keys(fieldErrors).length > 0) {
       const translated: Record<string, string> = {}
       for (const [k, v] of Object.entries(fieldErrors)) {
@@ -50,14 +71,12 @@ export default function LoginPage() {
       return
     }
 
-    setErrors({})
-    setServerError('')
     setSubmitting(true)
 
     try {
-      const { error } = await signIn(email, password)
+      const { error } = await signIn(trimmedEmail, password)
       if (error) {
-        setServerError(error.message)
+        setServerError(translateServerError(error.message))
         return
       }
       if (getPendingAccountApplication()) {
@@ -65,6 +84,8 @@ export default function LoginPage() {
       } else {
         navigate('/')
       }
+    } catch {
+      setServerError(t('auth.serverError.networkError'))
     } finally {
       setSubmitting(false)
     }

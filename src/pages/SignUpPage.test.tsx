@@ -161,7 +161,7 @@ describe('SignUpPage', () => {
     await userEvent.click(screen.getByRole('checkbox'))
     await userEvent.click(screen.getByRole('button', { name: /tạo tài khoản/i }))
     await waitFor(() => {
-      expect(screen.getByText(/email already registered/i)).toBeInTheDocument()
+      expect(screen.getByText(/email này đã được đăng ký/i)).toBeInTheDocument()
     })
   })
 

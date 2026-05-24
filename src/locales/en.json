@@ -663,6 +663,13 @@
       "successTitle": "Password updated",
       "successBody": "Your password has been reset successfully. You can now sign in with your new password."
     },
+    "serverError": {
+      "invalidCredentials": "Incorrect email or password. Please try again.",
+      "emailNotConfirmed": "Email not verified. Please check your inbox.",
+      "emailAlreadyRegistered": "This email is already registered. Please sign in or use a different email.",
+      "networkError": "Cannot connect to server. Please check your internet connection and try again.",
+      "tooManyRequests": "Too many attempts. Please wait a moment and try again."
+    },
     "validation": {
       "required": "This field is required.",
       "emailInvalid": "Invalid email address.",
