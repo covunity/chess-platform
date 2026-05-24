@@ -5,11 +5,14 @@ import { useTranslation } from 'react-i18next'
 import AuthLayout from '../components/auth/AuthLayout'
 import { useAuth } from '../context/AuthContext'
 import { validateSignUp } from '../lib/authValidation'
+import { GoogleIcon, FacebookIcon } from '../components/icons/BrandIcons'
+
+type OAuthProvider = 'google' | 'facebook'
 
 export default function SignUpPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { signUp } = useAuth()
+  const { signUp, signInWithOAuth } = useAuth()
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -19,6 +22,18 @@ export default function SignUpPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [serverError, setServerError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [oauthLoading, setOauthLoading] = useState<OAuthProvider | null>(null)
+
+  async function handleOAuth(provider: OAuthProvider) {
+    setServerError('')
+    setOauthLoading(provider)
+    const { error } = await signInWithOAuth(provider)
+    if (error) {
+      setServerError(t('auth.errors.oauthFailed', { provider: provider === 'google' ? 'Google' : 'Facebook' }))
+      setOauthLoading(null)
+    }
+    // On success the browser is redirected to the provider — no need to clear state.
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -55,11 +70,33 @@ export default function SignUpPage() {
       <p className="auth-helper">{t('auth.signup.helper')}</p>
 
       <div className="auth-oauth">
-        <button type="button" className="btn btn-secondary" disabled>
-          {t('auth.signup.googleBtn')}
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={() => handleOAuth('google')}
+          disabled={oauthLoading !== null || submitting}
+          aria-busy={oauthLoading === 'google'}
+        >
+          {oauthLoading === 'google' ? (
+            <span className="btn-spinner" aria-hidden="true" />
+          ) : (
+            <GoogleIcon />
+          )}
+          <span>{t('auth.signup.googleBtn')}</span>
         </button>
-        <button type="button" className="btn btn-secondary" disabled>
-          {t('auth.signup.facebookBtn')}
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={() => handleOAuth('facebook')}
+          disabled={oauthLoading !== null || submitting}
+          aria-busy={oauthLoading === 'facebook'}
+        >
+          {oauthLoading === 'facebook' ? (
+            <span className="btn-spinner" aria-hidden="true" />
+          ) : (
+            <FacebookIcon />
+          )}
+          <span>{t('auth.signup.facebookBtn')}</span>
         </button>
       </div>
 

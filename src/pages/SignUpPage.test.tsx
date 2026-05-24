@@ -8,6 +8,7 @@ import SignUpPage from './SignUpPage'
 import { AuthContext } from '../context/AuthContext'
 
 const mockSignUp = vi.fn()
+const mockSignInWithOAuth = vi.fn()
 const mockNavigate = vi.fn()
 
 vi.mock('react-router-dom', async () => {
@@ -21,6 +22,7 @@ function makeAuthContext(overrides = {}) {
     loading: false,
     signUp: mockSignUp,
     signIn: vi.fn(),
+    signInWithOAuth: mockSignInWithOAuth,
     signOut: vi.fn(),
     resetPassword: vi.fn(),
     updatePassword: vi.fn(),
@@ -44,6 +46,7 @@ describe('SignUpPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockSignUp.mockResolvedValue({ error: null })
+    mockSignInWithOAuth.mockResolvedValue({ error: null })
   })
 
   it('renders the sign up heading', () => {
@@ -159,6 +162,31 @@ describe('SignUpPage', () => {
     await userEvent.click(screen.getByRole('button', { name: /tạo tài khoản/i }))
     await waitFor(() => {
       expect(screen.getByText(/email already registered/i)).toBeInTheDocument()
+    })
+  })
+
+  it('calls signInWithOAuth with google when the Google button is clicked', async () => {
+    renderPage()
+    await userEvent.click(screen.getByRole('button', { name: /đăng nhập bằng google/i }))
+    await waitFor(() => {
+      expect(mockSignInWithOAuth).toHaveBeenCalledWith('google')
+    })
+  })
+
+  it('calls signInWithOAuth with facebook when the Facebook button is clicked', async () => {
+    renderPage()
+    await userEvent.click(screen.getByRole('button', { name: /đăng nhập bằng facebook/i }))
+    await waitFor(() => {
+      expect(mockSignInWithOAuth).toHaveBeenCalledWith('facebook')
+    })
+  })
+
+  it('shows oauth error when signInWithOAuth fails', async () => {
+    mockSignInWithOAuth.mockResolvedValue({ error: new Error('boom') })
+    renderPage()
+    await userEvent.click(screen.getByRole('button', { name: /đăng nhập bằng google/i }))
+    await waitFor(() => {
+      expect(screen.getByText(/đăng nhập bằng google không thành công/i)).toBeInTheDocument()
     })
   })
 

@@ -38,6 +38,7 @@ import ProfilePage from './pages/ProfilePage'
 import NotFoundPage from './pages/NotFoundPage'
 import SignUpPage from './pages/SignUpPage'
 import LoginPage from './pages/LoginPage'
+import AuthCallbackPage from './pages/AuthCallbackPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import CheckEmailPage from './pages/CheckEmailPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
@@ -99,6 +100,7 @@ export default function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/check-email" element={<CheckEmailPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
         {/* Public section — with TopNav + Footer */}
         <Route element={<PublicShell />}>

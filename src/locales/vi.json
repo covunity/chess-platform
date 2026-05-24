@@ -1219,6 +1219,15 @@
       "passwordNeedsNumber": "Mật khẩu phải có ít nhất một chữ số.",
       "passwordsNoMatch": "Mật khẩu xác nhận không khớp.",
       "tosRequired": "Bạn phải đồng ý với điều khoản dịch vụ."
+    },
+    "callback": {
+      "eyebrow": "Xác thực",
+      "processing": "Đang xác thực…",
+      "helper": "Vui lòng đợi trong giây lát."
+    },
+    "errors": {
+      "oauthFailed": "Đăng nhập bằng {{provider}} không thành công. Vui lòng thử lại.",
+      "oauthCallbackFailed": "Không thể hoàn tất đăng nhập. Vui lòng thử lại."
     }
   },
   "player": {

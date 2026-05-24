@@ -24,6 +24,7 @@ export interface AuthContextValue {
   profileLoading: boolean
   signUp: (name: string, email: string, password: string, extraData?: Record<string, unknown>, emailRedirectTo?: string) => Promise<{ error: Error | null; session: Session | null }>
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
+  signInWithOAuth: (provider: 'google' | 'facebook') => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<{ error: Error | null }>
   updatePassword: (password: string) => Promise<{ error: Error | null }>
@@ -82,6 +83,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error }
   }
 
+  async function signInWithOAuth(provider: 'google' | 'facebook') {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    })
+    return { error }
+  }
+
   async function signOut() {
     await supabase.auth.signOut()
   }
@@ -101,7 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, profile, profileLoading, signUp, signIn, signOut, resetPassword, updatePassword, updateProfile }}>
+    <AuthContext.Provider value={{ user, loading, profile, profileLoading, signUp, signIn, signInWithOAuth, signOut, resetPassword, updatePassword, updateProfile }}>
       {children}
     </AuthContext.Provider>
   )

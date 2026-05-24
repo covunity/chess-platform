@@ -15,6 +15,8 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
   const navigate = useNavigate()
   const { user, profile, signOut } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [avatarErrorUrl, setAvatarErrorUrl] = useState<string | null>(null)
+  const showAvatarImg = !!profile?.avatar_url && avatarErrorUrl !== profile.avatar_url
   const menuRef = useRef<HTMLDivElement>(null)
   const [searchParams, setSearchParams] = useSearchParams()
   const searchRef = useRef<HTMLInputElement>(null)
@@ -320,10 +322,12 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
               }}
             >
               <span className="avatar" style={{ flexShrink: 0, overflow: 'hidden' }}>
-                {profile?.avatar_url ? (
+                {showAvatarImg ? (
                   <img
-                    src={profile.avatar_url}
-                    alt={profile.name ?? user.email ?? ''}
+                    src={profile!.avatar_url!}
+                    alt={profile!.name ?? user.email ?? ''}
+                    referrerPolicy="no-referrer"
+                    onError={() => setAvatarErrorUrl(profile!.avatar_url)}
                     style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
                   />
                 ) : (

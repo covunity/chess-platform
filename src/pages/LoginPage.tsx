@@ -1,22 +1,42 @@
 import type { FormEvent } from 'react'
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import AuthLayout from '../components/auth/AuthLayout'
 import { useAuth } from '../context/AuthContext'
 import { validateLogin } from '../lib/authValidation'
 import { getPendingAccountApplication } from '../lib/pendingAccountApplication'
+import { GoogleIcon, FacebookIcon } from '../components/icons/BrandIcons'
+
+type OAuthProvider = 'google' | 'facebook'
 
 export default function LoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { signIn } = useAuth()
+  const [searchParams] = useSearchParams()
+  const { signIn, signInWithOAuth } = useAuth()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [serverError, setServerError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [oauthLoading, setOauthLoading] = useState<OAuthProvider | null>(null)
+
+  const oauthCallbackError = searchParams.get('error') === 'oauth_failed'
+    ? t('auth.errors.oauthCallbackFailed')
+    : ''
+  const displayedServerError = serverError || oauthCallbackError
+
+  async function handleOAuth(provider: OAuthProvider) {
+    setServerError('')
+    setOauthLoading(provider)
+    const { error } = await signInWithOAuth(provider)
+    if (error) {
+      setServerError(t('auth.errors.oauthFailed', { provider: provider === 'google' ? 'Google' : 'Facebook' }))
+      setOauthLoading(null)
+    }
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -57,11 +77,33 @@ export default function LoginPage() {
       <p className="auth-helper">{t('auth.login.helper')}</p>
 
       <div className="auth-oauth">
-        <button type="button" className="btn btn-secondary" disabled>
-          {t('auth.login.googleBtn')}
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={() => handleOAuth('google')}
+          disabled={oauthLoading !== null || submitting}
+          aria-busy={oauthLoading === 'google'}
+        >
+          {oauthLoading === 'google' ? (
+            <span className="btn-spinner" aria-hidden="true" />
+          ) : (
+            <GoogleIcon />
+          )}
+          <span>{t('auth.login.googleBtn')}</span>
         </button>
-        <button type="button" className="btn btn-secondary" disabled>
-          {t('auth.login.facebookBtn')}
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={() => handleOAuth('facebook')}
+          disabled={oauthLoading !== null || submitting}
+          aria-busy={oauthLoading === 'facebook'}
+        >
+          {oauthLoading === 'facebook' ? (
+            <span className="btn-spinner" aria-hidden="true" />
+          ) : (
+            <FacebookIcon />
+          )}
+          <span>{t('auth.login.facebookBtn')}</span>
         </button>
       </div>
 
@@ -69,8 +111,8 @@ export default function LoginPage() {
         <span>{t('auth.login.orWithEmail')}</span>
       </div>
 
-      {serverError && (
-        <p role="alert" className="auth-server-error">{serverError}</p>
+      {displayedServerError && (
+        <p role="alert" className="auth-server-error">{displayedServerError}</p>
       )}
 
       <form onSubmit={handleSubmit} noValidate>

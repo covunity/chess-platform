@@ -473,7 +473,26 @@ body {
   gap: 12px;
   margin-bottom: 20px;
 }
-.auth-oauth .btn { flex: 1; font-size: 13px; }
+.auth-oauth .btn {
+  flex: 1;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.auth-oauth .btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+.btn-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: btn-spinner-rotate 0.7s linear infinite;
+  display: inline-block;
+}
+@keyframes btn-spinner-rotate { to { transform: rotate(360deg); } }
 
 .auth-divider {
   display: flex;

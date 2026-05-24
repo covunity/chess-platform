@@ -8,6 +8,7 @@ import LoginPage from './LoginPage'
 import { AuthContext } from '../context/AuthContext'
 
 const mockSignIn = vi.fn()
+const mockSignInWithOAuth = vi.fn()
 const mockNavigate = vi.fn()
 
 const { mockGetPendingAccountApplication } = vi.hoisted(() => ({
@@ -31,6 +32,7 @@ function makeAuthContext(overrides = {}) {
     loading: false,
     signUp: vi.fn(),
     signIn: mockSignIn,
+    signInWithOAuth: mockSignInWithOAuth,
     signOut: vi.fn(),
     resetPassword: vi.fn(),
     updatePassword: vi.fn(),
@@ -54,6 +56,7 @@ describe('LoginPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockSignIn.mockResolvedValue({ error: null })
+    mockSignInWithOAuth.mockResolvedValue({ error: null })
     mockGetPendingAccountApplication.mockReturnValue(null)
   })
 
@@ -124,6 +127,31 @@ describe('LoginPage', () => {
   it('has a link to create account', () => {
     renderPage()
     expect(screen.getByRole('link', { name: /tạo tài khoản/i })).toHaveAttribute('href', '/signup')
+  })
+
+  it('calls signInWithOAuth with google when the Google button is clicked', async () => {
+    renderPage()
+    await userEvent.click(screen.getByRole('button', { name: /google/i }))
+    await waitFor(() => {
+      expect(mockSignInWithOAuth).toHaveBeenCalledWith('google')
+    })
+  })
+
+  it('calls signInWithOAuth with facebook when the Facebook button is clicked', async () => {
+    renderPage()
+    await userEvent.click(screen.getByRole('button', { name: /facebook/i }))
+    await waitFor(() => {
+      expect(mockSignInWithOAuth).toHaveBeenCalledWith('facebook')
+    })
+  })
+
+  it('shows oauth error when signInWithOAuth fails', async () => {
+    mockSignInWithOAuth.mockResolvedValue({ error: new Error('boom') })
+    renderPage()
+    await userEvent.click(screen.getByRole('button', { name: /google/i }))
+    await waitFor(() => {
+      expect(screen.getByText(/đăng nhập bằng google không thành công/i)).toBeInTheDocument()
+    })
   })
 
   it('redirects to /become-creator after login when pendingAccountApplication exists', async () => {
