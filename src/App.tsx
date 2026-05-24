@@ -33,6 +33,7 @@ import BecomeCreatorPage from './pages/BecomeCreatorPage'
 import TermsPage from './pages/TermsPage'
 import PrivacyPage from './pages/PrivacyPage'
 import HelpPage from './pages/HelpPage'
+import DataDeletionPage from './pages/DataDeletionPage'
 import ProfilePage from './pages/ProfilePage'
 import NotFoundPage from './pages/NotFoundPage'
 import SignUpPage from './pages/SignUpPage'
@@ -118,6 +119,7 @@ export default function App() {
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/help" element={<HelpPage />} />
+          <Route path="/data-deletion" element={<DataDeletionPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
         </Routes>
