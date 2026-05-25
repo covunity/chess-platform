@@ -87,7 +87,6 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   const [description, setDescription] = useState(lesson.description ?? '');
   const [pgn] = useState(lesson.pgn_data);
   const [perspective, setPerspective] = useState<"white" | "black">(lesson.board_perspective);
-  const [isFreePreview] = useState(lesson.is_free_preview);
   const [hasRewindMode, setHasRewindMode] = useState(lesson.has_rewind_mode ?? false);
   // True when this lesson row is the auto-managed Rewind sibling of another
   // source lesson — the editor switches to a read-only banner because the
@@ -166,7 +165,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
       const startingFen = rootFen !== STANDARD_FEN ? rootFen : undefined;
       pgnToSave = serializePgn(treeState.tree, startingFen);
     }
-    onSave({ pgn_data: pgnToSave, board_perspective: perspective, is_free_preview: isFreePreview, title, description: description || null, has_rewind_mode: hasRewindMode });
+    onSave({ pgn_data: pgnToSave, board_perspective: perspective, is_free_preview: lesson.is_free_preview, title, description: description || null, has_rewind_mode: hasRewindMode });
   };
 
   useEffect(() => {
