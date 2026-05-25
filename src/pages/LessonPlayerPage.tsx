@@ -296,6 +296,7 @@ export default function LessonPlayerPage() {
   const [showToast, setShowToast] = useState(false)
   const [completedLessonIds, setCompletedLessonIds] = useState<Set<string>>(new Set())
   const [playerState, setPlayerState] = useState<{ lessonId: string; lesson: PlayerLesson; videoUrl: string | null; videoFormat: 'mp4' | 'hls'; videoEmbedUrl: string | null; videoError: string | null; videoCompleted: boolean } | null>(null)
+  const [playerLoadError, setPlayerLoadError] = useState<{ lessonId: string } | null>(null)
   const playerLesson = playerState?.lessonId === currentLessonId ? playerState.lesson : null
   const videoUrl = playerState?.lessonId === currentLessonId ? playerState.videoUrl : null
   const videoFormat = playerState?.lessonId === currentLessonId ? playerState.videoFormat : 'mp4'
@@ -477,8 +478,13 @@ export default function LessonPlayerPage() {
     if (!lesson) return
 
     let cancelled = false
+    setPlayerLoadError(null)
     getLessonForPlayer(supabase, currentLessonId).then(({ lesson: pl }) => {
-      if (cancelled || !pl) return
+      if (cancelled) return
+      if (!pl) {
+        setPlayerLoadError({ lessonId: currentLessonId })
+        return
+      }
       if (pl.type === 'video') {
         getVideoPlaybackInfo(supabase, pl.id).then(({ url, format, embedUrl, error }) => {
           if (cancelled) return
@@ -821,6 +827,13 @@ export default function LessonPlayerPage() {
                   <span style={{ color: 'var(--ink-3)', fontSize: 13 }}>{t('player.loading', 'Đang tải...')}</span>
                 </div>
               )}
+            </div>
+          ) : playerLoadError?.lessonId === currentLessonId ? (
+            <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ textAlign: 'center', color: 'var(--ink-3)' }}>
+                <div style={{ fontSize: 32, marginBottom: 12 }}>⚠️</div>
+                <div style={{ fontSize: 13 }}>{t('player.lessonLoadError', 'Không thể tải bài học. Vui lòng thử lại.')}</div>
+              </div>
             </div>
           ) : (
             <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center' }}>

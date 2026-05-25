@@ -1248,7 +1248,8 @@
     "bookmarkedToast": "Đã bookmark · {{moveLabel}}",
     "bookmarkUndo": "Hoàn tác",
     "bookmarkMoveLabel": "Nước {{played}} / {{total}}",
-    "adminWatermark": "Admin preview · không enrolled"
+    "adminWatermark": "Admin preview · không enrolled",
+    "lessonLoadError": "Không thể tải bài học. Vui lòng thử lại."
   },
   "dashboard": {
     "welcome": "CHÀO MỪNG TRỞ LẠI, {{name}}",

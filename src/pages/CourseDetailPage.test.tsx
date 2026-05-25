@@ -461,27 +461,14 @@ describe('CourseDetailPage', () => {
   })
 
   describe('free preview interaction', () => {
-    it('clicking free-preview pill opens preview modal', async () => {
+    it('clicking free-preview pill navigates to lesson player', async () => {
       const user = userEvent.setup()
       mockGetCourseDetail.mockResolvedValue({ course: sampleCourse, error: null })
       renderPage(noAuthContext)
       await waitFor(() => screen.getByTestId('free-preview-pill-l1'))
       await user.click(screen.getByTestId('free-preview-pill-l1'))
       await waitFor(() => {
-        expect(screen.getByTestId('preview-modal')).toBeInTheDocument()
-      })
-    })
-
-    it('preview modal can be closed', async () => {
-      const user = userEvent.setup()
-      mockGetCourseDetail.mockResolvedValue({ course: sampleCourse, error: null })
-      renderPage(noAuthContext)
-      await waitFor(() => screen.getByTestId('free-preview-pill-l1'))
-      await user.click(screen.getByTestId('free-preview-pill-l1'))
-      await waitFor(() => screen.getByTestId('preview-modal'))
-      await user.click(screen.getByTestId('close-preview-modal'))
-      await waitFor(() => {
-        expect(screen.queryByTestId('preview-modal')).not.toBeInTheDocument()
+        expect(screen.getByTestId('lesson-player-page')).toBeInTheDocument()
       })
     })
 

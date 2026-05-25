@@ -204,15 +204,17 @@ function LessonRow({ lesson, onDelete, onToggleFreePreview, onOpenEditor, t }: L
         style={{
           fontSize: 11,
           height: 20,
-          background: lesson.free_preview ? 'var(--accent-soft)' : undefined,
-          color: lesson.free_preview ? 'var(--accent-ink)' : undefined,
+          background: lesson.free_preview ? 'var(--accent-soft)' : 'var(--surface-2)',
+          color: lesson.free_preview ? 'var(--accent-ink)' : 'var(--ink-3)',
           cursor: 'pointer',
           border: 'none',
         }}
         onClick={() => onToggleFreePreview(lesson)}
         title={t('creator.courseEdit.freePreview')}
       >
-        {t('creator.courseEdit.freePreview')}
+        {lesson.free_preview
+          ? `✓ ${t('creator.courseEdit.freePreview')}`
+          : t('creator.courseEdit.freePreview')}
       </button>
       <button
         type="button"

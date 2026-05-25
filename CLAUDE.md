@@ -42,9 +42,9 @@ UI language: **Vietnamese** (i18n-ready via react-i18next; all strings in `vi.js
 | Routing | React Router v6 |
 | Styling | Tailwind CSS + shadcn/ui |
 | i18n | react-i18next (`vi.json` primary; `en.json` later) |
-| Chess | chess.js + chessboard.js (CDN) |
+| Chess | chess.js + chessground (npm) |
 | Backend / DB | Supabase (PostgreSQL + Auth + Storage) |
-| Video | Supabase Storage (MP4 progressive, signed URLs, 50 MB max). Provider-pluggable via `src/lib/video/`; Phase 2 will switch to Cloudflare Stream for HLS adaptive — see `docs/adr/0001-video-storage-supabase.md`. |
+| Video | Bunny Stream (HLS adaptive, signed URLs). Provider-pluggable via `src/lib/video/`; legacy Supabase Storage rows still play back via `getProvider(lesson.video_provider)`. See `docs/adr/0001-video-storage-supabase.md`. |
 | QR Payment | VietQR API (`img.vietqr.io`) |
 | Email | Resend (low priority — build after core loop) |
 | Deployment | Vercel (frontend) + Supabase (backend) |
@@ -122,9 +122,8 @@ draft ↔ published   (creator self-publish; no admin gate — see ADR-0008)
 
 | Type | Description |
 |------|-------------|
-| `video` | MP4 (H.264 + AAC) upload via Supabase Storage in Phase 1. Max 50 MB. Phase 2 will switch to Cloudflare Stream for HLS adaptive — see `docs/adr/0001-video-storage-supabase.md`. |
+| `video` | Bunny Stream (HLS + MP4 fallback). Signed playback URLs minted by the `get-video-playback` edge function (service role). |
 | `chess` | PGN guided mode with inline `{ }` annotations and `(...)` variation trees per ADR-0004. |
-| `puzzle` | Puzzle Rewind — interactive puzzle with correct/mistake-branch variations, per-node shapes, rich-text notes; activates `lesson_type='puzzle'`. Learner side set via `puzzle_player_side`. |
 | `practice` | Bookmark-based review — replays a chess lesson from the beginning. Powered by `PracticePage`; no separate lesson type row (uses the bookmarked `chess` lesson). |
 
 ### Order status flow
@@ -166,7 +165,7 @@ Platform fee stored per tier in `account_tiers.platform_fee_pct`. The global `co
 | D-08 | PGN annotations use standard `{ }` comment syntax parsed by chess.js. |
 | D-09 | Board perspective (White/Black) set per lesson by Creator. |
 | D-10 | Wrong move: piece snaps back + red highlight ~1 second. No popup. |
-| D-11 | Hint: uses chessboard.js native square highlighting. No custom arrows. |
+| D-11 | Hint: uses chessground `drawable.autoShapes` to highlight the target square. No custom SVG overlay. |
 | D-12 | No backward navigation in guided mode. Bookmark + practice is the review mechanism. |
 | D-13 | Video complete threshold: **≥80%** of video duration watched. |
 | D-14 | Email notifications are low priority — build after core loop is validated. |
@@ -178,9 +177,8 @@ Platform fee stored per tier in `account_tiers.platform_fee_pct`. The global `co
 | D-20 | ToS and Privacy Policy are static pages. |
 | D-21 | Board-direct authoring co-exists with PGN; PGN is hidden behind a per-user `users.editor_advanced` toggle in Profile settings. Default is board-only. |
 | D-22 | Shapes attach to **nodes** in the variation tree, not to board positions; stored and round-tripped via structured PGN comments (`[gambitly:v1]{...}`). |
-| D-23 | Puzzle `purpose='mistake'` variations animate, show a 1 500 ms note banner, then auto-undo — they are **not** counted as wrong attempts for the hint counter. |
-| D-24 | Viewer mode (`is_view_only`) is a per-lesson opt-in for `type='chess'` only; D-12 forward-only still holds for interactive lesson and puzzle modes. |
-| D-25 | Zustand introduced for editor state only (`treeStore`); player, viewer, and puzzle modes remain on local `useState`. |
+| D-24 | Viewer mode (`is_view_only`) is a per-lesson opt-in for `type='chess'` only; D-12 forward-only still holds for interactive lesson mode. |
+| D-25 | Zustand introduced for editor state only (`treeStore`); player and viewer modes remain on local `useState`. |
 
 #### Enterprise account tier decisions (ADR-0002, PRD-0001)
 
@@ -230,12 +228,12 @@ Platform fee stored per tier in `account_tiers.platform_fee_pct`. The global `co
 | V-17 | PGN-to-tree parser is a **custom recursive-descent tokenizer** tracking `(...)` depth — not `chess.js loadPgn` (which discards parenthesised content). `chess.js` is used only for per-node FEN computation by replaying the path from root. |
 | V-18 | Leaf-completion fires regardless of which side is to move at the leaf. UI omits “your turn” prompt at a leaf. |
 
-#### Board authoring + puzzle rewind decisions (PRD-0004 — in flight)
+#### Board authoring decisions (PRD-0004 — shipped)
 
-PRD-0004 design decisions (D-21 through D-25) land with slice 12 (issue #199). Architectural decisions are recorded ahead of code:
+PRD-0004 design decisions (D-21 through D-25) landed with slice 12 (issue #199):
 
-- **ADR-0005** — Migrate board library from `react-chessboard` to `chessground` for native arrow/marker support and the chess-standard right-click + Shift/Alt/Ctrl drawing vocabulary.
-- **ADR-0006** — Introduce Zustand for editor state only (`treeStore`); player + viewer + puzzle modes stay on local `useState`.
+- **ADR-0005** — Migrated board library from `react-chessboard` to `chessground` for native arrow/marker support and the chess-standard right-click + Shift/Alt/Ctrl drawing vocabulary.
+- **ADR-0006** — Introduced Zustand for editor state only (`treeStore`); player and viewer modes stay on local `useState`.
 
 ---
 
@@ -270,31 +268,21 @@ The following are explicitly **deferred to Phase 2**:
 
 ## 9. Video Upload — Critical Implementation Notes
 
-> Phase 1 ships **Supabase Storage** behind a `VideoProvider` adapter so we can swap in
-> Cloudflare Stream in Phase 2 without touching UI code. See ADR-0001.
+> Current provider: **Bunny Stream** (HLS adaptive, signed URLs). Supabase Storage is legacy — existing rows still play back via `getProvider(lesson.video_provider)` but new uploads go to Bunny. See ADR-0001.
 
-- Provider lookup: `getDefaultProvider()` (env-selected) for new uploads;
-  `getProvider(lesson.video_provider)` for playback so old rows keep working.
-- Upload: `tus-js-client` directly to Supabase Storage `/storage/v1/upload/resumable`,
-  authenticated with the user's Supabase JWT. Bucket `lesson-videos` is private.
-- Object path convention: `<auth.uid()>/<lesson_id>/<filename>`. RLS on
-  `storage.objects` requires the first segment to match `auth.uid()` and the user's
-  role to be `creator` or `admin`.
-- Constraints (Phase 1): MP4 only, max **50 MB** per file (matches Supabase free tier).
-  Both client (`validateVideoFile`) and bucket (`allowed_mime_types`, `file_size_limit`)
-  enforce this.
-- Playback: server-side `supabase.storage.from('lesson-videos').createSignedUrl(path, 4h)`.
-  Only generate signed URLs for enrolled learners or for `free_preview` lessons.
+- Provider lookup: `getDefaultProvider()` (env-selected, currently Bunny) for new uploads;
+  `getProvider(lesson.video_provider)` for playback so legacy Supabase Storage rows keep working.
+- Upload: creator uploads via the Bunny Stream API; `video_provider_id` stores the Bunny video GUID.
 - DB columns are provider-neutral: `video_provider`, `video_provider_id`, `video_status`
   (`idle | uploading | processing | ready | error`), `video_filename`, `video_size_bytes`,
-  `video_mime`, `video_error`, `duration_seconds`. The `processing` state is reserved
-  for the Phase 2 Cloudflare encoding step.
-- Resumable upload: tus-js-client retry delays `[0, 3000, 5000, 10000, 20000]` and 6 MB
-  chunks. Progress bar + Cancel + Replace + Delete in the editor UI.
+  `video_mime`, `video_error`, `duration_seconds`.
+- Playback: `getVideoPlaybackInfo()` calls the `get_video_playback_info` RPC (enrollment check),
+  then the `get-video-playback` edge function mints a Bunny signed URL (4 h expiry) using the
+  service role key. Anonymous callers are allowed for `free_preview` lessons.
+- Bunny signed URL formula: `Base64URL(SHA256(apiKey + "/" + videoGuid + "/" + expiresAt))`.
 - Player: `<VideoView url format>` switches between MP4 (`<video>` native) and HLS
   (lazy-imports `hls.js` only on browsers that don't natively support HLS — Safari does).
-- ⚠️ Phase 1 has **no transcoding and no adaptive bitrate**. Creators must compress to
-  ~720p, H.264, ≲1500 kbps before uploading.
+- Signed playback URLs only served to enrolled learners, admins, course creators, or for `free_preview` lessons.
 
 ---
 
@@ -323,7 +311,7 @@ The following are explicitly **deferred to Phase 2**:
 
 - HTTPS enforced on all routes
 - Supabase Row Level Security (RLS) on all tables
-- Supabase Storage signed URLs for video playback (4h expiry); switches to Cloudflare Stream signed URLs in Phase 2
+- Bunny Stream signed URLs for video playback (4 h expiry), minted server-side by the `get-video-playback` edge function
 - CSRF protection
 - Signed playback URLs only served to enrolled Learners
 

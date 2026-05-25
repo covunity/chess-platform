@@ -390,91 +390,6 @@ function ReviewCard({ review }: { review: CourseDetail['reviews'][number] }) {
   )
 }
 
-function PreviewModal({
-  lesson,
-  onClose,
-}: {
-  lesson: CourseDetailLesson
-  onClose: () => void
-}) {
-  const { t } = useTranslation()
-  return (
-    <div
-      data-testid="preview-modal"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(15,17,20,0.75)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-      }}
-      onClick={onClose}
-    >
-      <div
-        className="card"
-        style={{ width: 560, padding: 32, position: 'relative' }}
-        onClick={e => e.stopPropagation()}
-      >
-        <button
-          type="button"
-          data-testid="close-preview-modal"
-          onClick={onClose}
-          style={{
-            position: 'absolute',
-            top: 16,
-            right: 16,
-            background: 'none',
-            border: 'none',
-            fontSize: 20,
-            cursor: 'pointer',
-            color: 'var(--ink-3)',
-          }}
-        >
-          {t('courseDetail.closeBtn')}
-        </button>
-        <h3
-          style={{
-            fontFamily: 'var(--font-serif)',
-            fontSize: 22,
-            marginBottom: 16,
-            color: 'var(--ink-1)',
-          }}
-        >
-          {lesson.title}
-        </h3>
-        {lesson.type === 'chess' || lesson.type === 'puzzle' ? (
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <ChessBoard fen={INITIAL_FEN} size={300} showCoords={false} />
-          </div>
-        ) : (
-          <div
-            style={{
-              aspectRatio: '16/9',
-              background: '#0f1114',
-              borderRadius: 'var(--r-md)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--ink-4)',
-              fontSize: 13,
-            }}
-          >
-            Video preview
-          </div>
-        )}
-        <div style={{ marginTop: 16, textAlign: 'right' }}>
-          <button type="button" className="btn btn-ghost" onClick={onClose}>
-            {t('courseDetail.closePreview')}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-
 // ── WriteReviewBlock ──────────────────────────────────────────────────────────
 
 function WriteReviewBlock({
@@ -1186,7 +1101,7 @@ export default function CourseDetailPage() {
   const [loading, setLoading] = useState(true)
   const [isEnrolled, setIsEnrolled] = useState(false)
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set())
-  const [previewLesson, setPreviewLesson] = useState<CourseDetailLesson | null>(null)
+
   const [lockPromptOpen, setLockPromptOpen] = useState(false)
   const [enrolling, setEnrolling] = useState(false)
   const [userReview, setUserReview] = useState<Review | null>(null)
@@ -1799,7 +1714,7 @@ export default function CourseDetailPage() {
                   expanded={expandedChapters.has(chapter.id)}
                   onToggle={() => toggleChapter(chapter.id)}
                   isEnrolled={isEnrolled || isCourseCreator}
-                  onPreview={setPreviewLesson}
+                  onPreview={(lesson) => navigate(`/learn/${course!.id}/${lesson.id}`)}
                   onLock={() => setLockPromptOpen(true)}
                 />
               ))}
@@ -1896,9 +1811,7 @@ export default function CourseDetailPage() {
       </section>
 
       {/* ── Modals ──────────────────────────────────────────────────────────── */}
-      {previewLesson && (
-        <PreviewModal lesson={previewLesson} onClose={() => setPreviewLesson(null)} />
-      )}
+
       {lockPromptOpen && course && !isCourseCreator && (
         <PaywallSheet
           onClose={() => setLockPromptOpen(false)}
