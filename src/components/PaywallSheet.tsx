@@ -20,28 +20,6 @@ function formatPriceRaw(price: number): string {
   return String(price)
 }
 
-const PANEL_STYLE = `
-  .paywall-sheet-panel {
-    background: var(--surface-1);
-    border-radius: var(--r-lg);
-    width: 440px;
-    max-width: 100vw;
-    padding: 32px 32px 28px;
-    text-align: center;
-    position: relative;
-  }
-  @media (max-width: 640px) {
-    .paywall-sheet-panel {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      width: 100%;
-      max-width: 100%;
-      border-radius: var(--r-lg) var(--r-lg) 0 0;
-    }
-  }
-`
 
 export default function PaywallSheet({ onClose, course, isLoggedIn, onPurchase }: PaywallSheetProps) {
   const { t } = useTranslation()
@@ -69,7 +47,6 @@ export default function PaywallSheet({ onClose, course, isLoggedIn, onPurchase }
       }}
       onClick={onClose}
     >
-      <style>{PANEL_STYLE}</style>
       {/* Sheet panel */}
       <div
         className="paywall-sheet-panel"
