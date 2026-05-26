@@ -55,6 +55,8 @@ export interface LessonEditorProps {
   saveRef?: RefObject<(() => void) | null>;
   /** When true, shows the PGN (advanced) tab alongside the board surface. */
   editorAdvanced?: boolean;
+  /** Called when the user confirms removing the rewind sibling during a chess→video type switch. */
+  onRemoveRewindSibling?: () => Promise<void>;
 }
 
 const LESSON_TYPE_ICON: Record<LessonType, string> = {
@@ -76,7 +78,7 @@ function formatDuration(seconds: number | undefined | null): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectLesson, showSidebar = true, saveRef, editorAdvanced = false }: LessonEditorProps) {
+export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectLesson, showSidebar = true, saveRef, editorAdvanced = false, onRemoveRewindSibling }: LessonEditorProps) {
   const { t } = useTranslation();
   const tabLabels: Record<LessonType, string> = {
     video: t('creator.lessonEditor.tabVideo'),
@@ -113,6 +115,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lesson.id]);
   const [activeTab, setActiveTab] = useState<LessonType>(lesson.type ?? 'chess');
+  const [pendingTabSwitch, setPendingTabSwitch] = useState<LessonType | null>(null);
   const [puzzlePlayerSide, setPuzzlePlayerSide] = useState<'white' | 'black' | null>(
     lesson.puzzle_player_side ?? null
   );
@@ -256,7 +259,13 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
               type="button"
               data-testid={`lesson-type-tab-${value}`}
               aria-pressed={activeTab === value}
-              onClick={() => setActiveTab(value)}
+              onClick={() => {
+                if (value !== 'chess' && activeTab === 'chess' && hasRewindMode) {
+                  setPendingTabSwitch(value);
+                } else {
+                  setActiveTab(value);
+                }
+              }}
               style={{
                 padding: "6px 14px",
                 borderRadius: 999,
@@ -687,6 +696,46 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
           <VariationPanel store={treeStoreRef.current} />
         )}
       </div>
+
+      {/* Rewind-sibling removal confirmation dialog */}
+      {pendingTabSwitch !== null && (
+        <div
+          className="fixed inset-0 flex items-center justify-center"
+          style={{ background: 'rgba(20,22,26,0.4)', zIndex: 60 }}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="card" style={{ width: 380, padding: 24 }}>
+            <p className="text-sm font-medium mb-6" style={{ color: 'var(--ink-1)' }}>
+              {t('creator.lessonEditor.rewindRemoveOnTypeSwitch')}
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setPendingTabSwitch(null)}
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                data-testid="rewind-remove-confirm"
+                className="btn btn-sm"
+                style={{ background: 'var(--danger)', color: '#fff' }}
+                onClick={async () => {
+                  const target = pendingTabSwitch;
+                  setPendingTabSwitch(null);
+                  await onRemoveRewindSibling?.();
+                  setHasRewindMode(false);
+                  setActiveTab(target);
+                }}
+              >
+                {t('creator.lessonEditor.rewindRemoveConfirm')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -1030,7 +1030,9 @@
       "promoteVariation": "Đưa nhánh này thành chính",
       "deleteSubtree": "Xóa nước này và các nhánh con",
       "deleteSubtreeConfirm": "Xóa nhánh này?",
-      "deleteSubtreeConfirmBody": "Sẽ xóa {{count}} nước."
+      "deleteSubtreeConfirmBody": "Sẽ xóa {{count}} nước.",
+      "rewindRemoveOnTypeSwitch": "Bài này có một bài Rewind đi kèm. Nếu chuyển sang bài video, bài Rewind sẽ bị gỡ.",
+      "rewindRemoveConfirm": "Tiếp tục"
     },
     "deleteConfirm": {
       "title": "Xóa khóa học?",

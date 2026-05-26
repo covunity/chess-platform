@@ -686,6 +686,19 @@ export default function CourseEditPage() {
     await refreshReadiness()
   }
 
+  async function handleRemoveRewindSibling() {
+    if (!selectedLesson) return
+    const sibling = chapters
+      .flatMap(ch => ch.lessons ?? [])
+      .find(l => l.rewind_source_id === selectedLesson.id)
+    if (!sibling) return
+    await deleteLesson(supabase, sibling.id)
+    setChapters(prev => prev.map(ch => ({
+      ...ch,
+      lessons: (ch.lessons ?? []).filter(l => l.id !== sibling.id),
+    })))
+  }
+
   const selectedChapterLessons = selectedLesson
     ? (chapters.find(ch => ch.id === selectedLesson.chapter_id)?.lessons ?? [])
         .map(l => ({ id: l.id, title: l.title, type: l.type }))
@@ -859,6 +872,7 @@ export default function CourseEditPage() {
               if (lesson) { setSelectedLesson(lesson); setShowCourseInfo(false) }
             }}
             onSave={handleSaveLesson}
+            onRemoveRewindSibling={handleRemoveRewindSibling}
             showSidebar={false}
             saveRef={saveLessonRef}
           />
