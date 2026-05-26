@@ -627,13 +627,13 @@ export default function CourseEditPage() {
   }
 
   async function handleToggleFreePreview(lesson: Lesson) {
-    const updated = await updateLesson(supabase, lesson.id, { free_preview: !lesson.free_preview })
-    if (updated.lesson) {
-      setChapters(prev => prev.map(ch => ({
-        ...ch,
-        lessons: (ch.lessons ?? []).map(l => l.id === lesson.id ? { ...l, free_preview: !lesson.free_preview } : l),
-      })))
-    }
+    const newValue = !lesson.free_preview
+    setChapters(prev => prev.map(ch => ({
+      ...ch,
+      lessons: (ch.lessons ?? []).map(l => l.id === lesson.id ? { ...l, free_preview: newValue } : l),
+    })))
+    setSelectedLesson(prev => prev?.id === lesson.id ? { ...prev, free_preview: newValue } : prev)
+    await updateLesson(supabase, lesson.id, { free_preview: newValue })
   }
 
   async function handleSaveLesson(data: { type: LessonType; pgn_data: string; board_perspective: 'white' | 'black'; is_free_preview: boolean; title: string; description?: string | null; has_rewind_mode?: boolean }) {
