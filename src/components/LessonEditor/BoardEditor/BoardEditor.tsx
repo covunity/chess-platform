@@ -327,7 +327,7 @@ export default function BoardEditor({ store, onClose }: BoardEditorProps) {
             borderRadius: 999,
             border: '1px solid var(--border)',
             background: activeTab === 'fen' ? 'var(--ink-1)' : 'var(--surface)',
-            color: activeTab === 'fen' ? 'var(--ink-on-accent)' : 'var(--ink-2)',
+            color: activeTab === 'fen' ? 'var(--on-ink-1)' : 'var(--ink-2)',
             fontSize: 12,
             cursor: 'pointer',
           }}
@@ -343,7 +343,7 @@ export default function BoardEditor({ store, onClose }: BoardEditorProps) {
             borderRadius: 999,
             border: '1px solid var(--border)',
             background: activeTab === 'editor' ? 'var(--ink-1)' : 'var(--surface)',
-            color: activeTab === 'editor' ? 'var(--ink-on-accent)' : 'var(--ink-2)',
+            color: activeTab === 'editor' ? 'var(--on-ink-1)' : 'var(--ink-2)',
             fontSize: 12,
             cursor: 'pointer',
           }}
@@ -465,7 +465,7 @@ export default function BoardEditor({ store, onClose }: BoardEditorProps) {
                 border: `1px solid var(--border)`,
                 borderRadius: 'var(--r-sm)',
                 background: sideToMove === 'w' ? 'var(--ink-1)' : 'var(--surface)',
-                color: sideToMove === 'w' ? 'var(--ink-on-accent)' : 'var(--ink-2)',
+                color: sideToMove === 'w' ? 'var(--on-ink-1)' : 'var(--ink-2)',
                 cursor: 'pointer',
               }}
             >
@@ -481,7 +481,7 @@ export default function BoardEditor({ store, onClose }: BoardEditorProps) {
                 border: `1px solid var(--border)`,
                 borderRadius: 'var(--r-sm)',
                 background: sideToMove === 'b' ? 'var(--ink-1)' : 'var(--surface)',
-                color: sideToMove === 'b' ? 'var(--ink-on-accent)' : 'var(--ink-2)',
+                color: sideToMove === 'b' ? 'var(--on-ink-1)' : 'var(--ink-2)',
                 cursor: 'pointer',
               }}
             >
@@ -562,7 +562,7 @@ export default function BoardEditor({ store, onClose }: BoardEditorProps) {
             border: 'none',
             borderRadius: 'var(--r-sm)',
             background: 'var(--ink-1)',
-            color: 'var(--ink-on-accent)',
+            color: 'var(--on-ink-1)',
             cursor: 'pointer',
           }}
         >

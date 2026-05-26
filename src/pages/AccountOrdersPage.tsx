@@ -162,7 +162,7 @@ export default function AccountOrdersPage() {
             className="btn btn-sm"
             style={{
               background: filter === f ? 'var(--ink-1)' : 'var(--surface)',
-              color: filter === f ? 'var(--ink-on-accent)' : 'var(--ink-2)',
+              color: filter === f ? 'var(--on-ink-1)' : 'var(--ink-2)',
               border: '1px solid var(--border)',
             }}
           >

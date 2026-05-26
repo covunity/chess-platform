@@ -263,7 +263,7 @@ export default function AdminCreatorApplicationsPage() {
                   fontSize: 13,
                   fontWeight: tab === s ? 600 : 400,
                   background: tab === s ? 'var(--ink-1)' : 'transparent',
-                  color: tab === s ? 'var(--ink-on-accent)' : 'var(--ink-2)',
+                  color: tab === s ? 'var(--on-ink-1)' : 'var(--ink-2)',
                   cursor: 'pointer',
                   transition: 'background 0.12s, color 0.12s',
                 }}

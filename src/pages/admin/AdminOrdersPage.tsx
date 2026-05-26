@@ -536,7 +536,7 @@ export default function AdminOrdersPage() {
             className="btn btn-sm"
             style={{
               background: tab === 'pending' ? 'var(--ink-1)' : 'transparent',
-              color: tab === 'pending' ? 'var(--ink-on-accent)' : 'var(--ink-2)',
+              color: tab === 'pending' ? 'var(--on-ink-1)' : 'var(--ink-2)',
               border: '1px solid var(--border)',
             }}
           >
@@ -554,7 +554,7 @@ export default function AdminOrdersPage() {
             className="btn btn-sm"
             style={{
               background: tab === 'stale' ? 'var(--ink-1)' : 'transparent',
-              color: tab === 'stale' ? 'var(--ink-on-accent)' : 'var(--ink-2)',
+              color: tab === 'stale' ? 'var(--on-ink-1)' : 'var(--ink-2)',
               border: '1px solid var(--border)',
             }}
           >
@@ -570,7 +570,7 @@ export default function AdminOrdersPage() {
             className="btn btn-sm"
             style={{
               background: tab === 'refund' ? 'var(--ink-1)' : 'transparent',
-              color: tab === 'refund' ? 'var(--ink-on-accent)' : 'var(--ink-2)',
+              color: tab === 'refund' ? 'var(--on-ink-1)' : 'var(--ink-2)',
               border: '1px solid var(--border)',
             }}
           >
@@ -586,7 +586,7 @@ export default function AdminOrdersPage() {
             className="btn btn-sm"
             style={{
               background: tab === 'all' ? 'var(--ink-1)' : 'transparent',
-              color: tab === 'all' ? 'var(--ink-on-accent)' : 'var(--ink-2)',
+              color: tab === 'all' ? 'var(--on-ink-1)' : 'var(--ink-2)',
               border: '1px solid var(--border)',
             }}
           >
@@ -640,7 +640,7 @@ export default function AdminOrdersPage() {
                     aria-pressed={isActive}
                     style={{
                       background: isActive ? 'var(--ink-1)' : 'transparent',
-                      color: isActive ? 'var(--ink-on-accent)' : 'var(--ink-2)',
+                      color: isActive ? 'var(--on-ink-1)' : 'var(--ink-2)',
                       border: '1px solid var(--border)',
                       height: 36,
                     }}

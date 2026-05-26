@@ -690,7 +690,7 @@ export default function LessonPlayerPage() {
               left: '50%',
               transform: 'translateX(-50%)',
               background: 'var(--ink-1)',
-              color: 'var(--ink-on-accent)',
+              color: 'var(--on-ink-1)',
               borderRadius: 'var(--r-md)',
               padding: '12px 16px',
               display: 'flex',

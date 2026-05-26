@@ -179,7 +179,7 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
                 data-testid="nav-bookmark-badge"
                 style={{
                   background: 'var(--ink-1)',
-                  color: 'var(--ink-on-accent)',
+                  color: 'var(--on-ink-1)',
                   borderRadius: 999,
                   fontSize: 10.5,
                   fontWeight: 600,
