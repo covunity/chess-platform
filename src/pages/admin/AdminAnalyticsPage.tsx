@@ -63,7 +63,7 @@ function DeltaPill({ value, noneLabel }: DeltaProps) {
         data-testid="kpi-delta"
         data-direction="none"
         className="pill"
-        style={{ color: 'var(--ink-3)' }}
+        style={{ color: 'var(--ink-3)', alignSelf: 'flex-start' }}
       >
         {noneLabel}
       </span>
@@ -86,7 +86,7 @@ function DeltaPill({ value, noneLabel }: DeltaProps) {
       data-testid="kpi-delta"
       data-direction={direction}
       className="pill"
-      style={{ color, fontVariantNumeric: 'tabular-nums' }}
+      style={{ color, fontVariantNumeric: 'tabular-nums', alignSelf: 'flex-start' }}
     >
       {arrow} {magnitude}%
     </span>
