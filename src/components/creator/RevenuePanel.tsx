@@ -11,6 +11,7 @@ import {
 } from '../../lib/creatorWalletApi'
 import { maskAccount } from '../../lib/bankAccount'
 import { formatPrice } from '../../lib/utils'
+import { Skeleton } from '../ui/skeleton'
 
 const EMPTY_WALLET: CreatorWallet = {
   pendingBalance: 0,
@@ -28,13 +29,17 @@ interface Props {
   creatorId: string
 }
 
+const TABLE_SKELETON_ROWS = 3
+
 export default function RevenuePanel({ creatorId }: Props) {
   const { t } = useTranslation()
+  const [loading, setLoading] = useState(true)
   const [wallet, setWallet] = useState<CreatorWallet>(EMPTY_WALLET)
   const [earnings, setEarnings] = useState<RecentEarning[]>([])
   const [payouts, setPayouts] = useState<PayoutHistoryEntry[]>([])
 
   useEffect(() => {
+    setLoading(true)
     let cancelled = false
     async function load() {
       const [w, e, p] = await Promise.all([
@@ -46,6 +51,7 @@ export default function RevenuePanel({ creatorId }: Props) {
       setWallet(w.wallet)
       setEarnings(e.earnings)
       setPayouts(p.payouts)
+      setLoading(false)
     }
     void load()
     return () => {
@@ -74,17 +80,21 @@ export default function RevenuePanel({ creatorId }: Props) {
           >
             {t('creator.revenue.pendingBalance')}
           </div>
-          <div
-            style={{
-              fontFamily: 'var(--font-serif)',
-              fontSize: 32,
-              fontWeight: 600,
-              color: 'var(--ink-1)',
-              lineHeight: 1.1,
-            }}
-          >
-            {formatPrice(wallet.pendingBalance)}
-          </div>
+          {loading ? (
+            <Skeleton className="h-9 w-44" />
+          ) : (
+            <div
+              style={{
+                fontFamily: 'var(--font-serif)',
+                fontSize: 32,
+                fontWeight: 600,
+                color: 'var(--ink-1)',
+                lineHeight: 1.1,
+              }}
+            >
+              {formatPrice(wallet.pendingBalance)}
+            </div>
+          )}
         </div>
         <div
           data-testid="revenue-lifetime-earnings"
@@ -103,9 +113,13 @@ export default function RevenuePanel({ creatorId }: Props) {
           >
             {t('creator.revenue.lifetimeEarnings')}
           </div>
-          <div style={{ fontSize: 20, fontWeight: 600, color: 'var(--ink-2)' }}>
-            {formatPrice(wallet.lifetimeEarnings)}
-          </div>
+          {loading ? (
+            <Skeleton className="h-6 w-36" />
+          ) : (
+            <div style={{ fontSize: 20, fontWeight: 600, color: 'var(--ink-2)' }}>
+              {formatPrice(wallet.lifetimeEarnings)}
+            </div>
+          )}
         </div>
       </div>
       <p
@@ -123,7 +137,27 @@ export default function RevenuePanel({ creatorId }: Props) {
         >
           {t('creator.revenue.recentEarnings.heading')}
         </div>
-        {earnings.length === 0 ? (
+        {loading ? (
+          <div style={{ padding: '0 20px' }}>
+            {Array.from({ length: TABLE_SKELETON_ROWS }).map((_, i) => (
+              <div
+                key={i}
+                style={{
+                  display: 'flex',
+                  gap: 16,
+                  padding: '14px 0',
+                  borderTop: i > 0 ? '1px solid var(--border)' : undefined,
+                  alignItems: 'center',
+                }}
+              >
+                <Skeleton style={{ flex: 3, height: 14 }} />
+                <Skeleton style={{ flex: 2, height: 14 }} />
+                <Skeleton style={{ width: 80, height: 14 }} />
+                <Skeleton style={{ width: 64, height: 14 }} />
+              </div>
+            ))}
+          </div>
+        ) : earnings.length === 0 ? (
           <div
             data-testid="recent-earnings-empty"
             style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--ink-3)', fontSize: 14 }}
@@ -185,7 +219,27 @@ export default function RevenuePanel({ creatorId }: Props) {
         >
           {t('creator.revenue.payoutHistory.heading')}
         </div>
-        {payouts.length === 0 ? (
+        {loading ? (
+          <div style={{ padding: '0 20px' }}>
+            {Array.from({ length: TABLE_SKELETON_ROWS }).map((_, i) => (
+              <div
+                key={i}
+                style={{
+                  display: 'flex',
+                  gap: 16,
+                  padding: '14px 0',
+                  borderTop: i > 0 ? '1px solid var(--border)' : undefined,
+                  alignItems: 'center',
+                }}
+              >
+                <Skeleton style={{ width: 80, height: 14 }} />
+                <Skeleton style={{ width: 80, height: 14 }} />
+                <Skeleton style={{ flex: 2, height: 14 }} />
+                <Skeleton style={{ flex: 1, height: 14 }} />
+              </div>
+            ))}
+          </div>
+        ) : payouts.length === 0 ? (
           <div
             data-testid="payout-history-empty"
             style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--ink-3)', fontSize: 14 }}

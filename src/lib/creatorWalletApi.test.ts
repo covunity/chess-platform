@@ -4,18 +4,28 @@ import { fetchCreatorWallet, fetchRecentEarnings, fetchPayoutHistory } from './c
 
 describe('fetchCreatorWallet', () => {
   it('returns pending_balance, total_paid_out, lifetime_earnings for caller', async () => {
-    const row = {
-      creator_id: 'creator-1',
-      pending_balance: 1_536_000,
-      total_paid_out: 768_000,
-      lifetime_earnings: 2_304_000,
+    // 2 unpaid orders (1_536_000) + 1 paid-out order (768_000) = 2_304_000 lifetime
+    const coursesChain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockResolvedValue({ data: [{ id: 'c-1' }], error: null }),
     }
-    const chain = {
+    const ordersChain = {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
-      maybeSingle: vi.fn().mockResolvedValue({ data: row, error: null }),
+      in: vi.fn().mockResolvedValue({
+        data: [
+          { creator_payout: 768_000, paid_out_in: null },
+          { creator_payout: 768_000, paid_out_in: null },
+          { creator_payout: 768_000, paid_out_in: 'payout-1' },
+        ],
+        error: null,
+      }),
     }
-    const client = { from: vi.fn().mockReturnValue(chain) } as unknown as SupabaseClient
+    const client = {
+      from: vi.fn().mockImplementation((table: string) =>
+        table === 'courses' ? coursesChain : ordersChain
+      ),
+    } as unknown as SupabaseClient
 
     const { wallet, error } = await fetchCreatorWallet(client, 'creator-1')
 
@@ -25,17 +35,19 @@ describe('fetchCreatorWallet', () => {
       totalPaidOut: 768_000,
       lifetimeEarnings: 2_304_000,
     })
-    expect(client.from).toHaveBeenCalledWith('creator_wallet')
-    expect(chain.eq).toHaveBeenCalledWith('creator_id', 'creator-1')
+    expect(client.from).toHaveBeenCalledWith('courses')
+    expect(client.from).toHaveBeenCalledWith('orders')
+    expect(coursesChain.eq).toHaveBeenCalledWith('creator_id', 'creator-1')
+    expect(ordersChain.eq).toHaveBeenCalledWith('status', 'active')
+    expect(ordersChain.in).toHaveBeenCalledWith('course_id', ['c-1'])
   })
 
-  it('returns zero balances when view has no row for creator', async () => {
-    const chain = {
+  it('returns zero balances when creator has no courses', async () => {
+    const coursesChain = {
       select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+      eq: vi.fn().mockResolvedValue({ data: [], error: null }),
     }
-    const client = { from: vi.fn().mockReturnValue(chain) } as unknown as SupabaseClient
+    const client = { from: vi.fn().mockReturnValue(coursesChain) } as unknown as SupabaseClient
 
     const { wallet, error } = await fetchCreatorWallet(client, 'creator-2')
 
@@ -47,16 +59,12 @@ describe('fetchCreatorWallet', () => {
     })
   })
 
-  it('returns zero balances + error when query fails', async () => {
-    const chain = {
+  it('returns zero balances + error when courses query fails', async () => {
+    const coursesChain = {
       select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      maybeSingle: vi.fn().mockResolvedValue({
-        data: null,
-        error: { message: 'rls denied' },
-      }),
+      eq: vi.fn().mockResolvedValue({ data: null, error: { message: 'rls denied' } }),
     }
-    const client = { from: vi.fn().mockReturnValue(chain) } as unknown as SupabaseClient
+    const client = { from: vi.fn().mockReturnValue(coursesChain) } as unknown as SupabaseClient
 
     const { wallet, error } = await fetchCreatorWallet(client, 'creator-3')
 

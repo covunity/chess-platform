@@ -35,25 +35,35 @@ export async function fetchCreatorWallet(
   client: SupabaseClient,
   creatorId: string
 ): Promise<{ wallet: CreatorWallet; error: Error | null }> {
-  const { data, error } = await client
-    .from('creator_wallet')
-    .select('pending_balance, total_paid_out, lifetime_earnings')
+  const { data: courses, error: coursesError } = await client
+    .from('courses')
+    .select('id')
     .eq('creator_id', creatorId)
-    .maybeSingle()
 
-  if (error) {
-    return { wallet: EMPTY_WALLET, error: error as Error }
-  }
+  if (coursesError) return { wallet: EMPTY_WALLET, error: coursesError as Error }
 
-  if (!data) {
-    return { wallet: EMPTY_WALLET, error: null }
-  }
+  const courseIds = (courses ?? []).map((c: { id: string }) => c.id)
+  if (courseIds.length === 0) return { wallet: EMPTY_WALLET, error: null }
+
+  const { data, error } = await client
+    .from('orders')
+    .select('creator_payout, paid_out_in')
+    .eq('status', 'active')
+    .in('course_id', courseIds)
+
+  if (error) return { wallet: EMPTY_WALLET, error: error as Error }
+
+  const rows = (data ?? []) as Array<{ creator_payout: number | null; paid_out_in: string | null }>
+  const lifetimeEarnings = rows.reduce((sum, r) => sum + (Number(r.creator_payout) || 0), 0)
+  const pendingBalance = rows
+    .filter(r => r.paid_out_in === null)
+    .reduce((sum, r) => sum + (Number(r.creator_payout) || 0), 0)
 
   return {
     wallet: {
-      pendingBalance: Number(data.pending_balance) || 0,
-      totalPaidOut: Number(data.total_paid_out) || 0,
-      lifetimeEarnings: Number(data.lifetime_earnings) || 0,
+      pendingBalance,
+      totalPaidOut: lifetimeEarnings - pendingBalance,
+      lifetimeEarnings,
     },
     error: null,
   }

@@ -123,7 +123,7 @@ describe('TopNav', () => {
     })
 
     it('does not show Sign in link', () => {
-      renderNav({ user: loggedInUser })
+      renderNav({ user: loggedInUser, profile: profileFor('learner') })
       expect(screen.queryByRole('link', { name: /đăng nhập/i })).not.toBeInTheDocument()
     })
 
