@@ -1,6 +1,7 @@
-import { useSyncExternalStore, useState, useEffect } from 'react'
+import { useSyncExternalStore, useState, useEffect, useMemo } from 'react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import RichNoteEditor from '../RichNoteEditor/RichNoteEditor'
 import type { TreeStore } from './treeStore'
 import type { PgnNode, RichTextDoc } from '../../utils/parsePgn'
@@ -238,6 +239,15 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
     return rows
   }
 
+  const mainLineEndId = useMemo(() => {
+    let node: PgnNode = tree
+    while (node.children.length > 0) node = node.children[0]
+    return node.id === tree.id ? null : node.id
+  }, [tree])
+  const navAtRoot = currentNodeId === tree.id || !currentNode.parentId
+  const navAtLeaf = currentNode.children.length === 0
+  const navAtMainLineEnd = mainLineEndId !== null && currentNodeId === mainLineEndId
+
   const isRoot = currentNodeId === 'root'
   const currentNote = isRoot ? null : (currentNode.note ?? null)
 
@@ -468,6 +478,58 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
           </div>
         </div>
       )}
+
+      {/* Navigation buttons — full-width, same style as learner viewer */}
+      <div className="guided-player-actions" style={{ padding: 0, gap: 0, background: 'var(--surface-2)' }}>
+        <button
+          type="button"
+          data-testid="board-authoring-nav-begin"
+          className="btn btn-secondary"
+          style={{ flex: 1, padding: 0, height: 44, background: 'var(--surface-2)', borderRadius: 0, border: 'none', borderTop: '1px solid var(--border)' }}
+          aria-label={t('guidedPlayer.viewerBeginMove')}
+          title={t('guidedPlayer.viewerBeginMove')}
+          disabled={navAtRoot}
+          onClick={() => store.getState().setCurrentNode(tree.id)}
+        >
+          <ChevronsLeft size={18} aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          data-testid="board-authoring-nav-prev"
+          className="btn btn-secondary"
+          style={{ flex: 1, padding: 0, height: 44, background: 'var(--surface-2)', borderRadius: 0, border: 'none', borderTop: '1px solid var(--border)', borderLeft: '1px solid var(--border)' }}
+          aria-label={t('guidedPlayer.viewerPrevMove')}
+          title={t('guidedPlayer.viewerPrevMove')}
+          disabled={navAtRoot}
+          onClick={() => { if (currentNode.parentId) store.getState().setCurrentNode(currentNode.parentId) }}
+        >
+          <ChevronLeft size={20} aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          data-testid="board-authoring-nav-next"
+          className="btn btn-secondary"
+          style={{ flex: 1, padding: 0, height: 44, background: 'var(--surface-2)', borderRadius: 0, border: 'none', borderTop: '1px solid var(--border)', borderLeft: '1px solid var(--border)' }}
+          aria-label={t('guidedPlayer.viewerNextMove')}
+          title={t('guidedPlayer.viewerNextMove')}
+          disabled={navAtLeaf}
+          onClick={() => { const next = currentNode.children[0]; if (next) store.getState().setCurrentNode(next.id) }}
+        >
+          <ChevronRight size={20} aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          data-testid="board-authoring-nav-end"
+          className="btn btn-secondary"
+          style={{ flex: 1, padding: 0, height: 44, background: 'var(--surface-2)', borderRadius: 0, border: 'none', borderTop: '1px solid var(--border)', borderLeft: '1px solid var(--border)' }}
+          aria-label={t('guidedPlayer.viewerEndMove')}
+          title={t('guidedPlayer.viewerEndMove')}
+          disabled={navAtMainLineEnd || !mainLineEndId}
+          onClick={() => { if (mainLineEndId) store.getState().setCurrentNode(mainLineEndId) }}
+        >
+          <ChevronsRight size={18} aria-hidden="true" />
+        </button>
+      </div>
 
       {/* Note section — pinned to bottom */}
       <div
