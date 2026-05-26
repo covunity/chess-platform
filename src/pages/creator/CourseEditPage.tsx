@@ -442,6 +442,54 @@ function PublishBar({ courseId, courseTitle, status, readiness, publishing, onPu
   )
 }
 
+function LessonEditorSkeleton({ lessonType }: { lessonType?: LessonType }) {
+  return (
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: '1fr 380px',
+      height: '100%',
+      background: 'var(--surface)',
+      overflow: 'hidden',
+    }}>
+      <div style={{ padding: '12px 16px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <div className="skeleton" style={{ width: 72, height: 28, borderRadius: 6 }} />
+          <div className="skeleton" style={{ width: 72, height: 28, borderRadius: 6 }} />
+        </div>
+        <div className="skeleton" style={{ width: '100%', height: 36, borderRadius: 6 }} />
+        <div style={{ display: 'flex', gap: 8 }}>
+          <div className="skeleton" style={{ width: 96, height: 26, borderRadius: 6 }} />
+          <div className="skeleton" style={{ width: 96, height: 26, borderRadius: 6 }} />
+        </div>
+        {lessonType === 'video'
+          ? <div className="skeleton" style={{ width: '100%', aspectRatio: '16/9', borderRadius: 8 }} />
+          : <div className="skeleton" style={{ width: '100%', flex: 1, minHeight: 280, borderRadius: 8 }} />
+        }
+      </div>
+      <div style={{
+        borderLeft: '1px solid var(--border)',
+        background: 'var(--surface-2)',
+        padding: 16,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+      }}>
+        <div className="skeleton" style={{ width: '40%', height: 11, borderRadius: 4 }} />
+        {lessonType === 'video'
+          ? <div className="skeleton" style={{ width: '100%', aspectRatio: '16/9', borderRadius: 8 }} />
+          : <div className="skeleton" style={{ width: '100%', aspectRatio: '1/1', borderRadius: 8, maxHeight: 340 }} />
+        }
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
+          <div className="skeleton" style={{ width: '80%', height: 12, borderRadius: 4 }} />
+          <div className="skeleton" style={{ width: '60%', height: 12, borderRadius: 4 }} />
+          <div className="skeleton" style={{ width: '70%', height: 12, borderRadius: 4 }} />
+          <div className="skeleton" style={{ width: '50%', height: 12, borderRadius: 4 }} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function CourseEditPage() {
   const { t } = useTranslation()
   const { profile } = useAuth()
@@ -455,10 +503,13 @@ export default function CourseEditPage() {
   const [toast, setToast] = useState<string | null>(null)
 
   const saveLessonRef = useRef<(() => void) | null>(null)
+  const lessonTransitionRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [confirmDeleteChapter, setConfirmDeleteChapter] = useState<Chapter | null>(null)
   const [confirmDeleteLesson, setConfirmDeleteLesson] = useState<Lesson | null>(null)
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null)
+  const [displayedLesson, setDisplayedLesson] = useState<Lesson | null>(null)
+  const [isLessonTransitioning, setIsLessonTransitioning] = useState(false)
   const [newLessonChapterId, setNewLessonChapterId] = useState<string | null>(null)
 
   const [courseTitle, setCourseTitle] = useState('')
@@ -481,6 +532,21 @@ export default function CourseEditPage() {
     setReadiness(result)
   }, [courseId])
 
+  const switchLesson = useCallback((lesson: Lesson) => {
+    if (lessonTransitionRef.current) clearTimeout(lessonTransitionRef.current)
+    setSelectedLesson(lesson)
+    setShowCourseInfo(false)
+    setIsLessonTransitioning(true)
+    lessonTransitionRef.current = setTimeout(() => {
+      setDisplayedLesson(lesson)
+      setIsLessonTransitioning(false)
+    }, 100)
+  }, [])
+
+  useEffect(() => {
+    return () => { if (lessonTransitionRef.current) clearTimeout(lessonTransitionRef.current) }
+  }, [])
+
   useEffect(() => {
     if (!courseId) return
     Promise.all([
@@ -500,7 +566,7 @@ export default function CourseEditPage() {
       }
       setLoading(false)
       const firstLesson = chaptersResult.chapters.flatMap(ch => ch.lessons ?? [])[0]
-      if (firstLesson) setSelectedLesson(firstLesson)
+      if (firstLesson) { setSelectedLesson(firstLesson); setDisplayedLesson(firstLesson) }
     })
   }, [courseId])
 
@@ -715,7 +781,7 @@ export default function CourseEditPage() {
         <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
           <button
             type="button"
-            onClick={() => { setSelectedLesson(null); setShowCourseInfo(true) }}
+            onClick={() => { setSelectedLesson(null); setDisplayedLesson(null); setShowCourseInfo(true) }}
             className="group"
             style={{
               width: '100%',
@@ -762,7 +828,7 @@ export default function CourseEditPage() {
                 onDeleteChapter={ch => setConfirmDeleteChapter(ch)}
                 onOpenNewLessonDialog={chapterId => setNewLessonChapterId(chapterId)}
                 onDeleteLesson={l => setConfirmDeleteLesson(l)}
-                onOpenEditor={l => { setSelectedLesson(l); setShowCourseInfo(false) }}
+                onOpenEditor={l => switchLesson(l)}
                 t={t}
               />
             ))
@@ -838,44 +904,51 @@ export default function CourseEditPage() {
             t={t}
           />
         )}
-        {selectedLesson ? (
-          <LessonEditor
-            key={selectedLesson.id}
-            lesson={{
-              id: selectedLesson.id,
-              title: selectedLesson.title,
-              pgn_data: selectedLesson.pgn_data ?? '',
-              board_perspective: selectedLesson.board_perspective ?? 'white',
-              is_free_preview: selectedLesson.free_preview,
-              type: selectedLesson.type,
-              has_rewind_mode: selectedLesson.has_rewind_mode ?? false,
-              rewind_source_id: selectedLesson.rewind_source_id ?? null,
-              rewind_source_title: selectedLesson.rewind_source_id
-                ? chapters
-                    .flatMap(ch => ch.lessons ?? [])
-                    .find(l => l.id === selectedLesson.rewind_source_id)?.title ?? null
-                : null,
-              // Video fields — must be forwarded so VideoLessonEditor shows the
-              // existing video instead of defaulting to the idle/empty state.
-              video_status: selectedLesson.video_status,
-              video_provider: selectedLesson.video_provider,
-              video_provider_id: selectedLesson.video_provider_id,
-              video_filename: selectedLesson.video_filename,
-              video_size_bytes: selectedLesson.video_size_bytes,
-              duration_seconds: selectedLesson.duration_seconds,
-            }}
-            chapterLessons={selectedChapterLessons}
-            onSelectLesson={id => {
-              const lesson = chapters
-                .flatMap(ch => ch.lessons ?? [])
-                .find(l => l.id === id)
-              if (lesson) { setSelectedLesson(lesson); setShowCourseInfo(false) }
-            }}
-            onSave={handleSaveLesson}
-            onRemoveRewindSibling={handleRemoveRewindSibling}
-            showSidebar={false}
-            saveRef={saveLessonRef}
-          />
+        {isLessonTransitioning ? (
+          <LessonEditorSkeleton lessonType={selectedLesson?.type} />
+        ) : displayedLesson ? (
+          <div
+            key={displayedLesson.id}
+            className="lesson-panel-enter"
+            style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}
+          >
+            <LessonEditor
+              lesson={{
+                id: displayedLesson.id,
+                title: displayedLesson.title,
+                pgn_data: displayedLesson.pgn_data ?? '',
+                board_perspective: displayedLesson.board_perspective ?? 'white',
+                is_free_preview: displayedLesson.free_preview,
+                type: displayedLesson.type,
+                has_rewind_mode: displayedLesson.has_rewind_mode ?? false,
+                rewind_source_id: displayedLesson.rewind_source_id ?? null,
+                rewind_source_title: displayedLesson.rewind_source_id
+                  ? chapters
+                      .flatMap(ch => ch.lessons ?? [])
+                      .find(l => l.id === displayedLesson.rewind_source_id)?.title ?? null
+                  : null,
+                // Video fields — must be forwarded so VideoLessonEditor shows the
+                // existing video instead of defaulting to the idle/empty state.
+                video_status: displayedLesson.video_status,
+                video_provider: displayedLesson.video_provider,
+                video_provider_id: displayedLesson.video_provider_id,
+                video_filename: displayedLesson.video_filename,
+                video_size_bytes: displayedLesson.video_size_bytes,
+                duration_seconds: displayedLesson.duration_seconds,
+              }}
+              chapterLessons={selectedChapterLessons}
+              onSelectLesson={id => {
+                const lesson = chapters
+                  .flatMap(ch => ch.lessons ?? [])
+                  .find(l => l.id === id)
+                if (lesson) switchLesson(lesson)
+              }}
+              onSave={handleSaveLesson}
+              onRemoveRewindSibling={handleRemoveRewindSibling}
+              showSidebar={false}
+              saveRef={saveLessonRef}
+            />
+          </div>
         ) : (
           <div className="flex-1 overflow-y-auto" style={{ padding: '32px 40px' }}>
           <div className="card" style={{ maxWidth: 680, margin: '0 auto', padding: '32px 36px', display: 'flex', flexDirection: 'column', gap: 20 }}>
