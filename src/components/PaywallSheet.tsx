@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { formatPrice } from '../lib/utils'
 
 interface CourseSnapshot {
   lessons_count: number
@@ -13,11 +14,6 @@ interface PaywallSheetProps {
   course: CourseSnapshot
   isLoggedIn: boolean
   onPurchase?: () => void
-}
-
-function formatPriceRaw(price: number): string {
-  if (price >= 1000) return `${Math.round(price / 1000)}k`
-  return String(price)
 }
 
 
@@ -123,7 +119,7 @@ export default function PaywallSheet({ onClose, course, isLoggedIn, onPurchase }
           onClick={handleCta}
         >
           {isLoggedIn
-            ? t('paywallSheet.cta.buy', { price: formatPriceRaw(course.price) })
+            ? t('paywallSheet.cta.buy', { price: formatPrice(course.price) })
             : t('paywallSheet.cta.login')}
         </button>
 

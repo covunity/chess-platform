@@ -16,6 +16,7 @@ import { confirmOrder, cancelOrder } from '../../lib/orderApi'
 import type { OrderStatus } from '../../lib/orderApi'
 import { useDebounce } from '../../hooks/useDebounce'
 import { maskAccount } from '../../lib/bankAccount'
+import { formatPrice } from '../../lib/utils'
 
 type Tab = 'pending' | 'stale' | 'refund' | 'all'
 const PAGE_SIZE = 20
@@ -27,10 +28,6 @@ const STATUS_PILL: Record<OrderStatus, string> = {
   expired: 'pill',
   refund_pending: 'pill',
   refunded: 'pill',
-}
-
-function formatVnd(n: number): string {
-  return `${n.toLocaleString('en-US')} ₫`
 }
 
 function formatRelative(iso: string, now = new Date()): string {
@@ -717,7 +714,7 @@ export default function AdminOrdersPage() {
                         style={{ padding: '14px 16px', textAlign: 'right' }}
                         className="text-(--ink-1) font-medium"
                       >
-                        {formatVnd(o.amount)}
+                        {formatPrice(o.amount)}
                       </td>
                       <td
                         style={{ padding: '14px 16px' }}
@@ -801,7 +798,7 @@ export default function AdminOrdersPage() {
                         {o.course?.title ?? '—'}
                       </td>
                       <td style={{ padding: '14px 16px', textAlign: 'right' }} className="text-(--ink-1) font-medium">
-                        {formatVnd(o.amount)}
+                        {formatPrice(o.amount)}
                       </td>
                       <td
                         style={{ padding: '14px 16px' }}
@@ -821,7 +818,7 @@ export default function AdminOrdersPage() {
                         {campaignName ?? '—'}
                       </td>
                       <td style={{ padding: '14px 16px' }} className="text-(--ink-3)" >
-                        {`${Math.round(o.platform_fee_amount / 1000)}k → ${Math.round(o.creator_payout_amount / 1000)}k`}
+                        {`${formatPrice(o.platform_fee_amount)} → ${formatPrice(o.creator_payout_amount)}`}
                       </td>
                       <td
                         style={{ padding: '14px 16px' }}
@@ -968,7 +965,7 @@ export default function AdminOrdersPage() {
                               data-testid="breakdown-original"
                               style={{ textAlign: 'right' }}
                             >
-                              {formatVnd(o.original_price)}
+                              {formatPrice(o.original_price)}
                             </div>
 
                             {o.campaign_id !== null && (
@@ -987,7 +984,7 @@ export default function AdminOrdersPage() {
                                 <div
                                   style={{ textAlign: 'right', color: 'var(--danger)' }}
                                 >
-                                  −{formatVnd(o.campaign_discount_amount)}
+                                  −{formatPrice(o.campaign_discount_amount)}
                                 </div>
                               </div>
                             )}
@@ -1008,7 +1005,7 @@ export default function AdminOrdersPage() {
                                 <div
                                   style={{ textAlign: 'right', color: 'var(--danger)' }}
                                 >
-                                  −{formatVnd(o.voucher_discount_amount)}
+                                  −{formatPrice(o.voucher_discount_amount)}
                                 </div>
                               </div>
                             )}
@@ -1021,7 +1018,7 @@ export default function AdminOrdersPage() {
                               data-testid="breakdown-final"
                               style={{ textAlign: 'right', paddingTop: 6, borderTop: '1px solid var(--border)' }}
                             >
-                              {formatVnd(o.amount)}
+                              {formatPrice(o.amount)}
                             </div>
 
                             <div className="text-(--ink-3)">
@@ -1032,7 +1029,7 @@ export default function AdminOrdersPage() {
                               data-testid="breakdown-platform-fee"
                               style={{ textAlign: 'right' }}
                             >
-                              {formatVnd(o.platform_fee_amount)}
+                              {formatPrice(o.platform_fee_amount)}
                             </div>
 
                             <div className="text-(--ink-3)">
@@ -1043,7 +1040,7 @@ export default function AdminOrdersPage() {
                               data-testid="breakdown-creator-payout"
                               style={{ textAlign: 'right' }}
                             >
-                              {formatVnd(o.creator_payout_amount)}
+                              {formatPrice(o.creator_payout_amount)}
                             </div>
                           </div>
                         </td>

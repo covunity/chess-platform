@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import type { Campaign } from '../lib/campaignsApi'
+import { formatPrice } from '../lib/utils'
 
 function formatEndDate(iso: string): string {
   const d = new Date(iso)
@@ -23,7 +24,7 @@ export default function CampaignBanner({
 
   const discountLabel = campaign.discount_type === 'percentage'
     ? t('campaign.banner.discountPercent', { value: campaign.discount_value })
-    : t('campaign.banner.discountFixed', { value: campaign.discount_value.toLocaleString('vi-VN') })
+    : t('campaign.banner.discountFixed', { value: formatPrice(campaign.discount_value) })
 
   const endsAtLabel = t('campaign.banner.endsAt', { date: formatEndDate(campaign.ends_at) })
 

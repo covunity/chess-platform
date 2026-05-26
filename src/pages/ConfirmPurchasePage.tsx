@@ -8,10 +8,7 @@ import type { CourseDetail } from '../lib/coursesApi'
 import { getPendingOrderForCourse, previewPurchase, createOrder } from '../lib/orderApi'
 import type { PurchasePreview } from '../lib/orderApi'
 import { voucherErrorKey } from '../lib/vouchersApi'
-
-function formatVnd(n: number): string {
-  return `${n.toLocaleString('vi-VN')} ₫`
-}
+import { formatPrice } from '../lib/utils'
 
 // PRD-0006 slice 3b: voucher codes are constrained to ^[A-Z0-9]{6,20}$
 // (migration 065). Normalise client-side BEFORE hitting the RPC so users
@@ -326,7 +323,7 @@ export default function ConfirmPurchasePage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
                 <span style={{ color: 'var(--ink-2)' }}>{t('confirmPurchase.originalPrice')}</span>
                 <span data-testid="confirm-original-price" style={{ color: 'var(--ink-1)' }}>
-                  {formatVnd(preview.original_price)}
+                  {formatPrice(preview.original_price)}
                 </span>
               </div>
 
@@ -340,7 +337,7 @@ export default function ConfirmPurchasePage() {
                       data-testid="confirm-campaign-discount"
                       style={{ color: 'var(--success)' }}
                     >
-                      -{formatVnd(preview.campaign_discount_amount)}
+                      -{formatPrice(preview.campaign_discount_amount)}
                     </span>
                   </div>
                   {preview.campaign_name && (
@@ -361,7 +358,7 @@ export default function ConfirmPurchasePage() {
                 >
                   <span>{t('confirmPurchase.subtotal')}</span>
                   <span data-testid="confirm-subtotal-amount">
-                    {formatVnd(preview.original_price - preview.campaign_discount_amount)}
+                    {formatPrice(preview.original_price - preview.campaign_discount_amount)}
                   </span>
                 </div>
               )}
@@ -376,7 +373,7 @@ export default function ConfirmPurchasePage() {
                       data-testid="confirm-voucher-discount"
                       style={{ color: 'var(--success)' }}
                     >
-                      -{formatVnd(preview.voucher_discount_amount)}
+                      -{formatPrice(preview.voucher_discount_amount)}
                     </span>
                   </div>
                   {preview.voucher_code && (
@@ -405,7 +402,7 @@ export default function ConfirmPurchasePage() {
                   data-testid="confirm-total-price"
                   style={{ color: 'var(--ink-1)', fontFamily: 'var(--font-serif)', fontSize: 22 }}
                 >
-                  {formatVnd(preview.final_price)}
+                  {formatPrice(preview.final_price)}
                 </span>
               </div>
             </div>
@@ -430,7 +427,7 @@ export default function ConfirmPurchasePage() {
                   <span>
                     {t('voucher.applied', {
                       code: appliedCode,
-                      amount: formatVnd(preview.voucher_discount_amount),
+                      amount: formatPrice(preview.voucher_discount_amount),
                     })}
                   </span>
                   <button

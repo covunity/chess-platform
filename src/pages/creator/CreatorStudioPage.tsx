@@ -16,6 +16,7 @@ import type { AccountApplication } from '../../lib/accountApplicationApi'
 import { Pencil, Copy, Trash2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import RevenuePanel from '../../components/creator/RevenuePanel'
+import { formatPrice } from '../../lib/utils'
 
 type StatusFilter = CourseStatus | 'all'
 type DashboardTab = 'courses' | 'revenue'
@@ -31,12 +32,7 @@ function formatStudents(n: number): string {
 
 function formatCurrency(n: number): string {
   if (n === 0) return '—'
-  if (n >= 1_000_000) {
-    const val = n / 1_000_000
-    return `${val % 1 === 0 ? val.toFixed(0) : val.toFixed(1)}M ₫`
-  }
-  if (n >= 1_000) return `${Math.round(n / 1_000)}K ₫`
-  return `${n.toLocaleString('en-US')} ₫`
+  return formatPrice(n)
 }
 
 function formatRating(n: number): string {

@@ -20,6 +20,7 @@ import { listAdminCourses, listCampaigns } from '../../lib/campaignsApi'
 import type { Campaign, CoursePickerRow } from '../../lib/campaignsApi'
 import { useDebounce } from '../../hooks/useDebounce'
 import CourseMultiSelect from '../../components/admin/CourseMultiSelect'
+import { formatPrice } from '../../lib/utils'
 
 type StatusFilter = 'all' | 'active' | 'inactive'
 
@@ -945,7 +946,7 @@ export default function AdminVouchersPage() {
                           style={{ padding: '10px 8px', textAlign: 'right' }}
                           className="text-(--ink-1)"
                         >
-                          -{u.discount_amount.toLocaleString('de-DE')}₫
+                          -{formatPrice(u.discount_amount)}
                         </td>
                         <td style={{ padding: '10px 8px' }} className="text-(--ink-3)">
                           {new Date(u.used_at).toLocaleString('vi-VN')}

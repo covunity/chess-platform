@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase'
 import { listMyOrders, createOrder } from '../lib/orderApi'
 import type { MyOrderRow, OrderStatus } from '../lib/orderApi'
 import { writeLastSeenOrdersAt } from '../lib/orderUpdatesApi'
+import { formatPrice } from '../lib/utils'
 
 const PAGE_SIZE = 20
 const FILTERS: ('all' | OrderStatus)[] = ['all', 'active', 'pending', 'expired', 'cancelled']
@@ -20,10 +21,6 @@ const STATUS_PILL_STYLE: Record<OrderStatus, React.CSSProperties> = {
   refund_pending: { background: 'var(--warning-soft)', color: 'var(--warning)', border: '1px solid var(--warning-border)' },
   // refunded is a terminal neutral state, visually identical to expired.
   refunded: { background: 'var(--surface-2)', color: 'var(--ink-3)', border: '1px solid var(--border)' },
-}
-
-function formatVnd(n: number): string {
-  return `${n.toLocaleString('en-US')} ₫`
 }
 
 function formatRelative(iso: string, now = new Date()): string {
@@ -259,7 +256,7 @@ export default function AccountOrdersPage() {
                       style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600 }}
                       className={isFree ? 'text-(--success)' : 'text-(--ink-1)'}
                     >
-                      {isFree ? t('account.orders.free') : formatVnd(o.amount)}
+                      {isFree ? t('account.orders.free') : formatPrice(o.amount)}
                     </td>
                     <td style={{ padding: '14px 16px' }}>
                       <span

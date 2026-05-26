@@ -16,6 +16,7 @@ import type {
 } from '../../lib/campaignsApi'
 import { useDebounce } from '../../hooks/useDebounce'
 import CourseMultiSelect from '../../components/admin/CourseMultiSelect'
+import { formatPrice } from '../../lib/utils'
 
 type StatusFilter = 'all' | 'active' | 'inactive'
 
@@ -82,7 +83,7 @@ function fromCampaign(c: Campaign): FormState {
 
 function formatDiscount(c: Campaign): string {
   if (c.discount_type === 'percentage') return `-${c.discount_value}%`
-  return `-${c.discount_value.toLocaleString('en-US')}₫`
+  return `-${formatPrice(c.discount_value)}`
 }
 
 function formatDateRange(c: Campaign): string {

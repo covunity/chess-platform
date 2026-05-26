@@ -500,7 +500,7 @@ describe('ConfirmPurchasePage', () => {
     await user.type(screen.getByTestId('voucher-input'), 'FREE100')
     await user.click(screen.getByTestId('voucher-apply-btn'))
     await waitFor(() => screen.getByTestId('voucher-applied-banner'))
-    expect(screen.getByTestId('confirm-total-price')).toHaveTextContent(/^0\s/)
+    expect(screen.getByTestId('confirm-total-price')).toHaveTextContent(/^0đ/)
 
     await user.click(screen.getByTestId('confirm-submit-btn'))
     await waitFor(() => {

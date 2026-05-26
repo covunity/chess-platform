@@ -292,7 +292,7 @@ describe('formatVoucherDiscount', () => {
   })
 
   it('renders fixed_amount with VND formatting', () => {
-    expect(formatVoucherDiscount({ ...sampleVoucher, discount_type: 'fixed_amount', discount_value: 50000 })).toBe('-50.000₫')
+    expect(formatVoucherDiscount({ ...sampleVoucher, discount_type: 'fixed_amount', discount_value: 50000 })).toBe('-50.000đ')
   })
 })
 

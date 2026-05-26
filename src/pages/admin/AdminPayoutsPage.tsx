@@ -11,10 +11,7 @@ import {
   type PendingPayout,
   type CreatorMissingPayoutInfo,
 } from '../../lib/adminPayoutsApi'
-
-function formatVnd(n: number): string {
-  return `${n.toLocaleString('vi-VN')} ₫`
-}
+import { formatPrice } from '../../lib/utils'
 
 function downloadCsv(csv: string, filename: string) {
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
@@ -68,7 +65,7 @@ function MarkCompleteDialog({
           <span className="font-medium text-(--ink-1)">
             {payout.creatorName ?? payout.creatorEmail}
           </span>{' '}
-          ({formatVnd(payout.amount)}).
+          ({formatPrice(payout.amount)}).
         </p>
 
         <label className="label mb-1 block" htmlFor="payout-reference">
@@ -364,7 +361,7 @@ export default function AdminPayoutsPage() {
                         style={{ padding: '14px 16px', textAlign: 'right' }}
                         className="text-(--ink-1) font-medium"
                       >
-                        {formatVnd(p.amount)}
+                        {formatPrice(p.amount)}
                       </td>
                       <td
                         style={{ padding: '14px 16px', textAlign: 'right' }}
@@ -441,7 +438,7 @@ export default function AdminPayoutsPage() {
                         style={{ padding: '14px 16px', textAlign: 'right' }}
                         className="text-(--ink-1) font-medium"
                       >
-                        {formatVnd(m.pendingBalance)}
+                        {formatPrice(m.pendingBalance)}
                       </td>
                     </tr>
                   ))}

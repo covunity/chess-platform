@@ -18,6 +18,7 @@ import {
   type UsersSnapshotRow,
   type UsersSnapshotsByRange,
 } from '../../lib/analyticsApi'
+import { formatPrice } from '../../lib/utils'
 
 // Lazy-load Recharts (and the chart components that depend on it) so the
 // learner-facing routes never pull recharts (~95 KB gzipped) into their
@@ -28,19 +29,8 @@ const AnalyticsCharts = lazy(() => import('./AnalyticsCharts'))
 const RANGES: readonly TimeRange[] = ['7d', 'mtd', 'last_month', 'all_time'] as const
 const REFRESH_COOLDOWN_SECS = 30
 
-// VND formatter — matches the rest of the admin pages.
-const vnd = new Intl.NumberFormat('vi-VN', {
-  style: 'currency',
-  currency: 'VND',
-  maximumFractionDigits: 0,
-})
-
 // Integer count formatter — vi-VN uses `.` as thousand separator.
 const counter = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 })
-
-function formatVnd(n: number): string {
-  return vnd.format(n)
-}
 
 function formatCount(n: number): string {
   return counter.format(n)
@@ -533,7 +523,7 @@ export default function AdminAnalyticsPage() {
               <KpiCard
                 testId="admin-analytics-kpi-revenue"
                 label={t('admin.analytics.financial.kpiRevenue')}
-                display={formatVnd(kpis.revenue.value)}
+                display={formatPrice(kpis.revenue.value)}
                 delta={kpis.revenue.delta_pct}
                 noneLabel={t('admin.analytics.financial.deltaNone')}
               />
@@ -547,14 +537,14 @@ export default function AdminAnalyticsPage() {
               <KpiCard
                 testId="admin-analytics-kpi-platform-fee"
                 label={t('admin.analytics.financial.kpiPlatformFee')}
-                display={formatVnd(kpis.platform_fee.value)}
+                display={formatPrice(kpis.platform_fee.value)}
                 delta={kpis.platform_fee.delta_pct}
                 noneLabel={t('admin.analytics.financial.deltaNone')}
               />
               <KpiCard
                 testId="admin-analytics-kpi-creator-payout"
                 label={t('admin.analytics.financial.kpiCreatorPayout')}
-                display={formatVnd(kpis.creator_payout.value)}
+                display={formatPrice(kpis.creator_payout.value)}
                 delta={kpis.creator_payout.delta_pct}
                 noneLabel={t('admin.analytics.financial.deltaNone')}
               />

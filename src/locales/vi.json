@@ -1159,7 +1159,7 @@
     "bodyLoggedIn": "Mua để mở khoá {{n}} bài học, {{a}} annotations.",
     "cta": {
       "login": "Đăng nhập",
-      "buy": "Mua khoá học — {{price}}₫"
+      "buy": "Mua khoá học — {{price}}"
     },
     "back": "← Quay lại khoá học"
   },
@@ -1427,13 +1427,13 @@
     "badge": "Khuyến mại: {{name}}",
     "card": {
       "discountPercent": "-{{value}}%",
-      "discountFixed": "-{{value}}k"
+      "discountFixed": "-{{value}}"
     },
     "banner": {
       "scopeAll": "tất cả khoá học",
       "scopeCount": "{{count}} khoá học",
       "discountPercent": "Giảm {{value}}%",
-      "discountFixed": "Giảm {{value}}₫",
+      "discountFixed": "Giảm {{value}}",
       "endsAt": "đến hết {{date}}",
       "dismiss": "Đóng"
     }

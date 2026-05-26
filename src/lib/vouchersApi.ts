@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { formatPrice } from './utils'
 
 export type VoucherDiscountType = 'percentage' | 'fixed_amount'
 
@@ -164,7 +165,7 @@ export async function getVoucherUsages(
 
 export function formatVoucherDiscount(v: Voucher): string {
   if (v.discount_type === 'percentage') return `-${v.discount_value}%`
-  return `-${v.discount_value.toLocaleString('de-DE')}₫`
+  return `-${formatPrice(v.discount_value)}`
 }
 
 // PRD-0006 slice 3b: pure JS mirror of the SQL `_voucher_discount_amount`

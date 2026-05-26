@@ -18,17 +18,12 @@ import type { Order } from '../lib/orderApi'
 import { getActiveCampaignForCourse, computeCampaignDiscount } from '../lib/campaignsApi'
 import type { Campaign } from '../lib/campaignsApi'
 import { useAuth } from '../context/AuthContext'
+import { formatPrice } from '../lib/utils'
 import ChessBoard from '../components/ChessBoard/ChessBoard'
 import PaywallSheet from '../components/PaywallSheet'
 import UserNameCardTrigger from '../components/UserNameCard'
 
 const INITIAL_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
-
-function formatPrice(price: number): string {
-  if (price === 0) return 'Miễn phí'
-  if (price >= 1000) return `${Math.round(price / 1000)}k ₫`
-  return `${price} ₫`
-}
 
 function formatDuration(seconds: number): string {
   const mins = Math.floor(seconds / 60)

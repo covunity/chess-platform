@@ -827,17 +827,17 @@ describe('AdminOrdersPage', () => {
 
       const drawer = await screen.findByTestId('order-breakdown-ord-both')
       // Each breakdown row carries a stable test id for asserting values
-      expect(within(drawer).getByTestId('breakdown-original')).toHaveTextContent('500,000')
-      expect(within(drawer).getByTestId('breakdown-campaign')).toHaveTextContent('100,000')
+      expect(within(drawer).getByTestId('breakdown-original')).toHaveTextContent('500.000đ')
+      expect(within(drawer).getByTestId('breakdown-campaign')).toHaveTextContent('100.000đ')
       expect(within(drawer).getByTestId('breakdown-campaign')).toHaveTextContent(
         'Tết Sale 2026'
       )
-      expect(within(drawer).getByTestId('breakdown-voucher')).toHaveTextContent('50,000')
+      expect(within(drawer).getByTestId('breakdown-voucher')).toHaveTextContent('50.000đ')
       expect(within(drawer).getByTestId('breakdown-voucher')).toHaveTextContent('WELCOME10')
-      expect(within(drawer).getByTestId('breakdown-final')).toHaveTextContent('350,000')
-      expect(within(drawer).getByTestId('breakdown-platform-fee')).toHaveTextContent('70,000')
+      expect(within(drawer).getByTestId('breakdown-final')).toHaveTextContent('350.000đ')
+      expect(within(drawer).getByTestId('breakdown-platform-fee')).toHaveTextContent('70.000đ')
       expect(within(drawer).getByTestId('breakdown-creator-payout')).toHaveTextContent(
-        '280,000'
+        '280.000đ'
       )
     })
 

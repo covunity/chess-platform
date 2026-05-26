@@ -165,14 +165,14 @@ describe('CreatorStudioPage', () => {
   it('shows live gross revenue formatted from fetchCreatorKpis', async () => {
     renderPage()
     await waitFor(() => {
-      expect(screen.getByTestId('kpi-revenue')).toHaveTextContent('1M ₫')
+      expect(screen.getByTestId('kpi-revenue')).toHaveTextContent('1.000.000đ')
     })
   })
 
   it('shows live payout value formatted from fetchCreatorKpis', async () => {
     renderPage()
     await waitFor(() => {
-      expect(screen.getByTestId('kpi-payout')).toHaveTextContent('800K ₫')
+      expect(screen.getByTestId('kpi-payout')).toHaveTextContent('800.000đ')
     })
   })
 
@@ -217,7 +217,7 @@ describe('CreatorStudioPage', () => {
   it('shows per-course revenue in table row', async () => {
     renderPage()
     await waitFor(() => {
-      expect(screen.getByTestId('course-revenue-c1')).toHaveTextContent('600K ₫')
+      expect(screen.getByTestId('course-revenue-c1')).toHaveTextContent('600.000đ')
     })
   })
 

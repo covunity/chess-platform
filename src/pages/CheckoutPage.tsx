@@ -8,6 +8,7 @@ import { getOrder, cancelOrder } from '../lib/orderApi'
 import { createPayosPayment } from '../lib/payos'
 import type { OrderWithCourse } from '../lib/orderApi'
 import type { PayosCheckoutData } from '../lib/payos'
+import { formatPrice } from '../lib/utils'
 
 const POLL_INTERVAL_MS = 5000
 
@@ -17,10 +18,6 @@ const POLL_INTERVAL_MS = 5000
 // payment-critical path. ECC level "M" matches the api.qrserver.com default.
 const QR_SIZE_PX = 240
 const QR_ECC_LEVEL: 'L' | 'M' | 'Q' | 'H' = 'M'
-
-function formatVnd(n: number): string {
-  return `${n.toLocaleString('vi-VN')} ₫`
-}
 
 interface CancelDialogProps {
   onConfirm: (reason: string) => void
@@ -348,11 +345,11 @@ export default function CheckoutPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
                 <span style={{ color: 'var(--ink-2)' }}>{t('checkout.summary.price')}</span>
-                <span style={{ color: 'var(--ink-1)' }}>{formatVnd(order.amount)}</span>
+                <span style={{ color: 'var(--ink-1)' }}>{formatPrice(order.amount)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 600 }}>
                 <span style={{ color: 'var(--ink-1)' }}>{t('checkout.summary.total')}</span>
-                <span data-testid="checkout-amount" style={{ color: 'var(--ink-1)' }}>{formatVnd(order.amount)}</span>
+                <span data-testid="checkout-amount" style={{ color: 'var(--ink-1)' }}>{formatPrice(order.amount)}</span>
               </div>
             </div>
 
@@ -457,7 +454,7 @@ export default function CheckoutPage() {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
                   <span style={{ color: 'var(--ink-3)' }}>{t('checkout.bank.amount')}</span>
-                  <span style={{ color: 'var(--ink-1)', fontWeight: 500 }}>{formatVnd(order.amount)}</span>
+                  <span style={{ color: 'var(--ink-1)', fontWeight: 500 }}>{formatPrice(order.amount)}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
                   <span style={{ color: 'var(--ink-3)' }}>{t('checkout.bank.note')}</span>

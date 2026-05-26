@@ -7,6 +7,7 @@ import {
   type Campaign,
 } from '../lib/campaignsApi'
 import ChessBoard from './ChessBoard/ChessBoard'
+import { formatPrice } from '../lib/utils'
 
 const INITIAL_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
@@ -78,7 +79,7 @@ export default function CourseCard({
 
   const priceDisplay = course.price === 0
     ? t('home.free')
-    : `${(course.price / 1000).toFixed(0)}k ₫`
+    : formatPrice(course.price)
 
   const campaignApplies =
     course.price > 0 && campaignAppliesToCourse(activeCampaign, course.id)
@@ -87,11 +88,11 @@ export default function CourseCard({
     : 0
   const hasCampaign = campaignApplies && campaignDiscount > 0
   const discountedPrice = hasCampaign ? course.price - campaignDiscount : course.price
-  const discountedPriceDisplay = `${(discountedPrice / 1000).toFixed(0)}k ₫`
+  const discountedPriceDisplay = formatPrice(discountedPrice)
   const discountBadgeLabel = hasCampaign && activeCampaign
     ? activeCampaign.discount_type === 'percentage'
       ? t('campaign.card.discountPercent', { value: activeCampaign.discount_value })
-      : t('campaign.card.discountFixed', { value: Math.round(campaignDiscount / 1000) })
+      : t('campaign.card.discountFixed', { value: formatPrice(campaignDiscount) })
     : null
 
   const firstTag = course.tags[0]

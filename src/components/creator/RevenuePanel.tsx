@@ -10,15 +10,12 @@ import {
   type PayoutHistoryEntry,
 } from '../../lib/creatorWalletApi'
 import { maskAccount } from '../../lib/bankAccount'
+import { formatPrice } from '../../lib/utils'
 
 const EMPTY_WALLET: CreatorWallet = {
   pendingBalance: 0,
   totalPaidOut: 0,
   lifetimeEarnings: 0,
-}
-
-function formatVnd(n: number): string {
-  return `${n.toLocaleString('vi-VN')} ₫`
 }
 
 function formatDate(iso: string): string {
@@ -86,7 +83,7 @@ export default function RevenuePanel({ creatorId }: Props) {
               lineHeight: 1.1,
             }}
           >
-            {formatVnd(wallet.pendingBalance)}
+            {formatPrice(wallet.pendingBalance)}
           </div>
         </div>
         <div
@@ -107,7 +104,7 @@ export default function RevenuePanel({ creatorId }: Props) {
             {t('creator.revenue.lifetimeEarnings')}
           </div>
           <div style={{ fontSize: 20, fontWeight: 600, color: 'var(--ink-2)' }}>
-            {formatVnd(wallet.lifetimeEarnings)}
+            {formatPrice(wallet.lifetimeEarnings)}
           </div>
         </div>
       </div>
@@ -168,7 +165,7 @@ export default function RevenuePanel({ creatorId }: Props) {
                       textAlign: 'right',
                     }}
                   >
-                    {formatVnd(e.creatorPayout)}
+                    {formatPrice(e.creatorPayout)}
                   </td>
                   <td style={{ padding: '12px 20px', color: 'var(--ink-3)' }}>
                     {formatDate(e.confirmedAt)}
@@ -231,7 +228,7 @@ export default function RevenuePanel({ creatorId }: Props) {
                       textAlign: 'right',
                     }}
                   >
-                    {formatVnd(p.amount)}
+                    {formatPrice(p.amount)}
                   </td>
                   <td style={{ padding: '12px 20px', color: 'var(--ink-2)' }}>
                     {p.bankName} {maskAccount(p.accountNumber)}

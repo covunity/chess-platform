@@ -24,18 +24,7 @@ import type {
   TopCourseRow,
   TopCreatorRow,
 } from '../../lib/analyticsApi'
-
-// VND formatter — matches AdminAnalyticsPage so values render consistently
-// across KPI cards, chart tooltips, and leaderboard cells.
-const vnd = new Intl.NumberFormat('vi-VN', {
-  style: 'currency',
-  currency: 'VND',
-  maximumFractionDigits: 0,
-})
-
-function formatVnd(n: number): string {
-  return vnd.format(n)
-}
+import { formatPrice } from '../../lib/utils'
 
 // Recharts-internal axis tick formatter — must stay terse for narrow viewports.
 function formatRevenueTick(value: number): string {
@@ -184,7 +173,7 @@ function RevenueTrendChart({ data, emptyLabel, title }: RevenueTrendProps) {
             width={56}
           />
           <Tooltip
-            formatter={(v) => formatVnd(Number(v ?? 0))}
+            formatter={(v) => formatPrice(Number(v ?? 0))}
             contentStyle={{
               background: 'var(--surface)',
               border: '1px solid var(--border)',
@@ -269,7 +258,7 @@ function TopCoursesTable({ rows, emptyLabel }: TopCoursesProps) {
               className="text-(--ink-1) text-right"
               style={{ padding: '8px 12px', fontVariantNumeric: 'tabular-nums' }}
             >
-              {formatVnd(row.revenue)}
+              {formatPrice(row.revenue)}
             </td>
           </tr>
         ))}
@@ -339,7 +328,7 @@ function TopCreatorsTable({ rows, emptyLabel }: TopCreatorsProps) {
               className="text-(--ink-1) text-right"
               style={{ padding: '8px 12px', fontVariantNumeric: 'tabular-nums' }}
             >
-              {formatVnd(row.revenue)}
+              {formatPrice(row.revenue)}
             </td>
           </tr>
         ))}
@@ -653,7 +642,7 @@ function TopBuyersTable({ rows, emptyLabel }: TopBuyersProps) {
               className="text-(--ink-1) text-right"
               style={{ padding: '8px 12px', fontVariantNumeric: 'tabular-nums' }}
             >
-              {formatVnd(row.spend)}
+              {formatPrice(row.spend)}
             </td>
             <td
               className="text-(--ink-2) text-right"
