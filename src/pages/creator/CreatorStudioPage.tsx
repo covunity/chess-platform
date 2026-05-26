@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
@@ -15,6 +15,7 @@ import { Pencil, Copy, Trash2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import RevenuePanel from '../../components/creator/RevenuePanel'
 import { formatPrice } from '../../lib/utils'
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../../components/ui/dropdown-menu'
 
 type StatusFilter = CourseStatus | 'all'
 type DashboardTab = 'courses' | 'revenue'
@@ -134,78 +135,49 @@ interface KebabMenuProps {
   onDelete: (c: Course) => void
   onDuplicate: (c: Course) => void
   t: (k: string) => string
-  openMenuId: string | null
-  setOpenMenuId: (id: string | null) => void
 }
 
-function KebabMenu({ course, onDelete, onDuplicate, t, openMenuId, setOpenMenuId }: KebabMenuProps) {
-  const open = openMenuId === course.id
-  const btnRef = useRef<HTMLButtonElement>(null)
-  const [opensUpward, setOpensUpward] = useState(false)
-
-  useEffect(() => {
-    if (open && btnRef.current) {
-      const rect = btnRef.current.getBoundingClientRect()
-      // menu height ~120px; flip up if less than 140px below viewport bottom
-      setOpensUpward(window.innerHeight - rect.bottom < 140)
-    }
-  }, [open])
-
+function KebabMenu({ course, onDelete, onDuplicate, t }: KebabMenuProps) {
   return (
-    <div className="relative" style={{ display: 'inline-block' }}>
-      <button
-        ref={btnRef}
-        type="button"
-        data-testid="kebab-btn"
-        className="btn btn-ghost btn-sm"
-        aria-label="actions"
-        onClick={() => setOpenMenuId(open ? null : course.id)}
-      >
-        •••
-      </button>
-      {open && (
-        <div
-          className="card"
-          style={{
-            position: 'absolute',
-            right: 0,
-            ...(opensUpward ? { bottom: '100%' } : { top: '100%' }),
-            zIndex: 10,
-            minWidth: 160,
-            padding: '4px 0',
-          }}
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          data-testid="kebab-btn"
+          className="btn btn-ghost btn-sm"
+          aria-label="actions"
         >
+          •••
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem asChild>
           <Link
             to={`/creator/courses/${course.id}/edit`}
             data-testid={`kebab-edit-${course.id}`}
-            className="flex items-center gap-2 w-full px-4 py-2 text-sm text-(--ink-1) hover:bg-(--surface-2)"
-            onClick={() => setOpenMenuId(null)}
+            className="flex items-center gap-2"
           >
             <Pencil size={14} />
             {t('creator.studio.table.kebabEdit')}
           </Link>
-          <button
-            type="button"
-            data-testid={`kebab-duplicate-${course.id}`}
-            className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-(--ink-1) hover:bg-(--surface-2)"
-            onClick={() => { setOpenMenuId(null); onDuplicate(course) }}
-          >
-            <Copy size={14} />
-            {t('creator.studio.table.kebabDuplicate')}
-          </button>
-          <button
-            type="button"
-            data-testid={`kebab-delete-${course.id}`}
-            className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm"
-            style={{ color: 'var(--danger)' }}
-            onClick={() => { setOpenMenuId(null); onDelete(course) }}
-          >
-            <Trash2 size={14} />
-            {t('creator.studio.table.kebabDelete')}
-          </button>
-        </div>
-      )}
-    </div>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          data-testid={`kebab-duplicate-${course.id}`}
+          onSelect={() => onDuplicate(course)}
+        >
+          <Copy size={14} />
+          {t('creator.studio.table.kebabDuplicate')}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          data-testid={`kebab-delete-${course.id}`}
+          danger
+          onSelect={() => onDelete(course)}
+        >
+          <Trash2 size={14} />
+          {t('creator.studio.table.kebabDelete')}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 
@@ -224,7 +196,6 @@ export default function CreatorStudioPage() {
   const [courseStats, setCourseStats] = useState<CourseStats[]>([])
   const [allCourses, setAllCourses] = useState<Course[]>([])
   const [duplicateToast, setDuplicateToast] = useState<'success' | 'error' | null>(null)
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
 
   const loading = !coursesLoaded
 
@@ -551,7 +522,7 @@ export default function CreatorStudioPage() {
                           {s?.rating != null ? s.rating.toFixed(1) : '—'}
                         </td>
                         <td style={{ padding: '14px 20px', textAlign: 'right' }}>
-                          <KebabMenu course={course} onDelete={handleDeleteClick} onDuplicate={handleDuplicate} t={t} openMenuId={openMenuId} setOpenMenuId={setOpenMenuId} />
+                          <KebabMenu course={course} onDelete={handleDeleteClick} onDuplicate={handleDuplicate} t={t} />
                         </td>
                       </tr>
                     )
