@@ -1041,7 +1041,7 @@ body {
 
 /* PaywallSheet panel */
 .paywall-sheet-panel {
-  background: var(--surface-1);
+  background: var(--surface);
   border-radius: var(--r-lg);
   width: 440px;
   max-width: 100vw;
