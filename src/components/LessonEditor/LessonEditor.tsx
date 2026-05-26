@@ -476,7 +476,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
               <textarea
                 id="lesson-description"
                 className="input"
-                style={{ resize: 'vertical', minHeight: 80 }}
+                style={{ resize: 'vertical', minHeight: 150 }}
                 aria-label={t('creator.lessonEditor.lessonDescription')}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}

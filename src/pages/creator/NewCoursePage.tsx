@@ -134,7 +134,7 @@ export default function NewCoursePage() {
               <div
                 data-testid="thumbnail-upload-zone"
                 className="flex flex-col items-center justify-center cursor-pointer text-(--ink-4)"
-                style={{ border: '2px dashed var(--border-strong)', borderRadius: 'var(--r-md)', width: 220, height: 140, fontSize: 13 }}
+                style={{ border: '2px dashed var(--border-strong)', borderRadius: 'var(--r-md)', height: 140, fontSize: 13 }}
                 onClick={() => fileRef.current?.click()}
                 onDragOver={e => e.preventDefault()}
                 onDrop={e => {
