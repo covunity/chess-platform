@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { getPendingOrderCount } from '../../lib/adminOrdersApi'
+import UserAvatarMenu from '../UserAvatarMenu'
 
 const NAV_ITEMS = [
   { key: 'overview', to: '/admin/overview' },
@@ -21,7 +21,6 @@ const NAV_ITEMS = [
 
 export default function AdminSidebar() {
   const { t } = useTranslation()
-  const { profile } = useAuth()
   const location = useLocation()
   const [pendingCount, setPendingCount] = useState<number | null>(null)
 
@@ -43,10 +42,6 @@ export default function AdminSidebar() {
     // Refetch when navigating between admin pages — e.g. after a confirm/cancel
     // on /admin/orders changes the underlying count.
   }, [location.pathname])
-
-  const initials = profile?.name
-    ? profile.name.charAt(0).toUpperCase()
-    : profile?.email?.charAt(0).toUpperCase() ?? 'A'
 
   return (
     <aside
@@ -106,21 +101,7 @@ export default function AdminSidebar() {
       </nav>
 
       {/* Profile card */}
-      {profile && (
-        <div className="mx-2 mb-3 rounded-(--r-md) bg-(--surface-2) px-3 py-2.5 flex items-center gap-2">
-          <div
-            className="avatar shrink-0"
-            style={{ width: 28, height: 28, fontSize: 12 }}
-            aria-hidden="true"
-          >
-            {initials}
-          </div>
-          <div className="overflow-hidden">
-            <p className="text-xs font-medium text-(--ink-1) truncate">{profile.name}</p>
-            <p className="truncate text-(--ink-3)" style={{ fontSize: 10.5 }}>{profile.email}</p>
-          </div>
-        </div>
-      )}
+      <UserAvatarMenu placement="top-stretch" />
     </aside>
   )
 }

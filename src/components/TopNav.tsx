@@ -7,23 +7,16 @@ import { supabase } from '../lib/supabase'
 import { getBookmarks } from '../lib/bookmarkApi'
 import { listPublishedCourses } from '../lib/coursesApi'
 import type { PublicCourse } from '../lib/coursesApi'
-import { hasUnreadOrderUpdates, readLastSeenOrdersAt } from '../lib/orderUpdatesApi'
 import ThemeToggle from './ThemeToggle'
+import UserAvatarMenu from './UserAvatarMenu'
 
 export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } = {}) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { user, profile, signOut } = useAuth()
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [avatarErrorUrl, setAvatarErrorUrl] = useState<string | null>(null)
-  const showAvatarImg = !!profile?.avatar_url && avatarErrorUrl !== profile.avatar_url
-  const menuRef = useRef<HTMLDivElement>(null)
+  const { user, profile } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const searchRef = useRef<HTMLInputElement>(null)
   const [bookmarkCount, setBookmarkCount] = useState(0)
-  // PRD-0005 D12c — dot on /account/orders when any order has flipped
-  // to active / refunded / expired since the user last opened the page.
-  const [hasOrderUpdates, setHasOrderUpdates] = useState(false)
   const [overlayQuery, setOverlayQuery] = useState('')
   const [overlayResults, setOverlayResults] = useState<PublicCourse[]>([])
   const overlayRef = useRef<HTMLDivElement>(null)
@@ -61,50 +54,11 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
   }, [])
 
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  useEffect(() => {
     if (!user) return
     getBookmarks(supabase, user.id).then(({ bookmarks }) => {
       setBookmarkCount(bookmarks?.length ?? 0)
     })
   }, [user])
-
-  useEffect(() => {
-    if (!user) {
-      setHasOrderUpdates(false)
-      return
-    }
-    let cancelled = false
-    hasUnreadOrderUpdates(supabase, readLastSeenOrdersAt()).then(({ hasUpdates }) => {
-      if (!cancelled) setHasOrderUpdates(hasUpdates)
-    })
-    return () => { cancelled = true }
-  }, [user])
-
-  async function handleLogout() {
-    await signOut()
-    setMenuOpen(false)
-    navigate('/')
-  }
-
-  const initials = user?.user_metadata?.name
-    ? (user.user_metadata.name as string).charAt(0).toUpperCase()
-    : user?.email?.charAt(0).toUpperCase() ?? '?'
-
-  const firstName = (
-    profile?.name ||
-    (user?.user_metadata?.name as string | undefined) ||
-    user?.email?.split('@')[0] ||
-    ''
-  ).split(' ')[0]
 
   return (
     <header
@@ -303,118 +257,7 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
         </button> */}
 
         {user ? (
-          <div className="nav-avatar-menu" ref={menuRef}>
-            <button
-              type="button"
-              aria-label={t('nav.myProfile')}
-              aria-haspopup="true"
-              aria-expanded={menuOpen}
-              onClick={() => setMenuOpen(o => !o)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '4px 10px 4px 4px',
-                background: menuOpen ? 'var(--surface-2)' : 'transparent',
-                border: '1px solid transparent',
-                borderRadius: 'var(--r-md)',
-                cursor: 'pointer',
-              }}
-            >
-              <span className="avatar" style={{ flexShrink: 0, overflow: 'hidden' }}>
-                {showAvatarImg ? (
-                  <img
-                    src={profile!.avatar_url!}
-                    alt={profile!.name ?? user.email ?? ''}
-                    referrerPolicy="no-referrer"
-                    onError={() => setAvatarErrorUrl(profile!.avatar_url)}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
-                  />
-                ) : (
-                  initials
-                )}
-              </span>
-              <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--ink-1)', whiteSpace: 'nowrap' }}>
-                {t('nav.greeting', { name: firstName })}
-              </span>
-            </button>
-            {menuOpen && (
-              <div className="nav-dropdown" role="menu">
-                <p className="nav-dropdown__email">{user.email}</p>
-                <Link
-                  role="menuitem"
-                  className="nav-dropdown__item"
-                  to="/profile"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {t('nav.profile', 'Hồ sơ')}
-                </Link>
-                <Link
-                  role="menuitem"
-                  className="nav-dropdown__item"
-                  data-testid="nav-orders-link"
-                  to="/account/orders"
-                  onClick={() => {
-                    setMenuOpen(false)
-                    // Optimistic clear: the AccountOrdersPage mount writes
-                    // `last_seen_orders_at`, but in case that races with the
-                    // next TopNav render we hide the dot immediately so the
-                    // user gets instant feedback that their click registered.
-                    setHasOrderUpdates(false)
-                  }}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}
-                >
-                  <span>{t('nav.orders', 'Lịch sử đơn hàng')}</span>
-                  {hasOrderUpdates && (
-                    <span
-                      data-testid="topnav-orders-dot"
-                      aria-label={t('nav.ordersUnreadAriaLabel', 'Có cập nhật đơn hàng mới')}
-                      role="status"
-                      style={{
-                        display: 'inline-block',
-                        width: 8,
-                        height: 8,
-                        borderRadius: 999,
-                        background: 'var(--danger, #e54848)',
-                        flexShrink: 0,
-                      }}
-                    />
-                  )}
-                </Link>
-                {profile?.role === 'creator' && (
-                  <Link
-                    role="menuitem"
-                    className="nav-dropdown__item"
-                    data-testid="nav-creator-payout-link"
-                    to="/creator/settings/payout"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    {t('nav.creatorPayoutSettings', 'Thông tin thanh toán')}
-                  </Link>
-                )}
-                {profile?.role === 'admin' && (
-                  <Link
-                    role="menuitem"
-                    className="nav-dropdown__item"
-                    data-testid="nav-creator-link"
-                    to="/creator"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    {t('nav.creatorStudio', 'Creator Studio')}
-                  </Link>
-                )}
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="nav-dropdown__item"
-                  onClick={handleLogout}
-                  aria-label={t('nav.logout')}
-                >
-                  {t('nav.logout')}
-                </button>
-              </div>
-            )}
-          </div>
+          <UserAvatarMenu placement="bottom-right" />
         ) : (
           <>
             <Link to="/login" className="btn btn-secondary btn-sm">{t('nav.signIn')}</Link>
