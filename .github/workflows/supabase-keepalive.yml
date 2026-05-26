@@ -1,0 +1,36 @@
+name: Supabase Keepalive Ping
+
+on:
+  schedule:
+    # Runs every 5 days at 00:00 UTC to stay well within the 7-day pause window
+    - cron: '0 0 */5 * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase to prevent free-tier auto-pause
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          # Try the health endpoint first (lightweight, triggers DB activity)
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${SUPABASE_URL}/auth/v1/health" \
+            -H "apikey: ${SUPABASE_KEY}")
+          echo "Health endpoint: $response"
+
+          # Also hit the REST API to ensure DB activity is registered
+          db_response=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${SUPABASE_URL}/rest/v1/" \
+            -H "apikey: ${SUPABASE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_KEY}")
+          echo "REST API: $db_response"
+
+          if [ "$response" -ge 200 ] && [ "$response" -lt 400 ]; then
+            echo "✓ Supabase keepalive successful"
+          else
+            echo "✗ Supabase keepalive failed (health: $response, rest: $db_response)"
+            exit 1
+          fi
