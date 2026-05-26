@@ -85,7 +85,7 @@ export default function AdminHeroConfigPage() {
       </div>
 
       <div className="flex-1 overflow-auto p-6">
-        <p className="text-sm text-(--ink-2) mb-6" style={{ maxWidth: 640, lineHeight: 1.55 }}>
+        <p className="text-sm text-(--ink-2) mb-6" style={{ lineHeight: 1.55 }}>
           {t('admin.heroConfig.intro')}
         </p>
 
@@ -99,7 +99,6 @@ export default function AdminHeroConfigPage() {
               padding: '10px 14px',
               fontSize: 13,
               marginBottom: 20,
-              maxWidth: 640,
             }}
           >
             {loadError}
@@ -116,7 +115,6 @@ export default function AdminHeroConfigPage() {
               padding: '10px 14px',
               fontSize: 13,
               marginBottom: 20,
-              maxWidth: 640,
             }}
           >
             {t('admin.heroConfig.savedMsg')}
@@ -133,14 +131,13 @@ export default function AdminHeroConfigPage() {
               padding: '10px 14px',
               fontSize: 13,
               marginBottom: 20,
-              maxWidth: 640,
             }}
           >
             {saveError}
           </div>
         )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 640 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
           {/* Text content section */}
           <div className="card" style={{ padding: 24 }}>
             <p className="font-semibold text-(--ink-1) mb-4" style={{ fontSize: 14 }}>
