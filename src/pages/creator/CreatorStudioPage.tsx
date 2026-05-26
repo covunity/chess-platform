@@ -134,10 +134,12 @@ interface KebabMenuProps {
   onDelete: (c: Course) => void
   onDuplicate: (c: Course) => void
   t: (k: string) => string
+  openMenuId: string | null
+  setOpenMenuId: (id: string | null) => void
 }
 
-function KebabMenu({ course, onDelete, onDuplicate, t }: KebabMenuProps) {
-  const [open, setOpen] = useState(false)
+function KebabMenu({ course, onDelete, onDuplicate, t, openMenuId, setOpenMenuId }: KebabMenuProps) {
+  const open = openMenuId === course.id
 
   return (
     <div className="relative" style={{ display: 'inline-block' }}>
@@ -146,7 +148,7 @@ function KebabMenu({ course, onDelete, onDuplicate, t }: KebabMenuProps) {
         data-testid="kebab-btn"
         className="btn btn-ghost btn-sm"
         aria-label="actions"
-        onClick={() => setOpen(o => !o)}
+        onClick={() => setOpenMenuId(open ? null : course.id)}
       >
         •••
       </button>
@@ -159,7 +161,7 @@ function KebabMenu({ course, onDelete, onDuplicate, t }: KebabMenuProps) {
             to={`/creator/courses/${course.id}/edit`}
             data-testid={`kebab-edit-${course.id}`}
             className="flex items-center gap-2 w-full px-4 py-2 text-sm text-(--ink-1) hover:bg-(--surface-2)"
-            onClick={() => setOpen(false)}
+            onClick={() => setOpenMenuId(null)}
           >
             <Pencil size={14} />
             {t('creator.studio.table.kebabEdit')}
@@ -168,7 +170,7 @@ function KebabMenu({ course, onDelete, onDuplicate, t }: KebabMenuProps) {
             type="button"
             data-testid={`kebab-duplicate-${course.id}`}
             className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-(--ink-1) hover:bg-(--surface-2)"
-            onClick={() => { setOpen(false); onDuplicate(course) }}
+            onClick={() => { setOpenMenuId(null); onDuplicate(course) }}
           >
             <Copy size={14} />
             {t('creator.studio.table.kebabDuplicate')}
@@ -178,7 +180,7 @@ function KebabMenu({ course, onDelete, onDuplicate, t }: KebabMenuProps) {
             data-testid={`kebab-delete-${course.id}`}
             className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm"
             style={{ color: 'var(--danger)' }}
-            onClick={() => { setOpen(false); onDelete(course) }}
+            onClick={() => { setOpenMenuId(null); onDelete(course) }}
           >
             <Trash2 size={14} />
             {t('creator.studio.table.kebabDelete')}
@@ -204,6 +206,7 @@ export default function CreatorStudioPage() {
   const [courseStats, setCourseStats] = useState<CourseStats[]>([])
   const [allCourses, setAllCourses] = useState<Course[]>([])
   const [duplicateToast, setDuplicateToast] = useState<'success' | 'error' | null>(null)
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
 
   const loading = !coursesLoaded
 
@@ -498,10 +501,18 @@ export default function CreatorStudioPage() {
                       <tr key={course.id} className="border-b border-(--border) last:border-0">
                         <td style={{ padding: '14px 20px' }}>
                           <div className="flex items-center gap-3">
-                            <div
-                              style={{ width: 40, height: 40, background: 'var(--surface-3)', borderRadius: 'var(--r-sm)', flexShrink: 0 }}
-                              aria-hidden="true"
-                            />
+                            {course.thumbnail_url ? (
+                              <img
+                                src={course.thumbnail_url}
+                                alt=""
+                                style={{ width: 40, height: 40, borderRadius: 'var(--r-sm)', flexShrink: 0, objectFit: 'cover' }}
+                              />
+                            ) : (
+                              <div
+                                style={{ width: 40, height: 40, background: 'var(--surface-3)', borderRadius: 'var(--r-sm)', flexShrink: 0 }}
+                                aria-hidden="true"
+                              />
+                            )}
                             <span data-testid={`course-title-${course.id}`} className="font-medium text-(--ink-1)">{course.title}</span>
                           </div>
                         </td>
@@ -520,7 +531,7 @@ export default function CreatorStudioPage() {
                           {s?.rating != null ? s.rating.toFixed(1) : '—'}
                         </td>
                         <td style={{ padding: '14px 20px', textAlign: 'right' }}>
-                          <KebabMenu course={course} onDelete={handleDeleteClick} onDuplicate={handleDuplicate} t={t} />
+                          <KebabMenu course={course} onDelete={handleDeleteClick} onDuplicate={handleDuplicate} t={t} openMenuId={openMenuId} setOpenMenuId={setOpenMenuId} />
                         </td>
                       </tr>
                     )
