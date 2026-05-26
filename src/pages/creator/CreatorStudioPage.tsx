@@ -380,7 +380,7 @@ export default function CreatorStudioPage() {
                 {recent.title}
               </div>
             </div>
-            <Link to={`/creator/courses/${recent.id}`} className="btn btn-secondary btn-sm">
+            <Link to={`/creator/courses/${recent.id}/edit`} className="btn btn-secondary btn-sm">
               {t('creator.studio.builderContinue')}
             </Link>
           </div>
