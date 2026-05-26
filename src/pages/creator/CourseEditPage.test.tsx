@@ -233,10 +233,12 @@ describe('CourseEditPage', () => {
     })
   })
 
-  it('shows free-preview toggle per lesson', async () => {
+  it('shows free-preview toggle in publish bar when a lesson is selected', async () => {
     renderPage()
-    await waitFor(() => screen.getByTestId('free-preview-l1'))
-    expect(screen.getByTestId('free-preview-l1')).toBeInTheDocument()
+    await waitFor(() => screen.getByTestId('open-editor-l1'))
+    await userEvent.click(screen.getByTestId('open-editor-l1'))
+    await waitFor(() => screen.getByTestId('free-preview-toggle'))
+    expect(screen.getByTestId('free-preview-toggle')).toBeInTheDocument()
   })
 
   it('shows chapter counter with current/max', async () => {

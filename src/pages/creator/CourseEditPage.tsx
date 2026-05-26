@@ -19,11 +19,13 @@ import type { Chapter, CourseLevel, CourseStatus, Lesson, LessonType, PublishRea
 import LessonEditor from '../../components/LessonEditor/LessonEditor'
 import { useAuth } from '../../context/AuthContext'
 import { useAccountTiers } from '../../lib/accountTiers'
+import { Video, ChessKnight, Puzzle, Eye } from 'lucide-react'
 
-const LESSON_TYPE_ICON: Record<LessonType, string> = {
-  video: '▶',
-  chess: '♟',
-  puzzle: '📋',
+function LessonTypeIcon({ type, size = 15 }: { type: LessonType; size?: number }) {
+  const props = { size, strokeWidth: 2, 'aria-hidden': true as const }
+  if (type === 'video') return <Video {...props} />
+  if (type === 'chess') return <ChessKnight {...props} />
+  return <Puzzle {...props} />
 }
 
 interface NewLessonDialogProps {
@@ -75,7 +77,7 @@ function NewLessonDialog({ onCancel, onCreate, t }: NewLessonDialogProps) {
                 color: selectedType === type ? 'var(--accent-ink)' : 'var(--ink-2)',
               }}
             >
-              <span style={{ fontSize: 18 }}>{LESSON_TYPE_ICON[type]}</span>
+              <LessonTypeIcon type={type} size={20} />
               <span style={{ fontSize: 12, fontWeight: 500 }}>{t(labelKey)}</span>
             </button>
           ))}
@@ -154,12 +156,11 @@ function ConfirmDialog({ testid, confirmTestid, title, onCancel, onConfirm }: Co
 interface LessonRowProps {
   lesson: Lesson
   onDelete: (l: Lesson) => void
-  onToggleFreePreview: (l: Lesson) => void
   onOpenEditor: (l: Lesson) => void
   t: (k: string) => string
 }
 
-function LessonRow({ lesson, onDelete, onToggleFreePreview, onOpenEditor, t }: LessonRowProps) {
+function LessonRow({ lesson, onDelete, onOpenEditor, t }: LessonRowProps) {
   const [title, setTitle] = useState(lesson.title)
   const [editing, setEditing] = useState(false)
 
@@ -175,13 +176,13 @@ function LessonRow({ lesson, onDelete, onToggleFreePreview, onOpenEditor, t }: L
       style={{ paddingLeft: 32, paddingRight: 12, paddingTop: 8, paddingBottom: 8 }}
       className="flex items-center gap-2 border-b border-(--border) last:border-0 hover:bg-(--surface-2)"
     >
-      <span style={{ fontSize: 12, color: 'var(--ink-3)', width: 16, textAlign: 'center' }}>
-        {LESSON_TYPE_ICON[lesson.type]}
+      <span style={{ color: 'var(--ink-3)', width: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <LessonTypeIcon type={lesson.type} />
       </span>
       {editing ? (
         <input
           className="input flex-1"
-          style={{ height: 28, fontSize: 12.5 }}
+          style={{ height: 28, fontSize: 13.5 }}
           value={title}
           onChange={e => setTitle(e.target.value)}
           onBlur={handleBlur}
@@ -190,32 +191,22 @@ function LessonRow({ lesson, onDelete, onToggleFreePreview, onOpenEditor, t }: L
       ) : (
         <span
           className="flex-1 text-(--ink-2) cursor-pointer"
-          style={{ fontSize: 12.5 }}
+          style={{ fontSize: 13.5 }}
           onClick={() => onOpenEditor(lesson)}
           data-testid={`open-editor-${lesson.id}`}
         >
           {title}
         </span>
       )}
-      <button
-        type="button"
-        data-testid={`free-preview-${lesson.id}`}
-        className="pill"
-        style={{
-          fontSize: 11,
-          height: 20,
-          background: lesson.free_preview ? 'var(--accent-soft)' : 'var(--surface-2)',
-          color: lesson.free_preview ? 'var(--accent-ink)' : 'var(--ink-3)',
-          cursor: 'pointer',
-          border: 'none',
-        }}
-        onClick={() => onToggleFreePreview(lesson)}
-        title={t('creator.courseEdit.freePreview')}
-      >
-        {lesson.free_preview
-          ? `✓ ${t('creator.courseEdit.freePreview')}`
-          : t('creator.courseEdit.freePreview')}
-      </button>
+      {lesson.free_preview && (
+        <span
+          className="pill"
+          style={{ fontSize: 10, height: 18, background: 'var(--accent-soft)', color: 'var(--accent-ink)', border: 'none' }}
+        >
+          <Eye size={10} style={{ marginRight: 2 }} />
+          {t('creator.courseEdit.freePreview')}
+        </span>
+      )}
       <button
         type="button"
         data-testid={`delete-lesson-${lesson.id}`}
@@ -235,12 +226,11 @@ interface ChapterBlockProps {
   onDeleteChapter: (ch: Chapter) => void
   onOpenNewLessonDialog: (chapterId: string) => void
   onDeleteLesson: (l: Lesson) => void
-  onToggleFreePreview: (l: Lesson) => void
   onOpenEditor: (l: Lesson) => void
   t: (k: string) => string
 }
 
-function ChapterBlock({ chapter, onDeleteChapter, onOpenNewLessonDialog, onDeleteLesson, onToggleFreePreview, onOpenEditor, t }: ChapterBlockProps) {
+function ChapterBlock({ chapter, onDeleteChapter, onOpenNewLessonDialog, onDeleteLesson, onOpenEditor, t }: ChapterBlockProps) {
   const [title, setTitle] = useState(chapter.title)
   const [editing, setEditing] = useState(false)
 
@@ -261,7 +251,7 @@ function ChapterBlock({ chapter, onDeleteChapter, onOpenNewLessonDialog, onDelet
         {editing ? (
           <input
             className="input flex-1"
-            style={{ height: 28, fontSize: 12.5, fontWeight: 600 }}
+            style={{ height: 28, fontSize: 13.5, fontWeight: 600 }}
             value={title}
             onChange={e => setTitle(e.target.value)}
             onBlur={handleBlur}
@@ -270,7 +260,7 @@ function ChapterBlock({ chapter, onDeleteChapter, onOpenNewLessonDialog, onDelet
         ) : (
           <span
             className="flex-1 font-semibold text-(--ink-1) cursor-pointer"
-            style={{ fontSize: 12.5 }}
+            style={{ fontSize: 13.5 }}
             onClick={() => setEditing(true)}
           >
             {title}
@@ -294,7 +284,6 @@ function ChapterBlock({ chapter, onDeleteChapter, onOpenNewLessonDialog, onDelet
           key={lesson.id}
           lesson={lesson}
           onDelete={onDeleteLesson}
-          onToggleFreePreview={onToggleFreePreview}
           onOpenEditor={onOpenEditor}
           t={t}
         />
@@ -336,10 +325,12 @@ interface PublishBarProps {
   onPublish: () => void
   onUnpublish: () => void
   onSaveLesson?: () => void
+  onToggleFreePreview?: () => void
+  isFreePreview?: boolean
   t: (k: string) => string
 }
 
-function PublishBar({ courseId, courseTitle, status, readiness, publishing, onPublish, onUnpublish, onSaveLesson, t }: PublishBarProps) {
+function PublishBar({ courseId, courseTitle, status, readiness, publishing, onPublish, onUnpublish, onSaveLesson, onToggleFreePreview, isFreePreview, t }: PublishBarProps) {
   const barStyle: React.CSSProperties = {
     padding: '8px 20px',
     background: 'var(--surface)',
@@ -364,6 +355,27 @@ function PublishBar({ courseId, courseTitle, status, readiness, publishing, onPu
     </div>
   )
 
+  const freePreviewBtn = onToggleFreePreview && (
+    <button
+      type="button"
+      data-testid="free-preview-toggle"
+      className="btn btn-sm"
+      onClick={onToggleFreePreview}
+      style={{
+        fontSize: 12,
+        gap: 4,
+        display: 'inline-flex',
+        alignItems: 'center',
+        background: isFreePreview ? 'var(--accent-soft)' : 'var(--surface-2)',
+        color: isFreePreview ? 'var(--accent-ink)' : 'var(--ink-2)',
+        border: `1px solid ${isFreePreview ? 'var(--accent-border)' : 'var(--border)'}`,
+      }}
+    >
+      <Eye size={13} />
+      {isFreePreview ? `✓ ${t('creator.courseEdit.freePreview')}` : t('creator.courseEdit.freePreview')}
+    </button>
+  )
+
   if (status === 'published') {
     return (
       <div data-testid="publish-bar" className="flex items-center gap-3" style={barStyle}>
@@ -373,6 +385,7 @@ function PublishBar({ courseId, courseTitle, status, readiness, publishing, onPu
             {t('creator.courseEdit.saveLesson')}
           </button>
         )}
+        {freePreviewBtn}
         <Link
           to={`/courses/${courseId}`}
           data-testid="view-public-page"
@@ -395,6 +408,7 @@ function PublishBar({ courseId, courseTitle, status, readiness, publishing, onPu
           {t('creator.courseEdit.saveLesson')}
         </button>
       )}
+      {freePreviewBtn}
       <div className="relative group">
         <button
           type="button"
@@ -688,19 +702,28 @@ export default function CourseEditPage() {
           <button
             type="button"
             onClick={() => { setSelectedLesson(null); setShowCourseInfo(true) }}
+            className="group"
             style={{
               width: '100%',
               textAlign: 'left',
-              padding: '7px 10px',
+              padding: '8px 10px',
               borderRadius: 'var(--r-sm)',
-              border: 'none',
+              border: '1px solid',
+              borderColor: showCourseInfo && !selectedLesson ? 'var(--accent-border)' : 'var(--border)',
               cursor: 'pointer',
-              fontSize: 12.5,
+              fontSize: 13.5,
               fontWeight: 500,
-              background: showCourseInfo && !selectedLesson ? 'var(--accent-soft)' : 'transparent',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              background: showCourseInfo && !selectedLesson ? 'var(--accent-soft)' : 'var(--surface)',
               color: showCourseInfo && !selectedLesson ? 'var(--accent-ink)' : 'var(--ink-2)',
             }}
           >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0, opacity: 0.7 }}>
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
             {t('creator.courseEdit.courseInfo.link')}
           </button>
         </div>
@@ -725,7 +748,6 @@ export default function CourseEditPage() {
                 onDeleteChapter={ch => setConfirmDeleteChapter(ch)}
                 onOpenNewLessonDialog={chapterId => setNewLessonChapterId(chapterId)}
                 onDeleteLesson={l => setConfirmDeleteLesson(l)}
-                onToggleFreePreview={handleToggleFreePreview}
                 onOpenEditor={l => { setSelectedLesson(l); setShowCourseInfo(false) }}
                 t={t}
               />
@@ -797,6 +819,8 @@ export default function CourseEditPage() {
             onPublish={handlePublish}
             onUnpublish={handleUnpublish}
             onSaveLesson={selectedLesson ? () => saveLessonRef.current?.() : undefined}
+            onToggleFreePreview={selectedLesson ? () => handleToggleFreePreview(selectedLesson) : undefined}
+            isFreePreview={selectedLesson?.free_preview ?? false}
             t={t}
           />
         )}
@@ -838,8 +862,8 @@ export default function CourseEditPage() {
             saveRef={saveLessonRef}
           />
         ) : (
-          <div className="flex-1 p-0 overflow-y-auto">
-          <div className="card" style={{ maxWidth: 680, padding: '32px 36px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div className="flex-1 overflow-y-auto" style={{ padding: '32px 40px' }}>
+          <div className="card" style={{ maxWidth: 680, margin: '0 auto', padding: '32px 36px', display: 'flex', flexDirection: 'column', gap: 20 }}>
             <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--ink-1)', marginBottom: 4 }}>
               {t('creator.courseEdit.courseInfo.heading')}
             </h2>
