@@ -192,7 +192,8 @@
       "creatorFees": "Override creator",
       "tiers": "Gói tài khoản",
       "payouts": "Chi trả creator",
-      "reports": "Báo cáo"
+      "reports": "Báo cáo",
+      "heroConfig": "Nội dung trang chủ"
     },
     "campaigns": {
       "pageTitle": "Chiến dịch khuyến mại",
@@ -755,7 +756,33 @@
       "title": "403 — Không có quyền truy cập",
       "body": "Bạn không có quyền truy cập trang này."
     },
-    "comingSoon": "Sắp ra mắt"
+    "comingSoon": "Sắp ra mắt",
+    "heroConfig": {
+      "pageTitle": "Nội dung trang chủ",
+      "intro": "Tuỳ chỉnh nội dung khu vực hero trên trang chủ. Để trống từng trường để dùng nội dung mặc định.",
+      "sectionText": "Nội dung văn bản",
+      "sectionCards": "Thẻ nổi trang trí",
+      "cardsHint": "Các thẻ nổi chỉ hiển thị khi không có hình ảnh tuỳ chỉnh bên phải.",
+      "sectionImage": "Hình ảnh bên phải",
+      "imageHint": "Nhập URL hình ảnh để thay thế bàn cờ trang trí. Để trống = hiện bàn cờ mặc định cùng các thẻ nổi.",
+      "eyebrowLabel": "Dòng chữ nhỏ trên tiêu đề",
+      "headline1Label": "Tiêu đề dòng 1",
+      "headline2Label": "Tiêu đề dòng 2",
+      "headline2Hint": "Hiển thị in nghiêng với màu accent.",
+      "subparagraphLabel": "Đoạn mô tả",
+      "cta1Label": "Nút kêu gọi hành động",
+      "trustLabel": "Văn bản tin tưởng",
+      "annotationAuthorLabel": "Tên tác giả thẻ annotation",
+      "annotationLabel": "Nội dung annotation",
+      "bookmarkLabel": "Nội dung thẻ bookmark",
+      "imageUrlLabel": "URL hình ảnh",
+      "imagePreview": "Xem trước:",
+      "saveBtnLabel": "Lưu thay đổi",
+      "savingLabel": "Đang lưu…",
+      "savedMsg": "Đã lưu thành công!",
+      "errorMsg": "Lưu thất bại. Vui lòng thử lại.",
+      "loadError": "Không thể tải cấu hình. Vui lòng tải lại trang."
+    }
   },
   "creator": {
     "forbidden": {

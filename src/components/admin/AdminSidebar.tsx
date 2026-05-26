@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { key: 'tiers', to: '/admin/tiers' },
   { key: 'payouts', to: '/admin/payouts' },
   { key: 'reports', to: '/admin/reports' },
+  { key: 'heroConfig', to: '/admin/hero-config' },
 ] as const
 
 export default function AdminSidebar() {

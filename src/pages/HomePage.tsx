@@ -10,6 +10,8 @@ import type { CourseLevel } from '../lib/creatorApi'
 import CourseCard from '../components/CourseCard'
 import CampaignBanner from '../components/CampaignBanner'
 import ChessBoard from '../components/ChessBoard/ChessBoard'
+import { fetchHeroConfig } from '../lib/heroConfigApi'
+import type { HeroConfig } from '../lib/heroConfigApi'
 
 function dismissedKey(id: string): string {
   return `dismissed:campaign:${id}`
@@ -62,6 +64,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true)
   const [activeCampaign, setActiveCampaign] = useState<Campaign | null>(null)
   const [bannerDismissed, setBannerDismissed] = useState(false)
+  const [heroConfig, setHeroConfig] = useState<HeroConfig | null>(null)
 
   const level = (searchParams.get('level') ?? 'all') as CourseLevel | 'all'
   const tag = searchParams.get('tag') ?? ''
@@ -88,6 +91,15 @@ export default function HomePage() {
       if (campaign) setBannerDismissed(isCampaignDismissed(campaign.id))
     })
   }, [])
+
+  useEffect(() => {
+    fetchHeroConfig(supabase).then(setHeroConfig).catch(() => { /* use i18n defaults */ })
+  }, [])
+
+  function hero(key: keyof HeroConfig, i18nKey: string): string {
+    const val = heroConfig?.[key]
+    return typeof val === 'string' && val.trim() !== '' ? val : t(i18nKey)
+  }
 
   function handleDismissBanner() {
     if (!activeCampaign) return
@@ -155,7 +167,7 @@ export default function HomePage() {
                 color: 'var(--accent-ink)',
               }}
             >
-              {t('home.eyebrow')}
+              {hero('eyebrow', 'home.eyebrow')}
             </span>
 
             <h1
@@ -168,10 +180,10 @@ export default function HomePage() {
                 margin: 0,
               }}
             >
-              {t('home.heroHeadline1')}
+              {hero('headline1', 'home.heroHeadline1')}
               <br />
               <em style={{ color: 'var(--accent)', fontStyle: 'italic' }}>
-                {t('home.heroHeadline2')}
+                {hero('headline2', 'home.heroHeadline2')}
               </em>
             </h1>
 
@@ -184,7 +196,7 @@ export default function HomePage() {
                 margin: 0,
               }}
             >
-              {t('home.heroSubparagraph')}
+              {hero('subparagraph', 'home.heroSubparagraph')}
             </p>
 
             <button
@@ -193,15 +205,15 @@ export default function HomePage() {
               style={{ alignSelf: 'flex-start' }}
               onClick={() => (() => { const el = document.getElementById('course-section'); const navHeight = (document.querySelector('header[role="banner"]') as HTMLElement)?.offsetHeight ?? 0; if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - navHeight, behavior: 'smooth' }) })()}
             >
-              {t('home.heroCta1')} →
+              {hero('cta1', 'home.heroCta1')} →
             </button>
 
             <p style={{ fontSize: 13, color: 'var(--ink-3)', margin: 0 }}>
-              {t('home.heroTrust')}
+              {hero('trust', 'home.heroTrust')}
             </p>
           </div>
 
-          {/* Right — decorative board */}
+          {/* Right — decorative board or custom image */}
           <div
             style={{
               position: 'relative',
@@ -210,84 +222,103 @@ export default function HomePage() {
               alignItems: 'center',
             }}
           >
-            <div
-              style={{
-                background: 'radial-gradient(circle at center, oklch(0.85 0.07 200 / 0.4), transparent 60%)',
-                borderRadius: '50%',
-                width: 460,
-                height: 460,
-                position: 'absolute',
-              }}
-            />
-            <div style={{ transform: 'rotate(-3deg)', boxShadow: '0 30px 80px rgba(20,22,26,0.18)', zIndex: 1 }}>
-              <ChessBoard fen={INITIAL_FEN} size={400} showCoords={false} />
-            </div>
-
-            {/* Floating annotation card */}
-            <div
-              className="card"
-              style={{
-                position: 'absolute',
-                top: 20,
-                right: -20,
-                width: 240,
-                padding: 14,
-                transform: 'rotate(4deg)',
-                boxShadow: 'var(--sh-3)',
-                zIndex: 2,
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <div
-                  className="avatar"
-                  style={{ background: 'oklch(0.85 0.07 200)', color: 'var(--ink-1)', fontSize: 12, fontWeight: 600, flexShrink: 0 }}
-                >
-                  A
-                </div>
-                <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-1)' }}>
-                  {t('home.heroAnnotationAuthor')}
-                </span>
-              </div>
-              <p style={{ fontSize: 12, color: 'var(--ink-2)', fontStyle: 'italic', margin: 0, lineHeight: 1.5 }}>
-                {t('home.heroAnnotation')}
-              </p>
-            </div>
-
-            {/* Floating bookmark card */}
-            <div
-              className="card"
-              style={{
-                position: 'absolute',
-                bottom: 20,
-                left: -20,
-                width: 200,
-                padding: 12,
-                transform: 'rotate(-2deg)',
-                boxShadow: 'var(--sh-3)',
-                zIndex: 2,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-              }}
-            >
-              <div
+            {heroConfig?.imageUrl ? (
+              <img
+                src={heroConfig.imageUrl}
+                alt=""
                 style={{
-                  width: 32,
-                  height: 32,
-                  background: 'var(--accent-soft)',
-                  borderRadius: 'var(--r-sm)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
+                  width: '100%',
+                  maxWidth: 460,
+                  borderRadius: 'var(--r-lg)',
+                  boxShadow: '0 30px 80px rgba(20,22,26,0.18)',
+                  objectFit: 'cover',
+                  display: 'block',
+                  zIndex: 1,
+                  position: 'relative',
                 }}
-              >
-                🔖
-              </div>
-              <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>
-                {t('home.heroBookmark')}
-              </span>
-            </div>
+              />
+            ) : (
+              <>
+                <div
+                  style={{
+                    background: 'radial-gradient(circle at center, oklch(0.85 0.07 200 / 0.4), transparent 60%)',
+                    borderRadius: '50%',
+                    width: 460,
+                    height: 460,
+                    position: 'absolute',
+                  }}
+                />
+                <div style={{ transform: 'rotate(-3deg)', boxShadow: '0 30px 80px rgba(20,22,26,0.18)', zIndex: 1 }}>
+                  <ChessBoard fen={INITIAL_FEN} size={400} showCoords={false} />
+                </div>
+
+                {/* Floating annotation card */}
+                <div
+                  className="card"
+                  style={{
+                    position: 'absolute',
+                    top: 20,
+                    right: -20,
+                    width: 240,
+                    padding: 14,
+                    transform: 'rotate(4deg)',
+                    boxShadow: 'var(--sh-3)',
+                    zIndex: 2,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <div
+                      className="avatar"
+                      style={{ background: 'oklch(0.85 0.07 200)', color: 'var(--ink-1)', fontSize: 12, fontWeight: 600, flexShrink: 0 }}
+                    >
+                      A
+                    </div>
+                    <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-1)' }}>
+                      {hero('annotationAuthor', 'home.heroAnnotationAuthor')}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: 12, color: 'var(--ink-2)', fontStyle: 'italic', margin: 0, lineHeight: 1.5 }}>
+                    {hero('annotation', 'home.heroAnnotation')}
+                  </p>
+                </div>
+
+                {/* Floating bookmark card */}
+                <div
+                  className="card"
+                  style={{
+                    position: 'absolute',
+                    bottom: 20,
+                    left: -20,
+                    width: 200,
+                    padding: 12,
+                    transform: 'rotate(-2deg)',
+                    boxShadow: 'var(--sh-3)',
+                    zIndex: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 32,
+                      height: 32,
+                      background: 'var(--accent-soft)',
+                      borderRadius: 'var(--r-sm)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    🔖
+                  </div>
+                  <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>
+                    {hero('bookmark', 'home.heroBookmark')}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </section>

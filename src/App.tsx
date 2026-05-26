@@ -14,6 +14,7 @@ import AdminVouchersPage from './pages/admin/AdminVouchersPage'
 import AdminCreatorApplicationsPage from './pages/admin/AdminCreatorApplicationsPage'
 import AdminCreatorFeesPage from './pages/admin/AdminCreatorFeesPage'
 import AdminTiersPage from './pages/admin/AdminTiersPage'
+import AdminHeroConfigPage from './pages/admin/AdminHeroConfigPage'
 import AdminPayoutsPage from './pages/admin/AdminPayoutsPage'
 import AdminAnalyticsPage from './pages/admin/AdminAnalyticsPage'
 import AdminComingSoonPage from './pages/admin/AdminComingSoonPage'
@@ -76,6 +77,7 @@ export default function App() {
             <Route path="tiers" element={<AdminTiersPage />} />
             <Route path="payouts" element={<AdminPayoutsPage />} />
             <Route path="reports" element={<AdminReportsPage />} />
+            <Route path="hero-config" element={<AdminHeroConfigPage />} />
             <Route path="*" element={<AdminComingSoonPage />} />
           </Route>
         </Route>
