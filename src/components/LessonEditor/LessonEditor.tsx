@@ -25,7 +25,7 @@ export interface Lesson {
   pgn_data: string;
   board_perspective: "white" | "black";
   is_free_preview: boolean;
-  type?: LessonType;
+  type: LessonType;
   duration_seconds?: number;
   video_provider?: VideoProviderName | null;
   video_provider_id?: string | null;
