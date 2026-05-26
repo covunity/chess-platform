@@ -47,7 +47,7 @@ export interface Lesson {
 
 export interface LessonEditorProps {
   lesson: Lesson;
-  onSave: (data: Pick<Lesson, "pgn_data" | "board_perspective" | "is_free_preview" | "title" | "description" | "has_rewind_mode">) => void;
+  onSave: (data: Pick<Lesson, "type" | "pgn_data" | "board_perspective" | "is_free_preview" | "title" | "description" | "has_rewind_mode">) => void;
   chapterLessons?: Array<{ id: string; title: string; type: LessonType }>;
   onSelectLesson?: (id: string) => void;
   showSidebar?: boolean;
@@ -165,7 +165,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
       const startingFen = rootFen !== STANDARD_FEN ? rootFen : undefined;
       pgnToSave = serializePgn(treeState.tree, startingFen);
     }
-    onSave({ pgn_data: pgnToSave, board_perspective: perspective, is_free_preview: lesson.is_free_preview, title, description: description || null, has_rewind_mode: hasRewindMode });
+    onSave({ type: activeTab, pgn_data: pgnToSave, board_perspective: perspective, is_free_preview: lesson.is_free_preview, title, description: description || null, has_rewind_mode: hasRewindMode });
   };
 
   useEffect(() => {

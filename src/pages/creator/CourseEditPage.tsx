@@ -636,7 +636,7 @@ export default function CourseEditPage() {
     }
   }
 
-  async function handleSaveLesson(data: { pgn_data: string; board_perspective: 'white' | 'black'; is_free_preview: boolean; title: string; description?: string | null; has_rewind_mode?: boolean }) {
+  async function handleSaveLesson(data: { type: LessonType; pgn_data: string; board_perspective: 'white' | 'black'; is_free_preview: boolean; title: string; description?: string | null; has_rewind_mode?: boolean }) {
     if (!selectedLesson) return
     const hasRewindMode = data.has_rewind_mode ?? false
     // Rewind sibling rows are content-managed by the DB trigger from their
@@ -661,6 +661,7 @@ export default function CourseEditPage() {
       return
     }
     const { error: updateErr } = await updateLesson(supabase, selectedLesson.id, {
+      type: data.type,
       pgn_data: data.pgn_data,
       board_perspective: data.board_perspective,
       free_preview: data.is_free_preview,
@@ -678,7 +679,7 @@ export default function CourseEditPage() {
       ...ch,
       lessons: (ch.lessons ?? []).map(l =>
         l.id === selectedLesson.id
-          ? { ...l, pgn_data: data.pgn_data, board_perspective: data.board_perspective, free_preview: data.is_free_preview, title: data.title, description: data.description ?? null, has_rewind_mode: hasRewindMode }
+          ? { ...l, type: data.type, pgn_data: data.pgn_data, board_perspective: data.board_perspective, free_preview: data.is_free_preview, title: data.title, description: data.description ?? null, has_rewind_mode: hasRewindMode }
           : l
       ),
     })))
