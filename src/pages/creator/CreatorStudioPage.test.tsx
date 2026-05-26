@@ -15,7 +15,6 @@ const {
   mockListChapters,
   mockUpdateLesson,
   mockDuplicateCourse,
-  mockGetMyLatestAccountApplication,
 } = vi.hoisted(() => ({
   mockListCourses: vi.fn(),
   mockDeleteCourse: vi.fn(),
@@ -25,7 +24,6 @@ const {
   mockListChapters: vi.fn(),
   mockUpdateLesson: vi.fn(),
   mockDuplicateCourse: vi.fn(),
-  mockGetMyLatestAccountApplication: vi.fn(),
 }))
 
 vi.mock('../../lib/creatorApi', () => ({
@@ -37,10 +35,6 @@ vi.mock('../../lib/creatorApi', () => ({
   listChapters: mockListChapters,
   updateLesson: mockUpdateLesson,
   duplicateCourse: mockDuplicateCourse,
-}))
-
-vi.mock('../../lib/accountApplicationApi', () => ({
-  getMyLatestAccountApplication: mockGetMyLatestAccountApplication,
 }))
 
 const { mockFetchCreatorWallet, mockFetchRecentEarnings, mockFetchPayoutHistory } = vi.hoisted(() => ({
@@ -121,7 +115,6 @@ describe('CreatorStudioPage', () => {
     mockListChapters.mockResolvedValue({ chapters: [], error: null })
     mockUpdateLesson.mockResolvedValue({ lesson: null, error: null })
     mockDuplicateCourse.mockResolvedValue({ course: null, error: null })
-    mockGetMyLatestAccountApplication.mockResolvedValue({ application: null, error: null })
     mockFetchCreatorWallet.mockResolvedValue({
       wallet: { pendingBalance: 0, totalPaidOut: 0, lifetimeEarnings: 0 },
       error: null,
@@ -439,62 +432,6 @@ describe('CreatorStudioPage', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('duplicate-error-toast')).toBeInTheDocument()
-    })
-  })
-
-  describe('upgrade CTA card', () => {
-    it('shows upgrade CTA card when creator has individual tier and no application', async () => {
-      mockUseAuth.mockReturnValue({ profile: { id: 'u1', role: 'creator', account_tier_id: 'individual' } })
-      mockGetMyLatestAccountApplication.mockResolvedValue({ application: null, error: null })
-      renderPage()
-      await waitFor(() => {
-        expect(screen.getByTestId('upgrade-cta-card')).toBeInTheDocument()
-        expect(screen.getByTestId('upgrade-cta-btn')).toBeInTheDocument()
-      })
-      expect(screen.queryByTestId('upgrade-pending-badge')).not.toBeInTheDocument()
-    })
-
-    it('hides upgrade CTA and shows pending badge when creator has pending application', async () => {
-      mockUseAuth.mockReturnValue({ profile: { id: 'u1', role: 'creator', account_tier_id: 'individual' } })
-      mockGetMyLatestAccountApplication.mockResolvedValue({
-        application: { id: 'app1', status: 'pending', user_id: 'u1' },
-        error: null,
-      })
-      renderPage()
-      await waitFor(() => {
-        expect(screen.queryByTestId('upgrade-cta-card')).not.toBeInTheDocument()
-        expect(screen.getByTestId('upgrade-pending-badge')).toBeInTheDocument()
-        expect(screen.getByTestId('upgrade-pending-link')).toHaveAttribute('href', '/become-creator')
-      })
-    })
-
-    it('shows upgrade CTA again when creator has rejected application', async () => {
-      mockUseAuth.mockReturnValue({ profile: { id: 'u1', role: 'creator', account_tier_id: 'individual' } })
-      mockGetMyLatestAccountApplication.mockResolvedValue({
-        application: { id: 'app1', status: 'rejected', user_id: 'u1' },
-        error: null,
-      })
-      renderPage()
-      await waitFor(() => {
-        expect(screen.getByTestId('upgrade-cta-card')).toBeInTheDocument()
-      })
-      expect(screen.queryByTestId('upgrade-pending-badge')).not.toBeInTheDocument()
-    })
-
-    it('hides upgrade CTA when creator has enterprise tier', async () => {
-      mockUseAuth.mockReturnValue({ profile: { id: 'u1', role: 'creator', account_tier_id: 'business' } })
-      renderPage()
-      await waitFor(() => screen.getByTestId('kpi-students'))
-      expect(screen.queryByTestId('upgrade-cta-card')).not.toBeInTheDocument()
-      expect(screen.queryByTestId('upgrade-pending-badge')).not.toBeInTheDocument()
-    })
-
-    it('upgrade CTA button links to /become-creator', async () => {
-      mockUseAuth.mockReturnValue({ profile: { id: 'u1', role: 'creator', account_tier_id: 'individual' } })
-      mockGetMyLatestAccountApplication.mockResolvedValue({ application: null, error: null })
-      renderPage()
-      await waitFor(() => screen.getByTestId('upgrade-cta-btn'))
-      expect(screen.getByTestId('upgrade-cta-btn')).toHaveAttribute('href', '/become-creator')
     })
   })
 

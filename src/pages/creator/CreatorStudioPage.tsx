@@ -11,8 +11,6 @@ import {
   fetchCoursesWithStats,
 } from '../../lib/creatorApi'
 import type { Course, CourseStatus, CreatorKpis, CourseStats } from '../../lib/creatorApi'
-import { getMyLatestAccountApplication } from '../../lib/accountApplicationApi'
-import type { AccountApplication } from '../../lib/accountApplicationApi'
 import { Pencil, Copy, Trash2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import RevenuePanel from '../../components/creator/RevenuePanel'
@@ -206,7 +204,6 @@ export default function CreatorStudioPage() {
   const [courseStats, setCourseStats] = useState<CourseStats[]>([])
   const [allCourses, setAllCourses] = useState<Course[]>([])
   const [duplicateToast, setDuplicateToast] = useState<'success' | 'error' | null>(null)
-  const [latestApplication, setLatestApplication] = useState<AccountApplication | null>(null)
 
   const loading = !coursesLoaded
 
@@ -232,14 +229,6 @@ export default function CreatorStudioPage() {
     if (!profile?.id) return
     fetchCreatorKpis(supabase, profile.id).then(k => setKpis(k))
   }, [profile?.id])
-
-  // Load latest account application for upgrade CTA visibility
-  useEffect(() => {
-    if (!profile?.id || profile.account_tier_id !== 'individual') return
-    getMyLatestAccountApplication(supabase, profile.id).then(({ application }) => {
-      setLatestApplication(application)
-    })
-  }, [profile?.id, profile?.account_tier_id])
 
   // Load per-course stats whenever allCourses changes
   useEffect(() => {
@@ -377,74 +366,6 @@ export default function CreatorStudioPage() {
           detail={t('creator.studio.kpi.ratingDetail', { count: kpis.courseCount })}
         />
       </div>
-
-      {/* Upgrade CTA — only for individual tier creators without a pending application */}
-      {profile?.account_tier_id === 'individual' && latestApplication?.status !== 'pending' && (
-        <div
-          data-testid="upgrade-cta-card"
-          className="card"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '16px 24px',
-            marginBottom: 24,
-            background: 'var(--accent-soft)',
-            border: '1px solid var(--accent-border)',
-          }}
-        >
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--accent-ink)', marginBottom: 2 }}>
-              {t('creator.dashboard.upgradeCta.heading')}
-            </div>
-            <div style={{ fontSize: 13, color: 'var(--ink-2)' }}>
-              {t('creator.dashboard.upgradeCta.body')}
-            </div>
-          </div>
-          <Link
-            to="/become-creator"
-            className="btn btn-accent btn-sm"
-            data-testid="upgrade-cta-btn"
-            style={{ flexShrink: 0, marginLeft: 16 }}
-          >
-            {t('creator.dashboard.upgradeCta.btn')}
-          </Link>
-        </div>
-      )}
-
-      {/* Pending application badge — replaces upgrade CTA when application is awaiting review */}
-      {profile?.account_tier_id === 'individual' && latestApplication?.status === 'pending' && (
-        <div
-          data-testid="upgrade-pending-badge"
-          className="card"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '16px 24px',
-            marginBottom: 24,
-            background: 'var(--warning-soft)',
-            border: '1px solid var(--warning)',
-          }}
-        >
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-1)', marginBottom: 2 }}>
-              {t('creator.dashboard.upgradePending.heading')}
-            </div>
-            <div style={{ fontSize: 13, color: 'var(--ink-2)' }}>
-              {t('creator.dashboard.upgradePending.body')}
-            </div>
-          </div>
-          <Link
-            to="/become-creator"
-            className="btn btn-sm"
-            data-testid="upgrade-pending-link"
-            style={{ flexShrink: 0, marginLeft: 16 }}
-          >
-            {t('creator.dashboard.upgradePending.btn')}
-          </Link>
-        </div>
-      )}
 
       {/* Course builder block — most recently edited course */}
       {!loading && allCourses.length > 0 && (() => {

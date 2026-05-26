@@ -837,18 +837,6 @@
       "duplicateToast": "Đã nhân bản khóa học",
       "duplicateError": "Không thể nhân bản khóa học"
     },
-    "dashboard": {
-      "upgradeCta": {
-        "heading": "Nâng cấp tài khoản để mở thêm tính năng",
-        "body": "Tham gia gói Doanh nghiệp, Vận động viên hoặc Trung tâm để giảm phí nền tảng và tạo nhiều chương hơn.",
-        "btn": "Nâng cấp ngay"
-      },
-      "upgradePending": {
-        "heading": "Đơn nâng cấp đang chờ duyệt",
-        "body": "Chúng tôi đang xem xét đơn của bạn. Bạn sẽ nhận được thông báo khi đơn được duyệt.",
-        "btn": "Xem đơn"
-      }
-    },
     "revenue": {
       "tabLabel": "Doanh thu",
       "pendingBalance": "Số dư chờ chi trả",

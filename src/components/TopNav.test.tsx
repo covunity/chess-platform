@@ -117,7 +117,7 @@ describe('TopNav', () => {
     const loggedInUser = { email: 'user@example.com', id: '123', user_metadata: { name: 'John Doe' } }
 
     it('shows avatar button', () => {
-      renderNav({ user: loggedInUser })
+      renderNav({ user: loggedInUser, profile: profileFor('learner') })
       // aria-label is t('nav.myProfile') = "Hồ sơ của tôi"
       expect(screen.getByRole('button', { name: /hồ sơ/i })).toBeInTheDocument()
     })
@@ -128,7 +128,7 @@ describe('TopNav', () => {
     })
 
     it('opens dropdown on avatar click and shows logout option', async () => {
-      renderNav({ user: loggedInUser })
+      renderNav({ user: loggedInUser, profile: profileFor('learner') })
       await userEvent.click(screen.getByRole('button', { name: /hồ sơ/i }))
       await waitFor(() => {
         expect(screen.getByRole('menuitem', { name: /đăng xuất/i })).toBeInTheDocument()
@@ -136,7 +136,7 @@ describe('TopNav', () => {
     })
 
     it('calls signOut and navigates to / when logout is clicked', async () => {
-      renderNav({ user: loggedInUser })
+      renderNav({ user: loggedInUser, profile: profileFor('learner') })
       await userEvent.click(screen.getByRole('button', { name: /hồ sơ/i }))
       await waitFor(() => screen.getByRole('menuitem', { name: /đăng xuất/i }))
       await userEvent.click(screen.getByRole('menuitem', { name: /đăng xuất/i }))
