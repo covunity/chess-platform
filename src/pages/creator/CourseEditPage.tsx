@@ -457,6 +457,10 @@ export default function CourseEditPage() {
   const [savingCourseInfo, setSavingCourseInfo] = useState(false)
   const [showCourseInfo, setShowCourseInfo] = useState(false)
 
+  useEffect(() => {
+    if (courseId) localStorage.setItem('lastEditedCourseId', courseId)
+  }, [courseId])
+
   const refreshReadiness = useCallback(async () => {
     if (!courseId) return
     const result = await canPublishCourse(supabase, courseId)

@@ -390,9 +390,11 @@ export default function CreatorStudioPage() {
 
       {/* Course builder block — most recently edited course */}
       {!loading && allCourses.length > 0 && (() => {
-        const recent = [...allCourses].sort((a, b) =>
-          new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-        )[0]
+        const lastId = localStorage.getItem('lastEditedCourseId')
+        const recent = (lastId ? allCourses.find(c => c.id === lastId) : null)
+          ?? [...allCourses].sort((a, b) =>
+            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+          )[0]
         return (
           <div
             data-testid="course-builder-block"
