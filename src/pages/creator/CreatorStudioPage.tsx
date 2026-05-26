@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
@@ -140,10 +140,21 @@ interface KebabMenuProps {
 
 function KebabMenu({ course, onDelete, onDuplicate, t, openMenuId, setOpenMenuId }: KebabMenuProps) {
   const open = openMenuId === course.id
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const [opensUpward, setOpensUpward] = useState(false)
+
+  useEffect(() => {
+    if (open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect()
+      // menu height ~120px; flip up if less than 140px below viewport bottom
+      setOpensUpward(window.innerHeight - rect.bottom < 140)
+    }
+  }, [open])
 
   return (
     <div className="relative" style={{ display: 'inline-block' }}>
       <button
+        ref={btnRef}
         type="button"
         data-testid="kebab-btn"
         className="btn btn-ghost btn-sm"
@@ -155,7 +166,14 @@ function KebabMenu({ course, onDelete, onDuplicate, t, openMenuId, setOpenMenuId
       {open && (
         <div
           className="card"
-          style={{ position: 'absolute', right: 0, top: '100%', zIndex: 10, minWidth: 160, padding: '4px 0' }}
+          style={{
+            position: 'absolute',
+            right: 0,
+            ...(opensUpward ? { bottom: '100%' } : { top: '100%' }),
+            zIndex: 10,
+            minWidth: 160,
+            padding: '4px 0',
+          }}
         >
           <Link
             to={`/creator/courses/${course.id}/edit`}
