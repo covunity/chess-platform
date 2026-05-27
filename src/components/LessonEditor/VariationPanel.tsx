@@ -569,6 +569,11 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
             />
           )}
         </div>
+        {isRoot && (
+          <p style={{ fontSize: 13, color: 'var(--ink-3)', margin: 0 }}>
+            {t('creator.lessonEditor.notePanelRootHint', { defaultValue: 'Chọn một nước để thêm ghi chú' })}
+          </p>
+        )}
         <RichNoteEditor
           key={currentNodeId}
           value={currentNote}

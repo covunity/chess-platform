@@ -6,16 +6,18 @@ import { I18nextProvider } from 'react-i18next'
 import i18n from '../../i18n'
 import AdminReportsPage from './AdminReportsPage'
 
-const { mockListReportedComments, mockHideComment, mockDismissReports } = vi.hoisted(() => ({
+const { mockListReportedComments, mockHideComment, mockDismissReports, mockGetPendingReportCounts } = vi.hoisted(() => ({
   mockListReportedComments: vi.fn(),
   mockHideComment: vi.fn(),
   mockDismissReports: vi.fn(),
+  mockGetPendingReportCounts: vi.fn(),
 }))
 
 vi.mock('../../lib/adminReportsApi', () => ({
   listReportedComments: mockListReportedComments,
   hideComment: mockHideComment,
   dismissReports: mockDismissReports,
+  getPendingReportCounts: mockGetPendingReportCounts,
 }))
 
 vi.mock('../../lib/supabase', () => ({
@@ -54,6 +56,7 @@ describe('AdminReportsPage', () => {
     mockListReportedComments.mockResolvedValue({ comments: [], error: null })
     mockHideComment.mockResolvedValue({ error: null })
     mockDismissReports.mockResolvedValue({ error: null })
+    mockGetPendingReportCounts.mockResolvedValue({ commentCount: 0, courseCount: 0 })
   })
 
   describe('empty state', () => {
@@ -91,11 +94,13 @@ describe('AdminReportsPage', () => {
       })
     })
 
-    it('shows pending count pill in header', async () => {
+    it('shows pending count badge in comments tab', async () => {
       mockListReportedComments.mockResolvedValue({ comments: [sampleReportedComment], error: null })
+      mockGetPendingReportCounts.mockResolvedValue({ commentCount: 1, courseCount: 0 })
       renderPage()
       await waitFor(() => {
-        expect(screen.getByTestId('pending-count-pill')).toBeInTheDocument()
+        const commentsTab = screen.getByTestId('tab-comments')
+        expect(commentsTab).toHaveTextContent('1')
       })
     })
   })

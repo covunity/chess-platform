@@ -188,6 +188,7 @@ export async function duplicateCourse(
     .select('*, lessons(*)')
     .eq('course_id', courseId)
     .order('position', { ascending: true })
+    .order('position', { ascending: true, referencedTable: 'lessons' })
 
   const chapters = (chapterRows ?? []) as (Chapter & { lessons?: Lesson[] })[]
 
@@ -249,6 +250,7 @@ export async function listChapters(
     .select('*, lessons(*)')
     .eq('course_id', courseId)
     .order('position', { ascending: true })
+    .order('position', { ascending: true, referencedTable: 'lessons' })
 
   return { chapters: (data as Chapter[]) ?? [], error: error as Error | null }
 }

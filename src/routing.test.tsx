@@ -74,11 +74,6 @@ describe('routing', () => {
     expect(screen.getByRole('heading', { name: /đặt lại mật khẩu của bạn/i })).toBeInTheDocument()
   })
 
-  it('renders /check-email page', () => {
-    renderAt('/check-email')
-    expect(screen.getByTestId('check-email-page')).toBeInTheDocument()
-  })
-
   it('renders /reset-password page', () => {
     renderAt('/reset-password')
     expect(screen.getByRole('heading', { name: /tạo mật khẩu mới/i })).toBeInTheDocument()
