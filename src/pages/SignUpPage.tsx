@@ -73,7 +73,7 @@ export default function SignUpPage() {
         setServerError(translateServerError(error.message))
         return
       }
-      navigate('/check-email')
+      navigate('/dashboard')
     } catch {
       setServerError(t('auth.serverError.networkError'))
     } finally {

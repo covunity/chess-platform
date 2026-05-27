@@ -22,7 +22,7 @@ export interface AuthContextValue {
   loading: boolean
   profile: UserProfile | null
   profileLoading: boolean
-  signUp: (name: string, email: string, password: string, extraData?: Record<string, unknown>, emailRedirectTo?: string) => Promise<{ error: Error | null; session: Session | null }>
+  signUp: (name: string, email: string, password: string, extraData?: Record<string, unknown>) => Promise<{ error: Error | null; session: Session | null }>
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
   signInWithOAuth: (provider: 'google' | 'facebook') => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
@@ -69,11 +69,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
-  async function signUp(name: string, email: string, password: string, extraData?: Record<string, unknown>, emailRedirectTo?: string) {
+  async function signUp(name: string, email: string, password: string, extraData?: Record<string, unknown>) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name, ...extraData }, emailRedirectTo },
+      options: { data: { name, ...extraData } },
     })
     return { error, session: data?.session ?? null }
   }

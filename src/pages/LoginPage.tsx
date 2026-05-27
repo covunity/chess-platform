@@ -43,9 +43,6 @@ export default function LoginPage() {
     if (lower.includes('invalid login credentials') || lower.includes('invalid_credentials')) {
       return t('auth.serverError.invalidCredentials')
     }
-    if (lower.includes('email not confirmed')) {
-      return t('auth.serverError.emailNotConfirmed')
-    }
     if (lower.includes('failed to fetch') || lower.includes('networkerror') || lower.includes('network')) {
       return t('auth.serverError.networkError')
     }

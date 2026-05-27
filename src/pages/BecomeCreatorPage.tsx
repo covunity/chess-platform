@@ -743,26 +743,18 @@ function AnonCombinedForm({
     }
     savePendingAccountApplication(pendingPayload)
 
-    const { error, session } = await signUp(
+    const { error } = await signUp(
       displayName,
       email.trim(),
       password,
       { pending_application: pendingPayload },
-      `${window.location.origin}/become-creator`,
     )
     setSubmitting(false)
     if (error) {
       setSubmitError((error as { message?: string }).message ?? t('becomeCreator.errors.generic'))
       return
     }
-    // If Supabase returned a session immediately (email confirmations disabled),
-    // go straight to /become-creator so the auto-submit effect runs.
-    // Otherwise the emailRedirectTo link in the confirmation email will bring them back.
-    if (session) {
-      navigate('/become-creator')
-    } else {
-      navigate('/check-email')
-    }
+    navigate('/become-creator')
   }
 
   return (

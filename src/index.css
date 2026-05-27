@@ -649,39 +649,6 @@ body {
 }
 .nav-dropdown__item:hover { background: var(--surface-2); }
 
-/* Check email page */
-.check-email-page {
-  min-height: calc(100vh - 64px - 56px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 48px 24px;
-}
-
-.check-email-page__inner {
-  max-width: 480px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-}
-
-.check-email-page__icon {
-  font-size: 48px;
-  width: 80px;
-  height: 80px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--accent-soft);
-  border-radius: 50%;
-  color: var(--accent-ink);
-}
-
-.check-email-page__actions {
-  margin-top: 8px;
-}
 
 /* ── Guided Chess Player ── */
 

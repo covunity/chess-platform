@@ -138,7 +138,7 @@ describe('SignUpPage', () => {
     })
   })
 
-  it('navigates to /check-email after successful signup', async () => {
+  it('navigates to /dashboard after successful signup', async () => {
     renderPage()
     await userEvent.type(screen.getByLabelText(/họ và tên/i), 'John Doe')
     await userEvent.type(screen.getByLabelText(/^email$/i), 'john@example.com')
@@ -147,7 +147,7 @@ describe('SignUpPage', () => {
     await userEvent.click(screen.getByRole('checkbox'))
     await userEvent.click(screen.getByRole('button', { name: /tạo tài khoản/i }))
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/check-email')
+      expect(mockNavigate).toHaveBeenCalledWith('/dashboard')
     })
   })
 

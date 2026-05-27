@@ -1275,12 +1275,6 @@
       "successTitle": "Kiểm tra email của bạn",
       "successBody": "Chúng tôi đã gửi liên kết đặt lại mật khẩu đến email của bạn. Liên kết sẽ hết hạn sau 24 giờ."
     },
-    "checkEmail": {
-      "heading": "Kiểm tra email của bạn",
-      "body": "Chúng tôi đã gửi email xác minh. Nhấp vào liên kết trong email để kích hoạt tài khoản của bạn. Liên kết sẽ hết hạn sau 24 giờ.",
-      "resend": "Gửi lại email",
-      "backToSignup": "Quay lại đăng ký"
-    },
     "resetPassword": {
       "eyebrow": "Đặt lại mật khẩu",
       "heading": "Tạo mật khẩu mới.",
@@ -1293,7 +1287,6 @@
     },
     "serverError": {
       "invalidCredentials": "Email hoặc mật khẩu không đúng. Vui lòng thử lại.",
-      "emailNotConfirmed": "Email chưa được xác minh. Vui lòng kiểm tra hộp thư của bạn.",
       "emailAlreadyRegistered": "Email này đã được đăng ký. Vui lòng đăng nhập hoặc sử dụng email khác.",
       "networkError": "Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại.",
       "tooManyRequests": "Quá nhiều lần thử. Vui lòng đợi một lát rồi thử lại."

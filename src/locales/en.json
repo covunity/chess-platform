@@ -647,12 +647,6 @@
       "successTitle": "Check your email",
       "successBody": "We've sent a password reset link to your email. The link expires in 24 hours."
     },
-    "checkEmail": {
-      "heading": "Check your email",
-      "body": "We've sent a verification email. Click the link in the email to activate your account. The link expires in 24 hours.",
-      "resend": "Resend email",
-      "backToSignup": "Back to sign up"
-    },
     "resetPassword": {
       "eyebrow": "Reset password",
       "heading": "Create a new password.",
@@ -665,7 +659,6 @@
     },
     "serverError": {
       "invalidCredentials": "Incorrect email or password. Please try again.",
-      "emailNotConfirmed": "Email not verified. Please check your inbox.",
       "emailAlreadyRegistered": "This email is already registered. Please sign in or use a different email.",
       "networkError": "Cannot connect to server. Please check your internet connection and try again.",
       "tooManyRequests": "Too many attempts. Please wait a moment and try again."

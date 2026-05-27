@@ -98,7 +98,7 @@ function renderPage(ctx: Partial<AuthContextValue>, initialPath = '/become-creat
             <Route path="/become-creator" element={<BecomeCreatorPage />} />
             <Route path="/register-business" element={<BecomeCreatorPage />} />
             <Route path="/login" element={<div data-testid="login-page">Login</div>} />
-            <Route path="/check-email" element={<div data-testid="check-email-page">Check Email</div>} />
+            <Route path="/dashboard" element={<div data-testid="dashboard-page">Dashboard</div>} />
           </Routes>
         </AuthContext.Provider>
       </MemoryRouter>
@@ -246,12 +246,12 @@ describe('BecomeCreatorPage', () => {
         expect(savePendingAccountApplication).toHaveBeenCalledWith(
           expect.objectContaining({ requested_tier_code: 'individual' })
         )
-        expect(mockSignUp).toHaveBeenCalledWith('Alice', 'alice@test.com', 'secret123', expect.objectContaining({ pending_application: expect.objectContaining({ requested_tier_code: 'individual' }) }), expect.any(String))
+        expect(mockSignUp).toHaveBeenCalledWith('Alice', 'alice@test.com', 'secret123', expect.objectContaining({ pending_application: expect.objectContaining({ requested_tier_code: 'individual' }) }))
       })
     })
 
-    it('redirects to /check-email after successful signUp', async () => {
-      mockSignUp.mockResolvedValue({ error: null })
+    it('redirects to /become-creator after successful signUp', async () => {
+      mockSignUp.mockResolvedValue({ error: null, session: {} })
       renderPage({ user: null, loading: false })
 
       await userEvent.type(screen.getByTestId('field-name'), 'Alice')
@@ -261,7 +261,7 @@ describe('BecomeCreatorPage', () => {
       await userEvent.click(screen.getByTestId('anon-submit'))
 
       await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith('/check-email')
+        expect(mockNavigate).toHaveBeenCalledWith('/become-creator')
       })
     })
 
@@ -297,7 +297,7 @@ describe('BecomeCreatorPage', () => {
       await userEvent.click(screen.getByTestId('anon-submit'))
 
       await waitFor(() => {
-        expect(mockSignUp).toHaveBeenCalledWith('Chess Corp', 'corp@test.com', 'secret123', expect.objectContaining({ pending_application: expect.objectContaining({ requested_tier_code: 'business' }) }), expect.any(String))
+        expect(mockSignUp).toHaveBeenCalledWith('Chess Corp', 'corp@test.com', 'secret123', expect.objectContaining({ pending_application: expect.objectContaining({ requested_tier_code: 'business' }) }))
         expect(savePendingAccountApplication).toHaveBeenCalledWith(
           expect.objectContaining({
             requested_tier_code: 'business',
@@ -802,8 +802,7 @@ describe('BecomeCreatorPage', () => {
           'password123',
           expect.objectContaining({
             pending_application: expect.objectContaining({ requested_tier_code: 'individual' }),
-          }),
-          expect.any(String)
+          })
         )
       })
     })
