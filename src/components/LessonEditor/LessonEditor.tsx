@@ -301,50 +301,52 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
                 Hidden for rewind siblings (they show a read-only banner instead). */}
             {!isRewindSibling && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                {/* Sub-tabs: Bảng / PGN */}
-                <button
-                  type="button"
-                  data-testid="board-tab"
-                  aria-pressed={chessSubTab === 'board'}
-                  onClick={() => setChessSubTab('board')}
-                  style={{
-                    padding: '3px 10px',
-                    borderRadius: 999,
-                    border: '1px solid var(--border)',
-                    background: chessSubTab === 'board' ? 'var(--ink-1)' : 'var(--surface)',
-                    color: chessSubTab === 'board' ? 'var(--on-ink-1)' : 'var(--ink-2)',
-                    fontSize: 12,
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    flexShrink: 0,
-                  }}
-                >
-                  {t('creator.lessonEditor.tabBoardAuthoring')}
-                </button>
+                {/* Sub-tabs: Bảng / PGN — only rendered when advanced mode is on (both tabs exist) */}
                 {editorAdvanced && (
-                  <button
-                    type="button"
-                    data-testid="pgn-advanced-tab"
-                    aria-pressed={chessSubTab === 'pgn'}
-                    onClick={() => setChessSubTab('pgn')}
-                    style={{
-                      padding: '3px 10px',
-                      borderRadius: 999,
-                      border: '1px solid var(--border)',
-                      background: chessSubTab === 'pgn' ? 'var(--ink-1)' : 'var(--surface)',
-                      color: chessSubTab === 'pgn' ? 'var(--on-ink-1)' : 'var(--ink-2)',
-                      fontSize: 12,
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {t('creator.lessonEditor.tabPgnAdvanced')}
-                  </button>
-                )}
+                  <>
+                    <button
+                      type="button"
+                      data-testid="board-tab"
+                      aria-pressed={chessSubTab === 'board'}
+                      onClick={() => setChessSubTab('board')}
+                      style={{
+                        padding: '3px 10px',
+                        borderRadius: 999,
+                        border: '1px solid var(--border)',
+                        background: chessSubTab === 'board' ? 'var(--ink-1)' : 'var(--surface)',
+                        color: chessSubTab === 'board' ? 'var(--on-ink-1)' : 'var(--ink-2)',
+                        fontSize: 12,
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {t('creator.lessonEditor.tabBoardAuthoring')}
+                    </button>
+                    <button
+                      type="button"
+                      data-testid="pgn-advanced-tab"
+                      aria-pressed={chessSubTab === 'pgn'}
+                      onClick={() => setChessSubTab('pgn')}
+                      style={{
+                        padding: '3px 10px',
+                        borderRadius: 999,
+                        border: '1px solid var(--border)',
+                        background: chessSubTab === 'pgn' ? 'var(--ink-1)' : 'var(--surface)',
+                        color: chessSubTab === 'pgn' ? 'var(--on-ink-1)' : 'var(--ink-2)',
+                        fontSize: 12,
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {t('creator.lessonEditor.tabPgnAdvanced')}
+                    </button>
 
-                {/* Divider */}
-                <div style={{ width: 1, height: 18, background: 'var(--border)', flexShrink: 0, margin: '0 2px' }} />
+                    {/* Divider */}
+                    <div style={{ width: 1, height: 18, background: 'var(--border)', flexShrink: 0, margin: '0 2px' }} />
+                  </>
+                )}
 
                 {/* Perspective segmented control — only on source lessons */}
                 {(["white", "black"] as const).map((val, i) => (
