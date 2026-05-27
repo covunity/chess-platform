@@ -57,6 +57,8 @@ export interface LessonEditorProps {
   editorAdvanced?: boolean;
   /** Called when the user confirms removing the rewind sibling during a chess→video type switch. */
   onRemoveRewindSibling?: () => Promise<void>;
+  /** Called whenever hasRewindMode changes inside the editor. */
+  onRewindModeChange?: (v: boolean) => void;
 }
 
 const LESSON_TYPE_ICON: Record<LessonType, string> = {
@@ -78,7 +80,7 @@ function formatDuration(seconds: number | undefined | null): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectLesson, showSidebar = true, saveRef, onRemoveRewindSibling }: LessonEditorProps) {
+export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectLesson, showSidebar = true, saveRef, onRemoveRewindSibling, onRewindModeChange }: LessonEditorProps) {
   const { t } = useTranslation();
   const tabLabels: Record<LessonType, string> = {
     video: t('creator.lessonEditor.tabVideo'),
@@ -90,6 +92,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   const [pgn] = useState(lesson.pgn_data);
   const [perspective, setPerspective] = useState<"white" | "black">(lesson.board_perspective);
   const [hasRewindMode, setHasRewindMode] = useState(lesson.has_rewind_mode ?? false);
+  const updateRewindMode = (v: boolean) => { setHasRewindMode(v); onRewindModeChange?.(v); };
   // True when this lesson row is the auto-managed Rewind sibling of another
   // source lesson — the editor switches to a read-only banner because the
   // content is kept in sync by the DB trigger from the source side.
@@ -299,59 +302,6 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
                 Hidden for rewind siblings (they show a read-only banner instead). */}
             {!isRewindSibling && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                {/* Perspective segmented control */}
-                {(["white", "black"] as const).map((val, i) => (
-                  <button
-                    key={val}
-                    type="button"
-                    aria-pressed={perspective === val}
-                    onClick={() => setPerspective(val)}
-                    style={{
-                      height: 26,
-                      padding: '0 8px',
-                      border: '1px solid var(--border)',
-                      borderRadius: i === 0 ? 'var(--r-sm) 0 0 var(--r-sm)' : '0 var(--r-sm) var(--r-sm) 0',
-                      marginLeft: i === 1 ? -1 : 0,
-                      background: perspective === val ? 'var(--ink-1)' : 'var(--surface)',
-                      color: perspective === val ? 'var(--on-ink-1)' : 'var(--ink-1)',
-                      fontWeight: 500,
-                      fontSize: 12,
-                      cursor: 'pointer',
-                      position: 'relative' as const,
-                      zIndex: perspective === val ? 1 : 0,
-                      flexShrink: 0,
-                    }}
-                  >
-                    {val === 'white' ? t('creator.lessonEditor.perspectiveWhite') : t('creator.lessonEditor.perspectiveBlack')}
-                  </button>
-                ))}
-
-                {/* Rewind toggle */}
-                <label
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 5,
-                    fontSize: 12,
-                    color: 'var(--ink-2)',
-                    cursor: 'pointer',
-                    flexShrink: 0,
-                    whiteSpace: 'nowrap' as const,
-                  }}
-                >
-                  <input
-                    data-testid="lesson-has-rewind-mode-checkbox"
-                    type="checkbox"
-                    checked={hasRewindMode}
-                    onChange={(e) => setHasRewindMode(e.target.checked)}
-                    style={{ cursor: 'pointer' }}
-                  />
-                  {t('creator.lessonEditor.hasRewindModeLabel')}
-                </label>
-
-                {/* Spacer */}
-                <div style={{ flex: 1 }} />
-
                 {/* Action buttons — rect style to distinguish from pill tabs */}
                 <button
                   type="button"
@@ -387,6 +337,36 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
                 >
                   {t('creator.lessonEditor.importFromPgn')}
                 </button>
+
+                {/* Spacer */}
+                <div style={{ flex: 1 }} />
+
+                {/* Perspective segmented control */}
+                {(["white", "black"] as const).map((val, i) => (
+                  <button
+                    key={val}
+                    type="button"
+                    aria-pressed={perspective === val}
+                    onClick={() => setPerspective(val)}
+                    style={{
+                      height: 26,
+                      padding: '0 8px',
+                      border: '1px solid var(--border)',
+                      borderRadius: i === 0 ? 'var(--r-sm) 0 0 var(--r-sm)' : '0 var(--r-sm) var(--r-sm) 0',
+                      marginLeft: i === 1 ? -1 : 0,
+                      background: perspective === val ? 'var(--ink-1)' : 'var(--surface)',
+                      color: perspective === val ? 'var(--on-ink-1)' : 'var(--ink-1)',
+                      fontWeight: 500,
+                      fontSize: 12,
+                      cursor: 'pointer',
+                      position: 'relative' as const,
+                      zIndex: perspective === val ? 1 : 0,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {val === 'white' ? t('creator.lessonEditor.perspectiveWhite') : t('creator.lessonEditor.perspectiveBlack')}
+                  </button>
+                ))}
               </div>
             )}
 
@@ -673,7 +653,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
                   const target = pendingTabSwitch;
                   setPendingTabSwitch(null);
                   await onRemoveRewindSibling?.();
-                  setHasRewindMode(false);
+                  updateRewindMode(false);
                   setActiveTab(target);
                 }}
               >

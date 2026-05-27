@@ -23,6 +23,7 @@ import { useAccountTiers } from '../../lib/accountTiers'
 import { fetchCoursePriceLimits, getLimitForLevel } from '../../lib/coursePriceLimits'
 import type { CoursePriceLimit } from '../../lib/coursePriceLimits'
 import { Video, ChessKnight, Puzzle, Eye } from 'lucide-react'
+import { Switch } from '../../components/ui/switch'
 
 function LessonTypeIcon({ type, size = 15 }: { type: LessonType; size?: number }) {
   const props = { size, strokeWidth: 2, 'aria-hidden': true as const }
@@ -330,10 +331,14 @@ interface PublishBarProps {
   onSaveLesson?: () => void
   onToggleFreePreview?: () => void
   isFreePreview?: boolean
+  hasRewindMode?: boolean
+  onRewindModeChange?: (v: boolean) => void
+  isChessLesson?: boolean
+  isRewindSibling?: boolean
   t: (k: string) => string
 }
 
-function PublishBar({ courseId, courseTitle, status, readiness, publishing, onPublish, onUnpublish, onSaveLesson, onToggleFreePreview, isFreePreview, t }: PublishBarProps) {
+function PublishBar({ courseId, courseTitle, status, readiness, publishing, onPublish, onUnpublish, onSaveLesson, onToggleFreePreview, isFreePreview, hasRewindMode, onRewindModeChange, isChessLesson, isRewindSibling, t }: PublishBarProps) {
   const barStyle: React.CSSProperties = {
     padding: '8px 20px',
     background: 'var(--surface)',
@@ -379,16 +384,38 @@ function PublishBar({ courseId, courseTitle, status, readiness, publishing, onPu
     </button>
   )
 
+  const rewindCheckbox = isChessLesson && !isRewindSibling && onRewindModeChange && (
+    <label
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        fontSize: 12,
+        color: 'var(--ink-2)',
+        cursor: 'pointer',
+        flexShrink: 0,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      <Switch
+        checked={hasRewindMode ?? false}
+        onCheckedChange={onRewindModeChange}
+      />
+      {t('creator.lessonEditor.hasRewindModeLabel')}
+    </label>
+  )
+
   if (status === 'published') {
     return (
       <div data-testid="publish-bar" className="flex items-center gap-3" style={barStyle}>
         {left}
+        {rewindCheckbox}
+        {freePreviewBtn}
         {onSaveLesson && (
           <button type="button" className="btn btn-secondary btn-sm" onClick={onSaveLesson}>
             {t('creator.courseEdit.saveLesson')}
           </button>
         )}
-        {freePreviewBtn}
         <Link
           to={`/courses/${courseId}`}
           data-testid="view-public-page"
@@ -406,12 +433,13 @@ function PublishBar({ courseId, courseTitle, status, readiness, publishing, onPu
   return (
     <div data-testid="publish-bar" className="flex items-center gap-3" style={barStyle}>
       {left}
+      {rewindCheckbox}
+      {freePreviewBtn}
       {onSaveLesson && (
         <button type="button" className="btn btn-secondary btn-sm" onClick={onSaveLesson}>
           {t('creator.courseEdit.saveLesson')}
         </button>
       )}
-      {freePreviewBtn}
       <div className="relative group">
         <button
           type="button"
@@ -507,6 +535,7 @@ export default function CourseEditPage() {
 
   const saveLessonRef = useRef<(() => void) | null>(null)
   const lessonTransitionRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [lessonRewindMode, setLessonRewindMode] = useState(false)
 
   const [confirmDeleteChapter, setConfirmDeleteChapter] = useState<Chapter | null>(null)
   const [confirmDeleteLesson, setConfirmDeleteLesson] = useState<Lesson | null>(null)
@@ -531,6 +560,10 @@ export default function CourseEditPage() {
   useEffect(() => {
     if (courseId) localStorage.setItem('lastEditedCourseId', courseId)
   }, [courseId])
+
+  useEffect(() => {
+    setLessonRewindMode(displayedLesson?.has_rewind_mode ?? false)
+  }, [displayedLesson?.id])
 
   useEffect(() => {
     fetchCoursePriceLimits(supabase).then(setPriceLimits)
@@ -948,6 +981,10 @@ export default function CourseEditPage() {
             onSaveLesson={selectedLesson ? () => saveLessonRef.current?.() : undefined}
             onToggleFreePreview={selectedLesson ? () => handleToggleFreePreview(selectedLesson) : undefined}
             isFreePreview={selectedLesson?.free_preview ?? false}
+            hasRewindMode={lessonRewindMode}
+            onRewindModeChange={selectedLesson?.type === 'chess' ? setLessonRewindMode : undefined}
+            isChessLesson={selectedLesson?.type === 'chess'}
+            isRewindSibling={!!selectedLesson?.rewind_source_id}
             t={t}
           />
         )}
@@ -992,6 +1029,7 @@ export default function CourseEditPage() {
               }}
               onSave={handleSaveLesson}
               onRemoveRewindSibling={handleRemoveRewindSibling}
+              onRewindModeChange={setLessonRewindMode}
               showSidebar={false}
               saveRef={saveLessonRef}
               editorAdvanced={profile?.editor_advanced ?? false}
