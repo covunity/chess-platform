@@ -1740,8 +1740,8 @@ export default function CourseDetailPage() {
                 </button>
               )}
 
-              {/* Report course — visible to logged-in non-creator non-admin users */}
-              {user && !isCourseCreator && profile?.role !== 'admin' && (
+              {/* Report course — visible to logged-in non-creator users */}
+              {user && !isCourseCreator && (
                 <button
                   type="button"
                   data-testid="report-course-btn"
