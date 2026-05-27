@@ -46,8 +46,9 @@ export default function NoteView({ note, className }: NoteViewProps) {
 
         if (block.type === 'heading') {
           const Tag = block.attrs.level === 3 ? 'h3' : 'h4'
+          const fontSize = block.attrs.level === 3 ? 15 : 13
           return (
-            <Tag key={bIdx} style={{ margin: '0 0 4px', fontWeight: 600 }}>
+            <Tag key={bIdx} style={{ margin: '0 0 4px', fontWeight: 700, fontSize, lineHeight: 1.4 }}>
               {renderSpans(block.content, `b${bIdx}`)}
             </Tag>
           )
@@ -55,7 +56,7 @@ export default function NoteView({ note, className }: NoteViewProps) {
 
         if (block.type === 'bulletList') {
           return (
-            <ul key={bIdx} style={{ margin: '0 0 6px', paddingLeft: 20 }}>
+            <ul key={bIdx} style={{ margin: '0 0 6px', paddingLeft: 20, listStyleType: 'disc' }}>
               {(block.content ?? []).map((item, iIdx) =>
                 (item.content ?? []).map((para, pIdx) => (
                   <li key={`${bIdx}-${iIdx}-${pIdx}`}>
@@ -69,7 +70,7 @@ export default function NoteView({ note, className }: NoteViewProps) {
 
         if (block.type === 'orderedList') {
           return (
-            <ol key={bIdx} style={{ margin: '0 0 6px', paddingLeft: 20 }} start={block.attrs?.start}>
+            <ol key={bIdx} style={{ margin: '0 0 6px', paddingLeft: 20, listStyleType: 'decimal' }} start={block.attrs?.start}>
               {(block.content ?? []).map((item, iIdx) =>
                 (item.content ?? []).map((para, pIdx) => (
                   <li key={`${bIdx}-${iIdx}-${pIdx}`}>

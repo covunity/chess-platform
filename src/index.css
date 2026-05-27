@@ -1061,3 +1061,27 @@ body {
 .ProseMirror:focus {
   outline: none;
 }
+
+/* RichNoteEditor — undo Tailwind Preflight resets inside TipTap */
+.ProseMirror h3 {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 0 0 4px;
+}
+.ProseMirror h4 {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 0 0 4px;
+}
+.ProseMirror ul {
+  list-style-type: disc;
+  padding-left: 20px;
+  margin: 0 0 6px;
+}
+.ProseMirror ol {
+  list-style-type: decimal;
+  padding-left: 20px;
+  margin: 0 0 6px;
+}
