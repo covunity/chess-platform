@@ -945,7 +945,7 @@
       }
     },
     "tagsSelect": {
-      "popularPlaceholder": "Chọn thẻ phổ biến…",
+      "popularPlaceholder": "Chọn loại",
       "customPlaceholder": "Nhập thẻ tự chọn…",
       "addBtn": "Thêm",
       "helper": "Tối đa {{max}} thẻ. Thẻ mới sẽ được lưu vào danh sách của bạn."

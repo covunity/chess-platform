@@ -62,6 +62,10 @@ export default function CourseTagsSelect({
     [t],
   )
 
+  const popularKeys = useMemo(() => new Set(POPULAR_TAGS.map(p => p.key)), [])
+
+  const selectedPopular = value.find(v => popularKeys.has(v)) ?? ''
+  const customTags = value.filter(v => !popularKeys.has(v))
   const atLimit = value.length >= maxTags
 
   function getTagLabel(v: string): string {
@@ -76,11 +80,12 @@ export default function CourseTagsSelect({
 
   function handlePopularSelect(e: React.ChangeEvent<HTMLSelectElement>) {
     const selected = e.target.value
-    if (!selected || atLimit) return
-    if (!value.includes(selected)) {
-      onChange([...value, selected])
+    const withoutOldPopular = value.filter(v => !popularKeys.has(v))
+    if (selected) {
+      onChange([selected, ...withoutOldPopular])
+    } else {
+      onChange(withoutOldPopular)
     }
-    e.target.value = ''
   }
 
   async function handleAddCustomTag() {
@@ -122,14 +127,32 @@ export default function CourseTagsSelect({
     }
   }
 
-  const availablePopular = popularOptions.filter(o => !value.includes(o.value))
-
   return (
     <div data-testid={testId}>
-      {/* Selected tags */}
-      {value.length > 0 && (
+      {/* Popular tag dropdown — normal single select */}
+      <div className="mb-2">
+        <select
+          className="input"
+          value={selectedPopular}
+          onChange={handlePopularSelect}
+          disabled={disabled || loading}
+          data-testid="popular-tag-select"
+        >
+          <option value="">
+            {t('creator.tagsSelect.popularPlaceholder')}
+          </option>
+          {popularOptions.map(o => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Custom tags as chips */}
+      {customTags.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-2" data-testid="selected-tags">
-          {value.map(tag => (
+          {customTags.map(tag => (
             <span
               key={tag}
               className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs"
@@ -150,26 +173,6 @@ export default function CourseTagsSelect({
           ))}
         </div>
       )}
-
-      {/* Popular tag dropdown — single select */}
-      <div className="mb-2">
-        <select
-          className="input"
-          onChange={handlePopularSelect}
-          disabled={disabled || loading || atLimit}
-          defaultValue=""
-          data-testid="popular-tag-select"
-        >
-          <option value="" disabled>
-            {t('creator.tagsSelect.popularPlaceholder')}
-          </option>
-          {availablePopular.map(o => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-      </div>
 
       {/* Custom tag input */}
       <div className="flex gap-2">

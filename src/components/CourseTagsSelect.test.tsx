@@ -55,7 +55,7 @@ describe('CourseTagsSelect', () => {
     })
   })
 
-  it('shows popular tags in the dropdown', async () => {
+  it('shows all popular tags in the dropdown', async () => {
     renderSelect()
     await waitFor(() => expect(mockListCreatorTags).toHaveBeenCalled())
     const select = screen.getByTestId('popular-tag-select')
@@ -65,7 +65,7 @@ describe('CourseTagsSelect', () => {
     expect(options[1].textContent).toBe('Khai cuộc')
   })
 
-  it('selecting a popular tag emits its key value', async () => {
+  it('selecting a popular tag emits it as first element', async () => {
     const { onChange } = renderSelect()
     await waitFor(() => expect(mockListCreatorTags).toHaveBeenCalled())
     const select = screen.getByTestId('popular-tag-select')
@@ -73,12 +73,21 @@ describe('CourseTagsSelect', () => {
     expect(onChange).toHaveBeenCalledWith(['openings'])
   })
 
-  it('hides already-selected popular tags from the dropdown', async () => {
-    renderSelect({ value: ['openings'] })
+  it('changing popular tag replaces the previous one', async () => {
+    const { onChange } = renderSelect({ value: ['openings', 'Najdorf'] })
     await waitFor(() => expect(mockListCreatorTags).toHaveBeenCalled())
     const select = screen.getByTestId('popular-tag-select')
-    const optionValues = Array.from(select.querySelectorAll('option')).map(o => o.value)
-    expect(optionValues).not.toContain('openings')
+    expect(select).toHaveValue('openings')
+    await userEvent.selectOptions(select, 'tactics')
+    expect(onChange).toHaveBeenCalledWith(['tactics', 'Najdorf'])
+  })
+
+  it('shows selected popular tag as the select value, not as a chip', async () => {
+    renderSelect({ value: ['openings'] })
+    await waitFor(() => expect(mockListCreatorTags).toHaveBeenCalled())
+    const select = screen.getByTestId('popular-tag-select') as HTMLSelectElement
+    expect(select.value).toBe('openings')
+    expect(screen.queryByTestId('selected-tags')).not.toBeInTheDocument()
   })
 
   it('typing a custom tag and pressing Enter creates and emits it', async () => {
@@ -109,20 +118,20 @@ describe('CourseTagsSelect', () => {
     })
   })
 
-  it('renders existing selected values as chips', async () => {
+  it('renders custom tags as chips (not popular tags)', async () => {
     renderSelect({ value: ['openings', 'custom-tag'] })
     await waitFor(() => expect(mockListCreatorTags).toHaveBeenCalled())
     const chips = screen.getByTestId('selected-tags')
-    expect(chips).toHaveTextContent('Khai cuộc')
     expect(chips).toHaveTextContent('custom-tag')
+    expect(chips).not.toHaveTextContent('Khai cuộc')
   })
 
-  it('removes a tag when clicking the × button', async () => {
-    const { onChange } = renderSelect({ value: ['openings', 'tactics'] })
+  it('removes a custom tag when clicking the × button', async () => {
+    const { onChange } = renderSelect({ value: ['openings', 'Najdorf', 'Sicilian'] })
     await waitFor(() => expect(mockListCreatorTags).toHaveBeenCalled())
-    const removeBtn = screen.getByLabelText('Remove Khai cuộc')
+    const removeBtn = screen.getByLabelText('Remove Najdorf')
     await userEvent.click(removeBtn)
-    expect(onChange).toHaveBeenCalledWith(['tactics'])
+    expect(onChange).toHaveBeenCalledWith(['openings', 'Sicilian'])
   })
 
   it('enforces 300 char max on custom input', async () => {

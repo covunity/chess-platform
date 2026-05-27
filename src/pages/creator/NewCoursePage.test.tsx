@@ -136,13 +136,13 @@ describe('NewCoursePage', () => {
 
   it('selects a popular tag from the dropdown', async () => {
     renderPage()
-    const select = await screen.findByTestId('popular-tag-select')
+    const select = await screen.findByTestId('popular-tag-select') as HTMLSelectElement
     await waitFor(() => {
       expect(select).not.toBeDisabled()
     })
     await userEvent.selectOptions(select, 'openings')
     await waitFor(() => {
-      expect(screen.getByTestId('selected-tags')).toHaveTextContent('Khai cuộc')
+      expect(select.value).toBe('openings')
     })
   })
 

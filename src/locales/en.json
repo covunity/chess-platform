@@ -353,7 +353,7 @@
       }
     },
     "tagsSelect": {
-      "popularPlaceholder": "Select a popular tag…",
+      "popularPlaceholder": "Select category",
       "customPlaceholder": "Enter a custom tag…",
       "addBtn": "Add",
       "helper": "Up to {{max}} tags. New tags are saved to your library."
