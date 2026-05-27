@@ -85,6 +85,13 @@ vi.mock('../../lib/accountTiers', () => ({
   })),
 }))
 
+vi.mock('../../lib/creatorTagsApi', () => ({
+  listCreatorTags: vi.fn().mockResolvedValue({ tags: [], error: null }),
+  createCreatorTag: vi.fn().mockResolvedValue({ tag: null, error: null }),
+  normalizeTagName: (s: string) => s.toLowerCase().trim(),
+  MAX_TAG_LENGTH: 50,
+}))
+
 const mockChapters = [
   {
     id: 'ch1',

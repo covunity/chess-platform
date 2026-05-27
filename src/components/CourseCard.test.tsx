@@ -95,7 +95,9 @@ describe('CourseCard', () => {
 
   it('shows first tag as pill', () => {
     renderCard(freeCourse)
-    expect(screen.getByText(/openings/i)).toBeInTheDocument()
+    // "openings" translates to "Khai cuộc"; appears in thumbnail badge + body pill
+    const tagEls = screen.getAllByText('Khai cuộc')
+    expect(tagEls.length).toBeGreaterThanOrEqual(1)
   })
 
   it('shows "Free" badge for free course', () => {

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
-import { listPublishedCourses } from '../lib/coursesApi'
+import { listPublishedCourses, listPublishedCourseTags } from '../lib/coursesApi'
 import { getCurrentActiveCampaign } from '../lib/campaignsApi'
 import type { Campaign } from '../lib/campaignsApi'
 import type { PublicCourse, SortOption } from '../lib/coursesApi'
@@ -65,6 +65,7 @@ export default function HomePage() {
   const [activeCampaign, setActiveCampaign] = useState<Campaign | null>(null)
   const [bannerDismissed, setBannerDismissed] = useState(false)
   const [heroConfig, setHeroConfig] = useState<HeroConfig | null>(null)
+  const [customTags, setCustomTags] = useState<string[]>([])
 
   const level = (searchParams.get('level') ?? 'all') as CourseLevel | 'all'
   const tag = searchParams.get('tag') ?? ''
@@ -94,6 +95,12 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchHeroConfig(supabase).then(setHeroConfig).catch(() => { /* use i18n defaults */ })
+  }, [])
+
+  useEffect(() => {
+    listPublishedCourseTags(supabase).then(({ tags }) => {
+      setCustomTags(tags.filter(t => !TAGS.some(p => p.key === t)))
+    })
   }, [])
 
   function hero(key: keyof HeroConfig, i18nKey: string): string {
@@ -423,6 +430,33 @@ export default function HomePage() {
                 {t(tg.labelKey)}
               </button>
             ))}
+
+            {customTags.length > 0 && (
+              <>
+                <div style={{ width: 1, height: 20, background: 'var(--border-strong)', margin: '0 4px' }} />
+                {customTags.map(tagKey => (
+                  <button
+                    key={tagKey}
+                    type="button"
+                    onClick={() => setTag(tagKey)}
+                    style={{
+                      height: 32,
+                      padding: '0 14px',
+                      borderRadius: 'var(--r-sm)',
+                      fontSize: 13,
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      border: 'none',
+                      background: tag === tagKey ? 'var(--accent)' : 'var(--surface-2)',
+                      color: tag === tagKey ? '#fff' : 'var(--ink-2)',
+                      transition: 'background 0.15s',
+                    }}
+                  >
+                    {tagKey}
+                  </button>
+                ))}
+              </>
+            )}
           </div>
         </div>
       </section>

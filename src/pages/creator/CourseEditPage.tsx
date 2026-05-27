@@ -17,6 +17,7 @@ import {
 } from '../../lib/creatorApi'
 import type { Chapter, CourseLevel, CourseStatus, Lesson, LessonType, PublishReadiness } from '../../lib/creatorApi'
 import LessonEditor from '../../components/LessonEditor/LessonEditor'
+import CourseTagsSelect from '../../components/CourseTagsSelect'
 import { useAuth } from '../../context/AuthContext'
 import { useAccountTiers } from '../../lib/accountTiers'
 import { Video, ChessKnight, Puzzle, Eye } from 'lucide-react'
@@ -519,6 +520,7 @@ export default function CourseEditPage() {
   const [courseLevel, setCourseLevel] = useState<CourseLevel>('beginner')
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null)
+  const [courseTags, setCourseTags] = useState<string[]>([])
   const [savingCourseInfo, setSavingCourseInfo] = useState(false)
   const [showCourseInfo, setShowCourseInfo] = useState(false)
 
@@ -551,7 +553,7 @@ export default function CourseEditPage() {
     if (!courseId) return
     Promise.all([
       listChapters(supabase, courseId),
-      supabase.from('courses').select('title, description, thumbnail_url, price, level, status').eq('id', courseId).single(),
+      supabase.from('courses').select('title, description, thumbnail_url, price, level, status, tags').eq('id', courseId).single(),
     ]).then(([chaptersResult, courseResult]) => {
       setChapters(chaptersResult.chapters)
       if (courseResult.data) {
@@ -563,6 +565,7 @@ export default function CourseEditPage() {
         setThumbnailPreview(c.thumbnail_url ?? null)
         setCoursePrice(c.price ?? 0)
         setCourseLevel((c.level ?? 'beginner') as CourseLevel)
+        setCourseTags(Array.isArray(c.tags) ? c.tags as string[] : [])
       }
       setLoading(false)
       const firstLesson = chaptersResult.chapters.flatMap(ch => ch.lessons ?? [])[0]
@@ -628,6 +631,7 @@ export default function CourseEditPage() {
       thumbnail_url: thumbnail_url ?? undefined,
       price: coursePrice,
       level: courseLevel,
+      tags: courseTags,
     })
     setSavingCourseInfo(false)
     showToast(t('creator.courseEdit.courseInfo.saved'))
@@ -1045,6 +1049,18 @@ export default function CourseEditPage() {
                 </select>
               </div>
             </div>
+
+            {/* Tags */}
+            {profile?.id && (
+              <div>
+                <label className="label">{t('creator.courseEdit.courseInfo.labelTags')}</label>
+                <CourseTagsSelect
+                  creatorId={profile.id}
+                  value={courseTags}
+                  onChange={setCourseTags}
+                />
+              </div>
+            )}
 
             <button
               type="button"

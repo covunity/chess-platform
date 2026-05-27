@@ -8,6 +8,12 @@ import {
 } from '../lib/campaignsApi'
 import ChessBoard from './ChessBoard/ChessBoard'
 import { formatPrice } from '../lib/utils'
+import { POPULAR_TAGS } from '../lib/popularTags'
+
+function getTagLabel(tag: string, t: (key: string) => string): string {
+  const popular = POPULAR_TAGS.find(p => p.key === tag)
+  return popular ? t(popular.labelKey) : tag
+}
 
 const INITIAL_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
@@ -96,6 +102,7 @@ export default function CourseCard({
     : null
 
   const firstTag = course.tags[0]
+  const firstTagLabel = firstTag ? getTagLabel(firstTag, t) : null
 
   return (
     <Link
@@ -110,7 +117,7 @@ export default function CourseCard({
       <div style={{ position: 'relative', aspectRatio: '16/10', background: 'var(--surface-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
         {badgeLabel && <Badge label={badgeLabel} color={badgeColor} testId={badgeKind ? `badge-${badgeKind}` : undefined} />}
 
-        {firstTag && (
+        {firstTagLabel && (
           <span
             className="thumbnail-tag"
             style={{
@@ -124,7 +131,7 @@ export default function CourseCard({
               zIndex: 1,
             }}
           >
-            {firstTag}
+            {firstTagLabel}
           </span>
         )}
 
@@ -159,6 +166,27 @@ export default function CourseCard({
         <p style={{ fontSize: 12.5, color: 'var(--ink-3)', margin: 0 }}>
           {course.creator_name}
         </p>
+
+        {/* Tags */}
+        {course.tags.length > 0 && (
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+            {course.tags.map(tag => (
+              <span
+                key={tag}
+                style={{
+                  fontSize: 11,
+                  padding: '1px 8px',
+                  borderRadius: 999,
+                  background: 'var(--surface-2)',
+                  color: 'var(--ink-3)',
+                  fontWeight: 500,
+                }}
+              >
+                {getTagLabel(tag, t)}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Stats */}
         <p style={{ fontSize: 12, color: 'var(--ink-3)', margin: 0, display: 'flex', gap: 4, alignItems: 'center', flexWrap: 'wrap' }}>

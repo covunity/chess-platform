@@ -235,6 +235,27 @@ export async function checkUserEnrollment(
   return (count ?? 0) > 0
 }
 
+export async function listPublishedCourseTags(
+  client: SupabaseClient
+): Promise<{ tags: string[]; error: Error | null }> {
+  const { data, error } = await client
+    .from('courses')
+    .select('tags')
+    .eq('status', 'published')
+
+  if (error) return { tags: [], error: error as unknown as Error }
+
+  const uniqueTags = new Set<string>()
+  for (const row of data ?? []) {
+    const tags = Array.isArray(row.tags) ? (row.tags as string[]) : []
+    for (const tag of tags) {
+      uniqueTags.add(tag)
+    }
+  }
+
+  return { tags: Array.from(uniqueTags).sort(), error: null }
+}
+
 export async function listPublishedCourses(
   client: SupabaseClient,
   options: ListPublishedCoursesOptions = {}
