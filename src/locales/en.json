@@ -353,11 +353,9 @@
       }
     },
     "tagsSelect": {
-      "placeholder": "Select or create a tag…",
-      "groupPopular": "Popular tags",
-      "groupYours": "Your tags",
-      "createLabel": "Create tag \"{{name}}\"",
-      "noOptions": "Type to create a new tag",
+      "popularPlaceholder": "Select a popular tag…",
+      "customPlaceholder": "Enter a custom tag…",
+      "addBtn": "Add",
       "helper": "Up to {{max}} tags. New tags are saved to your library."
     },
     "courseEdit": {

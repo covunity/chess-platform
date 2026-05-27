@@ -6,6 +6,7 @@ function makeSupabase(rows: unknown[] = [], error: unknown = null) {
   const query = {
     eq: vi.fn().mockReturnThis(),
     ilike: vi.fn().mockReturnThis(),
+    or: vi.fn().mockReturnThis(),
     contains: vi.fn().mockReturnThis(),
     order: vi.fn().mockResolvedValue({ data: rows, error }),
   }
@@ -72,10 +73,10 @@ describe('listPublishedCourses', () => {
     expect(courses[0].enrollment_count).toBe(2)
   })
 
-  it('applies ILIKE filter when q is given', async () => {
+  it('applies title+tags search filter when q is given', async () => {
     const client = makeSupabase([])
     await listPublishedCourses(client, { q: 'cờ' })
-    expect(client._query.ilike).toHaveBeenCalledWith('title', '%cờ%')
+    expect(client._query.or).toHaveBeenCalledWith('title.ilike.%cờ%,tags_text.ilike.%cờ%')
   })
 
   it('applies level filter', async () => {

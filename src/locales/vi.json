@@ -155,7 +155,6 @@
     "tagEndgame": "Tàn cuộc",
     "tagStrategy": "Chiến lược",
     "tagMasterGames": "Ván cờ đại kiện tướng",
-    "moreTagsBtn": "Thêm thẻ",
     "emptyHeading": "Không có khóa học nào phù hợp.",
     "emptySubtext": "Thử bỏ bớt một vài bộ lọc.",
     "emptyCtaClear": "Xóa bộ lọc",
@@ -946,11 +945,9 @@
       }
     },
     "tagsSelect": {
-      "placeholder": "Chọn hoặc tạo thẻ…",
-      "groupPopular": "Thẻ phổ biến",
-      "groupYours": "Thẻ của bạn",
-      "createLabel": "Tạo thẻ \"{{name}}\"",
-      "noOptions": "Gõ để tạo thẻ mới",
+      "popularPlaceholder": "Chọn thẻ phổ biến…",
+      "customPlaceholder": "Nhập thẻ tự chọn…",
+      "addBtn": "Thêm",
       "helper": "Tối đa {{max}} thẻ. Thẻ mới sẽ được lưu vào danh sách của bạn."
     },
     "courseEdit": {

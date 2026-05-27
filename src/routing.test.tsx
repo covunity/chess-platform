@@ -21,7 +21,6 @@ vi.mock('./lib/creatorApi', () => ({
 
 vi.mock('./lib/coursesApi', () => ({
   listPublishedCourses: vi.fn().mockResolvedValue({ courses: [], error: null }),
-  listPublishedCourseTags: vi.fn().mockResolvedValue({ tags: [], error: null }),
 }))
 
 vi.mock('./lib/campaignsApi', () => ({

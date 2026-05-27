@@ -7,7 +7,7 @@ export interface CreatorTag {
   created_at: string
 }
 
-export const MAX_TAG_LENGTH = 50
+export const MAX_TAG_LENGTH = 300
 
 export function normalizeTagName(raw: string): string {
   return raw.trim().slice(0, MAX_TAG_LENGTH)

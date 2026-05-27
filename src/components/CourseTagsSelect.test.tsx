@@ -16,8 +16,8 @@ vi.mock('../lib/creatorTagsApi', () => ({
   listCreatorTags: mockListCreatorTags,
   createCreatorTag: mockCreateCreatorTag,
   deleteCreatorTag: vi.fn(),
-  normalizeTagName: (raw: string) => raw.trim().slice(0, 50),
-  MAX_TAG_LENGTH: 50,
+  normalizeTagName: (raw: string) => raw.trim().slice(0, 300),
+  MAX_TAG_LENGTH: 300,
 }))
 
 function makeTag(name: string): CreatorTag {
@@ -39,13 +39,6 @@ function renderSelect(props: Partial<React.ComponentProps<typeof CourseTagsSelec
   return { ...utils, onChange }
 }
 
-async function openMenu() {
-  const container = screen.getByTestId('course-tags-select')
-  const input = container.querySelector('input') as HTMLInputElement
-  await userEvent.click(input)
-  return { container, input }
-}
-
 describe('CourseTagsSelect', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -62,37 +55,37 @@ describe('CourseTagsSelect', () => {
     })
   })
 
-  it('shows popular tags group with translated labels', async () => {
+  it('shows popular tags in the dropdown', async () => {
     renderSelect()
     await waitFor(() => expect(mockListCreatorTags).toHaveBeenCalled())
-    await openMenu()
-    expect(await screen.findByText('Khai cuộc')).toBeInTheDocument()
-    expect(screen.getByText('Chiến thuật')).toBeInTheDocument()
+    const select = screen.getByTestId('popular-tag-select')
+    const options = select.querySelectorAll('option')
+    // placeholder + 5 popular tags
+    expect(options.length).toBe(6)
+    expect(options[1].textContent).toBe('Khai cuộc')
   })
 
   it('selecting a popular tag emits its key value', async () => {
     const { onChange } = renderSelect()
     await waitFor(() => expect(mockListCreatorTags).toHaveBeenCalled())
-    await openMenu()
-    const opt = await screen.findByText('Khai cuộc')
-    await userEvent.click(opt)
+    const select = screen.getByTestId('popular-tag-select')
+    await userEvent.selectOptions(select, 'openings')
     expect(onChange).toHaveBeenCalledWith(['openings'])
   })
 
-  it('lists creator-saved tags in their own group', async () => {
-    mockListCreatorTags.mockResolvedValue({ tags: [makeTag('Sicilian')], error: null })
-    renderSelect()
-    await openMenu()
-    expect(await screen.findByText('Sicilian')).toBeInTheDocument()
+  it('hides already-selected popular tags from the dropdown', async () => {
+    renderSelect({ value: ['openings'] })
+    await waitFor(() => expect(mockListCreatorTags).toHaveBeenCalled())
+    const select = screen.getByTestId('popular-tag-select')
+    const optionValues = Array.from(select.querySelectorAll('option')).map(o => o.value)
+    expect(optionValues).not.toContain('openings')
   })
 
-  it('typing a new tag and selecting create persists and emits the new tag', async () => {
+  it('typing a custom tag and pressing Enter creates and emits it', async () => {
     const { onChange } = renderSelect()
     await waitFor(() => expect(mockListCreatorTags).toHaveBeenCalled())
-    const { input } = await openMenu()
-    await userEvent.type(input, 'Najdorf')
-    const createOption = await screen.findByText(/Tạo thẻ "Najdorf"/i)
-    await userEvent.click(createOption)
+    const input = screen.getByTestId('custom-tag-input')
+    await userEvent.type(input, 'Najdorf{Enter}')
     await waitFor(() => {
       expect(mockCreateCreatorTag).toHaveBeenCalledWith(expect.anything(), 'u1', 'Najdorf')
     })
@@ -101,25 +94,41 @@ describe('CourseTagsSelect', () => {
     })
   })
 
-  it('does not re-create a popular tag when typed verbatim — selects it instead', async () => {
+  it('clicking Add button creates the custom tag', async () => {
     const { onChange } = renderSelect()
     await waitFor(() => expect(mockListCreatorTags).toHaveBeenCalled())
-    const { input } = await openMenu()
-    await userEvent.type(input, 'openings')
-    // popular options match by label, not key, so typing the key still shows the create-option;
-    // when picked, our handler short-circuits and does NOT call createCreatorTag.
-    const createOption = await screen.findByText(/Tạo thẻ "openings"/i)
-    await userEvent.click(createOption)
+    const input = screen.getByTestId('custom-tag-input')
+    await userEvent.type(input, 'Sicilian')
+    const addBtn = screen.getByTestId('add-custom-tag-btn')
+    await userEvent.click(addBtn)
     await waitFor(() => {
-      expect(onChange).toHaveBeenCalledWith(['openings'])
+      expect(mockCreateCreatorTag).toHaveBeenCalledWith(expect.anything(), 'u1', 'Sicilian')
     })
-    expect(mockCreateCreatorTag).not.toHaveBeenCalled()
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalledWith(['Sicilian'])
+    })
   })
 
   it('renders existing selected values as chips', async () => {
     renderSelect({ value: ['openings', 'custom-tag'] })
     await waitFor(() => expect(mockListCreatorTags).toHaveBeenCalled())
-    expect(screen.getByText('Khai cuộc')).toBeInTheDocument()
-    expect(screen.getByText('custom-tag')).toBeInTheDocument()
+    const chips = screen.getByTestId('selected-tags')
+    expect(chips).toHaveTextContent('Khai cuộc')
+    expect(chips).toHaveTextContent('custom-tag')
+  })
+
+  it('removes a tag when clicking the × button', async () => {
+    const { onChange } = renderSelect({ value: ['openings', 'tactics'] })
+    await waitFor(() => expect(mockListCreatorTags).toHaveBeenCalled())
+    const removeBtn = screen.getByLabelText('Remove Khai cuộc')
+    await userEvent.click(removeBtn)
+    expect(onChange).toHaveBeenCalledWith(['tactics'])
+  })
+
+  it('enforces 300 char max on custom input', async () => {
+    renderSelect()
+    await waitFor(() => expect(mockListCreatorTags).toHaveBeenCalled())
+    const input = screen.getByTestId('custom-tag-input') as HTMLInputElement
+    expect(input.maxLength).toBe(300)
   })
 })

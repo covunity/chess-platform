@@ -136,14 +136,13 @@ describe('NewCoursePage', () => {
 
   it('selects a popular tag from the dropdown', async () => {
     renderPage()
-    const tagsContainer = screen.getByTestId('course-tags-select')
-    const input = tagsContainer.querySelector('input') as HTMLInputElement
-    await userEvent.click(input)
-    // "Khai cuộc" is the Vietnamese label for the 'openings' popular tag
-    const option = await screen.findByText('Khai cuộc')
-    await userEvent.click(option)
+    const select = await screen.findByTestId('popular-tag-select')
     await waitFor(() => {
-      expect(tagsContainer.querySelector('.course-tags-select__multi-value')).toBeInTheDocument()
+      expect(select).not.toBeDisabled()
+    })
+    await userEvent.selectOptions(select, 'openings')
+    await waitFor(() => {
+      expect(screen.getByTestId('selected-tags')).toHaveTextContent('Khai cuộc')
     })
   })
 

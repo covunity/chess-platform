@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
-import { listPublishedCourses, listPublishedCourseTags } from '../lib/coursesApi'
+import { listPublishedCourses } from '../lib/coursesApi'
 import { getCurrentActiveCampaign } from '../lib/campaignsApi'
 import type { Campaign } from '../lib/campaignsApi'
 import type { PublicCourse, SortOption } from '../lib/coursesApi'
@@ -66,9 +66,6 @@ export default function HomePage() {
   const [activeCampaign, setActiveCampaign] = useState<Campaign | null>(null)
   const [bannerDismissed, setBannerDismissed] = useState(false)
   const [heroConfig, setHeroConfig] = useState<HeroConfig | null>(null)
-  const [customTags, setCustomTags] = useState<string[]>([])
-  const [customTagsOpen, setCustomTagsOpen] = useState(false)
-  const customTagsRef = useRef<HTMLDivElement>(null)
 
   const level = (searchParams.get('level') ?? 'all') as CourseLevel | 'all'
   const tag = searchParams.get('tag') ?? ''
@@ -100,21 +97,6 @@ export default function HomePage() {
     fetchHeroConfig(supabase).then(setHeroConfig).catch(() => { /* use i18n defaults */ })
   }, [])
 
-  useEffect(() => {
-    listPublishedCourseTags(supabase).then(({ tags }) => {
-      setCustomTags(tags.filter(t => !TAGS.some(p => p.key === t)))
-    })
-  }, [])
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (customTagsRef.current && !customTagsRef.current.contains(e.target as Node)) {
-        setCustomTagsOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   function hero(key: keyof HeroConfig, i18nKey: string): string {
     const val = heroConfig?.[key]
@@ -444,78 +426,6 @@ export default function HomePage() {
               </button>
             ))}
 
-            {customTags.length > 0 && (
-              <>
-                <div style={{ width: 1, height: 20, background: 'var(--border-strong)', margin: '0 4px' }} />
-                <div ref={customTagsRef} style={{ position: 'relative' }}>
-                  <button
-                    type="button"
-                    onClick={() => setCustomTagsOpen(o => !o)}
-                    style={{
-                      height: 32,
-                      padding: '0 12px',
-                      borderRadius: 'var(--r-sm)',
-                      fontSize: 13,
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      border: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      background: customTags.includes(tag) ? 'var(--accent)' : 'var(--surface-2)',
-                      color: customTags.includes(tag) ? '#fff' : 'var(--ink-2)',
-                      transition: 'background 0.15s',
-                    }}
-                  >
-                    {customTags.includes(tag) ? tag : t('home.moreTagsBtn')}
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
-                      <path d="M1 3l4 4 4-4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </button>
-
-                  {customTagsOpen && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: 'calc(100% + 6px)',
-                        left: 0,
-                        background: 'var(--surface)',
-                        border: '1px solid var(--border)',
-                        borderRadius: 'var(--r-md)',
-                        boxShadow: 'var(--sh-2)',
-                        zIndex: 20,
-                        minWidth: 160,
-                        maxHeight: 280,
-                        overflowY: 'auto',
-                        padding: '4px 0',
-                      }}
-                    >
-                      {customTags.map(tagKey => (
-                        <button
-                          key={tagKey}
-                          type="button"
-                          onClick={() => { setTag(tagKey); setCustomTagsOpen(false) }}
-                          style={{
-                            display: 'block',
-                            width: '100%',
-                            textAlign: 'left',
-                            padding: '7px 14px',
-                            fontSize: 13,
-                            fontWeight: tag === tagKey ? 600 : 400,
-                            cursor: 'pointer',
-                            border: 'none',
-                            background: tag === tagKey ? 'var(--accent-soft)' : 'transparent',
-                            color: tag === tagKey ? 'var(--accent-ink)' : 'var(--ink-1)',
-                          }}
-                        >
-                          {tagKey}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
           </div>
         </div>
       </section>
