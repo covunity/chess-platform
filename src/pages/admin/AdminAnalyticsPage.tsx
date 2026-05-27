@@ -725,6 +725,7 @@ export default function AdminAnalyticsPage() {
                       beginner: t('admin.analytics.content.level.beginner'),
                       intermediate: t('admin.analytics.content.level.intermediate'),
                       advanced: t('admin.analytics.content.level.advanced'),
+                      professional: t('admin.analytics.content.level.professional'),
                     }}
                   />
                 </Suspense>

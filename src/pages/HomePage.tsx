@@ -32,6 +32,7 @@ const LEVELS: Array<{ key: CourseLevel | 'all'; labelKey: string }> = [
   { key: 'beginner', labelKey: 'home.levelBeginner' },
   { key: 'intermediate', labelKey: 'home.levelIntermediate' },
   { key: 'advanced', labelKey: 'home.levelAdvanced' },
+  { key: 'professional', labelKey: 'home.levelProfessional' },
 ]
 
 import { POPULAR_TAGS as TAGS } from '../lib/popularTags'

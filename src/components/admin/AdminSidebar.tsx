@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { key: 'payouts', to: '/admin/payouts' },
   { key: 'reports', to: '/admin/reports' },
   { key: 'heroConfig', to: '/admin/hero-config' },
+  { key: 'coursePriceLimits', to: '/admin/course-price-limits' },
 ] as const
 
 export default function AdminSidebar() {

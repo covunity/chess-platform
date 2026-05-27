@@ -81,6 +81,7 @@ export default function CourseCard({
     beginner: t('home.levelBadgeBeginner'),
     intermediate: t('home.levelBadgeIntermediate'),
     advanced: t('home.levelBadgeAdvanced'),
+    professional: t('home.levelBadgeProfessional'),
   }[course.level] ?? course.level
 
   const priceDisplay = course.price === 0

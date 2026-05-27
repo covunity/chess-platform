@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
@@ -20,6 +20,8 @@ import LessonEditor from '../../components/LessonEditor/LessonEditor'
 import CourseTagsSelect from '../../components/CourseTagsSelect'
 import { useAuth } from '../../context/AuthContext'
 import { useAccountTiers } from '../../lib/accountTiers'
+import { fetchCoursePriceLimits, getLimitForLevel } from '../../lib/coursePriceLimits'
+import type { CoursePriceLimit } from '../../lib/coursePriceLimits'
 import { Video, ChessKnight, Puzzle, Eye } from 'lucide-react'
 
 function LessonTypeIcon({ type, size = 15 }: { type: LessonType; size?: number }) {
@@ -522,11 +524,40 @@ export default function CourseEditPage() {
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null)
   const [courseTags, setCourseTags] = useState<string[]>([])
   const [savingCourseInfo, setSavingCourseInfo] = useState(false)
+  const [coursePriceError, setCoursePriceError] = useState('')
+  const [priceLimits, setPriceLimits] = useState<CoursePriceLimit[]>([])
   const [showCourseInfo, setShowCourseInfo] = useState(false)
 
   useEffect(() => {
     if (courseId) localStorage.setItem('lastEditedCourseId', courseId)
   }, [courseId])
+
+  useEffect(() => {
+    fetchCoursePriceLimits(supabase).then(setPriceLimits)
+  }, [])
+
+  const activePriceLimit = useMemo(
+    () => getLimitForLevel(priceLimits, courseLevel),
+    [priceLimits, courseLevel]
+  )
+
+  function validateCoursePrice(p: number, lv: CourseLevel): boolean {
+    if (p === 0) { setCoursePriceError(''); return true }
+    const limit = getLimitForLevel(priceLimits, lv)
+    if (!limit) { setCoursePriceError(''); return true }
+    if (p < limit.min_price || p > limit.max_price) {
+      setCoursePriceError(
+        t('creator.courseEdit.courseInfo.priceRangeError', {
+          min: limit.min_price.toLocaleString('vi-VN'),
+          max: limit.max_price.toLocaleString('vi-VN'),
+          level: t(`creator.courseEdit.courseInfo.level${lv.charAt(0).toUpperCase() + lv.slice(1)}`),
+        })
+      )
+      return false
+    }
+    setCoursePriceError('')
+    return true
+  }
 
   const refreshReadiness = useCallback(async () => {
     if (!courseId) return
@@ -612,6 +643,7 @@ export default function CourseEditPage() {
 
   async function handleSaveCourseInfo() {
     if (!courseId) return
+    if (!validateCoursePrice(coursePrice, courseLevel)) return
     setSavingCourseInfo(true)
     let thumbnail_url = courseThumbnailUrl
     if (thumbnailFile) {
@@ -1032,8 +1064,25 @@ export default function CourseEditPage() {
                   type="number"
                   min={0}
                   value={coursePrice}
-                  onChange={e => setCoursePrice(Number(e.target.value))}
+                  onChange={e => {
+                    const p = Number(e.target.value)
+                    setCoursePrice(p)
+                    validateCoursePrice(p, courseLevel)
+                  }}
                 />
+                {activePriceLimit && coursePrice !== 0 && (
+                  <p className="text-xs mt-1 text-(--ink-3)">
+                    {t('creator.courseEdit.courseInfo.priceRangeHint', {
+                      min: activePriceLimit.min_price.toLocaleString('vi-VN'),
+                      max: activePriceLimit.max_price.toLocaleString('vi-VN'),
+                    })}
+                  </p>
+                )}
+                {coursePriceError && (
+                  <p data-testid="ci-price-error" className="text-xs mt-1" style={{ color: 'var(--danger)' }}>
+                    {coursePriceError}
+                  </p>
+                )}
               </div>
               <div style={{ flex: 1 }}>
                 <label className="label" htmlFor="ci-level">{t('creator.courseEdit.courseInfo.labelLevel')}</label>
@@ -1041,11 +1090,16 @@ export default function CourseEditPage() {
                   id="ci-level"
                   className="input"
                   value={courseLevel}
-                  onChange={e => setCourseLevel(e.target.value as CourseLevel)}
+                  onChange={e => {
+                    const lv = e.target.value as CourseLevel
+                    setCourseLevel(lv)
+                    validateCoursePrice(coursePrice, lv)
+                  }}
                 >
-                  <option value="beginner">{t('creator.newCourse.levelBeginner')}</option>
-                  <option value="intermediate">{t('creator.newCourse.levelIntermediate')}</option>
-                  <option value="advanced">{t('creator.newCourse.levelAdvanced')}</option>
+                  <option value="beginner">{t('creator.courseEdit.courseInfo.levelBeginner')}</option>
+                  <option value="intermediate">{t('creator.courseEdit.courseInfo.levelIntermediate')}</option>
+                  <option value="advanced">{t('creator.courseEdit.courseInfo.levelAdvanced')}</option>
+                  <option value="professional">{t('creator.courseEdit.courseInfo.levelProfessional')}</option>
                 </select>
               </div>
             </div>

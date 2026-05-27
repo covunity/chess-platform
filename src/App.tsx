@@ -14,6 +14,7 @@ import AdminVouchersPage from './pages/admin/AdminVouchersPage'
 import AdminCreatorApplicationsPage from './pages/admin/AdminCreatorApplicationsPage'
 import AdminCreatorFeesPage from './pages/admin/AdminCreatorFeesPage'
 import AdminTiersPage from './pages/admin/AdminTiersPage'
+import AdminCoursePriceLimitsPage from './pages/admin/AdminCoursePriceLimitsPage'
 import AdminHeroConfigPage from './pages/admin/AdminHeroConfigPage'
 import AdminPayoutsPage from './pages/admin/AdminPayoutsPage'
 import AdminAnalyticsPage from './pages/admin/AdminAnalyticsPage'
@@ -78,6 +79,7 @@ export default function App() {
             <Route path="payouts" element={<AdminPayoutsPage />} />
             <Route path="reports" element={<AdminReportsPage />} />
             <Route path="hero-config" element={<AdminHeroConfigPage />} />
+            <Route path="course-price-limits" element={<AdminCoursePriceLimitsPage />} />
             <Route path="*" element={<AdminComingSoonPage />} />
           </Route>
         </Route>

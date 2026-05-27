@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
@@ -7,6 +7,8 @@ import type { CourseLevel } from '../../lib/creatorApi'
 import { useAuth } from '../../context/AuthContext'
 import { useAccountTiers, computeFeeFloor } from '../../lib/accountTiers'
 import CourseTagsSelect from '../../components/CourseTagsSelect'
+import { fetchCoursePriceLimits, getLimitForLevel } from '../../lib/coursePriceLimits'
+import type { CoursePriceLimit } from '../../lib/coursePriceLimits'
 
 const MAX_TITLE = 200
 const MAX_TAGS = 10
@@ -27,14 +29,38 @@ export default function NewCoursePage() {
   const [thumbnail, setThumbnail] = useState<File | null>(null)
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null)
   const [titleError, setTitleError] = useState('')
+  const [priceError, setPriceError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [priceLimits, setPriceLimits] = useState<CoursePriceLimit[]>([])
   const fileRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    fetchCoursePriceLimits(supabase).then(setPriceLimits)
+  }, [])
 
   function handleThumbnailFile(file: File) {
     if (!file.type.startsWith('image/') || file.size > MAX_THUMBNAIL_BYTES) return
     setThumbnail(file)
     const url = URL.createObjectURL(file)
     setThumbnailPreview(url)
+  }
+
+  function validatePrice(p: number, lv: CourseLevel): boolean {
+    if (p === 0) { setPriceError(''); return true }
+    const limit = getLimitForLevel(priceLimits, lv)
+    if (!limit) { setPriceError(''); return true }
+    if (p < limit.min_price || p > limit.max_price) {
+      setPriceError(
+        t('creator.newCourse.priceRangeError', {
+          min: limit.min_price.toLocaleString('vi-VN'),
+          max: limit.max_price.toLocaleString('vi-VN'),
+          level: t(`creator.newCourse.level${lv.charAt(0).toUpperCase() + lv.slice(1)}`),
+        })
+      )
+      return false
+    }
+    setPriceError('')
+    return true
   }
 
   function validate(): boolean {
@@ -47,6 +73,7 @@ export default function NewCoursePage() {
       return false
     }
     setTitleError('')
+    if (!validatePrice(price, level)) return false
     return true
   }
 
@@ -172,10 +199,31 @@ export default function NewCoursePage() {
                   value={price}
                   min={0}
                   step={1000}
-                  onChange={e => setPrice(Math.max(0, parseInt(e.target.value) || 0))}
+                  onChange={e => {
+                    const p = Math.max(0, parseInt(e.target.value) || 0)
+                    setPrice(p)
+                    validatePrice(p, level)
+                  }}
                 />
               </div>
               <p className="text-xs mt-1 text-(--ink-3)">{t('creator.newCourse.priceHelper')}</p>
+              {(() => {
+                const limit = getLimitForLevel(priceLimits, level)
+                if (!limit) return null
+                return (
+                  <p className="text-xs mt-1 text-(--ink-3)">
+                    {t('creator.newCourse.priceRangeHint', {
+                      min: limit.min_price.toLocaleString('vi-VN'),
+                      max: limit.max_price.toLocaleString('vi-VN'),
+                    })}
+                  </p>
+                )
+              })()}
+              {priceError && (
+                <p data-testid="price-error" className="text-xs mt-1" style={{ color: 'var(--danger)' }}>
+                  {priceError}
+                </p>
+              )}
               {/* Real-time fee preview based on creator's current tier */}
               {profile?.account_tier_id && (() => {
                 const tier = getTier(profile.account_tier_id)
@@ -216,11 +264,16 @@ export default function NewCoursePage() {
                   data-testid="course-level-select"
                   className="input"
                   value={level}
-                  onChange={e => setLevel(e.target.value as CourseLevel)}
+                  onChange={e => {
+                    const lv = e.target.value as CourseLevel
+                    setLevel(lv)
+                    validatePrice(price, lv)
+                  }}
                 >
                   <option value="beginner">{t('creator.newCourse.levelBeginner')}</option>
                   <option value="intermediate">{t('creator.newCourse.levelIntermediate')}</option>
                   <option value="advanced">{t('creator.newCourse.levelAdvanced')}</option>
+                  <option value="professional">{t('creator.newCourse.levelProfessional')}</option>
                 </select>
               </div>
               <div>

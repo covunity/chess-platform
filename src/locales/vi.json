@@ -149,6 +149,7 @@
     "levelBeginner": "Cơ bản",
     "levelIntermediate": "Trung cấp",
     "levelAdvanced": "Nâng cao",
+    "levelProfessional": "Chuyên nghiệp",
     "tagOpenings": "Khai cuộc",
     "tagTactics": "Chiến thuật",
     "tagEndgame": "Tàn cuộc",
@@ -168,7 +169,8 @@
     "searchNoResults": "Không tìm thấy kết quả nào.",
     "levelBadgeBeginner": "Cơ bản",
     "levelBadgeIntermediate": "Trung cấp",
-    "levelBadgeAdvanced": "Nâng cao"
+    "levelBadgeAdvanced": "Nâng cao",
+    "levelBadgeProfessional": "Chuyên nghiệp"
   },
   "terms": {
     "title": "Điều khoản dịch vụ"
@@ -194,7 +196,8 @@
       "tiers": "Gói tài khoản",
       "payouts": "Chi trả creator",
       "reports": "Báo cáo",
-      "heroConfig": "Nội dung trang chủ"
+      "heroConfig": "Nội dung trang chủ",
+      "coursePriceLimits": "Giới hạn giá khóa học"
     },
     "campaigns": {
       "pageTitle": "Chiến dịch khuyến mại",
@@ -425,7 +428,8 @@
         "level": {
           "beginner": "Người mới",
           "intermediate": "Trung cấp",
-          "advanced": "Cao cấp"
+          "advanced": "Cao cấp",
+          "professional": "Chuyên nghiệp"
         },
         "language": {
           "vi": "Tiếng Việt",
@@ -783,6 +787,38 @@
       "savedMsg": "Đã lưu thành công!",
       "errorMsg": "Lưu thất bại. Vui lòng thử lại.",
       "loadError": "Không thể tải cấu hình. Vui lòng tải lại trang."
+    },
+    "coursePriceLimits": {
+      "pageTitle": "Giới hạn giá khóa học",
+      "intro": "Cấu hình khoảng giá cho phép theo từng cấp độ khóa học. Khóa học miễn phí (giá = 0) luôn được phép bất kể cấp độ.",
+      "colLevel": "Cấp độ",
+      "colMin": "Giá tối thiểu",
+      "colMax": "Giá tối đa",
+      "edit": "Chỉnh sửa",
+      "empty": "Không có dữ liệu.",
+      "loadError": "Không thể tải giới hạn giá. Vui lòng tải lại trang.",
+      "editDialogTitle": "Chỉnh sửa giới hạn — {{level}}",
+      "editDialogHint": "Nhập giá bằng VND (đơn vị: đồng). Khóa miễn phí (giá = 0) luôn được phép.",
+      "minLabel": "Giá tối thiểu (₫)",
+      "maxLabel": "Giá tối đa (₫)",
+      "cancel": "Huỷ",
+      "save": "Lưu",
+      "saving": "Đang lưu…",
+      "levelName": {
+        "beginner": "Cơ bản",
+        "intermediate": "Trung cấp",
+        "advanced": "Nâng cao",
+        "professional": "Chuyên nghiệp"
+      },
+      "errors": {
+        "minRequired": "Giá tối thiểu là bắt buộc.",
+        "minNumeric": "Giá tối thiểu phải là số nguyên.",
+        "minNegative": "Giá tối thiểu không được âm.",
+        "maxRequired": "Giá tối đa là bắt buộc.",
+        "maxNumeric": "Giá tối đa phải là số nguyên.",
+        "maxLteMin": "Giá tối đa phải lớn hơn giá tối thiểu.",
+        "saveFailed": "Lưu thất bại. Vui lòng thử lại."
+      }
     }
   },
   "creator": {
@@ -888,6 +924,9 @@
       "levelBeginner": "Cơ bản",
       "levelIntermediate": "Trung cấp",
       "levelAdvanced": "Nâng cao",
+      "levelProfessional": "Chuyên nghiệp",
+      "priceRangeHint": "Khoảng giá cho cấp độ này: ₫{{min}} – ₫{{max}}",
+      "priceRangeError": "Giá phải từ ₫{{min}} đến ₫{{max}} cho cấp độ {{level}} (hoặc 0 nếu miễn phí).",
       "labelLanguage": "Ngôn ngữ",
       "languageVi": "Tiếng Việt",
       "languageEn": "Tiếng Anh",
@@ -952,6 +991,12 @@
         "thumbnailChange": "Đổi ảnh",
         "labelPrice": "Giá (₫)",
         "labelLevel": "Cấp độ",
+        "levelBeginner": "Cơ bản",
+        "levelIntermediate": "Trung cấp",
+        "levelAdvanced": "Nâng cao",
+        "levelProfessional": "Chuyên nghiệp",
+        "priceRangeHint": "Khoảng giá cho cấp độ này: ₫{{min}} – ₫{{max}}",
+        "priceRangeError": "Giá phải từ ₫{{min}} đến ₫{{max}} cho cấp độ {{level}} (hoặc 0 nếu miễn phí).",
         "labelTags": "Thẻ",
         "save": "Lưu thông tin",
         "saved": "Đã lưu thông tin khóa học!"
