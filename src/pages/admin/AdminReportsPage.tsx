@@ -296,15 +296,22 @@ function CourseReportsPanel() {
               {t('adminReports.reporterList')}
             </p>
             {selected.course_reports.map(r => (
-              <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                <div
-                  className="avatar"
-                  style={{ width: 32, height: 32, fontSize: 11, fontWeight: 600, background: 'var(--surface-3)', color: 'var(--ink-1)', flexShrink: 0 }}
-                >
-                  {r.reporter?.name?.charAt(0).toUpperCase() ?? '?'}
+              <div key={r.id} style={{ marginBottom: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div
+                    className="avatar"
+                    style={{ width: 32, height: 32, fontSize: 11, fontWeight: 600, background: 'var(--surface-3)', color: 'var(--ink-1)', flexShrink: 0 }}
+                  >
+                    {r.reporter?.name?.charAt(0).toUpperCase() ?? '?'}
+                  </div>
+                  <span style={{ fontSize: 13, color: 'var(--ink-1)', flex: 1 }}>{r.reporter?.name ?? '—'}</span>
+                  <ReasonPill reason={r.reason} />
                 </div>
-                <span style={{ fontSize: 13, color: 'var(--ink-1)', flex: 1 }}>{r.reporter?.name ?? '—'}</span>
-                <ReasonPill reason={r.reason} />
+                {r.context && (
+                  <p style={{ fontSize: 12.5, color: 'var(--ink-2)', margin: '6px 0 0 42px', fontStyle: 'italic', lineHeight: 1.5 }}>
+                    {r.context}
+                  </p>
+                )}
               </div>
             ))}
           </div>

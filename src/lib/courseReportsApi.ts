@@ -5,6 +5,7 @@ export interface CourseReportRow {
   id: string
   reporter_id: string
   reason: ReportReason
+  context: string | null
   created_at: string
   reporter: { name: string | null } | null
 }
@@ -40,7 +41,7 @@ export async function listReportedCourses(
     .select(`
       id, title, creator_id, status,
       creator:creator_id(name),
-      course_reports(id, reporter_id, reason, created_at, reporter:reporter_id(name))
+      course_reports(id, reporter_id, reason, context, created_at, reporter:reporter_id(name))
     `)
     .order('created_at', { ascending: false })
 
