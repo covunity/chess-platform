@@ -107,11 +107,11 @@ export default function CourseCard({
   return (
     <Link
       to={`/courses/${course.id}`}
-      style={{ textDecoration: 'none', display: 'block' }}
+      style={{ textDecoration: 'none', display: 'block', height: '100%' }}
     >
     <article
       className="card"
-      style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
+      style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%' }}
     >
       {/* Thumbnail */}
       <div style={{ position: 'relative', aspectRatio: '16/10', background: 'var(--surface-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
