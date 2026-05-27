@@ -102,17 +102,18 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
           }
         }}
         style={{
-          padding: '3px 6px',
-          background: isCurrentNode ? 'var(--surface-3)' : 'transparent',
+          padding: '2px 4px',
+          background: isCurrentNode ? 'var(--accent-soft)' : 'transparent',
           borderRadius: 'var(--r-sm)',
           cursor: 'pointer',
-          fontWeight: isCurrentNode ? 600 : 400,
-          fontSize: 12.5,
+          fontWeight: 600,
+          fontSize: 14,
+          fontFamily: 'var(--font-mono)',
           display: 'flex',
           alignItems: 'center',
           gap: 3,
           userSelect: 'none' as const,
-          color: 'var(--ink-1)',
+          color: isCurrentNode ? 'var(--accent-ink)' : 'var(--ink-1)',
           minWidth: 0,
         }}
       >
@@ -164,19 +165,18 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
             key={`row-${wNode.id}`}
             style={{
               display: 'grid',
-              gridTemplateColumns: '30px 1fr 1fr',
+              gridTemplateColumns: '28px 1fr 1fr',
               alignItems: 'center',
-              paddingInline: 8,
-              paddingBlock: 1,
-              gap: 2,
+              paddingBlock: 3,
+              gap: 4,
             }}
           >
             <span
               style={{
-                color: 'var(--ink-3)',
-                fontSize: 11,
+                color: 'var(--ink-4)',
+                fontSize: 13,
+                fontFamily: 'var(--font-mono)',
                 userSelect: 'none' as const,
-                paddingLeft: 2,
               }}
             >
               {wNode.moveNumber}.
@@ -206,19 +206,18 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
             key={`row-b-${bNode.id}`}
             style={{
               display: 'grid',
-              gridTemplateColumns: '30px 1fr 1fr',
+              gridTemplateColumns: '28px 1fr 1fr',
               alignItems: 'center',
-              paddingInline: 8,
-              paddingBlock: 1,
-              gap: 2,
+              paddingBlock: 3,
+              gap: 4,
             }}
           >
             <span
               style={{
-                color: 'var(--ink-3)',
-                fontSize: 11,
+                color: 'var(--ink-4)',
+                fontSize: 13,
+                fontFamily: 'var(--font-mono)',
                 userSelect: 'none' as const,
-                paddingLeft: 2,
               }}
             >
               {bNode.moveNumber}...
@@ -262,6 +261,7 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
         flexDirection: 'column',
         height: '100%',
         overflow: 'hidden',
+        background: 'var(--surface)',
       }}
     >
       {/* Moves section header */}
@@ -270,18 +270,18 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
           display: 'flex',
           alignItems: 'center',
           gap: 8,
-          padding: '10px 16px',
+          padding: '20px 28px 16px',
           borderBottom: '1px solid var(--border)',
           flexShrink: 0,
         }}
       >
         <span
           style={{
-            fontSize: 10,
+            fontSize: 11,
             fontWeight: 600,
             color: 'var(--ink-3)',
             textTransform: 'uppercase' as const,
-            letterSpacing: '0.1em',
+            letterSpacing: '0.08em',
           }}
         >
           {t('creator.lessonEditor.variationListHeading')}
@@ -327,7 +327,7 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
         style={{
           flex: 1,
           overflowY: 'auto',
-          padding: '6px 0',
+          padding: '8px 28px',
           minHeight: 0,
         }}
       >
@@ -340,9 +340,9 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
         ) : (
           <div
             style={{
-              padding: '40px 20px',
+              padding: '40px 0',
               textAlign: 'center' as const,
-              fontSize: 12.5,
+              fontSize: 14,
               color: 'var(--ink-3)',
               fontStyle: 'italic',
               lineHeight: 1.6,
@@ -479,13 +479,13 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
         </div>
       )}
 
-      {/* Navigation buttons — full-width, same style as learner viewer */}
-      <div className="guided-player-actions" style={{ padding: 0, gap: 0, background: 'var(--surface-2)' }}>
+      {/* Navigation buttons — identical to learner viewer mode */}
+      <div className="guided-player-actions">
         <button
           type="button"
           data-testid="board-authoring-nav-begin"
           className="btn btn-secondary"
-          style={{ flex: 1, padding: 0, height: 44, background: 'var(--surface-2)', borderRadius: 0, border: 'none', borderTop: '1px solid var(--border)' }}
+          style={{ flex: 1, padding: 0, background: 'var(--surface-2)' }}
           aria-label={t('guidedPlayer.viewerBeginMove')}
           title={t('guidedPlayer.viewerBeginMove')}
           disabled={navAtRoot}
@@ -497,7 +497,7 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
           type="button"
           data-testid="board-authoring-nav-prev"
           className="btn btn-secondary"
-          style={{ flex: 1, padding: 0, height: 44, background: 'var(--surface-2)', borderRadius: 0, border: 'none', borderTop: '1px solid var(--border)', borderLeft: '1px solid var(--border)' }}
+          style={{ flex: 1, padding: 0, background: 'var(--surface-2)' }}
           aria-label={t('guidedPlayer.viewerPrevMove')}
           title={t('guidedPlayer.viewerPrevMove')}
           disabled={navAtRoot}
@@ -509,7 +509,7 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
           type="button"
           data-testid="board-authoring-nav-next"
           className="btn btn-secondary"
-          style={{ flex: 1, padding: 0, height: 44, background: 'var(--surface-2)', borderRadius: 0, border: 'none', borderTop: '1px solid var(--border)', borderLeft: '1px solid var(--border)' }}
+          style={{ flex: 1, padding: 0, background: 'var(--surface-2)' }}
           aria-label={t('guidedPlayer.viewerNextMove')}
           title={t('guidedPlayer.viewerNextMove')}
           disabled={navAtLeaf}
@@ -521,7 +521,7 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
           type="button"
           data-testid="board-authoring-nav-end"
           className="btn btn-secondary"
-          style={{ flex: 1, padding: 0, height: 44, background: 'var(--surface-2)', borderRadius: 0, border: 'none', borderTop: '1px solid var(--border)', borderLeft: '1px solid var(--border)' }}
+          style={{ flex: 1, padding: 0, background: 'var(--surface-2)' }}
           aria-label={t('guidedPlayer.viewerEndMove')}
           title={t('guidedPlayer.viewerEndMove')}
           disabled={navAtMainLineEnd || !mainLineEndId}
@@ -540,17 +540,17 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
           display: 'flex',
           flexDirection: 'column',
           gap: 8,
-          padding: '12px 16px 16px',
+          padding: '16px 28px',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span
             style={{
-              fontSize: 10,
+              fontSize: 11,
               fontWeight: 600,
               color: 'var(--ink-3)',
               textTransform: 'uppercase' as const,
-              letterSpacing: '0.1em',
+              letterSpacing: '0.08em',
             }}
           >
             {t('creator.lessonEditor.notePanelLabel', { defaultValue: 'Ghi chú' })}
