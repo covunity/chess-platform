@@ -507,19 +507,6 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
             />
           )}
         </div>
-        {isRoot && (
-          <div
-            style={{
-              fontSize: 12,
-              color: 'var(--ink-3)',
-              fontStyle: 'italic',
-            }}
-          >
-            {t('creator.lessonEditor.notePanelRootHint', {
-              defaultValue: 'Chọn một nước để thêm ghi chú',
-            })}
-          </div>
-        )}
         <RichNoteEditor
           key={currentNodeId}
           value={currentNote}
