@@ -74,7 +74,7 @@ export interface ContentKpis {
  *  advanced). The donut groups raw `courses` rows filtered to
  *  `created_at IN range`. */
 export interface LevelBucketRow {
-  level: 'beginner' | 'intermediate' | 'advanced'
+  level: 'beginner' | 'intermediate' | 'advanced' | 'professional'
   count: number
 }
 
