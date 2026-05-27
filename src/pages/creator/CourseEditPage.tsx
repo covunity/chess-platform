@@ -994,6 +994,7 @@ export default function CourseEditPage() {
               onRemoveRewindSibling={handleRemoveRewindSibling}
               showSidebar={false}
               saveRef={saveLessonRef}
+              editorAdvanced={profile?.editor_advanced ?? false}
             />
           </div>
         ) : (
