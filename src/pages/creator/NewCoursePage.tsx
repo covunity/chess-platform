@@ -224,7 +224,6 @@ export default function NewCoursePage() {
                   {priceError}
                 </p>
               )}
-              {/* Real-time fee preview based on creator's current tier */}
               {profile?.account_tier_id && (() => {
                 const tier = getTier(profile.account_tier_id)
                 if (!tier) return null

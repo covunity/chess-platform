@@ -132,11 +132,11 @@
     "creatorCta": {
       "eyebrow": "DÀNH CHO CREATOR",
       "heading": "Chia sẻ kiến thức cờ vua của bạn.",
-      "body": "Tham gia với tư cách cá nhân để dạy theo phong cách riêng, hoặc đăng ký gói doanh nghiệp để giảm phí nền tảng và mở khoá thêm nhiều chương cho mỗi khoá học.",
+      "body": "Tham gia với tư cách cá nhân để dạy theo phong cách riêng, hoặc đăng ký gói doanh nghiệp để mở khoá thêm nhiều tính năng.",
       "individualCta": "Trở thành creator cá nhân",
       "businessCta": "Đăng ký tài khoản doanh nghiệp",
-      "individualHint": "Phí nền tảng 20% · 10 chương/khoá",
-      "businessHint": "Phí 10–15% · 15–50 chương/khoá tuỳ gói"
+      "individualHint": "Bắt đầu dạy ngay hôm nay",
+      "businessHint": "Dành cho tổ chức và đội nhóm"
     },
     "browseAll": "Tất cả khóa học",
     "coursesCount": "{{count}} khóa học · sắp xếp theo mới nhất",
