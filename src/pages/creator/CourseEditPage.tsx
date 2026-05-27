@@ -22,7 +22,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useAccountTiers } from '../../lib/accountTiers'
 import { fetchCoursePriceLimits, getLimitForLevel } from '../../lib/coursePriceLimits'
 import type { CoursePriceLimit } from '../../lib/coursePriceLimits'
-import { Video, ChessKnight, Puzzle, Eye } from 'lucide-react'
+import { Video, ChessKnight, Puzzle, Eye, ExternalLink } from 'lucide-react'
 import { Switch } from '../../components/ui/switch'
 
 function LessonTypeIcon({ type, size = 15 }: { type: LessonType; size?: number }) {
@@ -360,6 +360,24 @@ function PublishBar({ courseId, courseTitle, status, readiness, publishing, onPu
           {t('creator.studio.status.' + status)}
         </span>
       </div>
+      {status === 'published' && (
+        <Link
+          to={`/courses/${courseId}`}
+          data-testid="view-public-page"
+          className="flex items-center gap-1 shrink-0"
+          style={{
+            fontSize: 12,
+            color: 'var(--ink-3)',
+            textDecoration: 'none',
+            transition: 'color 0.15s',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
+          onMouseLeave={e => (e.currentTarget.style.color = 'var(--ink-3)')}
+        >
+          <ExternalLink size={12} strokeWidth={2} />
+          {t('creator.courseEdit.viewPublicPage')}
+        </Link>
+      )}
     </div>
   )
 
@@ -416,13 +434,6 @@ function PublishBar({ courseId, courseTitle, status, readiness, publishing, onPu
             {t('creator.courseEdit.saveLesson')}
           </button>
         )}
-        <Link
-          to={`/courses/${courseId}`}
-          data-testid="view-public-page"
-          className="btn btn-ghost btn-sm"
-        >
-          {t('creator.courseEdit.viewPublicPage')}
-        </Link>
         <button type="button" data-testid="unpublish-btn" className="btn btn-secondary btn-sm" onClick={onUnpublish} disabled={publishing}>
           {t('creator.courseEdit.publish.unpublish')}
         </button>
