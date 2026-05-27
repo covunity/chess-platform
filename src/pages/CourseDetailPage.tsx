@@ -737,11 +737,11 @@ function CourseReportDialog({
             </div>
             <textarea
               className="input"
-              rows={2}
+              rows={4}
               value={context}
               onChange={e => setContext(e.target.value)}
               placeholder={t('courseDetail.courseReportDialog.contextPlaceholder')}
-              style={{ width: '100%', marginBottom: 16, resize: 'vertical' }}
+              style={{ width: '100%', marginBottom: 16, resize: 'vertical', minHeight: 96 }}
             />
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button type="button" className="btn btn-ghost" onClick={onClose}>
