@@ -1,12 +1,13 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { Search } from 'lucide-react'
-import { Link, NavLink, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { getBookmarks } from '../lib/bookmarkApi'
 import { listPublishedCourses } from '../lib/coursesApi'
 import type { PublicCourse } from '../lib/coursesApi'
+import { formatPrice } from '../lib/utils'
 import ThemeToggle from './ThemeToggle'
 import UserAvatarMenu from './UserAvatarMenu'
 
@@ -14,7 +15,6 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { user, profile } = useAuth()
-  const [searchParams, setSearchParams] = useSearchParams()
   const searchRef = useRef<HTMLInputElement>(null)
   const [bookmarkCount, setBookmarkCount] = useState(0)
   const [overlayQuery, setOverlayQuery] = useState('')
@@ -34,12 +34,22 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
     setOverlayQuery(val)
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => fetchOverlay(val), 250)
-    setSearchParams(prev => {
-      const next = new URLSearchParams(prev)
-      if (val) next.set('q', val)
-      else next.delete('q')
-      return next
-    })
+  }
+
+  function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') {
+      const val = overlayQuery.trim()
+      setOverlayQuery('')
+      setOverlayResults([])
+      if (val) {
+        navigate(`/?q=${encodeURIComponent(val)}`)
+      }
+    }
+    if (e.key === 'Escape') {
+      setOverlayQuery('')
+      setOverlayResults([])
+      searchRef.current?.blur()
+    }
   }
 
   useEffect(() => {
@@ -51,6 +61,18 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (overlayRef.current && !overlayRef.current.contains(e.target as Node) &&
+          searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setOverlayQuery('')
+        setOverlayResults([])
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
   useEffect(() => {
@@ -154,8 +176,9 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
           ref={searchRef}
           role="searchbox"
           type="search"
-          defaultValue={searchParams.get('q') ?? ''}
+          value={overlayQuery}
           onChange={handleSearchChange}
+          onKeyDown={handleSearchKeyDown}
           placeholder={t('home.searchPlaceholder')}
           style={{
             width: '100%',
@@ -212,19 +235,68 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
                   setOverlayResults([])
                   navigate(`/courses/${course.id}`)
                 }}
+                className="flex items-center gap-3"
                 style={{
                   width: '100%',
                   textAlign: 'left',
-                  padding: '10px 14px',
+                  padding: '8px 12px',
                   border: 'none',
+                  borderBottom: '1px solid var(--border)',
                   background: 'transparent',
                   cursor: 'pointer',
-                  fontSize: 13,
-                  color: 'var(--ink-1)',
-                  display: 'block',
                 }}
               >
-                {course.title}
+                <div
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 'var(--r-sm)',
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                    background: 'var(--surface-2)',
+                  }}
+                >
+                  {course.thumbnail_url ? (
+                    <img
+                      src={course.thumbnail_url}
+                      alt=""
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 18,
+                        color: 'var(--ink-4)',
+                      }}
+                    >
+                      ♟
+                    </div>
+                  )}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 500,
+                      color: 'var(--ink-1)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {course.title}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 2 }}>
+                    {course.price === 0
+                      ? t('home.free')
+                      : formatPrice(course.price)}
+                  </div>
+                </div>
               </button>
             ))}
           </div>
