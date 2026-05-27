@@ -83,3 +83,18 @@ export async function getPendingReportCount(
 
   return { count: commentIds.size + courseIds.size }
 }
+
+/** Returns separate pending counts for comment reports and course reports. */
+export async function getPendingReportCounts(
+  client: SupabaseClient
+): Promise<{ commentCount: number; courseCount: number }> {
+  const [commentRes, courseRes] = await Promise.all([
+    client.from('reports').select('comment_id', { head: false }),
+    client.from('course_reports').select('course_id', { head: false }),
+  ])
+
+  const commentIds = new Set((commentRes.data ?? []).map((r: { comment_id: string }) => r.comment_id))
+  const courseIds = new Set((courseRes.data ?? []).map((r: { course_id: string }) => r.course_id))
+
+  return { commentCount: commentIds.size, courseCount: courseIds.size }
+}

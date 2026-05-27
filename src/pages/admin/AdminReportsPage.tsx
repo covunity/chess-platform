@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
-import { listReportedComments, hideComment, dismissReports } from '../../lib/adminReportsApi'
+import { listReportedComments, hideComment, dismissReports, getPendingReportCounts } from '../../lib/adminReportsApi'
 import type { ReportedComment } from '../../lib/adminReportsApi'
 import { listReportedCourses, dismissCourseReports, unpublishCourse } from '../../lib/courseReportsApi'
 import type { ReportedCourse } from '../../lib/courseReportsApi'
@@ -351,7 +351,23 @@ function CourseReportsPanel() {
 
 export default function AdminReportsPage() {
   const { t } = useTranslation()
-  const [tab, setTab] = useState<Tab>('comments')
+  const [tab, setTab] = useState<Tab | null>(null)
+  const [counts, setCounts] = useState<{ commentCount: number; courseCount: number } | null>(null)
+
+  useEffect(() => {
+    getPendingReportCounts(supabase).then(result => {
+      setCounts(result)
+      // Auto-select: prefer comments; fall back to courses if comments is empty
+      setTab(result.commentCount === 0 && result.courseCount > 0 ? 'courses' : 'comments')
+    })
+  }, [])
+
+  const activeTab = tab ?? 'comments'
+
+  const tabCount: Record<Tab, number> = {
+    comments: counts?.commentCount ?? 0,
+    courses: counts?.courseCount ?? 0,
+  }
 
   return (
     <div style={{ padding: 32 }}>
@@ -370,24 +386,40 @@ export default function AdminReportsPage() {
               data-testid={`tab-${t2}`}
               onClick={() => setTab(t2)}
               style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
                 padding: '8px 20px',
                 fontSize: 13.5,
-                fontWeight: tab === t2 ? 600 : 400,
-                color: tab === t2 ? 'var(--accent)' : 'var(--ink-3)',
+                fontWeight: activeTab === t2 ? 600 : 400,
+                color: activeTab === t2 ? 'var(--accent)' : 'var(--ink-3)',
                 background: 'none',
                 border: 'none',
-                borderBottom: tab === t2 ? '2px solid var(--accent)' : '2px solid transparent',
+                borderBottom: activeTab === t2 ? '2px solid var(--accent)' : '2px solid transparent',
                 marginBottom: -1,
                 cursor: 'pointer',
               }}
             >
               {t(`adminReports.tab${t2.charAt(0).toUpperCase() + t2.slice(1)}`)}
+              {tabCount[t2] > 0 && (
+                <span style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  lineHeight: 1,
+                  padding: '2px 7px',
+                  borderRadius: 999,
+                  background: 'var(--danger)',
+                  color: '#fff',
+                }}>
+                  {tabCount[t2]}
+                </span>
+              )}
             </button>
           ))}
         </div>
       </div>
 
-      {tab === 'comments' ? <CommentReportsPanel /> : <CourseReportsPanel />}
+      {activeTab === 'comments' ? <CommentReportsPanel /> : <CourseReportsPanel />}
     </div>
   )
 }
