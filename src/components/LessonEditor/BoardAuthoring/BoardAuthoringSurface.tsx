@@ -29,6 +29,10 @@ export interface BoardAuthoringSurfaceProps {
   store: TreeStore
   perspective?: 'white' | 'black'
   size?: number
+  /** Controlled open state for the board editor modal. When provided, the built-in trigger button is hidden. */
+  boardEditorOpen?: boolean
+  /** Callback to change the controlled board editor open state. */
+  onBoardEditorOpenChange?: (open: boolean) => void
 }
 
 /** Compute legal destinations for each piece from a FEN (for Chessground dests prop). */
@@ -67,6 +71,8 @@ export default function BoardAuthoringSurface({
   store,
   perspective = 'white',
   size = 400,
+  boardEditorOpen: boardEditorOpenProp,
+  onBoardEditorOpenChange,
 }: BoardAuthoringSurfaceProps) {
   const { t } = useTranslation()
 
@@ -82,8 +88,13 @@ export default function BoardAuthoringSurface({
   // Promotion state: pending promotion from/to squares
   const [pendingPromotion, setPendingPromotion] = useState<{ from: string; to: string } | null>(null)
 
-  // Board editor open/close state
-  const [boardEditorOpen, setBoardEditorOpen] = useState(false)
+  // Board editor open/close — controlled when parent passes boardEditorOpenProp
+  const [boardEditorOpenInternal, setBoardEditorOpenInternal] = useState(false)
+  const isControlled = boardEditorOpenProp !== undefined
+  const boardEditorOpen = isControlled ? boardEditorOpenProp! : boardEditorOpenInternal
+  const setBoardEditorOpen = isControlled
+    ? (onBoardEditorOpenChange ?? (() => {}))
+    : setBoardEditorOpenInternal
 
   // Build nodeMap from tree for O(1) lookup
   function buildNodeMap(root: PgnNode): Map<string, PgnNode> {
@@ -146,25 +157,27 @@ export default function BoardAuthoringSurface({
         gap: 12,
       }}
     >
-      {/* Starting position button */}
-      <div>
-        <button
-          type="button"
-          data-testid="board-authoring-starting-position-btn"
-          onClick={() => setBoardEditorOpen(true)}
-          style={{
-            padding: '5px 12px',
-            fontSize: 12,
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--r-sm)',
-            background: 'var(--surface)',
-            color: 'var(--ink-2)',
-            cursor: 'pointer',
-          }}
-        >
-          {t('creator.lessonEditor.startingPositionLabel', { defaultValue: 'Vị trí bắt đầu' })}
-        </button>
-      </div>
+      {/* Uncontrolled trigger button — hidden when parent controls boardEditorOpen via props */}
+      {!isControlled && (
+        <div>
+          <button
+            type="button"
+            data-testid="board-authoring-starting-position-btn"
+            onClick={() => setBoardEditorOpen(true)}
+            style={{
+              padding: '5px 12px',
+              fontSize: 12,
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--r-sm)',
+              background: 'var(--surface)',
+              color: 'var(--ink-2)',
+              cursor: 'pointer',
+            }}
+          >
+            {t('creator.lessonEditor.startingPositionLabel', { defaultValue: 'Vị trí bắt đầu' })}
+          </button>
+        </div>
+      )}
 
       {/* Board editor — shown when open */}
       {boardEditorOpen && (

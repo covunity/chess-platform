@@ -98,6 +98,8 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   const [chessSubTab, setChessSubTab] = useState<'board' | 'pgn'>('board');
   // Import-from-PGN modal open state
   const [importModalOpen, setImportModalOpen] = useState(false);
+  // Board editor (starting position) open state — lifted here so the toolbar can trigger it
+  const [boardEditorOpen, setBoardEditorOpen] = useState(false);
 
   // ── treeStore for board-direct authoring (chess lessons) ─────────────────
   const [treeStore] = useState(() => createTreeStore());
@@ -247,109 +249,193 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
 
       {/* Center: Editor form */}
       <div style={{ padding: "12px 16px 16px", display: "flex", flexDirection: "column", gap: 10, overflowY: "auto" }}>
-        {/* Lesson type tabs */}
-        <div style={{ display: "flex", gap: 6 }}>
-          {(lesson.type === 'puzzle'
-            ? [...VISIBLE_LESSON_TAB_VALUES, 'puzzle' as LessonType]
-            : VISIBLE_LESSON_TAB_VALUES
-          ).map((value) => (
-            <button
-              key={value}
-              type="button"
-              data-testid={`lesson-type-tab-${value}`}
-              aria-pressed={activeTab === value}
-              onClick={() => {
-                if (value !== 'chess' && activeTab === 'chess' && hasRewindMode) {
-                  setPendingTabSwitch(value);
-                } else {
-                  setActiveTab(value);
-                }
-              }}
-              style={{
-                padding: "6px 14px",
-                borderRadius: 999,
-                border: "1px solid var(--border)",
-                background: activeTab === value ? "var(--ink-1)" : "var(--surface)",
-                color: activeTab === value ? "var(--on-ink-1)" : "var(--ink-2)",
-                fontSize: 12.5,
-                fontWeight: 500,
-                cursor: "pointer",
-              }}
-            >
-              {tabLabels[value]}
-            </button>
-          ))}
+        {/* Row 1: lesson type tabs (left) + title input (right) */}
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+            {(lesson.type === 'puzzle'
+              ? [...VISIBLE_LESSON_TAB_VALUES, 'puzzle' as LessonType]
+              : VISIBLE_LESSON_TAB_VALUES
+            ).map((value) => (
+              <button
+                key={value}
+                type="button"
+                data-testid={`lesson-type-tab-${value}`}
+                aria-pressed={activeTab === value}
+                onClick={() => {
+                  if (value !== 'chess' && activeTab === 'chess' && hasRewindMode) {
+                    setPendingTabSwitch(value);
+                  } else {
+                    setActiveTab(value);
+                  }
+                }}
+                style={{
+                  padding: "6px 14px",
+                  borderRadius: 999,
+                  border: "1px solid var(--border)",
+                  background: activeTab === value ? "var(--ink-1)" : "var(--surface)",
+                  color: activeTab === value ? "var(--on-ink-1)" : "var(--ink-2)",
+                  fontSize: 12.5,
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}
+              >
+                {tabLabels[value]}
+              </button>
+            ))}
+          </div>
+          <input
+            id="lesson-title"
+            className="input"
+            type="text"
+            style={{ flex: 1, height: 34 }}
+            placeholder={t('creator.lessonEditor.lessonTitle')}
+            aria-label={t('creator.lessonEditor.lessonTitle')}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
         </div>
 
         {activeTab === "chess" ? (
           <>
-            {/* Compact metadata bar: title + (source-only) perspective + rewind toggle */}
-            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-              <input
-                id="lesson-title"
-                className="input"
-                type="text"
-                style={{ flex: 1, height: 34 }}
-                placeholder={t('creator.lessonEditor.lessonTitle')}
-                aria-label={t('creator.lessonEditor.lessonTitle')}
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-              {/* Perspective segmented control + Rewind-toggle checkbox only show on
-                  source lessons; siblings inherit their content (including perspective)
-                  from the source via the DB trigger. */}
-              {!isRewindSibling && (
-                <>
-                  {(["white", "black"] as const).map((val, i) => (
-                    <button
-                      key={val}
-                      type="button"
-                      aria-pressed={perspective === val}
-                      onClick={() => setPerspective(val)}
-                      style={{
-                        height: 34,
-                        padding: "0 10px",
-                        border: "1px solid var(--border)",
-                        borderRadius: i === 0 ? "var(--r-sm) 0 0 var(--r-sm)" : "0 var(--r-sm) var(--r-sm) 0",
-                        marginLeft: i === 1 ? -1 : 0,
-                        background: perspective === val ? "var(--ink-1)" : "var(--surface)",
-                        color: perspective === val ? "var(--on-ink-1)" : "var(--ink-1)",
-                        fontWeight: 500,
-                        fontSize: 12.5,
-                        cursor: "pointer",
-                        position: "relative" as const,
-                        zIndex: perspective === val ? 1 : 0,
-                        flexShrink: 0,
-                      }}
-                    >
-                      {val === "white" ? t('creator.lessonEditor.perspectiveWhite') : t('creator.lessonEditor.perspectiveBlack')}
-                    </button>
-                  ))}
-                  <label
+            {/* Row 2: unified board toolbar — all chess controls in one compact strip.
+                Hidden for rewind siblings (they show a read-only banner instead). */}
+            {!isRewindSibling && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {/* Sub-tabs: Bảng / PGN */}
+                <button
+                  type="button"
+                  data-testid="board-tab"
+                  aria-pressed={chessSubTab === 'board'}
+                  onClick={() => setChessSubTab('board')}
+                  style={{
+                    padding: '3px 10px',
+                    borderRadius: 999,
+                    border: '1px solid var(--border)',
+                    background: chessSubTab === 'board' ? 'var(--ink-1)' : 'var(--surface)',
+                    color: chessSubTab === 'board' ? 'var(--on-ink-1)' : 'var(--ink-2)',
+                    fontSize: 12,
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                  }}
+                >
+                  {t('creator.lessonEditor.tabBoardAuthoring')}
+                </button>
+                {editorAdvanced && (
+                  <button
+                    type="button"
+                    data-testid="pgn-advanced-tab"
+                    aria-pressed={chessSubTab === 'pgn'}
+                    onClick={() => setChessSubTab('pgn')}
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 5,
-                      fontSize: 12.5,
-                      color: "var(--ink-2)",
-                      cursor: "pointer",
+                      padding: '3px 10px',
+                      borderRadius: 999,
+                      border: '1px solid var(--border)',
+                      background: chessSubTab === 'pgn' ? 'var(--ink-1)' : 'var(--surface)',
+                      color: chessSubTab === 'pgn' ? 'var(--on-ink-1)' : 'var(--ink-2)',
+                      fontSize: 12,
+                      fontWeight: 500,
+                      cursor: 'pointer',
                       flexShrink: 0,
-                      whiteSpace: "nowrap" as const,
-                      paddingLeft: 4,
                     }}
                   >
-                    <input
-                      data-testid="lesson-has-rewind-mode-checkbox"
-                      type="checkbox"
-                      checked={hasRewindMode}
-                      onChange={(e) => setHasRewindMode(e.target.checked)}
-                      style={{ cursor: "pointer" }}
-                    />
-                    {t('creator.lessonEditor.hasRewindModeLabel')}
-                  </label>
-                </>
-              )}
-            </div>
+                    {t('creator.lessonEditor.tabPgnAdvanced')}
+                  </button>
+                )}
+
+                {/* Divider */}
+                <div style={{ width: 1, height: 18, background: 'var(--border)', flexShrink: 0, margin: '0 2px' }} />
+
+                {/* Perspective segmented control — only on source lessons */}
+                {(["white", "black"] as const).map((val, i) => (
+                  <button
+                    key={val}
+                    type="button"
+                    aria-pressed={perspective === val}
+                    onClick={() => setPerspective(val)}
+                    style={{
+                      height: 26,
+                      padding: '0 8px',
+                      border: '1px solid var(--border)',
+                      borderRadius: i === 0 ? 'var(--r-sm) 0 0 var(--r-sm)' : '0 var(--r-sm) var(--r-sm) 0',
+                      marginLeft: i === 1 ? -1 : 0,
+                      background: perspective === val ? 'var(--ink-1)' : 'var(--surface)',
+                      color: perspective === val ? 'var(--on-ink-1)' : 'var(--ink-1)',
+                      fontWeight: 500,
+                      fontSize: 12,
+                      cursor: 'pointer',
+                      position: 'relative' as const,
+                      zIndex: perspective === val ? 1 : 0,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {val === 'white' ? t('creator.lessonEditor.perspectiveWhite') : t('creator.lessonEditor.perspectiveBlack')}
+                  </button>
+                ))}
+
+                {/* Rewind toggle */}
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    fontSize: 12,
+                    color: 'var(--ink-2)',
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                    whiteSpace: 'nowrap' as const,
+                  }}
+                >
+                  <input
+                    data-testid="lesson-has-rewind-mode-checkbox"
+                    type="checkbox"
+                    checked={hasRewindMode}
+                    onChange={(e) => setHasRewindMode(e.target.checked)}
+                    style={{ cursor: 'pointer' }}
+                  />
+                  {t('creator.lessonEditor.hasRewindModeLabel')}
+                </label>
+
+                {/* Spacer */}
+                <div style={{ flex: 1 }} />
+
+                {/* Action buttons — rect style to distinguish from pill tabs */}
+                <button
+                  type="button"
+                  data-testid="board-authoring-starting-position-btn"
+                  onClick={() => setBoardEditorOpen(true)}
+                  style={{
+                    padding: '3px 10px',
+                    fontSize: 12,
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--r-sm)',
+                    background: 'var(--surface)',
+                    color: 'var(--ink-2)',
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                  }}
+                >
+                  {t('creator.lessonEditor.startingPositionLabel', { defaultValue: 'Vị trí bắt đầu' })}
+                </button>
+                <button
+                  type="button"
+                  data-testid="import-from-pgn-btn"
+                  onClick={() => setImportModalOpen(true)}
+                  style={{
+                    padding: '3px 10px',
+                    fontSize: 12,
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--r-sm)',
+                    background: 'var(--surface)',
+                    color: 'var(--ink-2)',
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                  }}
+                >
+                  {t('creator.lessonEditor.importFromPgn')}
+                </button>
+              </div>
+            )}
 
             {isRewindSibling ? (
               <div
@@ -375,74 +461,14 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
               </div>
             ) : (
               <>
-                {/* Authoring sub-tabs: Board | PGN (advanced) + Import-from-PGN button */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <button
-                    type="button"
-                    data-testid="board-tab"
-                    aria-pressed={chessSubTab === 'board'}
-                    onClick={() => setChessSubTab('board')}
-                    style={{
-                      padding: '4px 12px',
-                      borderRadius: 999,
-                      border: '1px solid var(--border)',
-                      background: chessSubTab === 'board' ? 'var(--ink-1)' : 'var(--surface)',
-                      color: chessSubTab === 'board' ? 'var(--on-ink-1)' : 'var(--ink-2)',
-                      fontSize: 12,
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {t('creator.lessonEditor.tabBoardAuthoring')}
-                  </button>
-
-                  {editorAdvanced && (
-                    <button
-                      type="button"
-                      data-testid="pgn-advanced-tab"
-                      aria-pressed={chessSubTab === 'pgn'}
-                      onClick={() => setChessSubTab('pgn')}
-                      style={{
-                        padding: '4px 12px',
-                        borderRadius: 999,
-                        border: '1px solid var(--border)',
-                        background: chessSubTab === 'pgn' ? 'var(--ink-1)' : 'var(--surface)',
-                        color: chessSubTab === 'pgn' ? 'var(--on-ink-1)' : 'var(--ink-2)',
-                        fontSize: 12,
-                        fontWeight: 500,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {t('creator.lessonEditor.tabPgnAdvanced')}
-                    </button>
-                  )}
-
-                  <button
-                    type="button"
-                    data-testid="import-from-pgn-btn"
-                    onClick={() => setImportModalOpen(true)}
-                    style={{
-                      marginLeft: 'auto',
-                      padding: '4px 12px',
-                      borderRadius: 999,
-                      border: '1px solid var(--border)',
-                      background: 'var(--surface)',
-                      color: 'var(--ink-2)',
-                      fontSize: 12,
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {t('creator.lessonEditor.importFromPgn')}
-                  </button>
-                </div>
-
                 {chessSubTab === 'board' && (
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
                     <BoardAuthoringSurface
                       store={treeStore}
                       perspective={perspective}
                       size={460}
+                      boardEditorOpen={boardEditorOpen}
+                      onBoardEditorOpenChange={setBoardEditorOpen}
                     />
                   </div>
                 )}
@@ -464,21 +490,6 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
           </>
         ) : activeTab === "video" ? (
           <>
-            {/* Lesson title */}
-            <div>
-              <label className="label" htmlFor="lesson-title">
-                {t('creator.lessonEditor.lessonTitle')}
-              </label>
-              <input
-                id="lesson-title"
-                className="input"
-                type="text"
-                aria-label={t('creator.lessonEditor.lessonTitle')}
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-            </div>
-
             <div>
               <label className="label" htmlFor="lesson-description">
                 {t('creator.lessonEditor.lessonDescription')}
@@ -502,18 +513,8 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
           </>
         ) : activeTab === "puzzle" ? (
           <>
-            {/* Compact metadata bar: title + perspective */}
+            {/* Perspective selector for puzzle lessons */}
             <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-              <input
-                id="lesson-title"
-                className="input"
-                type="text"
-                style={{ flex: 1, height: 34 }}
-                placeholder={t('creator.lessonEditor.lessonTitle')}
-                aria-label={t('creator.lessonEditor.lessonTitle')}
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
               {(["white", "black"] as const).map((val, i) => (
                 <button
                   key={val}
