@@ -66,3 +66,20 @@ export async function dismissReports(
 
   return { error: error as unknown as Error | null }
 }
+
+/** Returns the total number of distinct items (comments + courses) with at least one pending report. */
+export async function getPendingReportCount(
+  client: SupabaseClient
+): Promise<{ count: number }> {
+  const [commentRes, courseRes] = await Promise.all([
+    client.from('reports').select('comment_id', { count: 'exact', head: false }),
+    client.from('course_reports').select('course_id', { count: 'exact', head: false }),
+  ])
+
+  // Distinct comment IDs
+  const commentIds = new Set((commentRes.data ?? []).map((r: { comment_id: string }) => r.comment_id))
+  // Distinct course IDs
+  const courseIds = new Set((courseRes.data ?? []).map((r: { course_id: string }) => r.course_id))
+
+  return { count: commentIds.size + courseIds.size }
+}

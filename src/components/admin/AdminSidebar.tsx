@@ -3,6 +3,7 @@ import { NavLink, Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
 import { getPendingOrderCount } from '../../lib/adminOrdersApi'
+import { getPendingReportCount } from '../../lib/adminReportsApi'
 import UserAvatarMenu from '../UserAvatarMenu'
 
 const NAV_ITEMS = [
@@ -25,15 +26,22 @@ export default function AdminSidebar() {
   const { t } = useTranslation()
   const location = useLocation()
   const [pendingCount, setPendingCount] = useState<number | null>(null)
+  const [reportCount, setReportCount] = useState<number | null>(null)
 
   useEffect(() => {
     let cancelled = false
     getPendingOrderCount(supabase).then(({ count }) => {
       if (!cancelled) setPendingCount(count)
     })
+    getPendingReportCount(supabase).then(({ count }) => {
+      if (!cancelled) setReportCount(count)
+    })
     const onFocus = () => {
       getPendingOrderCount(supabase).then(({ count }) => {
         if (!cancelled) setPendingCount(count)
+      })
+      getPendingReportCount(supabase).then(({ count }) => {
+        if (!cancelled) setReportCount(count)
       })
     }
     window.addEventListener('focus', onFocus)
@@ -41,8 +49,7 @@ export default function AdminSidebar() {
       cancelled = true
       window.removeEventListener('focus', onFocus)
     }
-    // Refetch when navigating between admin pages — e.g. after a confirm/cancel
-    // on /admin/orders changes the underlying count.
+    // Refetch when navigating between admin pages
   }, [location.pathname])
 
   return (
@@ -96,6 +103,23 @@ export default function AdminSidebar() {
                 }}
               >
                 {pendingCount}
+              </span>
+            )}
+            {key === 'reports' && reportCount !== null && reportCount > 0 && (
+              <span
+                data-testid="reports-pending-badge"
+                className="pill"
+                style={{
+                  background: 'var(--danger-soft, oklch(0.97 0.03 25))',
+                  color: 'var(--danger)',
+                  border: '1px solid var(--danger-border, oklch(0.88 0.06 25))',
+                  fontSize: 11,
+                  padding: '1px 8px',
+                  minWidth: 22,
+                  textAlign: 'center',
+                }}
+              >
+                {reportCount}
               </span>
             )}
           </NavLink>
