@@ -369,7 +369,7 @@ describe('BoardAuthoringSurface', () => {
 
   describe('main-line navigation arrows', () => {
     it('renders Begin / Prev / Next / End buttons', () => {
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
       expect(screen.getByTestId('board-authoring-nav-begin')).toBeInTheDocument()
       expect(screen.getByTestId('board-authoring-nav-prev')).toBeInTheDocument()
       expect(screen.getByTestId('board-authoring-nav-next')).toBeInTheDocument()
@@ -377,7 +377,7 @@ describe('BoardAuthoringSurface', () => {
     })
 
     it('disables Begin + Prev + Next + End on an empty tree (no moves yet)', () => {
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
       expect(screen.getByTestId('board-authoring-nav-begin')).toBeDisabled()
       expect(screen.getByTestId('board-authoring-nav-prev')).toBeDisabled()
       expect(screen.getByTestId('board-authoring-nav-next')).toBeDisabled()
@@ -392,7 +392,7 @@ describe('BoardAuthoringSurface', () => {
       let leaf = store.getState().tree
       while (leaf.children.length > 0) leaf = leaf.children[0]
       store.getState().setCurrentNode(leaf.id)
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
       expect(screen.getByTestId('board-authoring-nav-end')).toBeDisabled()
       expect(screen.getByTestId('board-authoring-nav-next')).toBeDisabled()
       expect(screen.getByTestId('board-authoring-nav-begin')).toBeEnabled()
@@ -402,7 +402,7 @@ describe('BoardAuthoringSurface', () => {
     it('Begin jumps the store back to the root', async () => {
       const parsed = parsePgn('1. e4 e5 2. Nf3')
       store.getState().replaceTree(parsed.root!)
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
       fireEvent.click(screen.getByTestId('board-authoring-nav-begin'))
       await waitFor(() => {
         expect(store.getState().currentNodeId).toBe(store.getState().tree.id)
@@ -414,7 +414,7 @@ describe('BoardAuthoringSurface', () => {
       store.getState().replaceTree(parsed.root!)
       // Move cursor back to root, then click End.
       store.getState().setCurrentNode(store.getState().tree.id)
-      render(<BoardAuthoringSurface store={store} perspective="white" />)
+      renderWithVariationPanel(store)
       fireEvent.click(screen.getByTestId('board-authoring-nav-end'))
       await waitFor(() => {
         // The main-line end is the Nf3 node — walk children[0] from root.

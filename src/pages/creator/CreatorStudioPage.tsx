@@ -15,6 +15,7 @@ import { Pencil, Copy, Trash2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import RevenuePanel from '../../components/creator/RevenuePanel'
 import { formatPrice } from '../../lib/utils'
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../../components/ui/dropdown-menu'
 
 type StatusFilter = CourseStatus | 'all'
 type DashboardTab = 'courses' | 'revenue'
@@ -137,55 +138,46 @@ interface KebabMenuProps {
 }
 
 function KebabMenu({ course, onDelete, onDuplicate, t }: KebabMenuProps) {
-  const [open, setOpen] = useState(false)
-
   return (
-    <div className="relative" style={{ display: 'inline-block' }}>
-      <button
-        type="button"
-        data-testid="kebab-btn"
-        className="btn btn-ghost btn-sm"
-        aria-label="actions"
-        onClick={() => setOpen(o => !o)}
-      >
-        •••
-      </button>
-      {open && (
-        <div
-          className="card"
-          style={{ position: 'absolute', right: 0, top: '100%', zIndex: 10, minWidth: 160, padding: '4px 0' }}
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          data-testid="kebab-btn"
+          className="btn btn-ghost btn-sm"
+          aria-label="actions"
         >
+          •••
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem asChild>
           <Link
             to={`/creator/courses/${course.id}/edit`}
             data-testid={`kebab-edit-${course.id}`}
-            className="flex items-center gap-2 w-full px-4 py-2 text-sm text-(--ink-1) hover:bg-(--surface-2)"
-            onClick={() => setOpen(false)}
+            className="flex items-center gap-2"
           >
             <Pencil size={14} />
             {t('creator.studio.table.kebabEdit')}
           </Link>
-          <button
-            type="button"
-            data-testid={`kebab-duplicate-${course.id}`}
-            className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-(--ink-1) hover:bg-(--surface-2)"
-            onClick={() => { setOpen(false); onDuplicate(course) }}
-          >
-            <Copy size={14} />
-            {t('creator.studio.table.kebabDuplicate')}
-          </button>
-          <button
-            type="button"
-            data-testid={`kebab-delete-${course.id}`}
-            className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm"
-            style={{ color: 'var(--danger)' }}
-            onClick={() => { setOpen(false); onDelete(course) }}
-          >
-            <Trash2 size={14} />
-            {t('creator.studio.table.kebabDelete')}
-          </button>
-        </div>
-      )}
-    </div>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          data-testid={`kebab-duplicate-${course.id}`}
+          onSelect={() => onDuplicate(course)}
+        >
+          <Copy size={14} />
+          {t('creator.studio.table.kebabDuplicate')}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          data-testid={`kebab-delete-${course.id}`}
+          danger
+          onSelect={() => onDelete(course)}
+        >
+          <Trash2 size={14} />
+          {t('creator.studio.table.kebabDelete')}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 
@@ -369,9 +361,11 @@ export default function CreatorStudioPage() {
 
       {/* Course builder block — most recently edited course */}
       {!loading && allCourses.length > 0 && (() => {
-        const recent = [...allCourses].sort((a, b) =>
-          new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-        )[0]
+        const lastId = localStorage.getItem('lastEditedCourseId')
+        const recent = (lastId ? allCourses.find(c => c.id === lastId) : null)
+          ?? [...allCourses].sort((a, b) =>
+            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+          )[0]
         return (
           <div
             data-testid="course-builder-block"
@@ -386,7 +380,7 @@ export default function CreatorStudioPage() {
                 {recent.title}
               </div>
             </div>
-            <Link to={`/creator/courses/${recent.id}`} className="btn btn-secondary btn-sm">
+            <Link to={`/creator/courses/${recent.id}/edit`} className="btn btn-secondary btn-sm">
               {t('creator.studio.builderContinue')}
             </Link>
           </div>
@@ -498,10 +492,18 @@ export default function CreatorStudioPage() {
                       <tr key={course.id} className="border-b border-(--border) last:border-0">
                         <td style={{ padding: '14px 20px' }}>
                           <div className="flex items-center gap-3">
-                            <div
-                              style={{ width: 40, height: 40, background: 'var(--surface-3)', borderRadius: 'var(--r-sm)', flexShrink: 0 }}
-                              aria-hidden="true"
-                            />
+                            {course.thumbnail_url ? (
+                              <img
+                                src={course.thumbnail_url}
+                                alt=""
+                                style={{ width: 40, height: 40, borderRadius: 'var(--r-sm)', flexShrink: 0, objectFit: 'cover' }}
+                              />
+                            ) : (
+                              <div
+                                style={{ width: 40, height: 40, background: 'var(--surface-3)', borderRadius: 'var(--r-sm)', flexShrink: 0 }}
+                                aria-hidden="true"
+                              />
+                            )}
                             <span data-testid={`course-title-${course.id}`} className="font-medium text-(--ink-1)">{course.title}</span>
                           </div>
                         </td>

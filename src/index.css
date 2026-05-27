@@ -1039,6 +1039,35 @@ body {
   100% { opacity: 0; transform: translate(-50%, 8px); }
 }
 
+/* ── Lesson editor transition ───────────────────────────────── */
+.skeleton {
+  background: var(--surface-3);
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.05) 50%, transparent 75%);
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+
+.lesson-panel-enter {
+  animation: lesson-panel-in 200ms ease-out both;
+}
+
+@keyframes lesson-panel-in {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* PaywallSheet panel */
 .paywall-sheet-panel {
   background: var(--surface);
