@@ -1173,7 +1173,7 @@ export default function CourseDetailPage() {
   const { courseId } = useParams<{ courseId: string }>()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { user, profile } = useAuth()
+  const { user } = useAuth()
   const { t } = useTranslation()
   const showPaywallBanner = searchParams.get('paywall') === 'true'
 
