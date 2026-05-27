@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
-import { updateProfileName, updateProfileBio, uploadAvatar, removeAvatar, updateEditorAdvanced, MAX_BIO_LENGTH } from '../lib/profileApi'
+import { updateProfileName, updateProfileBio, uploadAvatar, removeAvatar, MAX_BIO_LENGTH } from '../lib/profileApi'
 import { validateNewPassword } from '../lib/authValidation'
 
 const MAX_AVATAR_SIZE = 2 * 1024 * 1024
@@ -41,9 +41,6 @@ export default function ProfilePage() {
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [passwordFieldErrors, setPasswordFieldErrors] = useState<{ password?: string; confirmPassword?: string }>({})
 
-  const [editorAdvanced, setEditorAdvanced] = useState(profile?.editor_advanced ?? false)
-  const [prevEditorAdvanced, setPrevEditorAdvanced] = useState(profile?.editor_advanced)
-
   if (profile?.name !== prevProfileName) {
     setPrevProfileName(profile?.name)
     setName(profile?.name ?? '')
@@ -56,26 +53,10 @@ export default function ProfilePage() {
     setPrevProfileAvatar(profile?.avatar_url)
     setAvatarPreview(profile?.avatar_url ?? null)
   }
-  if (profile?.editor_advanced !== prevEditorAdvanced) {
-    setPrevEditorAdvanced(profile?.editor_advanced)
-    setEditorAdvanced(profile?.editor_advanced ?? false)
-  }
-
   if (!user) return null
 
   const initials = (profile?.name ?? user.email ?? '?').charAt(0).toUpperCase()
 
-  async function handleEditorAdvancedToggle(checked: boolean) {
-    if (!user) return
-    setEditorAdvanced(checked)
-    const { error } = await updateEditorAdvanced(supabase, user.id, checked)
-    if (!error) {
-      updateProfile({ editor_advanced: checked })
-    } else {
-      // Rollback on error
-      setEditorAdvanced(!checked)
-    }
-  }
 
   function validateName(value: string): string | null {
     const trimmed = value.trim()
@@ -489,38 +470,6 @@ export default function ProfilePage() {
         </form>
       </section>
 
-      {/* ── Advanced editor section ────────────────────────── */}
-      <section
-        data-testid="editor-advanced-section"
-        className="card"
-        style={{ padding: '28px 28px', marginTop: 20 }}
-      >
-        <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink-1)', marginBottom: 16 }}>
-          {t('profile.editorAdvancedSection')}
-        </h2>
-
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-          <input
-            id="editor-advanced"
-            type="checkbox"
-            data-testid="editor-advanced-checkbox"
-            checked={editorAdvanced}
-            onChange={(e) => handleEditorAdvancedToggle(e.target.checked)}
-            style={{ marginTop: 3, flexShrink: 0 }}
-          />
-          <div>
-            <label htmlFor="editor-advanced" style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink-2)', cursor: 'pointer' }}>
-              {t('profile.editorAdvancedToggleLabel')}
-            </label>
-            <p
-              data-testid="editor-advanced-help"
-              style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 4, margin: 0 }}
-            >
-              {t('profile.editorAdvancedToggleHelp')}
-            </p>
-          </div>
-        </div>
-      </section>
     </main>
   )
 }

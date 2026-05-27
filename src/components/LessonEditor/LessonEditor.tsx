@@ -94,8 +94,6 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   // source lesson — the editor switches to a read-only banner because the
   // content is kept in sync by the DB trigger from the source side.
   const isRewindSibling = !!lesson.rewind_source_id;
-  // Sub-tab for chess lesson: 'board' | 'pgn' (pgn only when editorAdvanced)
-  const [chessSubTab, setChessSubTab] = useState<'board' | 'pgn'>('board');
   // Import-from-PGN modal open state
   const [importModalOpen, setImportModalOpen] = useState(false);
   // Board editor (starting position) open state — lifted here so the toolbar can trigger it
@@ -297,58 +295,11 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
 
         {activeTab === "chess" ? (
           <>
-            {/* Row 2: unified board toolbar — all chess controls in one compact strip.
+            {/* Row 2: board toolbar — chess settings + actions.
                 Hidden for rewind siblings (they show a read-only banner instead). */}
             {!isRewindSibling && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                {/* Sub-tabs: Bảng / PGN — only rendered when advanced mode is on (both tabs exist) */}
-                {editorAdvanced && (
-                  <>
-                    <button
-                      type="button"
-                      data-testid="board-tab"
-                      aria-pressed={chessSubTab === 'board'}
-                      onClick={() => setChessSubTab('board')}
-                      style={{
-                        padding: '3px 10px',
-                        borderRadius: 999,
-                        border: '1px solid var(--border)',
-                        background: chessSubTab === 'board' ? 'var(--ink-1)' : 'var(--surface)',
-                        color: chessSubTab === 'board' ? 'var(--on-ink-1)' : 'var(--ink-2)',
-                        fontSize: 12,
-                        fontWeight: 500,
-                        cursor: 'pointer',
-                        flexShrink: 0,
-                      }}
-                    >
-                      {t('creator.lessonEditor.tabBoardAuthoring')}
-                    </button>
-                    <button
-                      type="button"
-                      data-testid="pgn-advanced-tab"
-                      aria-pressed={chessSubTab === 'pgn'}
-                      onClick={() => setChessSubTab('pgn')}
-                      style={{
-                        padding: '3px 10px',
-                        borderRadius: 999,
-                        border: '1px solid var(--border)',
-                        background: chessSubTab === 'pgn' ? 'var(--ink-1)' : 'var(--surface)',
-                        color: chessSubTab === 'pgn' ? 'var(--on-ink-1)' : 'var(--ink-2)',
-                        fontSize: 12,
-                        fontWeight: 500,
-                        cursor: 'pointer',
-                        flexShrink: 0,
-                      }}
-                    >
-                      {t('creator.lessonEditor.tabPgnAdvanced')}
-                    </button>
-
-                    {/* Divider */}
-                    <div style={{ width: 1, height: 18, background: 'var(--border)', flexShrink: 0, margin: '0 2px' }} />
-                  </>
-                )}
-
-                {/* Perspective segmented control — only on source lessons */}
+                {/* Perspective segmented control */}
                 {(["white", "black"] as const).map((val, i) => (
                   <button
                     key={val}
@@ -463,23 +414,15 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
               </div>
             ) : (
               <>
-                {chessSubTab === 'board' && (
-                  <div style={{ display: 'flex', justifyContent: 'center' }}>
-                    <BoardAuthoringSurface
-                      store={treeStore}
-                      perspective={perspective}
-                      size={460}
-                      boardEditorOpen={boardEditorOpen}
-                      onBoardEditorOpenChange={setBoardEditorOpen}
-                    />
-                  </div>
-                )}
-
-                {editorAdvanced && chessSubTab === 'pgn' && (
-                  <AdvancedPgnPanel
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <BoardAuthoringSurface
                     store={treeStore}
+                    perspective={perspective}
+                    size={460}
+                    boardEditorOpen={boardEditorOpen}
+                    onBoardEditorOpenChange={setBoardEditorOpen}
                   />
-                )}
+                </div>
 
                 {importModalOpen && (
                   <ImportFromPgnModal
