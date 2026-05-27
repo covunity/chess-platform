@@ -5,7 +5,7 @@
  * Following TDD: written before implementation.
  */
 import { vi } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 
 vi.mock('chessground')
 import userEvent from '@testing-library/user-event'
@@ -38,11 +38,6 @@ function renderEditor(props: LessonEditorProps) {
   ])
   return render(<RouterProvider router={router} />)
 }
-
-// ── Advanced PGN panel visibility ─────────────────────────────────────────────
-
-// AdvancedPgnPanel visibility and round-trip tests removed — the inline PGN
-// editor tab (Bảng ↔ PGN) has been removed from the UI. Board is always shown.
 
 // ── Import-from-PGN modal ─────────────────────────────────────────────────────
 

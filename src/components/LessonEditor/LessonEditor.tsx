@@ -5,7 +5,7 @@ import { parsePgn } from "../../utils/parsePgn";
 import { serializePgn } from "../../utils/serializePgn";
 import { createTreeStore } from "./treeStore";
 import BoardAuthoringSurface from "./BoardAuthoring/BoardAuthoringSurface";
-import AdvancedPgnPanel from "./AdvancedPgnPanel/AdvancedPgnPanel";
+
 import VariationPanel from "./VariationPanel";
 import ImportFromPgnModal from "./AdvancedPgnPanel/ImportFromPgnModal";
 import PuzzleEditorPanel from "./PuzzleEditorPanel";
@@ -78,7 +78,7 @@ function formatDuration(seconds: number | undefined | null): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectLesson, showSidebar = true, saveRef, editorAdvanced = false, onRemoveRewindSibling }: LessonEditorProps) {
+export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectLesson, showSidebar = true, saveRef, onRemoveRewindSibling }: LessonEditorProps) {
   const { t } = useTranslation();
   const tabLabels: Record<LessonType, string> = {
     video: t('creator.lessonEditor.tabVideo'),
