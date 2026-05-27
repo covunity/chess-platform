@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import type { RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { parsePgn } from "../../utils/parsePgn";
@@ -100,17 +100,17 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   const [importModalOpen, setImportModalOpen] = useState(false);
 
   // ── treeStore for board-direct authoring (chess lessons) ─────────────────
-  const treeStoreRef = useRef(createTreeStore());
+  const [treeStore] = useState(() => createTreeStore());
   // Initialize on mount: load pgn_data into treeStore if present
   useEffect(() => {
     if (lesson.pgn_data && lesson.pgn_data.trim()) {
       const parsed = parsePgn(lesson.pgn_data);
       if (parsed.valid && parsed.root) {
-        treeStoreRef.current.getState().replaceTree(parsed.root);
+        treeStore.getState().replaceTree(parsed.root);
       }
     } else if (lesson.starting_fen) {
       // No pgn_data but a custom starting_fen is set — seed the tree from it
-      treeStoreRef.current.getState().setStartingFen(lesson.starting_fen);
+      treeStore.getState().setStartingFen(lesson.starting_fen);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lesson.id]);
@@ -134,13 +134,12 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   const [showUploadWarnOnSave, setShowUploadWarnOnSave] = useState(false);
 
   // Preview panel state for video lessons
-  const [previewInfo, setPreviewInfo] = useState<{ url: string; format: 'mp4' | 'hls'; embedUrl?: string | null } | null>(null);
+  const [_previewInfo, setPreviewInfo] = useState<{ videoId: string; videoStatus: string; url: string; format: 'mp4' | 'hls'; embedUrl?: string | null } | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
-
-  // Reset preview when video changes
-  useEffect(() => {
-    setPreviewInfo(null);
-  }, [videoLesson.id, videoLesson.video_status]);
+  // Derived: treat as null when the video identity has changed since the preview was fetched
+  const previewInfo = _previewInfo?.videoId === videoLesson.id && _previewInfo?.videoStatus === videoLesson.video_status
+    ? _previewInfo
+    : null;
 
   const handlePreviewPlay = async () => {
     if (previewLoading) return;
@@ -148,7 +147,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
     const { url, format, embedUrl, error } = await getVideoPlaybackInfo(supabase, videoLesson.id);
     setPreviewLoading(false);
     if (error || !url) return;
-    setPreviewInfo({ url, format, embedUrl });
+    setPreviewInfo({ videoId: videoLesson.id, videoStatus: videoLesson.video_status, url, format, embedUrl });
   };
 
   const handleSave = () => {
@@ -161,7 +160,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
     const isChessLesson = (activeTab === 'chess');
     let pgnToSave = pgn;
     if (isChessLesson) {
-      const treeState = treeStoreRef.current.getState();
+      const treeState = treeStore.getState();
       const rootFen = treeState.tree.fen;
       const STANDARD_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
       // Pass startingFen only when it differs from the standard starting position
@@ -439,22 +438,24 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
                 </div>
 
                 {chessSubTab === 'board' && (
-                  <BoardAuthoringSurface
-                    store={treeStoreRef.current}
-                    perspective={perspective}
-                    size={460}
-                  />
+                  <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <BoardAuthoringSurface
+                      store={treeStore}
+                      perspective={perspective}
+                      size={460}
+                    />
+                  </div>
                 )}
 
                 {editorAdvanced && chessSubTab === 'pgn' && (
                   <AdvancedPgnPanel
-                    store={treeStoreRef.current}
+                    store={treeStore}
                   />
                 )}
 
                 {importModalOpen && (
                   <ImportFromPgnModal
-                    store={treeStoreRef.current}
+                    store={treeStore}
                     onClose={() => setImportModalOpen(false)}
                   />
                 )}
@@ -541,7 +542,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
             </div>
 
             <PuzzleEditorPanel
-              store={treeStoreRef.current}
+              store={treeStore}
               playerSide={puzzlePlayerSide}
               onPlayerSideChange={(side) => setPuzzlePlayerSide(side)}
               perspective={perspective}
@@ -693,7 +694,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
           </div>
         ) : (
           /* Chess / Puzzle: Variation list + Note panel */
-          <VariationPanel store={treeStoreRef.current} />
+          <VariationPanel store={treeStore} />
         )}
       </div>
 
