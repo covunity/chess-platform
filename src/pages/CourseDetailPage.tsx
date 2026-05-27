@@ -737,7 +737,7 @@ function CourseReportDialog({
             </div>
             <textarea
               className="input"
-              rows={3}
+              rows={2}
               value={context}
               onChange={e => setContext(e.target.value)}
               placeholder={t('courseDetail.courseReportDialog.contextPlaceholder')}
