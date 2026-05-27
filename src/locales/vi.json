@@ -1086,17 +1086,24 @@
     "pageTitle": "Báo cáo",
     "pending": "{{count}} chờ xử lý",
     "noReports": "Không có bình luận nào bị báo cáo.",
+    "noCourseReports": "Không có khóa học nào bị báo cáo.",
     "reportsCount": "{{count}} báo cáo",
     "reporterList": "Người báo cáo",
     "hide": "Ẩn bình luận",
     "dismiss": "Bỏ qua báo cáo",
+    "dismissCourse": "Bỏ qua báo cáo",
+    "unpublishCourse": "Gỡ xuống khóa học",
     "reasonInappropriate": "Không phù hợp",
     "reasonSpam": "Spam",
     "reasonMisleading": "Gây hiểu lầm",
     "commentBy": "Bởi {{name}}",
     "inCourse": "Trong khóa học: {{title}}",
     "hiddenLabel": "Đã ẩn",
-    "selectToView": "Chọn một bình luận để xem chi tiết."
+    "selectToView": "Chọn một bình luận để xem chi tiết.",
+    "selectCourseToView": "Chọn một khóa học để xem chi tiết.",
+    "courseCreatedBy": "Tạo bởi {{name}}",
+    "tabComments": "Bình luận",
+    "tabCourses": "Khóa học"
   },
   "courseDetail": {
     "loading": "Đang tải...",
@@ -1141,7 +1148,18 @@
     "paywallBanner": "Bài học này yêu cầu mua khoá học để truy cập.",
     "previewAsLearner": "Xem trước như học viên",
     "creatorBannerTitle": "Bạn là tác giả của khóa học này.",
-    "creatorBannerDesc": "Đây là chế độ xem dành cho học viên. Để chỉnh sửa, vào Creator Studio."
+    "creatorBannerDesc": "Đây là chế độ xem dành cho học viên. Để chỉnh sửa, vào Creator Studio.",
+    "reportCourse": "Báo cáo khóa học",
+    "courseReportDialog": {
+      "heading": "Báo cáo khóa học",
+      "inappropriate": "Nội dung không phù hợp",
+      "spam": "Spam / quảng cáo",
+      "misleading": "Thông tin gây hiểu lầm",
+      "contextPlaceholder": "Có điều gì khác muốn chia sẻ? (tùy chọn)",
+      "cancel": "Hủy",
+      "submit": "Gửi báo cáo",
+      "successMsg": "Đã gửi báo cáo. Cảm ơn bạn!"
+    }
   },
   "paywallSheet": {
     "title": "Mở khoá toàn bộ khoá học",

@@ -13,6 +13,7 @@ import { getUserReview, submitReview } from '../lib/reviewsApi'
 import type { Review } from '../lib/reviewsApi'
 import { listComments, createComment, reportComment, updateComment, deleteComment } from '../lib/commentsApi'
 import type { Comment, ReportReason } from '../lib/commentsApi'
+import { reportCourse } from '../lib/courseReportsApi'
 import { getPendingOrderForCourse } from '../lib/orderApi'
 import type { Order } from '../lib/orderApi'
 import { getActiveCampaignForCourse, computeCampaignDiscount } from '../lib/campaignsApi'
@@ -666,6 +667,102 @@ function ReportDialog({
   )
 }
 
+// ── CourseReportDialog ────────────────────────────────────────────────────────
+
+function CourseReportDialog({
+  courseId,
+  userId,
+  onClose,
+}: {
+  courseId: string
+  userId: string
+  onClose: () => void
+}) {
+  const { t } = useTranslation()
+  const [reason, setReason] = useState<ReportReason | ''>('')
+  const [context, setContext] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [done, setDone] = useState(false)
+
+  async function handleSubmit() {
+    if (!reason) return
+    setSubmitting(true)
+    await reportCourse(supabase, courseId, userId, reason as ReportReason, context.trim() || undefined)
+    setSubmitting(false)
+    setDone(true)
+    setTimeout(onClose, 1200)
+  }
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, background: 'rgba(15,17,20,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}
+      onClick={onClose}
+    >
+      <div
+        data-testid="course-report-dialog"
+        className="card"
+        style={{ width: 440, padding: 28, position: 'relative' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--ink-1)', margin: '0 0 18px' }}>
+          {t('courseDetail.courseReportDialog.heading')}
+        </h2>
+        {done ? (
+          <p style={{ fontSize: 14, color: 'var(--success)' }}>{t('courseDetail.courseReportDialog.successMsg')}</p>
+        ) : (
+          <>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+              {(['inappropriate', 'spam', 'misleading'] as ReportReason[]).map(r => (
+                <button
+                  key={r}
+                  type="button"
+                  data-testid={`course-report-reason-${r}`}
+                  onClick={() => setReason(r)}
+                  style={{
+                    height: 56,
+                    padding: '0 16px',
+                    border: `1px solid ${reason === r ? 'var(--accent)' : 'var(--border-strong)'}`,
+                    borderRadius: 'var(--r-md)',
+                    background: reason === r ? 'var(--accent-soft)' : 'var(--surface)',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    fontSize: 13.5,
+                    fontWeight: reason === r ? 600 : 400,
+                    color: 'var(--ink-1)',
+                  }}
+                >
+                  {t(`courseDetail.courseReportDialog.${r}`)}
+                </button>
+              ))}
+            </div>
+            <textarea
+              className="input"
+              rows={3}
+              value={context}
+              onChange={e => setContext(e.target.value)}
+              placeholder={t('courseDetail.courseReportDialog.contextPlaceholder')}
+              style={{ width: '100%', marginBottom: 16, resize: 'vertical' }}
+            />
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button type="button" className="btn btn-ghost" onClick={onClose}>
+                {t('courseDetail.courseReportDialog.cancel')}
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={!reason || submitting}
+                onClick={handleSubmit}
+              >
+                {t('courseDetail.courseReportDialog.submit')}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── CommentRow ────────────────────────────────────────────────────────────────
 
 function CommentRow({
@@ -1076,7 +1173,7 @@ export default function CourseDetailPage() {
   const { courseId } = useParams<{ courseId: string }>()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const { t } = useTranslation()
   const showPaywallBanner = searchParams.get('paywall') === 'true'
 
@@ -1099,6 +1196,7 @@ export default function CourseDetailPage() {
 
   const [lockPromptOpen, setLockPromptOpen] = useState(false)
   const [enrolling, setEnrolling] = useState(false)
+  const [courseReportOpen, setCourseReportOpen] = useState(false)
   const [userReview, setUserReview] = useState<Review | null>(null)
   const [pendingOrder, setPendingOrder] = useState<Order | null>(null)
   const [campaign, setCampaign] = useState<Campaign | null>(null)
@@ -1642,6 +1740,28 @@ export default function CourseDetailPage() {
                 </button>
               )}
 
+              {/* Report course — visible to logged-in non-creator non-admin users */}
+              {user && !isCourseCreator && profile?.role !== 'admin' && (
+                <button
+                  type="button"
+                  data-testid="report-course-btn"
+                  onClick={() => setCourseReportOpen(true)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    fontSize: 12,
+                    color: 'var(--ink-3)',
+                    cursor: 'pointer',
+                    textAlign: 'center',
+                    textDecoration: 'underline',
+                    width: '100%',
+                  }}
+                >
+                  {t('courseDetail.reportCourse')}
+                </button>
+              )}
+
               {/* Divider */}
               <div style={{ height: 1, background: 'var(--border)' }} />
 
@@ -1816,6 +1936,14 @@ export default function CourseDetailPage() {
             setLockPromptOpen(false)
             document.getElementById('buy-card')?.scrollIntoView({ behavior: 'smooth' })
           }}
+        />
+      )}
+
+      {courseReportOpen && course && user && (
+        <CourseReportDialog
+          courseId={course.id}
+          userId={user.id}
+          onClose={() => setCourseReportOpen(false)}
         />
       )}
     </main>
