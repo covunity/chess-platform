@@ -20,24 +20,43 @@
  * variation brackets, then recurse into the main-line child.
  */
 
-import type { PgnNode, RichTextDoc } from "./parsePgn";
+import type { PgnNode, RichTextDoc, RichTextSpan } from "./parsePgn";
 
 const DEFAULT_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 const GAMBITLY_PREFIX = "[gambitly:v1]";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+function spansText(spans: RichTextSpan[] | undefined): string {
+  return (spans ?? []).map((s) => s.text).join("");
+}
+
 function flattenNote(note: RichTextDoc): string {
   return note.content
-    .map((para) => (para.content ?? []).map((s) => s.text).join(""))
+    .map((block) => {
+      if (block.type === "paragraph" || block.type === "heading") {
+        return spansText(block.content);
+      }
+      if (block.type === "bulletList" || block.type === "orderedList") {
+        return (block.content ?? [])
+          .map((item) =>
+            (item.content ?? []).map((p) => spansText(p.content)).join("")
+          )
+          .join("\n");
+      }
+      return "";
+    })
     .join("\n");
 }
 
 function isRichNote(note: RichTextDoc): boolean {
   if (note.content.length > 1) return true;
-  for (const para of note.content) {
-    for (const span of para.content ?? []) {
-      if (span.marks && span.marks.length > 0) return true;
+  for (const block of note.content) {
+    if (block.type === "heading" || block.type === "bulletList" || block.type === "orderedList") return true;
+    if (block.type === "paragraph") {
+      for (const span of block.content ?? []) {
+        if (span.marks && span.marks.length > 0) return true;
+      }
     }
   }
   return false;

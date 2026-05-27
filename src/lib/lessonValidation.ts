@@ -17,9 +17,15 @@ export interface LessonForValidation {
 /** Returns true if a RichTextDoc has any non-empty text content. */
 function noteHasText(note: RichTextDoc | null): boolean {
   if (!note) return false
-  for (const para of note.content) {
-    for (const span of para.content ?? []) {
-      if (span.text && span.text.trim().length > 0) return true
+  for (const block of note.content) {
+    if (block.type === 'paragraph' || block.type === 'heading') {
+      if ((block.content ?? []).some((s) => s.text.trim().length > 0)) return true
+    } else if (block.type === 'bulletList' || block.type === 'orderedList') {
+      for (const item of block.content ?? []) {
+        if ((item.content ?? []).some((p) =>
+          (p.content ?? []).some((s) => s.text.trim().length > 0)
+        )) return true
+      }
     }
   }
   return false

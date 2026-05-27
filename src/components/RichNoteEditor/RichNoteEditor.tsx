@@ -1,12 +1,11 @@
 /**
  * RichNoteEditor — PRD-0004 Slice 7
  *
- * Thin TipTap wrapper for per-node rich-text annotation editing.
- * Schema: doc → paragraph → text (with bold + italic marks only).
+ * TipTap wrapper for per-node rich-text annotation editing.
+ * Schema: doc → paragraph | heading (H3/H4) | bulletList | orderedList
  * Props: value, onChange, placeholder, disabled.
  *
- * This component is editor-only. The player uses NoteView (hand-written
- * read-only renderer) to keep @tiptap/* out of the player bundle.
+ * Editor-only. Player uses NoteView (no TipTap dep) to keep bundle light.
  */
 
 import { useEditor, EditorContent } from '@tiptap/react'
@@ -21,17 +20,117 @@ export interface RichNoteEditorProps {
   disabled?: boolean
 }
 
-/** Convert our RichTextDoc JSON to TipTap-compatible JSON. They share the same shape. */
-function toTipTapDoc(note: RichTextDoc | null): object | undefined {
-  if (!note) return undefined
-  return note
-}
-
-/** Convert TipTap editor JSON output to our RichTextDoc type. */
 function fromTipTapDoc(json: Record<string, unknown>): RichTextDoc {
-  // TipTap's JSON is ProseMirror-shaped — same as our RichTextDoc
   return json as unknown as RichTextDoc
 }
+
+// ── Toolbar button styles ──────────────────────────────────────────────────────
+
+const btnBase: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: 26,
+  height: 26,
+  fontSize: 12,
+  fontWeight: 600,
+  border: '1px solid transparent',
+  borderRadius: 'var(--r-sm)',
+  cursor: 'pointer',
+  background: 'transparent',
+  color: 'var(--ink-2)',
+  userSelect: 'none',
+}
+
+const btnActive: React.CSSProperties = {
+  background: 'var(--accent-soft)',
+  color: 'var(--accent-ink)',
+  borderColor: 'var(--accent-border)',
+}
+
+const btnDisabled: React.CSSProperties = {
+  cursor: 'default',
+  opacity: 0.4,
+}
+
+function ToolbarBtn({
+  active,
+  disabled,
+  onClick,
+  title,
+  testId,
+  children,
+}: {
+  active: boolean
+  disabled: boolean
+  onClick: () => void
+  title: string
+  testId: string
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      data-testid={testId}
+      disabled={disabled}
+      onClick={onClick}
+      title={title}
+      aria-label={title}
+      aria-pressed={active}
+      style={{
+        ...btnBase,
+        ...(active ? btnActive : {}),
+        ...(disabled ? btnDisabled : {}),
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
+function Separator() {
+  return (
+    <div
+      style={{
+        width: 1,
+        height: 16,
+        background: 'var(--border-strong)',
+        margin: '0 2px',
+        alignSelf: 'center',
+      }}
+    />
+  )
+}
+
+// ── SVG icons ─────────────────────────────────────────────────────────────────
+
+function IconBulletList() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <circle cx="2" cy="3.5" r="1.2" fill="currentColor" />
+      <rect x="5" y="2.8" width="8" height="1.4" rx="0.7" fill="currentColor" />
+      <circle cx="2" cy="7" r="1.2" fill="currentColor" />
+      <rect x="5" y="6.3" width="8" height="1.4" rx="0.7" fill="currentColor" />
+      <circle cx="2" cy="10.5" r="1.2" fill="currentColor" />
+      <rect x="5" y="9.8" width="8" height="1.4" rx="0.7" fill="currentColor" />
+    </svg>
+  )
+}
+
+function IconOrderedList() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <text x="0.5" y="5" fontSize="5" fontWeight="600" fill="currentColor" fontFamily="inherit">1.</text>
+      <rect x="5" y="2.8" width="8" height="1.4" rx="0.7" fill="currentColor" />
+      <text x="0.5" y="8.5" fontSize="5" fontWeight="600" fill="currentColor" fontFamily="inherit">2.</text>
+      <rect x="5" y="6.3" width="8" height="1.4" rx="0.7" fill="currentColor" />
+      <text x="0.5" y="12" fontSize="5" fontWeight="600" fill="currentColor" fontFamily="inherit">3.</text>
+      <rect x="5" y="9.8" width="8" height="1.4" rx="0.7" fill="currentColor" />
+    </svg>
+  )
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export default function RichNoteEditor({
   value,
@@ -39,17 +138,16 @@ export default function RichNoteEditor({
   placeholder,
   disabled = false,
 }: RichNoteEditorProps) {
-  // Guard flag: skip onChange during programmatic content updates to avoid loops
   const isProgrammaticUpdate = useRef(false)
 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        // Only keep doc, paragraph, text, bold, italic — disable everything else
-        heading: false,
-        bulletList: false,
-        orderedList: false,
-        listItem: false,
+        heading: { levels: [3, 4] },
+        bulletList: {},
+        orderedList: {},
+        listItem: {},
+        // Disabled — not needed in note context
         blockquote: false,
         codeBlock: false,
         code: false,
@@ -58,23 +156,19 @@ export default function RichNoteEditor({
         strike: false,
       }),
     ],
-    content: value ? toTipTapDoc(value) : '',
+    content: value ?? '',
     editable: !disabled,
     onUpdate: ({ editor: ed }) => {
       if (isProgrammaticUpdate.current) return
-      const json = ed.getJSON() as Record<string, unknown>
-      onChange(fromTipTapDoc(json))
+      onChange(fromTipTapDoc(ed.getJSON() as Record<string, unknown>))
     },
   })
 
-  // Update editable state when disabled prop changes
   useEffect(() => {
     if (!editor) return
     editor.setEditable(!disabled)
   }, [editor, disabled])
 
-  // Update content when value changes externally (e.g., node switch)
-  // We compare serialized to avoid infinite loops
   const handleValueChange = useCallback(() => {
     if (!editor) return
     const currentJson = JSON.stringify(editor.getJSON())
@@ -90,11 +184,16 @@ export default function RichNoteEditor({
     handleValueChange()
   }, [handleValueChange])
 
-  const toggleBold = () => editor?.chain().focus().toggleBold().run()
-  const toggleItalic = () => editor?.chain().focus().toggleItalic().run()
+  if (!editor) return null
 
-  const isBoldActive = editor?.isActive('bold') ?? false
-  const isItalicActive = editor?.isActive('italic') ?? false
+  const isBoldActive = editor.isActive('bold')
+  const isItalicActive = editor.isActive('italic')
+  const isH3Active = editor.isActive('heading', { level: 3 })
+  const isH4Active = editor.isActive('heading', { level: 4 })
+  const isBulletActive = editor.isActive('bulletList')
+  const isOrderedActive = editor.isActive('orderedList')
+
+  const act = (fn: () => void) => () => { if (!disabled) fn() }
 
   return (
     <div
@@ -112,59 +211,79 @@ export default function RichNoteEditor({
       <div
         style={{
           display: 'flex',
-          gap: 2,
-          padding: '4px 6px',
+          alignItems: 'center',
+          gap: 1,
+          padding: '3px 5px',
           borderBottom: '1px solid var(--border)',
           background: 'var(--surface-2)',
         }}
       >
-        <button
-          type="button"
-          data-testid="rich-note-toolbar-bold"
+        {/* Inline formatting */}
+        <ToolbarBtn
+          active={isBoldActive}
           disabled={disabled}
-          onClick={toggleBold}
+          onClick={act(() => editor.chain().focus().toggleBold().run())}
           title="Bold"
-          aria-label="Bold"
-          aria-pressed={isBoldActive}
-          style={{
-            width: 26,
-            height: 26,
-            fontWeight: 700,
-            fontSize: 13,
-            border: '1px solid transparent',
-            borderRadius: 'var(--r-sm)',
-            cursor: disabled ? 'default' : 'pointer',
-            background: isBoldActive ? 'var(--surface-3)' : 'transparent',
-            color: 'var(--ink-1)',
-          }}
+          testId="rich-note-toolbar-bold"
         >
-          B
-        </button>
-        <button
-          type="button"
-          data-testid="rich-note-toolbar-italic"
+          <span style={{ fontWeight: 700, fontStyle: 'normal' }}>B</span>
+        </ToolbarBtn>
+        <ToolbarBtn
+          active={isItalicActive}
           disabled={disabled}
-          onClick={toggleItalic}
+          onClick={act(() => editor.chain().focus().toggleItalic().run())}
           title="Italic"
-          aria-label="Italic"
-          aria-pressed={isItalicActive}
-          style={{
-            width: 26,
-            height: 26,
-            fontStyle: 'italic',
-            fontSize: 13,
-            border: '1px solid transparent',
-            borderRadius: 'var(--r-sm)',
-            cursor: disabled ? 'default' : 'pointer',
-            background: isItalicActive ? 'var(--surface-3)' : 'transparent',
-            color: 'var(--ink-1)',
-          }}
+          testId="rich-note-toolbar-italic"
         >
-          I
-        </button>
+          <span style={{ fontStyle: 'italic' }}>I</span>
+        </ToolbarBtn>
+
+        <Separator />
+
+        {/* Block formatting */}
+        <ToolbarBtn
+          active={isH3Active}
+          disabled={disabled}
+          onClick={act(() => editor.chain().focus().toggleHeading({ level: 3 }).run())}
+          title="Heading 3"
+          testId="rich-note-toolbar-h3"
+        >
+          H3
+        </ToolbarBtn>
+        <ToolbarBtn
+          active={isH4Active}
+          disabled={disabled}
+          onClick={act(() => editor.chain().focus().toggleHeading({ level: 4 }).run())}
+          title="Heading 4"
+          testId="rich-note-toolbar-h4"
+        >
+          H4
+        </ToolbarBtn>
+
+        <Separator />
+
+        {/* Lists */}
+        <ToolbarBtn
+          active={isBulletActive}
+          disabled={disabled}
+          onClick={act(() => editor.chain().focus().toggleBulletList().run())}
+          title="Bullet list"
+          testId="rich-note-toolbar-bullet-list"
+        >
+          <IconBulletList />
+        </ToolbarBtn>
+        <ToolbarBtn
+          active={isOrderedActive}
+          disabled={disabled}
+          onClick={act(() => editor.chain().focus().toggleOrderedList().run())}
+          title="Ordered list"
+          testId="rich-note-toolbar-ordered-list"
+        >
+          <IconOrderedList />
+        </ToolbarBtn>
       </div>
 
-      {/* Editor content area */}
+      {/* Editor content */}
       <div
         style={{ padding: '8px 10px', minHeight: 64, fontSize: 13 }}
         data-placeholder={placeholder}

@@ -47,6 +47,22 @@ describe('RichNoteEditor', () => {
       })
     })
 
+    it('renders H3 and H4 toolbar buttons', async () => {
+      render(<RichNoteEditor value={null} onChange={vi.fn()} />)
+      await waitFor(() => {
+        expect(screen.getByTestId('rich-note-toolbar-h3')).toBeInTheDocument()
+        expect(screen.getByTestId('rich-note-toolbar-h4')).toBeInTheDocument()
+      })
+    })
+
+    it('renders bullet list and ordered list toolbar buttons', async () => {
+      render(<RichNoteEditor value={null} onChange={vi.fn()} />)
+      await waitFor(() => {
+        expect(screen.getByTestId('rich-note-toolbar-bullet-list')).toBeInTheDocument()
+        expect(screen.getByTestId('rich-note-toolbar-ordered-list')).toBeInTheDocument()
+      })
+    })
+
     it('shows placeholder text when value is null', async () => {
       render(
         <RichNoteEditor

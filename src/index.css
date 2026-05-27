@@ -1056,3 +1056,8 @@ body {
     border-radius: var(--r-lg) var(--r-lg) 0 0;
   }
 }
+
+/* TipTap editor — remove browser default focus outline on contenteditable */
+.ProseMirror:focus {
+  outline: none;
+}

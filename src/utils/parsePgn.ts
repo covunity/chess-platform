@@ -22,17 +22,30 @@ export type Shape =
   | { kind: "circle"; square: string; color: "green" | "red" | "yellow" | "blue" }
   | { kind: "arrow"; from: string; to: string; color: "green" | "red" | "yellow" | "blue" };
 
-/** Rich-text document (minimal ProseMirror-shaped JSON). */
+/** Inline text run inside a block. */
+export interface RichTextSpan {
+  type: "text";
+  text: string;
+  marks?: Array<{ type: "bold" | "italic" }>;
+}
+
+/** List item — wraps one or more paragraphs. */
+export interface RichTextListItem {
+  type: "listItem";
+  content?: Array<{ type: "paragraph"; content?: RichTextSpan[] }>;
+}
+
+/** Block-level nodes allowed inside a RichTextDoc. */
+export type RichTextBlock =
+  | { type: "paragraph"; content?: RichTextSpan[] }
+  | { type: "heading"; attrs: { level: number }; content?: RichTextSpan[] }
+  | { type: "bulletList"; content?: RichTextListItem[] }
+  | { type: "orderedList"; attrs?: { start?: number }; content?: RichTextListItem[] };
+
+/** Rich-text document (ProseMirror-shaped JSON). */
 export interface RichTextDoc {
   type: "doc";
-  content: Array<{
-    type: "paragraph";
-    content?: Array<{
-      type: "text";
-      text: string;
-      marks?: Array<{ type: "bold" | "italic" }>;
-    }>;
-  }>;
+  content: RichTextBlock[];
 }
 
 /** Tree node representing a single move. root is a virtual sentinel node. */
@@ -250,8 +263,23 @@ const GAMBITLY_PREFIX = "[gambitly:v1]";
 
 /** Flatten a RichTextDoc to plain text (for the annotation shim). */
 function flattenNote(note: RichTextDoc): string {
+  function spansText(spans: RichTextSpan[] | undefined): string {
+    return (spans ?? []).map((s) => s.text).join("");
+  }
   return note.content
-    .map((para) => (para.content ?? []).map((span) => span.text).join(""))
+    .map((block) => {
+      if (block.type === "paragraph" || block.type === "heading") {
+        return spansText(block.content);
+      }
+      if (block.type === "bulletList" || block.type === "orderedList") {
+        return (block.content ?? [])
+          .map((item) =>
+            (item.content ?? []).map((p) => spansText(p.content)).join("")
+          )
+          .join("\n");
+      }
+      return "";
+    })
     .join("\n");
 }
 

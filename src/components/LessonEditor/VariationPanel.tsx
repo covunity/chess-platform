@@ -17,12 +17,21 @@ function buildNodeMap(root: PgnNode): Map<string, PgnNode> {
 }
 
 function isEmptyDoc(doc: RichTextDoc): boolean {
-  for (const para of doc.content) {
-    for (const span of para.content ?? []) {
-      if (span.text && span.text.length > 0) return false
+  function blockHasText(content: RichTextDoc['content']): boolean {
+    for (const block of content) {
+      if (block.type === 'paragraph' || block.type === 'heading') {
+        if ((block.content ?? []).some((s) => s.text.length > 0)) return true
+      } else if (block.type === 'bulletList' || block.type === 'orderedList') {
+        for (const item of block.content ?? []) {
+          if ((item.content ?? []).some((p) =>
+            (p.content ?? []).some((s) => s.text.length > 0)
+          )) return true
+        }
+      }
     }
+    return false
   }
-  return true
+  return !blockHasText(doc.content)
 }
 
 function countSubtreeNodes(node: PgnNode): number {

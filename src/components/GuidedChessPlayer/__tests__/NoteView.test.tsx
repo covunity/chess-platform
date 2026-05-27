@@ -110,4 +110,70 @@ describe('NoteView', () => {
       expect(paragraphs.length).toBe(2)
     })
   })
+
+  describe('headings', () => {
+    it('renders H3 heading', () => {
+      const note: RichTextDoc = {
+        type: 'doc',
+        content: [
+          { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: 'Section title' }] },
+        ],
+      }
+      render(<NoteView note={note} />)
+      const h3 = document.querySelector('h3')
+      expect(h3).toBeInTheDocument()
+      expect(h3?.textContent).toBe('Section title')
+    })
+
+    it('renders H4 heading', () => {
+      const note: RichTextDoc = {
+        type: 'doc',
+        content: [
+          { type: 'heading', attrs: { level: 4 }, content: [{ type: 'text', text: 'Sub-section' }] },
+        ],
+      }
+      render(<NoteView note={note} />)
+      expect(document.querySelector('h4')).toBeInTheDocument()
+    })
+  })
+
+  describe('lists', () => {
+    it('renders a bullet list as <ul>', () => {
+      const note: RichTextDoc = {
+        type: 'doc',
+        content: [
+          {
+            type: 'bulletList',
+            content: [
+              { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Item one' }] }] },
+              { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Item two' }] }] },
+            ],
+          },
+        ],
+      }
+      render(<NoteView note={note} />)
+      expect(document.querySelector('ul')).toBeInTheDocument()
+      expect(document.querySelectorAll('li').length).toBe(2)
+      expect(screen.getByText('Item one')).toBeInTheDocument()
+      expect(screen.getByText('Item two')).toBeInTheDocument()
+    })
+
+    it('renders an ordered list as <ol>', () => {
+      const note: RichTextDoc = {
+        type: 'doc',
+        content: [
+          {
+            type: 'orderedList',
+            content: [
+              { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'First' }] }] },
+              { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Second' }] }] },
+            ],
+          },
+        ],
+      }
+      render(<NoteView note={note} />)
+      expect(document.querySelector('ol')).toBeInTheDocument()
+      expect(document.querySelectorAll('li').length).toBe(2)
+    })
+  })
 })
