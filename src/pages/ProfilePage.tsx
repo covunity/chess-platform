@@ -223,10 +223,10 @@ export default function ProfilePage() {
               title={t('profile.avatarUpload')}
               style={{
                 position: 'relative',
-                width: 96,
-                height: 96,
-                borderRadius: '50%',
-                border: '2px solid var(--border)',
+                width: 140,
+                height: 140,
+                borderRadius: 12,
+                border: '1px solid var(--border)',
                 background: avatarPreview ? 'var(--surface)' : 'var(--surface-2)',
                 padding: 0,
                 overflow: 'hidden',
@@ -245,8 +245,8 @@ export default function ProfilePage() {
               ) : (
                 <svg
                   viewBox="0 0 45 45"
-                  width="64"
-                  height="64"
+                  width="96"
+                  height="96"
                   aria-hidden="true"
                   style={{ color: 'var(--ink-2)' }}
                 >
@@ -263,7 +263,7 @@ export default function ProfilePage() {
                 <div style={{
                   position: 'absolute',
                   inset: 0,
-                  borderRadius: '50%',
+                  borderRadius: 12,
                   background: 'rgba(0,0,0,0.4)',
                   display: 'flex',
                   alignItems: 'center',
