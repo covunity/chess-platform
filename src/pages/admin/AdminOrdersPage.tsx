@@ -39,6 +39,10 @@ function formatRelative(iso: string, now = new Date()): string {
   return `${Math.floor(diff / 86400)}d`
 }
 
+function formatShortDate(iso: string) {
+  return new Date(iso).toLocaleDateString('vi-VN', { year: '2-digit', month: 'numeric', day: 'numeric' })
+}
+
 interface CancelDialogProps {
   order: AdminOrderRow
   saving: boolean
@@ -825,7 +829,7 @@ export default function AdminOrdersPage() {
                         className="text-(--ink-2)"
                         title={new Date(o.created_at).toLocaleString('vi-VN')}
                       >
-                        {formatRelative(o.created_at)}
+                        {formatShortDate(o.created_at)}
                       </td>
                       {tab === 'all' && (
                         <td style={{ padding: '14px 16px' }}>
