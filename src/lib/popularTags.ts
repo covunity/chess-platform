@@ -11,5 +11,4 @@ export const POPULAR_TAGS: PopularTag[] = [
   { key: 'tactics',      labelKey: 'home.tagTactics' },
   { key: 'endgame',      labelKey: 'home.tagEndgame' },
   { key: 'strategy',     labelKey: 'home.tagStrategy' },
-  { key: 'master-games', labelKey: 'home.tagMasterGames' },
 ]

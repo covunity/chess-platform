@@ -60,8 +60,8 @@ describe('CourseTagsSelect', () => {
     await waitFor(() => expect(mockListCreatorTags).toHaveBeenCalled())
     const select = screen.getByTestId('popular-tag-select')
     const options = select.querySelectorAll('option')
-    // placeholder + 5 popular tags
-    expect(options.length).toBe(6)
+    // placeholder + 4 popular tags
+    expect(options.length).toBe(5)
     expect(options[1].textContent).toBe('Khai cuộc')
   })
 
