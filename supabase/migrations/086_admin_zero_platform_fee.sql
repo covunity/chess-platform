@@ -1,4 +1,4 @@
--- Migration 079: admin role pays zero platform fee
+-- Migration 086: admin role pays zero platform fee
 -- When a user with role='admin' sells a course, they keep 100% of revenue.
 -- The learner journey, price, and payment flow are unchanged — only the
 -- fee snapshot resolves to 0 for admins, so orders book full price as

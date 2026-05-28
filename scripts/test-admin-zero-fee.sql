@@ -1,5 +1,5 @@
 -- Manual SQL test: admin role pays zero platform fee
--- Run after migration 079 against a local Supabase instance.
+-- Run after migration 086 against a local Supabase instance.
 -- Covers: resolver short-circuit, override is ignored for admin,
 --         backfill applied, admin_list_creator_fees excludes admin,
 --         admin_set_creator_fee_override rejects admin target.
@@ -66,7 +66,7 @@ BEGIN
   INSERT INTO public.courses (id, creator_id, title, status, price, level, language)
   VALUES (v_course_id, v_admin_id, 'Admin Course', 'published', 100000, 'beginner', 'vi');
 
-  -- Simulate a legacy order written before migration 079 (with 20% fee snapshot)
+  -- Simulate a legacy order written before migration 086 (with 20% fee snapshot)
   INSERT INTO public.orders (id, course_id, user_id, status, amount, code,
                              platform_fee_pct, platform_fee_amount, creator_payout_amount,
                              creator_payout, account_tier_code)
@@ -122,7 +122,7 @@ BEGIN
 END;
 $$;
 
--- ── Test 6a: today's analytics_snapshots was refreshed by migration 079 ──
+-- ── Test 6a: today's analytics_snapshots was refreshed by migration 086 ──
 -- After step 4 of the migration, today's snapshot rows must exist for the
 -- canonical (time_range, category) pairs that AdminAnalyticsPage reads.
 DO $$
@@ -135,7 +135,7 @@ BEGIN
    WHERE snapshot_date = v_today
      AND category = 'financial';
   ASSERT v_count >= 1,
-    'expected at least one financial snapshot row for today after migration 079, got ' || v_count::text;
+    'expected at least one financial snapshot row for today after migration 086, got ' || v_count::text;
   RAISE NOTICE 'PASS: today financial analytics snapshot exists (% rows)', v_count;
 END;
 $$;
