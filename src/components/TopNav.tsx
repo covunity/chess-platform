@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { Search } from 'lucide-react'
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -14,6 +14,7 @@ import UserAvatarMenu from './UserAvatarMenu'
 export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } = {}) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const { user, profile } = useAuth()
   const searchRef = useRef<HTMLInputElement>(null)
   const [bookmarkCount, setBookmarkCount] = useState(0)
@@ -39,10 +40,12 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
   function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') {
       const val = overlayQuery.trim()
-      setOverlayQuery('')
       setOverlayResults([])
+      searchRef.current?.blur()
       if (val) {
         navigate(`/?q=${encodeURIComponent(val)}`)
+      } else {
+        navigate('/')
       }
     }
     if (e.key === 'Escape') {
@@ -51,6 +54,17 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
       searchRef.current?.blur()
     }
   }
+
+  // Sync search box with ?q URL param when on home page
+  useEffect(() => {
+    if (location.pathname === '/') {
+      const params = new URLSearchParams(location.search)
+      setOverlayQuery(params.get('q') ?? '')
+    } else {
+      setOverlayQuery('')
+    }
+    setOverlayResults([])
+  }, [location.pathname, location.search])
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -67,7 +81,6 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
     function handleClickOutside(e: MouseEvent) {
       if (overlayRef.current && !overlayRef.current.contains(e.target as Node) &&
           searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setOverlayQuery('')
         setOverlayResults([])
       }
     }
@@ -175,7 +188,7 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
         <input
           ref={searchRef}
           role="searchbox"
-          type="search"
+          type="text"
           value={overlayQuery}
           onChange={handleSearchChange}
           onKeyDown={handleSearchKeyDown}
@@ -191,22 +204,39 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
             color: 'var(--ink-3)',
           }}
         />
-        <span
-          aria-hidden="true"
+        <button
+          type="button"
+          aria-label={t('home.searchPlaceholder')}
+          onClick={() => {
+            const val = overlayQuery.trim()
+            setOverlayResults([])
+            searchRef.current?.blur()
+            if (val) {
+              navigate(`/?q=${encodeURIComponent(val)}`)
+            } else {
+              navigate('/')
+            }
+          }}
           style={{
             position: 'absolute',
-            right: 10,
+            right: 6,
             top: '50%',
             transform: 'translateY(-50%)',
-            fontSize: 11,
-            fontFamily: 'var(--font-mono)',
-            color: 'var(--ink-4)',
-            padding: '1px 5px',
-            pointerEvents: 'none',
+            width: 28,
+            height: 28,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'transparent',
+            border: 'none',
+            borderRadius: 'var(--r-sm)',
+            cursor: 'pointer',
+            color: 'var(--ink-3)',
+            padding: 0,
           }}
         >
-          <Search size={12} />
-        </span>
+          <Search size={14} />
+        </button>
         {overlayQuery.length > 0 && overlayResults.length > 0 && (
           <div
             ref={overlayRef}
