@@ -832,8 +832,8 @@
         "students": "Tổng học viên",
         "studentsDetail": "Trên {{count}} khóa học",
         "revenue": "Doanh thu gộp",
-        "revenueDetail": "Trước phí nền tảng 20%",
-        "payout": "Của bạn (80%)",
+        "revenueDetail": "Trước phí nền tảng",
+        "payout": "Doanh thu thực nhận",
         "payoutDetail": "Thanh toán hàng tháng",
         "rating": "Đánh giá TB",
         "ratingDetail": "Trên {{count}} khóa học"

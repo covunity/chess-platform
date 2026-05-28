@@ -290,8 +290,8 @@
         "students": "Total students",
         "studentsDetail": "+124 this month",
         "revenue": "Gross revenue",
-        "revenueDetail": "Before 20% platform fee",
-        "payout": "Your payout (80%)",
+        "revenueDetail": "Before platform fee",
+        "payout": "Net revenue",
         "payoutDetail": "Settled monthly",
         "rating": "Avg. rating",
         "ratingDetail": "Across {{count}} courses"
