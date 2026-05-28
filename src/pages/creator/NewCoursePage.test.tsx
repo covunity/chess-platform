@@ -13,6 +13,11 @@ const { mockCreateCourse, mockNavigate } = vi.hoisted(() => ({
 
 vi.mock('../../lib/creatorApi', () => ({ createCourse: mockCreateCourse }))
 vi.mock('../../lib/supabase', () => ({ supabase: {} }))
+vi.mock('../../lib/coursePriceLimits', () => ({
+  fetchCoursePriceLimits: vi.fn(() => Promise.resolve([])),
+  getLimitForLevel: vi.fn(() => undefined),
+  clearCoursePriceLimitsCache: vi.fn(),
+}))
 vi.mock('../../lib/creatorTagsApi', () => ({
   listCreatorTags: vi.fn(() => Promise.resolve({ tags: [], error: null })),
   createCreatorTag: vi.fn((_c: unknown, creatorId: string, name: string) =>

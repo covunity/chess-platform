@@ -20,6 +20,7 @@ import { listAdminCourses, listCampaigns } from '../../lib/campaignsApi'
 import type { Campaign, CoursePickerRow } from '../../lib/campaignsApi'
 import { useDebounce } from '../../hooks/useDebounce'
 import CourseMultiSelect from '../../components/admin/CourseMultiSelect'
+import DateTimeInput from '../../components/admin/DateTimeInput'
 import { formatPrice } from '../../lib/utils'
 
 type StatusFilter = 'all' | 'active' | 'inactive'
@@ -746,13 +747,11 @@ export default function AdminVouchersPage() {
                   <label className="label" htmlFor="voucher-starts-at-input">
                     {t('admin.vouchers.form.startsAtLabel')}
                   </label>
-                  <input
+                  <DateTimeInput
                     id="voucher-starts-at-input"
                     data-testid="voucher-starts-at-input"
-                    type="datetime-local"
-                    className="input w-full"
                     value={form.starts_at}
-                    onChange={e => setForm({ ...form, starts_at: e.target.value })}
+                    onChange={v => setForm({ ...form, starts_at: v })}
                     disabled={locked}
                     title={locked ? t('admin.vouchers.lockedFieldTooltip') : undefined}
                   />
@@ -761,13 +760,11 @@ export default function AdminVouchersPage() {
                   <label className="label" htmlFor="voucher-ends-at-input">
                     {t('admin.vouchers.form.endsAtLabel')}
                   </label>
-                  <input
+                  <DateTimeInput
                     id="voucher-ends-at-input"
                     data-testid="voucher-ends-at-input"
-                    type="datetime-local"
-                    className="input w-full"
                     value={form.ends_at}
-                    onChange={e => setForm({ ...form, ends_at: e.target.value })}
+                    onChange={v => setForm({ ...form, ends_at: v })}
                   />
                 </div>
               </div>

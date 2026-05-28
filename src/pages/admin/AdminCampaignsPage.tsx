@@ -16,6 +16,7 @@ import type {
 } from '../../lib/campaignsApi'
 import { useDebounce } from '../../hooks/useDebounce'
 import CourseMultiSelect from '../../components/admin/CourseMultiSelect'
+import DateTimeInput from '../../components/admin/DateTimeInput'
 import { formatPrice } from '../../lib/utils'
 
 type StatusFilter = 'all' | 'active' | 'inactive'
@@ -589,26 +590,22 @@ export default function AdminCampaignsPage() {
                   <label className="label" htmlFor="campaign-starts-at-input">
                     {t('admin.campaigns.form.startsAtLabel')}
                   </label>
-                  <input
+                  <DateTimeInput
                     id="campaign-starts-at-input"
                     data-testid="campaign-starts-at-input"
-                    type="datetime-local"
-                    className="input w-full"
                     value={form.starts_at}
-                    onChange={e => setForm({ ...form, starts_at: e.target.value })}
+                    onChange={v => setForm({ ...form, starts_at: v })}
                   />
                 </div>
                 <div className="flex-1">
                   <label className="label" htmlFor="campaign-ends-at-input">
                     {t('admin.campaigns.form.endsAtLabel')}
                   </label>
-                  <input
+                  <DateTimeInput
                     id="campaign-ends-at-input"
                     data-testid="campaign-ends-at-input"
-                    type="datetime-local"
-                    className="input w-full"
                     value={form.ends_at}
-                    onChange={e => setForm({ ...form, ends_at: e.target.value })}
+                    onChange={v => setForm({ ...form, ends_at: v })}
                   />
                 </div>
               </div>

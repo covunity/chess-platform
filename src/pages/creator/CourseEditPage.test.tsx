@@ -63,6 +63,11 @@ vi.mock('../../lib/supabase', () => ({
     from: vi.fn(() => makeSupabaseChain({ data: { status: 'draft' }, error: null })),
   },
 }))
+vi.mock('../../lib/coursePriceLimits', () => ({
+  fetchCoursePriceLimits: vi.fn(() => Promise.resolve([])),
+  getLimitForLevel: vi.fn(() => undefined),
+  clearCoursePriceLimitsCache: vi.fn(),
+}))
 
 vi.mock('../../context/AuthContext', () => ({
   useAuth: vi.fn(() => ({

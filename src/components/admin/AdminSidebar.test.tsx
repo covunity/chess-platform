@@ -8,14 +8,19 @@ import { AuthContext } from '../../context/AuthContext'
 import type { AuthContextValue } from '../../context/AuthContext'
 import type { User } from '@supabase/supabase-js'
 
-const { mockGetPendingOrderCount, mockHasUnreadOrderUpdates, mockReadLastSeenOrdersAt } = vi.hoisted(() => ({
+const { mockGetPendingOrderCount, mockHasUnreadOrderUpdates, mockReadLastSeenOrdersAt, mockGetPendingReportCount } = vi.hoisted(() => ({
   mockGetPendingOrderCount: vi.fn(),
   mockHasUnreadOrderUpdates: vi.fn(),
   mockReadLastSeenOrdersAt: vi.fn(),
+  mockGetPendingReportCount: vi.fn(),
 }))
 
 vi.mock('../../lib/adminOrdersApi', () => ({
   getPendingOrderCount: mockGetPendingOrderCount,
+}))
+
+vi.mock('../../lib/adminReportsApi', () => ({
+  getPendingReportCount: mockGetPendingReportCount,
 }))
 
 vi.mock('../../lib/orderUpdatesApi', () => ({
@@ -76,6 +81,7 @@ describe('AdminSidebar', () => {
     mockGetPendingOrderCount.mockResolvedValue({ count: 0, error: null })
     mockHasUnreadOrderUpdates.mockResolvedValue({ hasUpdates: false, error: null })
     mockReadLastSeenOrdersAt.mockReturnValue(null)
+    mockGetPendingReportCount.mockResolvedValue({ count: 0 })
   })
 
   it('renders ADMIN eyebrow label', () => {

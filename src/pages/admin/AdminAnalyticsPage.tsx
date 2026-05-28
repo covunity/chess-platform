@@ -405,25 +405,45 @@ export default function AdminAnalyticsPage() {
       </p>
 
       {/* Range selector */}
-      <div
-        className="px-6 pt-4 pb-2 flex items-center gap-2"
-        data-testid="admin-analytics-range-selector"
-        role="tablist"
-        aria-label={t('admin.analytics.rangeLabel')}
-      >
-        {RANGES.map(r => (
-          <button
-            key={r}
-            type="button"
-            role="tab"
-            aria-selected={range === r}
-            data-testid={`admin-analytics-range-${r}`}
-            className={range === r ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'}
-            onClick={() => setRange(r)}
-          >
-            {t(`admin.analytics.range.${r}`)}
-          </button>
-        ))}
+      <div className="px-6 pt-4 pb-2">
+        <div
+          role="tablist"
+          aria-label={t('admin.analytics.rangeLabel')}
+          data-testid="admin-analytics-range-selector"
+          style={{
+            display: 'inline-flex',
+            gap: 2,
+            padding: 3,
+            borderRadius: 'var(--r-md)',
+            border: '1px solid var(--border)',
+            background: 'var(--bg)',
+          }}
+        >
+          {RANGES.map(r => (
+            <button
+              key={r}
+              type="button"
+              role="tab"
+              aria-selected={range === r}
+              data-testid={`admin-analytics-range-${r}`}
+              onClick={() => setRange(r)}
+              style={{
+                whiteSpace: 'nowrap',
+                padding: '4px 12px',
+                borderRadius: 'calc(var(--r-md) - 2px)',
+                border: 'none',
+                fontSize: 13,
+                fontWeight: range === r ? 600 : 400,
+                background: range === r ? 'var(--ink-1)' : 'transparent',
+                color: range === r ? 'var(--on-ink-1)' : 'var(--ink-2)',
+                cursor: 'pointer',
+                transition: 'background 0.12s, color 0.12s',
+              }}
+            >
+              {t(`admin.analytics.range.${r}`)}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="flex-1 px-6 pb-6 pt-4 overflow-auto">
