@@ -55,9 +55,6 @@ export default function ProfilePage() {
   }
   if (!user) return null
 
-  const initials = (profile?.name ?? user.email ?? '?').charAt(0).toUpperCase()
-
-
   function validateName(value: string): string | null {
     const trimmed = value.trim()
     if (!trimmed) return t('profile.errors.nameRequired')
@@ -201,69 +198,15 @@ export default function ProfilePage() {
         {t('profile.heading')}
       </h1>
 
-      {/* ── Avatar section ─────────────────────────────────── */}
-      <section
-        className="card"
-        style={{ padding: '28px 28px', marginBottom: 20 }}
-      >
+      {/* ── Profile info section (avatar + name/bio side-by-side) ─ */}
+      <section className="card" style={{ padding: '28px 28px', marginBottom: 20 }}>
         <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink-1)', marginBottom: 20 }}>
-          {t('profile.avatarSection')}
+          {t('profile.infoSection')}
         </h2>
 
-        <div className="flex items-center" style={{ gap: 24 }}>
-          {/* Avatar display */}
-          <div style={{ position: 'relative', flexShrink: 0 }}>
-            {avatarPreview ? (
-              <img
-                src={avatarPreview}
-                alt={profile?.name ?? user.email ?? ''}
-                style={{
-                  width: 72,
-                  height: 72,
-                  borderRadius: '50%',
-                  objectFit: 'cover',
-                  border: '2px solid var(--border)',
-                }}
-              />
-            ) : (
-              <div
-                style={{
-                  width: 72,
-                  height: 72,
-                  borderRadius: '50%',
-                  background: 'oklch(0.85 0.07 200)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 28,
-                  fontWeight: 600,
-                  color: 'var(--surface)',
-                }}
-              >
-                {initials}
-              </div>
-            )}
-            {avatarLoading && (
-              <div style={{
-                position: 'absolute',
-                inset: 0,
-                borderRadius: '50%',
-                background: 'rgba(0,0,0,0.4)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83">
-                    <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite" />
-                  </path>
-                </svg>
-              </div>
-            )}
-          </div>
-
-          {/* Avatar actions */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 24 }}>
+          {/* Avatar column — click to upload, remove button below */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             <input
               ref={fileInputRef}
               type="file"
@@ -274,11 +217,65 @@ export default function ProfilePage() {
             />
             <button
               type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => !avatarLoading && fileInputRef.current?.click()}
               disabled={avatarLoading}
+              aria-label={t('profile.avatarUpload')}
+              title={t('profile.avatarUpload')}
+              style={{
+                position: 'relative',
+                width: 96,
+                height: 96,
+                borderRadius: '50%',
+                border: '2px solid var(--border)',
+                background: avatarPreview ? 'var(--surface)' : 'var(--surface-2)',
+                padding: 0,
+                overflow: 'hidden',
+                cursor: avatarLoading ? 'wait' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             >
-              {t('profile.avatarUpload')}
+              {avatarPreview ? (
+                <img
+                  src={avatarPreview}
+                  alt={profile?.name ?? user.email ?? ''}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                />
+              ) : (
+                <svg
+                  viewBox="0 0 45 45"
+                  width="64"
+                  height="64"
+                  aria-hidden="true"
+                  style={{ color: 'var(--ink-2)' }}
+                >
+                  <path
+                    d="M22.5 9c-2.21 0-4 1.79-4 4 0 .89.29 1.71.78 2.38C17.33 16.5 16 18.59 16 21c0 2.03.94 3.84 2.41 5.03-3 1.06-7.41 5.55-7.41 13.47h23c0-7.92-4.41-12.41-7.41-13.47 1.47-1.19 2.41-3 2.41-5.03 0-2.41-1.33-4.5-3.28-5.62.49-.67.78-1.49.78-2.38 0-2.21-1.79-4-4-4z"
+                    fill="currentColor"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              )}
+              {avatarLoading && (
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  borderRadius: '50%',
+                  background: 'rgba(0,0,0,0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83">
+                      <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite" />
+                    </path>
+                  </svg>
+                </div>
+              )}
             </button>
             {avatarPreview && (
               <button
@@ -291,114 +288,104 @@ export default function ProfilePage() {
                 {t('profile.avatarRemove')}
               </button>
             )}
-            <p style={{ fontSize: 12, color: 'var(--ink-3)', margin: 0 }}>
-              {t('profile.avatarHint')}
-            </p>
-          </div>
-        </div>
-
-        {avatarError && (
-          <p style={{ marginTop: 12, fontSize: 13, color: 'var(--danger)' }}>{avatarError}</p>
-        )}
-      </section>
-
-      {/* ── Profile info section ───────────────────────────── */}
-      <section className="card" style={{ padding: '28px 28px', marginBottom: 20 }}>
-        <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink-1)', marginBottom: 20 }}>
-          {t('profile.infoSection')}
-        </h2>
-
-        <form onSubmit={handleSaveInfo} noValidate style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--ink-2)', marginBottom: 6 }}>
-              {t('profile.labelName')}
-            </label>
-            <input
-              className="input"
-              type="text"
-              value={name}
-              onChange={e => { setName(e.target.value); setNameError(null); setInfoSuccess(false) }}
-              style={{ width: '100%', borderColor: nameError ? 'var(--danger)' : undefined }}
-            />
-            {nameError && (
-              <p style={{ marginTop: 4, fontSize: 12, color: 'var(--danger)' }}>{nameError}</p>
-            )}
           </div>
 
-          <div>
-            <label
-              htmlFor="profile-bio-input"
-              style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                justifyContent: 'space-between',
-                fontSize: 13,
-                fontWeight: 500,
-                color: 'var(--ink-2)',
-                marginBottom: 6,
-              }}
-            >
-              <span>{t('profile.labelBio')}</span>
-              <span
-                data-testid="profile-bio-counter"
+          {/* Form column — name, bio, email, save */}
+          <form onSubmit={handleSaveInfo} noValidate style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--ink-2)', marginBottom: 6 }}>
+                {t('profile.labelName')}
+              </label>
+              <input
+                className="input"
+                type="text"
+                value={name}
+                onChange={e => { setName(e.target.value); setNameError(null); setInfoSuccess(false) }}
+                style={{ width: '100%', borderColor: nameError ? 'var(--danger)' : undefined }}
+              />
+              {nameError && (
+                <p style={{ marginTop: 4, fontSize: 12, color: 'var(--danger)' }}>{nameError}</p>
+              )}
+            </div>
+
+            <div>
+              <label
+                htmlFor="profile-bio-input"
                 style={{
-                  fontSize: 11,
-                  color: bio.length > MAX_BIO_LENGTH * 0.9 ? 'var(--danger)' : 'var(--ink-3)',
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  justifyContent: 'space-between',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: 'var(--ink-2)',
+                  marginBottom: 6,
                 }}
               >
-                {bio.length}/{MAX_BIO_LENGTH}
-              </span>
-            </label>
-            <textarea
-              id="profile-bio-input"
-              data-testid="profile-bio-input"
-              className="input"
-              value={bio}
-              maxLength={MAX_BIO_LENGTH}
-              onChange={e => { setBio(e.target.value); setInfoSuccess(false) }}
-              rows={2}
-              style={{ width: '100%', resize: 'vertical', minHeight: 56 }}
-              placeholder={t('profile.bioPlaceholder')}
-            />
-            <p style={{ marginTop: 4, fontSize: 12, color: 'var(--ink-3)' }}>
-              {t('profile.bioHint')}
-            </p>
-          </div>
+                <span>{t('profile.labelBio')}</span>
+                <span
+                  data-testid="profile-bio-counter"
+                  style={{
+                    fontSize: 11,
+                    color: bio.length > MAX_BIO_LENGTH * 0.9 ? 'var(--danger)' : 'var(--ink-3)',
+                  }}
+                >
+                  {bio.length}/{MAX_BIO_LENGTH}
+                </span>
+              </label>
+              <textarea
+                id="profile-bio-input"
+                data-testid="profile-bio-input"
+                className="input"
+                value={bio}
+                maxLength={MAX_BIO_LENGTH}
+                onChange={e => { setBio(e.target.value); setInfoSuccess(false) }}
+                rows={2}
+                style={{ width: '100%', resize: 'vertical', minHeight: 56 }}
+                placeholder={t('profile.bioPlaceholder')}
+              />
+              <p style={{ marginTop: 4, fontSize: 12, color: 'var(--ink-3)' }}>
+                {t('profile.bioHint')}
+              </p>
+            </div>
 
-          <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--ink-2)', marginBottom: 6 }}>
-              {t('profile.labelEmail')}
-            </label>
-            <input
-              className="input"
-              type="email"
-              value={user.email ?? ''}
-              readOnly
-              style={{ width: '100%', background: 'var(--surface-2)', color: 'var(--ink-3)', cursor: 'not-allowed' }}
-            />
-            <p style={{ marginTop: 4, fontSize: 12, color: 'var(--ink-3)' }}>
-              {t('profile.emailHint')}
-            </p>
-          </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--ink-2)', marginBottom: 6 }}>
+                {t('profile.labelEmail')}
+              </label>
+              <input
+                className="input"
+                type="email"
+                value={user.email ?? ''}
+                readOnly
+                style={{ width: '100%', background: 'var(--surface-2)', color: 'var(--ink-3)', cursor: 'not-allowed' }}
+              />
+              <p style={{ marginTop: 4, fontSize: 12, color: 'var(--ink-3)' }}>
+                {t('profile.emailHint')}
+              </p>
+            </div>
 
-          <div className="flex items-center" style={{ gap: 12, marginTop: 4 }}>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={infoLoading}
-            >
-              {infoLoading ? '...' : t('profile.saveInfo')}
-            </button>
-            {infoSuccess && (
-              <span style={{ fontSize: 13, color: 'var(--success)', fontWeight: 500 }}>
-                ✓ {t('profile.savedInfo')}
-              </span>
-            )}
-            {infoError && (
-              <span style={{ fontSize: 13, color: 'var(--danger)' }}>{infoError}</span>
-            )}
-          </div>
-        </form>
+            <div className="flex items-center" style={{ gap: 12, marginTop: 4, flexWrap: 'wrap' }}>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={infoLoading}
+              >
+                {infoLoading ? '...' : t('profile.saveInfo')}
+              </button>
+              {infoSuccess && (
+                <span style={{ fontSize: 13, color: 'var(--success)', fontWeight: 500 }}>
+                  ✓ {t('profile.savedInfo')}
+                </span>
+              )}
+              {infoError && (
+                <span style={{ fontSize: 13, color: 'var(--danger)' }}>{infoError}</span>
+              )}
+              {avatarError && (
+                <span style={{ fontSize: 13, color: 'var(--danger)' }}>{avatarError}</span>
+              )}
+            </div>
+          </form>
+        </div>
       </section>
 
       {/* ── Change password section ────────────────────────── */}
