@@ -73,7 +73,7 @@ export default function AdminSidebar() {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-2 space-y-0.5" aria-label="Admin menu">
+      <nav className="flex-1 overflow-y-auto px-2 space-y-0.5" aria-label="Admin menu">
         {NAV_ITEMS.map(({ key, to }) => (
           <NavLink
             key={key}

@@ -108,14 +108,6 @@ export async function deactivateVoucher(
   return { voucher: (data as Voucher) ?? null, error: error as Error | null }
 }
 
-export async function deleteVoucher(
-  client: SupabaseClient,
-  id: string
-): Promise<{ error: Error | null }> {
-  const { error } = await client.rpc('delete_voucher', { p_id: id })
-  return { error: error as Error | null }
-}
-
 export interface ListVouchersOptions {
   status?: 'all' | 'active' | 'inactive'
   search?: string

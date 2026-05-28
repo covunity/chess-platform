@@ -6,7 +6,6 @@ import {
   createVoucher,
   updateVoucher,
   deactivateVoucher,
-  deleteVoucher,
   getVoucherUsages,
   formatVoucherDiscount,
 } from '../../lib/vouchersApi'
@@ -284,18 +283,6 @@ export default function AdminVouchersPage() {
     setRefetchKey(k => k + 1)
   }
 
-  async function handleDelete(v: Voucher) {
-    if (v.total_uses > 0) return
-    if (!window.confirm(t('admin.vouchers.confirmDelete'))) return
-    const { error } = await deleteVoucher(supabase, v.id)
-    if (error) {
-      setToast(t('admin.vouchers.actionDeleteError'))
-      return
-    }
-    setToast(t('admin.vouchers.actionDeleteSuccess'))
-    setRefetchKey(k => k + 1)
-  }
-
   const columns = useMemo(
     () => [
       t('admin.vouchers.colCode'),
@@ -418,7 +405,6 @@ export default function AdminVouchersPage() {
                     v.total_quota == null || v.total_quota === 0
                       ? 0
                       : Math.min(100, Math.round((v.total_uses / v.total_quota) * 100))
-                  const isLocked = v.total_uses > 0
                   return (
                     <tr
                       key={v.id}
@@ -506,17 +492,6 @@ export default function AdminVouchersPage() {
                               {t('admin.vouchers.deactivate')}
                             </button>
                           )}
-                          <button
-                            type="button"
-                            className="btn btn-ghost btn-sm"
-                            data-testid={`admin-vouchers-delete-${v.id}`}
-                            onClick={() => handleDelete(v)}
-                            disabled={isLocked}
-                            title={isLocked ? t('admin.vouchers.deleteLockedTooltip') : undefined}
-                            style={{ color: 'var(--danger)' }}
-                          >
-                            {t('admin.vouchers.delete')}
-                          </button>
                         </div>
                       </td>
                     </tr>

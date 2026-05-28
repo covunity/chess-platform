@@ -13,7 +13,6 @@ const {
   mockCreateVoucher,
   mockUpdateVoucher,
   mockDeactivateVoucher,
-  mockDeleteVoucher,
   mockGetVoucherUsages,
   mockListAdminCourses,
   mockListCampaigns,
@@ -22,7 +21,6 @@ const {
   mockCreateVoucher: vi.fn(),
   mockUpdateVoucher: vi.fn(),
   mockDeactivateVoucher: vi.fn(),
-  mockDeleteVoucher: vi.fn(),
   mockGetVoucherUsages: vi.fn(),
   mockListAdminCourses: vi.fn(),
   mockListCampaigns: vi.fn(),
@@ -38,7 +36,6 @@ vi.mock('../../lib/vouchersApi', async () => {
     createVoucher: mockCreateVoucher,
     updateVoucher: mockUpdateVoucher,
     deactivateVoucher: mockDeactivateVoucher,
-    deleteVoucher: mockDeleteVoucher,
     getVoucherUsages: mockGetVoucherUsages,
   }
 })
@@ -120,7 +117,6 @@ describe('AdminVouchersPage', () => {
       voucher: { ...baseVoucher, is_active: false },
       error: null,
     })
-    mockDeleteVoucher.mockResolvedValue({ error: null })
     mockGetVoucherUsages.mockResolvedValue({ usages: [sampleUsage], error: null })
   })
 
@@ -274,27 +270,6 @@ describe('AdminVouchersPage', () => {
     await waitFor(() => {
       expect(mockDeactivateVoucher).toHaveBeenCalledWith(expect.anything(), 'v-1')
     })
-  })
-
-  it('deletes a voucher with no usage', async () => {
-    const user = userEvent.setup()
-    // confirm() is called before delete
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
-    renderPage()
-    await waitFor(() => screen.getByTestId('admin-vouchers-row-v-1'))
-    await user.click(screen.getByTestId('admin-vouchers-delete-v-1'))
-    await waitFor(() => {
-      expect(mockDeleteVoucher).toHaveBeenCalledWith(expect.anything(), 'v-1')
-    })
-    confirmSpy.mockRestore()
-  })
-
-  it('disables delete on a locked voucher (total_uses > 0)', async () => {
-    mockListVouchers.mockResolvedValue({ vouchers: [lockedVoucher], error: null })
-    renderPage()
-    await waitFor(() => screen.getByTestId('admin-vouchers-row-v-2'))
-    const btn = screen.getByTestId('admin-vouchers-delete-v-2') as HTMLButtonElement
-    expect(btn.disabled).toBe(true)
   })
 
   it('opens the detail drawer when a row is clicked and shows usages', async () => {

@@ -4,7 +4,6 @@ import {
   createVoucher,
   updateVoucher,
   deactivateVoucher,
-  deleteVoucher,
   listVouchers,
   getVoucherUsages,
   formatVoucherDiscount,
@@ -188,29 +187,6 @@ describe('deactivateVoucher', () => {
     expect(error).toBeNull()
     expect(voucher?.is_active).toBe(false)
     expect(rpc).toHaveBeenCalledWith('deactivate_voucher', { p_id: 'v-1' })
-  })
-})
-
-// ── deleteVoucher ───────────────────────────────────────────────────────────
-
-describe('deleteVoucher', () => {
-  it('calls delete_voucher RPC with the id', async () => {
-    const rpc = vi.fn().mockResolvedValue({ data: null, error: null })
-    const client = { rpc } as unknown as SupabaseClient
-
-    const { error } = await deleteVoucher(client, 'v-1')
-    expect(error).toBeNull()
-    expect(rpc).toHaveBeenCalledWith('delete_voucher', { p_id: 'v-1' })
-  })
-
-  it('surfaces voucher_in_use error when total_uses > 0', async () => {
-    const rpc = vi.fn().mockResolvedValue({
-      data: null,
-      error: { message: 'voucher_in_use' },
-    })
-    const client = { rpc } as unknown as SupabaseClient
-    const { error } = await deleteVoucher(client, 'v-1')
-    expect((error as { message: string }).message).toContain('voucher_in_use')
   })
 })
 
