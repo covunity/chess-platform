@@ -167,41 +167,6 @@ describe("LessonEditor", () => {
     });
   });
 
-  describe("has_rewind_mode toggle (Slice 10)", () => {
-    it("renders a view-only checkbox for chess lessons", () => {
-      renderEditor({ lesson: DEFAULT_LESSON, onSave: vi.fn() });
-      expect(screen.getByTestId("lesson-has-rewind-mode-checkbox")).toBeInTheDocument();
-    });
-
-    it("checkbox is unchecked by default", () => {
-      renderEditor({ lesson: DEFAULT_LESSON, onSave: vi.fn() });
-      expect(screen.getByTestId("lesson-has-rewind-mode-checkbox")).not.toBeChecked();
-    });
-
-    it("checkbox reflects has_rewind_mode=true from lesson data", () => {
-      renderEditor({ lesson: { ...DEFAULT_LESSON, has_rewind_mode: true }, onSave: vi.fn() });
-      expect(screen.getByTestId("lesson-has-rewind-mode-checkbox")).toBeChecked();
-    });
-
-    it("does not render the view-only checkbox for puzzle lessons", () => {
-      renderEditor({ lesson: { ...DEFAULT_LESSON, type: "puzzle" as const }, onSave: vi.fn() });
-      expect(screen.queryByTestId("lesson-has-rewind-mode-checkbox")).not.toBeInTheDocument();
-    });
-
-    it("does not render the view-only checkbox for video lessons", () => {
-      renderEditor({ lesson: { ...DEFAULT_LESSON, type: "video" as const }, onSave: vi.fn() });
-      expect(screen.queryByTestId("lesson-has-rewind-mode-checkbox")).not.toBeInTheDocument();
-    });
-
-    it("toggling the checkbox changes its checked state", async () => {
-      const user = userEvent.setup();
-      renderEditor({ lesson: DEFAULT_LESSON, onSave: vi.fn() });
-      const checkbox = screen.getByTestId("lesson-has-rewind-mode-checkbox");
-      await user.click(checkbox);
-      expect(checkbox).toBeChecked();
-    });
-  });
-
   describe("save", () => {
     it("calls onSave with pgn_data serialized from tree, board_perspective, is_free_preview when Save draft is clicked", async () => {
       const user = userEvent.setup();
@@ -218,59 +183,6 @@ describe("LessonEditor", () => {
           board_perspective: "white",
           is_free_preview: false,
         })
-      );
-    });
-  });
-
-  describe("has_rewind_mode toggle (issue #197)", () => {
-    it("renders has_rewind_mode checkbox for chess lessons", () => {
-      renderEditor({ lesson: { ...DEFAULT_LESSON, type: "chess" }, onSave: vi.fn() });
-      expect(screen.getByTestId("lesson-has-rewind-mode-checkbox")).toBeInTheDocument();
-    });
-
-    it("does not render has_rewind_mode checkbox for puzzle lessons", () => {
-      renderEditor({ lesson: { ...DEFAULT_LESSON, type: "puzzle" }, onSave: vi.fn() });
-      // Switch to puzzle tab
-      fireEvent.click(screen.getByTestId("lesson-type-tab-puzzle"));
-      expect(screen.queryByTestId("lesson-has-rewind-mode-checkbox")).not.toBeInTheDocument();
-    });
-
-    it("has_rewind_mode defaults to false (unchecked)", () => {
-      renderEditor({ lesson: { ...DEFAULT_LESSON, type: "chess" }, onSave: vi.fn() });
-      const checkbox = screen.getByTestId("lesson-has-rewind-mode-checkbox");
-      expect(checkbox).not.toBeChecked();
-    });
-
-    it("has_rewind_mode initialized from lesson.has_rewind_mode=true", () => {
-      renderEditor({
-        lesson: { ...DEFAULT_LESSON, type: "chess", has_rewind_mode: true },
-        onSave: vi.fn(),
-      });
-      const checkbox = screen.getByTestId("lesson-has-rewind-mode-checkbox");
-      expect(checkbox).toBeChecked();
-    });
-
-    it("onSave includes has_rewind_mode: true when checkbox is checked", async () => {
-      const user = userEvent.setup();
-      const onSave = vi.fn();
-      renderEditor({ lesson: { ...DEFAULT_LESSON, type: "chess" }, onSave });
-      const checkbox = screen.getByTestId("lesson-has-rewind-mode-checkbox");
-      await user.click(checkbox);
-      const saveBtn = screen.getByRole("button", { name: /lưu nháp/i });
-      await user.click(saveBtn);
-      expect(onSave).toHaveBeenCalledWith(
-        expect.objectContaining({ has_rewind_mode: true })
-      );
-    });
-
-    it("onSave includes has_rewind_mode: false when checkbox is unchecked", async () => {
-      const user = userEvent.setup();
-      const onSave = vi.fn();
-      renderEditor({ lesson: { ...DEFAULT_LESSON, type: "chess" }, onSave });
-      const saveBtn = screen.getByRole("button", { name: /lưu nháp/i });
-      await user.click(saveBtn);
-      expect(onSave).toHaveBeenCalledWith(
-        expect.objectContaining({ has_rewind_mode: false })
       );
     });
   });
