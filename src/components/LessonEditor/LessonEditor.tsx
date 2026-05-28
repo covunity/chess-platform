@@ -370,6 +370,21 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
               </div>
             )}
 
+            {!isRewindSibling && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <input
+                  type="checkbox"
+                  id="lesson-has-rewind-mode-checkbox"
+                  data-testid="lesson-has-rewind-mode-checkbox"
+                  checked={hasRewindMode}
+                  onChange={(e) => setHasRewindMode(e.target.checked)}
+                />
+                <label htmlFor="lesson-has-rewind-mode-checkbox" style={{ fontSize: 13, color: 'var(--ink-2)', cursor: 'pointer' }}>
+                  {t('creator.lessonEditor.hasRewindModeLabel')}
+                </label>
+              </div>
+            )}
+
             {isRewindSibling ? (
               <div
                 data-testid="rewind-sibling-banner"
