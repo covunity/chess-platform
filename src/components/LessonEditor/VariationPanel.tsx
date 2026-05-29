@@ -1,7 +1,7 @@
-import { useSyncExternalStore, useState, useEffect, useMemo } from 'react'
+import { useSyncExternalStore, useState, useMemo } from 'react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronUp, X } from 'lucide-react'
 import RichNoteEditor from '../RichNoteEditor/RichNoteEditor'
 import type { TreeStore } from './treeStore'
 import type { PgnNode, RichTextDoc } from '../../utils/parsePgn'
@@ -40,6 +40,134 @@ function countSubtreeNodes(node: PgnNode): number {
   return n
 }
 
+function iconBtnStyle(hovered: boolean): React.CSSProperties {
+  return {
+    visibility: hovered ? 'visible' : 'hidden',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 16,
+    height: 16,
+    borderRadius: '50%',
+    border: 'none',
+    background: hovered ? 'var(--surface-2)' : 'transparent',
+    color: 'var(--ink-3)',
+    cursor: 'pointer',
+    padding: 0,
+    flexShrink: 0,
+  }
+}
+
+function MoveCell({
+  node,
+  isCurrentNode,
+  isVariationStart,
+  onSelect,
+  onPromote,
+  onDeleteRequest,
+}: {
+  node: PgnNode
+  isCurrentNode: boolean
+  isVariationStart: boolean
+  onSelect: () => void
+  onPromote: () => void
+  onDeleteRequest: () => void
+}) {
+  const { t } = useTranslation()
+  const [hovered, setHovered] = useState(false)
+  const hasNote = !!node.note
+
+  return (
+    <div
+      data-testid={`variation-node-${node.id}`}
+      role="button"
+      tabIndex={0}
+      onClick={onSelect}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') onSelect()
+        else if (e.key === 'Delete') {
+          e.preventDefault()
+          onDeleteRequest()
+        }
+      }}
+      style={{
+        padding: '2px 4px',
+        background: isCurrentNode ? 'var(--accent-soft)' : 'transparent',
+        borderRadius: 'var(--r-sm)',
+        cursor: 'pointer',
+        fontWeight: 600,
+        fontSize: 14,
+        fontFamily: 'var(--font-mono)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 3,
+        userSelect: 'none' as const,
+        color: isCurrentNode ? 'var(--accent-ink)' : 'var(--ink-1)',
+        minWidth: 0,
+      }}
+    >
+      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+        {node.san}
+      </span>
+      {hasNote && (
+        <span aria-label="Có ghi chú" style={{ fontSize: 10, color: 'var(--ink-3)', flexShrink: 0 }}>
+          ✎
+        </span>
+      )}
+      {isVariationStart && (
+        <button
+          type="button"
+          data-testid={`promote-move-btn-${node.id}`}
+          aria-label={t('creator.lessonEditor.promoteVariation')}
+          title={t('creator.lessonEditor.promoteVariation')}
+          onClick={(e) => {
+            e.stopPropagation()
+            onPromote()
+          }}
+          style={iconBtnStyle(hovered)}
+          onMouseEnter={(e) => {
+            const btn = e.currentTarget
+            btn.style.background = 'var(--accent-soft, #dbeafe)'
+            btn.style.color = 'var(--accent, #3b82f6)'
+          }}
+          onMouseLeave={(e) => {
+            const btn = e.currentTarget
+            btn.style.background = 'var(--surface-2)'
+            btn.style.color = 'var(--ink-3)'
+          }}
+        >
+          <ChevronUp size={10} strokeWidth={2.5} aria-hidden="true" />
+        </button>
+      )}
+      <button
+        type="button"
+        data-testid={`delete-move-btn-${node.id}`}
+        aria-label={t('creator.lessonEditor.deleteSubtree')}
+        title={t('creator.lessonEditor.deleteSubtree')}
+        onClick={(e) => {
+          e.stopPropagation()
+          onDeleteRequest()
+        }}
+        style={iconBtnStyle(hovered)}
+        onMouseEnter={(e) => {
+          const btn = e.currentTarget
+          btn.style.background = 'var(--danger, #ef4444)'
+          btn.style.color = '#fff'
+        }}
+        onMouseLeave={(e) => {
+          const btn = e.currentTarget
+          btn.style.background = 'var(--surface-2)'
+          btn.style.color = 'var(--ink-3)'
+        }}
+      >
+        <X size={10} strokeWidth={2.5} aria-hidden="true" />
+      </button>
+    </div>
+  )
+}
+
 export default function VariationPanel({ store }: { store: TreeStore }) {
   const { t } = useTranslation()
 
@@ -57,84 +185,30 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
   const STANDARD_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
   const hasCustomStartingFen = tree.fen !== STANDARD_FEN
 
-  // Context menu state (right-click on a variation node)
-  const [contextMenu, setContextMenu] = useState<{
-    nodeId: string
-    x: number
-    y: number
-    isMain: boolean
-  } | null>(null)
-
   // Confirm delete dialog state
   const [deleteConfirm, setDeleteConfirm] = useState<{
     nodeId: string
     subtreeSize: number
   } | null>(null)
 
-  // Close context menu on outside mousedown
-  useEffect(() => {
-    if (!contextMenu) return
-    function handleOutside() { setContextMenu(null) }
-    document.addEventListener('mousedown', handleOutside)
-    return () => document.removeEventListener('mousedown', handleOutside)
-  }, [contextMenu])
-
-  function isMainMove(node: PgnNode): boolean {
-    if (!node.parentId) return true
+  function isVariationStart(node: PgnNode): boolean {
+    if (!node.parentId) return false
     const parent = nodeMap.get(node.parentId)
-    if (!parent) return true
-    return parent.children[0]?.id === node.id
+    if (!parent) return false
+    return parent.children[0]?.id !== node.id
   }
 
   function renderMoveCell(node: PgnNode): ReactNode {
-    const isCurrentNode = node.id === currentNodeId
-    const hasNote = !!node.note
-    const isMain = isMainMove(node)
-
     return (
-      <div
+      <MoveCell
         key={node.id}
-        data-testid={`variation-node-${node.id}`}
-        role="button"
-        tabIndex={0}
-        onClick={() => store.getState().setCurrentNode(node.id)}
-        onContextMenu={(e) => {
-          e.preventDefault()
-          setContextMenu({ nodeId: node.id, x: e.clientX, y: e.clientY, isMain })
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            store.getState().setCurrentNode(node.id)
-          } else if (e.key === 'Delete') {
-            e.preventDefault()
-            setDeleteConfirm({ nodeId: node.id, subtreeSize: countSubtreeNodes(node) })
-          }
-        }}
-        style={{
-          padding: '2px 4px',
-          background: isCurrentNode ? 'var(--accent-soft)' : 'transparent',
-          borderRadius: 'var(--r-sm)',
-          cursor: 'pointer',
-          fontWeight: 600,
-          fontSize: 14,
-          fontFamily: 'var(--font-mono)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 3,
-          userSelect: 'none' as const,
-          color: isCurrentNode ? 'var(--accent-ink)' : 'var(--ink-1)',
-          minWidth: 0,
-        }}
-      >
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {node.san}
-        </span>
-        {hasNote && (
-          <span aria-label="Có ghi chú" style={{ fontSize: 10, color: 'var(--ink-3)', flexShrink: 0 }}>
-            ✎
-          </span>
-        )}
-      </div>
+        node={node}
+        isCurrentNode={node.id === currentNodeId}
+        isVariationStart={isVariationStart(node)}
+        onSelect={() => store.getState().setCurrentNode(node.id)}
+        onPromote={() => store.getState().promoteVariation(node.id)}
+        onDeleteRequest={() => setDeleteConfirm({ nodeId: node.id, subtreeSize: countSubtreeNodes(node) })}
+      />
     )
   }
 
@@ -363,72 +437,6 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
           </div>
         )}
       </div>
-
-      {/* Context menu — right-click on a variation node */}
-      {contextMenu && (
-        <div
-          data-testid="variation-context-menu"
-          onMouseDown={(e) => e.stopPropagation()}
-          style={{
-            position: 'fixed',
-            top: contextMenu.y,
-            left: contextMenu.x,
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--r-sm)',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-            zIndex: 1000,
-            minWidth: 200,
-            padding: '4px 0',
-          }}
-        >
-          <button
-              type="button"
-              data-testid="ctx-promote-btn"
-              disabled={contextMenu.isMain}
-              onClick={() => {
-                store.getState().promoteVariation(contextMenu.nodeId)
-                setContextMenu(null)
-              }}
-              style={{
-                display: 'block',
-                width: '100%',
-                textAlign: 'left',
-                padding: '7px 14px',
-                fontSize: 13,
-                border: 'none',
-                background: 'transparent',
-                cursor: contextMenu.isMain ? 'not-allowed' : 'pointer',
-                color: contextMenu.isMain ? 'var(--ink-3)' : 'var(--ink-1)',
-              }}
-            >
-              {t('creator.lessonEditor.promoteVariation')}
-            </button>
-          <button
-            type="button"
-            data-testid="ctx-delete-btn"
-            onClick={() => {
-              const node = nodeMap.get(contextMenu.nodeId)
-              if (!node) return
-              setDeleteConfirm({ nodeId: contextMenu.nodeId, subtreeSize: countSubtreeNodes(node) })
-              setContextMenu(null)
-            }}
-            style={{
-              display: 'block',
-              width: '100%',
-              textAlign: 'left',
-              padding: '7px 14px',
-              fontSize: 13,
-              border: 'none',
-              background: 'transparent',
-              cursor: 'pointer',
-              color: 'var(--danger)',
-            }}
-          >
-            {t('creator.lessonEditor.deleteSubtree')}
-          </button>
-        </div>
-      )}
 
       {/* Confirm delete dialog */}
       {deleteConfirm && (

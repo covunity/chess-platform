@@ -114,11 +114,12 @@ describe('BoardAuthoringSurface', () => {
   })
 
   describe('right-click on variation list rows', () => {
-    it('does not crash on right-click', () => {
+    it('does not crash on right-click (no context menu shown)', () => {
       store.getState().applyMove('e2', 'e4')
       renderWithVariationPanel(store)
       const varList = screen.getByTestId('variation-list')
       expect(() => fireEvent.contextMenu(varList)).not.toThrow()
+      expect(screen.queryByTestId('variation-context-menu')).not.toBeInTheDocument()
     })
   })
 
@@ -194,83 +195,25 @@ describe('BoardAuthoringSurface', () => {
     })
   })
 
-  describe('variation list context menu — Slice 5b (#200)', () => {
-    it('right-click on a variation node opens the context menu', () => {
+  describe('variation list delete button — Slice 5b (#200)', () => {
+    it('hovering a variation node reveals the delete button', () => {
       store.getState().applyMove('e2', 'e4')
-      store.getState().setCurrentNode('root')
-      store.getState().applyMove('d2', 'd4')
       renderWithVariationPanel(store)
-      const d4Node = screen.getAllByTestId(/variation-node-/).find(
-        (el) => el.textContent?.includes('d4')
-      )!
-      fireEvent.contextMenu(d4Node)
-      expect(screen.getByTestId('variation-context-menu')).toBeInTheDocument()
+      const e4Node = screen.getAllByTestId(/variation-node-/)[0]
+      fireEvent.mouseEnter(e4Node)
+      const deleteBtn = screen.getByTestId(/delete-move-btn-/)
+      expect(deleteBtn).toBeVisible()
     })
 
-    it('context menu contains a promote action', () => {
+    it('delete button is hidden (visibility:hidden) when not hovering', () => {
       store.getState().applyMove('e2', 'e4')
-      store.getState().setCurrentNode('root')
-      store.getState().applyMove('d2', 'd4')
       renderWithVariationPanel(store)
-      const d4Node = screen.getAllByTestId(/variation-node-/).find(
-        (el) => el.textContent?.includes('d4')
-      )!
-      fireEvent.contextMenu(d4Node)
-      expect(screen.getByTestId('ctx-promote-btn')).toBeInTheDocument()
+      const e4Id = store.getState().tree.children[0].id
+      const deleteBtn = screen.getByTestId(`delete-move-btn-${e4Id}`)
+      expect(deleteBtn).not.toBeVisible()
     })
 
-    it('context menu contains a delete action', () => {
-      store.getState().applyMove('e2', 'e4')
-      store.getState().setCurrentNode('root')
-      store.getState().applyMove('d2', 'd4')
-      renderWithVariationPanel(store)
-      const d4Node = screen.getAllByTestId(/variation-node-/).find(
-        (el) => el.textContent?.includes('d4')
-      )!
-      fireEvent.contextMenu(d4Node)
-      expect(screen.getByTestId('ctx-delete-btn')).toBeInTheDocument()
-    })
-
-    it('promote button is disabled when the node is already children[0] of its parent', () => {
-      store.getState().applyMove('e2', 'e4')
-      store.getState().setCurrentNode('root')
-      store.getState().applyMove('d2', 'd4')
-      renderWithVariationPanel(store)
-      // e4 is children[0] — promote should be disabled for it
-      const e4Node = screen.getAllByTestId(/variation-node-/).find(
-        (el) => el.textContent?.includes('e4')
-      )!
-      fireEvent.contextMenu(e4Node)
-      expect(screen.getByTestId('ctx-promote-btn')).toBeDisabled()
-    })
-
-    it('promote button is enabled for a non-main-line sibling', () => {
-      store.getState().applyMove('e2', 'e4')
-      store.getState().setCurrentNode('root')
-      store.getState().applyMove('d2', 'd4')
-      renderWithVariationPanel(store)
-      const d4Node = screen.getAllByTestId(/variation-node-/).find(
-        (el) => el.textContent?.includes('d4')
-      )!
-      fireEvent.contextMenu(d4Node)
-      expect(screen.getByTestId('ctx-promote-btn')).not.toBeDisabled()
-    })
-
-    it('clicking promote calls promoteVariation on the store', () => {
-      store.getState().applyMove('e2', 'e4')
-      store.getState().setCurrentNode('root')
-      store.getState().applyMove('d2', 'd4')
-      renderWithVariationPanel(store)
-      const d4Node = screen.getAllByTestId(/variation-node-/).find(
-        (el) => el.textContent?.includes('d4')
-      )!
-      fireEvent.contextMenu(d4Node)
-      fireEvent.click(screen.getByTestId('ctx-promote-btn'))
-      // d4 should now be children[0]
-      expect(store.getState().tree.children[0].san).toBe('d4')
-    })
-
-    it('clicking delete opens a confirm dialog', () => {
+    it('clicking delete button opens a confirm dialog', () => {
       store.getState().applyMove('e2', 'e4')
       store.getState().setCurrentNode('root')
       store.getState().applyMove('d2', 'd4')
@@ -278,8 +221,9 @@ describe('BoardAuthoringSurface', () => {
       const e4Node = screen.getAllByTestId(/variation-node-/).find(
         (el) => el.textContent?.includes('e4')
       )!
-      fireEvent.contextMenu(e4Node)
-      fireEvent.click(screen.getByTestId('ctx-delete-btn'))
+      fireEvent.mouseEnter(e4Node)
+      const e4Id = store.getState().tree.children[0].id
+      fireEvent.click(screen.getByTestId(`delete-move-btn-${e4Id}`))
       expect(screen.getByTestId('delete-confirm-dialog')).toBeInTheDocument()
     })
 
@@ -291,8 +235,9 @@ describe('BoardAuthoringSurface', () => {
       const e4Node = screen.getAllByTestId(/variation-node-/).find(
         (el) => el.textContent?.includes('e4')
       )!
-      fireEvent.contextMenu(e4Node)
-      fireEvent.click(screen.getByTestId('ctx-delete-btn'))
+      fireEvent.mouseEnter(e4Node)
+      const e4Id = store.getState().tree.children[0].id
+      fireEvent.click(screen.getByTestId(`delete-move-btn-${e4Id}`))
       fireEvent.click(screen.getByTestId('delete-confirm-ok'))
       expect(store.getState().tree.children).toHaveLength(1)
       expect(store.getState().tree.children[0].san).toBe('d4')
@@ -306,8 +251,9 @@ describe('BoardAuthoringSurface', () => {
       const e4Node = screen.getAllByTestId(/variation-node-/).find(
         (el) => el.textContent?.includes('e4')
       )!
-      fireEvent.contextMenu(e4Node)
-      fireEvent.click(screen.getByTestId('ctx-delete-btn'))
+      fireEvent.mouseEnter(e4Node)
+      const e4Id = store.getState().tree.children[0].id
+      fireEvent.click(screen.getByTestId(`delete-move-btn-${e4Id}`))
       fireEvent.click(screen.getByTestId('delete-confirm-cancel'))
       expect(store.getState().tree.children).toHaveLength(2)
     })
@@ -320,19 +266,53 @@ describe('BoardAuthoringSurface', () => {
       fireEvent.keyDown(e4Node, { key: 'Delete' })
       expect(screen.getByTestId('delete-confirm-dialog')).toBeInTheDocument()
     })
+  })
 
-    it('context menu closes when clicking outside', () => {
+  describe('promote variation button', () => {
+    it('promote button appears only on the first move of a variation block', () => {
+      // e4 = main line, d4 = variation start
       store.getState().applyMove('e2', 'e4')
       store.getState().setCurrentNode('root')
       store.getState().applyMove('d2', 'd4')
       renderWithVariationPanel(store)
-      const d4Node = screen.getAllByTestId(/variation-node-/).find(
-        (el) => el.textContent?.includes('d4')
-      )!
-      fireEvent.contextMenu(d4Node)
-      expect(screen.getByTestId('variation-context-menu')).toBeInTheDocument()
-      fireEvent.mouseDown(document.body)
-      expect(screen.queryByTestId('variation-context-menu')).not.toBeInTheDocument()
+      const d4Id = store.getState().tree.children[1].id
+      const e4Id = store.getState().tree.children[0].id
+      expect(screen.getByTestId(`promote-move-btn-${d4Id}`)).toBeInTheDocument()
+      expect(screen.queryByTestId(`promote-move-btn-${e4Id}`)).not.toBeInTheDocument()
+    })
+
+    it('promote button is not shown for moves continuing a variation (not the branch point)', () => {
+      // 1.e4 (1.d4 d5) — d5 is continuation inside d4 variation, not a new branch
+      store.getState().applyMove('e2', 'e4')
+      store.getState().setCurrentNode('root')
+      store.getState().applyMove('d2', 'd4')
+      store.getState().applyMove('d7', 'd5')
+      renderWithVariationPanel(store)
+      const d5Id = store.getState().tree.children[1].children[0].id
+      expect(screen.queryByTestId(`promote-move-btn-${d5Id}`)).not.toBeInTheDocument()
+    })
+
+    it('hovering a variation-start node reveals the promote button', () => {
+      store.getState().applyMove('e2', 'e4')
+      store.getState().setCurrentNode('root')
+      store.getState().applyMove('d2', 'd4')
+      renderWithVariationPanel(store)
+      const d4Id = store.getState().tree.children[1].id
+      const d4Node = screen.getByTestId(`variation-node-${d4Id}`)
+      fireEvent.mouseEnter(d4Node)
+      expect(screen.getByTestId(`promote-move-btn-${d4Id}`)).toBeVisible()
+    })
+
+    it('clicking promote makes the variation the new main line', () => {
+      store.getState().applyMove('e2', 'e4')
+      store.getState().setCurrentNode('root')
+      store.getState().applyMove('d2', 'd4')
+      renderWithVariationPanel(store)
+      const d4Id = store.getState().tree.children[1].id
+      const d4Node = screen.getByTestId(`variation-node-${d4Id}`)
+      fireEvent.mouseEnter(d4Node)
+      fireEvent.click(screen.getByTestId(`promote-move-btn-${d4Id}`))
+      expect(store.getState().tree.children[0].san).toBe('d4')
     })
   })
 
