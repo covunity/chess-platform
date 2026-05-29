@@ -14,7 +14,9 @@ import {
   canPublishCourse,
   publishCourse,
   unpublishCourse,
+  manageRewindSiblings,
 } from '../../lib/creatorApi'
+import { parsePgn, extractLeafPaths, leafPathToPgn } from '../../utils/parsePgn'
 import type { Chapter, CourseLevel, CourseStatus, Lesson, LessonType, PublishReadiness } from '../../lib/creatorApi'
 import LessonEditor from '../../components/LessonEditor/LessonEditor'
 import CourseTagsSelect from '../../components/CourseTagsSelect'
@@ -813,16 +815,43 @@ export default function CourseEditPage() {
       free_preview: data.is_free_preview,
       title: data.title,
       description: data.description ?? null,
-      has_rewind_mode: hasRewindMode,
     })
     if (updateErr?.message === 'errors.lessonLimitReached') {
-      // Sibling-create from has_rewind_mode=true hit the per-course lesson cap.
       showToast(t('errors.lessonLimitReached'))
       return
     }
+
+    // FE manages rewind siblings via RPC (trigger removed in migration 087)
+    let needsChapterRefresh = false
+    if (hasRewindMode) {
+      const parsed = parsePgn(data.pgn_data)
+      const branchPgns = (parsed.valid && parsed.root)
+        ? extractLeafPaths(parsed.root).map(leafPathToPgn)
+        : []
+      if (branchPgns.length > 0) {
+        const { error: siblingErr } = await manageRewindSiblings(supabase, selectedLesson.id, branchPgns)
+        if (siblingErr?.message === 'errors.lessonLimitReached') {
+          showToast(t('errors.lessonLimitReached'))
+          return
+        }
+        if (siblingErr) {
+          showToast(t('creator.courseEdit.saveRewindError'))
+          return
+        }
+        needsChapterRefresh = true
+      } else if (selectedLesson.has_rewind_mode) {
+        // PGN was cleared while rewind was already ON — clean up stale siblings
+        await manageRewindSiblings(supabase, selectedLesson.id, [])
+        needsChapterRefresh = true
+      }
+    } else if (selectedLesson.has_rewind_mode) {
+      await manageRewindSiblings(supabase, selectedLesson.id, [])
+      needsChapterRefresh = true
+    }
+
     showToast(t('creator.courseEdit.saveLessonToast'))
-    const rewindToggled = hasRewindMode !== (selectedLesson.has_rewind_mode ?? false)
-    if (rewindToggled && courseId) {
+
+    if (needsChapterRefresh && courseId) {
       const { chapters: fresh } = await listChapters(supabase, courseId)
       setChapters(fresh)
       const updatedLesson = fresh.flatMap(ch => ch.lessons ?? []).find(l => l.id === selectedLesson.id)
@@ -845,15 +874,16 @@ export default function CourseEditPage() {
 
   async function handleRemoveRewindSibling() {
     if (!selectedLesson) return
-    const sibling = chapters
-      .flatMap(ch => ch.lessons ?? [])
-      .find(l => l.rewind_source_id === selectedLesson.id)
-    if (!sibling) return
-    await deleteLesson(supabase, sibling.id)
-    setChapters(prev => prev.map(ch => ({
-      ...ch,
-      lessons: (ch.lessons ?? []).filter(l => l.id !== sibling.id),
-    })))
+    await manageRewindSiblings(supabase, selectedLesson.id, [])
+    if (courseId) {
+      const { chapters: fresh } = await listChapters(supabase, courseId)
+      setChapters(fresh)
+      const updatedLesson = fresh.flatMap(ch => ch.lessons ?? []).find(l => l.id === selectedLesson.id)
+      if (updatedLesson) {
+        setSelectedLesson(updatedLesson)
+        setDisplayedLesson(updatedLesson)
+      }
+    }
   }
 
   const selectedChapterLessons = selectedLesson

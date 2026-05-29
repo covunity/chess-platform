@@ -358,13 +358,25 @@ export async function updateLesson(
     .select()
     .single()
 
-  // Toggling has_rewind_mode=true fires the sibling-create trigger which inserts
-  // a new lesson row — that insert can fail enforce_lesson_limit. Map here too
-  // so the UI can show the friendly toast.
   if (error?.message?.includes('lesson_limit_exceeded')) {
     return { lesson: null, error: new Error('errors.lessonLimitReached') }
   }
   return { lesson: (data as Lesson) ?? null, error: error as Error | null }
+}
+
+export async function manageRewindSiblings(
+  client: SupabaseClient,
+  sourceId: string,
+  branchPgns: string[]
+): Promise<{ error: Error | null }> {
+  const { error } = await client.rpc('manage_rewind_siblings', {
+    p_source_id: sourceId,
+    p_branch_pgns: branchPgns,
+  })
+  if (error?.message?.includes('lesson_limit_exceeded')) {
+    return { error: new Error('errors.lessonLimitReached') }
+  }
+  return { error: error as Error | null }
 }
 
 export async function deleteLesson(

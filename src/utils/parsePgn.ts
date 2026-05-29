@@ -592,3 +592,37 @@ export function parsePgn(pgn: string): PgnParseResult {
     startingFen,
   };
 }
+
+// ── Rewind branch helpers ─────────────────────────────────────────────────────
+
+/** Return every root-to-leaf path in the tree as an array of node arrays. */
+export function extractLeafPaths(root: PgnNode): PgnNode[][] {
+  const paths: PgnNode[][] = [];
+  function dfs(node: PgnNode, path: PgnNode[]) {
+    const next = [...path, node];
+    if (node.children.length === 0) {
+      paths.push(next);
+    } else {
+      for (const child of node.children) dfs(child, next);
+    }
+  }
+  for (const child of root.children) dfs(child, []);
+  return paths;
+}
+
+/** Serialise a root-to-leaf path as a minimal linear PGN string (no variations). */
+export function leafPathToPgn(path: PgnNode[]): string {
+  if (path.length === 0) return "";
+  const parts: string[] = [];
+  for (let i = 0; i < path.length; i++) {
+    const node = path[i];
+    if (node.side === "w") {
+      parts.push(`${node.moveNumber}. ${node.san}`);
+    } else {
+      // Black move — prefix move number only when it's the very first token
+      if (i === 0) parts.push(`${node.moveNumber}... ${node.san}`);
+      else parts.push(node.san);
+    }
+  }
+  return parts.join(" ");
+}

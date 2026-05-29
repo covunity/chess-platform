@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import type { RefObject } from "react";
 import { useTranslation } from "react-i18next";
-import { parsePgn } from "../../utils/parsePgn";
+import { parsePgn, extractLeafPaths } from "../../utils/parsePgn";
 import { serializePgn } from "../../utils/serializePgn";
 import { createTreeStore } from "./treeStore";
 import BoardAuthoringSurface from "./BoardAuthoring/BoardAuthoringSurface";
@@ -93,6 +93,9 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   const [perspective, setPerspective] = useState<"white" | "black">(lesson.board_perspective);
   const [hasRewindMode, setHasRewindMode] = useState(lesson.has_rewind_mode ?? false);
   const updateRewindMode = (v: boolean) => { setHasRewindMode(v); onRewindModeChange?.(v); };
+  const [rewindConfirmOpen, setRewindConfirmOpen] = useState(false);
+  const [rewindBranchCount, setRewindBranchCount] = useState(1);
+  const [rewindNeedsPgn, setRewindNeedsPgn] = useState(false);
   // True when this lesson row is the auto-managed Rewind sibling of another
   // source lesson — the editor switches to a read-only banner because the
   // content is kept in sync by the DB trigger from the source side.
@@ -371,18 +374,47 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
             )}
 
             {!isRewindSibling && (
+              <>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <input
                   type="checkbox"
                   id="lesson-has-rewind-mode-checkbox"
                   data-testid="lesson-has-rewind-mode-checkbox"
                   checked={hasRewindMode}
-                  onChange={(e) => setHasRewindMode(e.target.checked)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      const treeState = treeStore.getState();
+                      const rootFen = treeState.tree.fen;
+                      const STANDARD_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+                      const startingFen = rootFen !== STANDARD_FEN ? rootFen : undefined;
+                      const pgn = serializePgn(treeState.tree, startingFen);
+                      const parsed = pgn.trim() ? parsePgn(pgn) : null;
+                      const count = (parsed?.valid && parsed.root)
+                        ? extractLeafPaths(parsed.root).length
+                        : 0;
+                      if (count === 0) {
+                        setRewindNeedsPgn(true);
+                        return;
+                      }
+                      setRewindNeedsPgn(false);
+                      setRewindBranchCount(count);
+                      setRewindConfirmOpen(true);
+                    } else {
+                      setRewindNeedsPgn(false);
+                      updateRewindMode(false);
+                    }
+                  }}
                 />
                 <label htmlFor="lesson-has-rewind-mode-checkbox" style={{ fontSize: 13, color: 'var(--ink-2)', cursor: 'pointer' }}>
                   {t('creator.lessonEditor.hasRewindModeLabel')}
                 </label>
               </div>
+              {rewindNeedsPgn && (
+                <p style={{ fontSize: 12, color: 'var(--danger)', marginTop: 4 }}>
+                  {t('creator.lessonEditor.rewindNeedsPgn')}
+                </p>
+              )}
+              </>
             )}
 
             {isRewindSibling ? (
@@ -638,6 +670,45 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
           <VariationPanel store={treeStore} />
         )}
       </div>
+
+      {/* Rewind-create confirmation dialog */}
+      {rewindConfirmOpen && (
+        <div
+          className="fixed inset-0 flex items-center justify-center"
+          style={{ background: 'rgba(20,22,26,0.4)', zIndex: 60 }}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="card" style={{ width: 380, padding: 24 }}>
+            <p className="text-sm font-medium mb-2" style={{ color: 'var(--ink-1)' }}>
+              {t('creator.lessonEditor.rewindConfirmHeading')}
+            </p>
+            <p className="text-sm mb-6" style={{ color: 'var(--ink-2)', lineHeight: 1.55 }}>
+              {t('creator.lessonEditor.rewindConfirmBody', { count: rewindBranchCount })}
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setRewindConfirmOpen(false)}
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                data-testid="rewind-confirm-create"
+                className="btn btn-sm"
+                onClick={() => {
+                  setRewindConfirmOpen(false);
+                  updateRewindMode(true);
+                }}
+              >
+                {t('creator.lessonEditor.rewindConfirmCreate', { count: rewindBranchCount })}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Rewind-sibling removal confirmation dialog */}
       {pendingTabSwitch !== null && (

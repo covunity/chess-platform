@@ -976,6 +976,7 @@
       "cancel": "Hủy",
       "saveLesson": "Lưu bài học",
       "saveLessonToast": "Đã lưu bài học!",
+      "saveRewindError": "Lưu bài học thành công nhưng tạo Rewind thất bại. Vui lòng thử lại.",
       "viewPublicPage": "Xem trang công khai",
       "courseInfo": {
         "heading": "Thông tin khóa học",
@@ -1074,8 +1075,12 @@
       "deleteSubtree": "Xóa nước này và các nhánh con",
       "deleteSubtreeConfirm": "Xóa nhánh này?",
       "deleteSubtreeConfirmBody": "Sẽ xóa {{count}} nước.",
-      "rewindRemoveOnTypeSwitch": "Bài này có một bài Rewind đi kèm. Nếu chuyển sang bài video, bài Rewind sẽ bị gỡ.",
-      "rewindRemoveConfirm": "Tiếp tục"
+      "rewindRemoveOnTypeSwitch": "Bài này có các bài Rewind đi kèm. Nếu chuyển sang bài video, toàn bộ bài Rewind sẽ bị gỡ.",
+      "rewindRemoveConfirm": "Tiếp tục",
+      "rewindConfirmHeading": "Xác nhận tạo Rewind",
+      "rewindConfirmBody": "Bài giảng có {{count}} nhánh — hệ thống sẽ tạo {{count}} bài Rewind tương ứng.",
+      "rewindConfirmCreate": "Tạo {{count}} bài Rewind",
+      "rewindNeedsPgn": "Thêm nội dung bài học trước khi bật Rewind."
     },
     "deleteConfirm": {
       "title": "Xóa khóa học?",
