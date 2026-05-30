@@ -404,23 +404,9 @@ function PublishBar({ courseId, courseTitle, status, readiness, publishing, onPu
     </button>
   )
 
-  const rewindCheckbox = isChessLesson && !isRewindSibling && onRewindModeChange && (
-    <label
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 6,
-        fontSize: 12,
-        color: 'var(--ink-2)',
-        cursor: 'pointer',
-        flexShrink: 0,
-        whiteSpace: 'nowrap',
-      }}
-    >
-      <Switch
-        checked={hasRewindMode ?? false}
-        onCheckedChange={onRewindModeChange}
-      />
+  const rewindSwitch = isChessLesson && !isRewindSibling && onRewindModeChange && (
+    <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ink-2)', cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap' }}>
+      <Switch checked={hasRewindMode ?? false} onCheckedChange={onRewindModeChange} />
       {t('creator.lessonEditor.hasRewindModeLabel')}
     </label>
   )
@@ -429,7 +415,7 @@ function PublishBar({ courseId, courseTitle, status, readiness, publishing, onPu
     return (
       <div data-testid="publish-bar" className="flex items-center gap-3" style={barStyle}>
         {left}
-        {rewindCheckbox}
+        {rewindSwitch}
         {freePreviewBtn}
         {onSaveLesson && (
           <button type="button" className="btn btn-secondary btn-sm" onClick={onSaveLesson}>
@@ -446,7 +432,7 @@ function PublishBar({ courseId, courseTitle, status, readiness, publishing, onPu
   return (
     <div data-testid="publish-bar" className="flex items-center gap-3" style={barStyle}>
       {left}
-      {rewindCheckbox}
+      {rewindSwitch}
       {freePreviewBtn}
       {onSaveLesson && (
         <button type="button" className="btn btn-secondary btn-sm" onClick={onSaveLesson}>
@@ -548,7 +534,10 @@ export default function CourseEditPage() {
 
   const saveLessonRef = useRef<(() => void) | null>(null)
   const lessonTransitionRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const [lessonRewindMode, setLessonRewindMode] = useState(false)
+  const [rewindConfirmOpen, setRewindConfirmOpen] = useState(false)
+  const [rewindBranchCount, setRewindBranchCount] = useState(0)
 
   const [confirmDeleteChapter, setConfirmDeleteChapter] = useState<Chapter | null>(null)
   const [confirmDeleteLesson, setConfirmDeleteLesson] = useState<Lesson | null>(null)
@@ -571,12 +560,28 @@ export default function CourseEditPage() {
   const [showCourseInfo, setShowCourseInfo] = useState(false)
 
   useEffect(() => {
-    if (courseId) localStorage.setItem('lastEditedCourseId', courseId)
-  }, [courseId])
-
-  useEffect(() => {
     setLessonRewindMode(displayedLesson?.has_rewind_mode ?? false)
   }, [displayedLesson?.id])
+
+  function handleRewindToggle(v: boolean) {
+    if (!v) {
+      setLessonRewindMode(false)
+      return
+    }
+    const pgn = displayedLesson?.pgn_data ?? ''
+    const parsed = pgn.trim() ? parsePgn(pgn) : null
+    const count = (parsed?.valid && parsed.root) ? extractLeafPaths(parsed.root).length : 0
+    if (count === 0) {
+      showToast(t('creator.lessonEditor.rewindNeedsPgn'))
+      return
+    }
+    setRewindBranchCount(count)
+    setRewindConfirmOpen(true)
+  }
+
+  useEffect(() => {
+    if (courseId) localStorage.setItem('lastEditedCourseId', courseId)
+  }, [courseId])
 
   useEffect(() => {
     fetchCoursePriceLimits(supabase).then(setPriceLimits)
@@ -786,7 +791,7 @@ export default function CourseEditPage() {
 
   async function handleSaveLesson(data: { type: LessonType; pgn_data: string; board_perspective: 'white' | 'black'; is_free_preview: boolean; title: string; description?: string | null; has_rewind_mode?: boolean }) {
     if (!selectedLesson) return
-    const hasRewindMode = data.has_rewind_mode ?? false
+    const hasRewindMode = lessonRewindMode
     // Rewind sibling rows are content-managed by the DB trigger from their
     // source. Pushing pgn / perspective / etc. from a sibling save would lose
     // the source's intent — only title + free_preview are safe to forward.
@@ -1023,7 +1028,7 @@ export default function CourseEditPage() {
             onToggleFreePreview={selectedLesson ? () => handleToggleFreePreview(selectedLesson) : undefined}
             isFreePreview={selectedLesson?.free_preview ?? false}
             hasRewindMode={lessonRewindMode}
-            onRewindModeChange={selectedLesson?.type === 'chess' ? setLessonRewindMode : undefined}
+            onRewindModeChange={selectedLesson?.type === 'chess' ? handleRewindToggle : undefined}
             isChessLesson={selectedLesson?.type === 'chess'}
             isRewindSibling={!!selectedLesson?.rewind_source_id}
             t={t}
@@ -1070,7 +1075,6 @@ export default function CourseEditPage() {
               }}
               onSave={handleSaveLesson}
               onRemoveRewindSibling={handleRemoveRewindSibling}
-              onRewindModeChange={setLessonRewindMode}
               showSidebar={false}
               saveRef={saveLessonRef}
               editorAdvanced={profile?.editor_advanced ?? false}
@@ -1260,6 +1264,37 @@ export default function CourseEditPage() {
           onCancel={() => setConfirmDeleteLesson(null)}
           onConfirm={handleDeleteLessonConfirm}
         />
+      )}
+
+      {rewindConfirmOpen && (
+        <div
+          className="fixed inset-0 flex items-center justify-center"
+          style={{ background: 'rgba(20,22,26,0.4)', zIndex: 60 }}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="card" style={{ width: 380, padding: 24 }}>
+            <p className="text-sm font-medium mb-2" style={{ color: 'var(--ink-1)' }}>
+              {t('creator.lessonEditor.rewindConfirmHeading')}
+            </p>
+            <p className="text-sm mb-6" style={{ color: 'var(--ink-2)', lineHeight: 1.55 }}>
+              {t('creator.lessonEditor.rewindConfirmBody', { count: rewindBranchCount })}
+            </p>
+            <div className="flex justify-end gap-3">
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setRewindConfirmOpen(false)}>
+                {t('creator.courseEdit.cancel')}
+              </button>
+              <button
+                type="button"
+                data-testid="rewind-confirm-create"
+                className="btn btn-sm"
+                onClick={() => { setRewindConfirmOpen(false); setLessonRewindMode(true) }}
+              >
+                {t('creator.lessonEditor.rewindConfirmCreate', { count: rewindBranchCount })}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
