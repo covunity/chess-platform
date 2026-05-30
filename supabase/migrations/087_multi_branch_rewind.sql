@@ -6,7 +6,8 @@
 
 -- 1. Remove the old trigger and function (FE manages siblings from here on)
 DROP TRIGGER IF EXISTS trg_sync_rewind_sibling ON public.lessons;
-DROP FUNCTION IF EXISTS public.sync_rewind_sibling();
+DROP TRIGGER IF EXISTS sync_rewind_sibling_trg ON public.lessons;
+DROP FUNCTION IF EXISTS public.sync_rewind_sibling() CASCADE;
 
 -- 2. RPC: atomically create/replace all rewind siblings for a source lesson
 --    p_source_id   — uuid of the source chess lesson
