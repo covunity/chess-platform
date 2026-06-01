@@ -184,7 +184,7 @@ export default function HomePage() {
             >
               {hero('headline1', 'home.heroHeadline1')}
               <br />
-              <em style={{ color: 'var(--accent)', fontStyle: 'italic' }}>
+              <em style={{ color: 'var(--accent-ink)', fontStyle: 'italic' }}>
                 {hero('headline2', 'home.heroHeadline2')}
               </em>
             </h1>
