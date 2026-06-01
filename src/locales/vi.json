@@ -1,6 +1,6 @@
 {
   "nav": {
-    "title": "Gambitly",
+    "title": "Counity",
     "home": "Trang chủ",
     "browse": "Khám phá",
     "practice": "Luyện tập",
@@ -30,7 +30,7 @@
   "becomeCreator": {
     "eyebrow": "TRỞ THÀNH CREATOR",
     "heading": "Chia sẻ kiến thức cờ vua của bạn.",
-    "intro": "Gambitly tuyển chọn các creator có chuyên môn cờ vua rõ ràng. Sau khi gửi đơn, đội ngũ admin sẽ xem xét và phản hồi qua email trong vòng vài ngày.",
+    "intro": "Counity tuyển chọn các creator có chuyên môn cờ vua rõ ràng. Sau khi gửi đơn, đội ngũ admin sẽ xem xét và phản hồi qua email trong vòng vài ngày.",
     "alreadyCreatorHeading": "Bạn đã là creator.",
     "alreadyCreatorBody": "Bạn đã có quyền tạo và xuất bản khóa học. Truy cập Creator Studio để bắt đầu.",
     "alreadyEnterpriseHeading": "Bạn đã là enterprise creator.",
@@ -1263,7 +1263,7 @@
       "password": "Mật khẩu",
       "forgotPassword": "Quên mật khẩu?",
       "cta": "Đăng nhập",
-      "footerPrompt": "Mới dùng Gambitly?",
+      "footerPrompt": "Mới dùng Counity?",
       "footerLink": "Tạo tài khoản"
     },
     "forgotPassword": {

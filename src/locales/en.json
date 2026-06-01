@@ -1,6 +1,6 @@
 {
   "nav": {
-    "title": "Gambitly",
+    "title": "Counity",
     "home": "Home",
     "signIn": "Sign in",
     "createAccount": "Create account",
@@ -22,7 +22,7 @@
   "becomeCreator": {
     "eyebrow": "BECOME A CREATOR",
     "heading": "Share your chess expertise.",
-    "intro": "Gambitly curates creators with clear chess expertise. After you submit, our admin team will review and reply by email within a few days.",
+    "intro": "Counity curates creators with clear chess expertise. After you submit, our admin team will review and reply by email within a few days.",
     "alreadyCreatorHeading": "You're already a creator.",
     "alreadyCreatorBody": "You can create and publish courses. Open the Creator Studio to get started.",
     "openStudio": "Open Creator Studio",
@@ -632,7 +632,7 @@
       "password": "Password",
       "forgotPassword": "Forgot password?",
       "cta": "Sign in",
-      "footerPrompt": "New to Gambitly?",
+      "footerPrompt": "New to Counity?",
       "footerLink": "Create one"
     },
     "forgotPassword": {

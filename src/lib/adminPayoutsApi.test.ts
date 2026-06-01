@@ -106,9 +106,9 @@ describe('buildPayoutsCsv', () => {
     expect(lines[2].startsWith('2,')).toBe(true)
   })
 
-  it('formats memo as "Gambitly payout T<MM>-<YYYY> [creator_name]"', () => {
+  it('formats memo as "Counity payout T<MM>-<YYYY> [creator_name]"', () => {
     const csv = buildPayoutsCsv([payout], new Date('2026-05-19T00:00:00Z'))
-    expect(csv).toContain('Gambitly payout T05-2026 Alice Nguyễn')
+    expect(csv).toContain('Counity payout T05-2026 Alice Nguyễn')
   })
 
   it('escapes quotes and commas in creator names', () => {

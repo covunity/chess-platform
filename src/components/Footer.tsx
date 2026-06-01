@@ -6,7 +6,10 @@ export default function Footer() {
   return (
     <footer className="border-t border-(--border) bg-(--surface-2) py-6 px-14">
       <div className="max-w-[1280px] mx-auto flex flex-wrap items-center gap-6 text-[13px] text-(--ink-3)">
-        <span className="font-serif text-(--ink-1)">Gambitly</span>
+        <span className="font-serif">
+          <span style={{ color: '#9610d5' }}>Co</span>
+          <span className="text-(--ink-1)">un<span className="brand-dotless-i">ı</span>ty</span>
+        </span>
         <Link to="/become-creator">{t('footer.becomeCreator', 'Trở thành creator')}</Link>
         <Link to="/help">{t('footer.help', 'Trợ giúp')}</Link>
         <Link to="/terms">{t('footer.terms', 'Điều khoản')}</Link>

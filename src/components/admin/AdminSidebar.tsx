@@ -60,9 +60,12 @@ export default function AdminSidebar() {
     >
       {/* Logo + eyebrow */}
       <div className="px-4 pt-5 pb-4">
-        <Link to="/" className="flex items-center gap-2 mb-1" aria-label="Gambitly home" style={{ textDecoration: 'none' }}>
-          <span className="logo-mark" aria-hidden="true" style={{ fontSize: 17 }} />
-          <span className="font-serif text-base text-(--ink-1)">Gambitly</span>
+        <Link to="/" className="flex items-center gap-2 mb-1" aria-label="Counity home" style={{ textDecoration: 'none' }}>
+          <span className="logo-mark" aria-hidden="true" />
+          <span className="font-serif text-base">
+            <span style={{ color: '#9610d5' }}>Co</span>
+            <span className="text-(--ink-1)">un<span className="brand-dotless-i">ı</span>ty</span>
+          </span>
         </Link>
         <p
           className="text-(--ink-3) uppercase font-medium tracking-widest"

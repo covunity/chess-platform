@@ -1,4 +1,4 @@
-# Social OAuth setup — Google & Facebook
+﻿# Social OAuth setup — Google & Facebook
 
 Phase 1 ships social login via Supabase Auth. This page covers the **HITL**
 (human-in-the-loop) steps needed to wire real credentials. The frontend
@@ -23,7 +23,7 @@ into Supabase, the buttons start working.
 1. Go to <https://console.cloud.google.com> → create or pick a project.
 2. **APIs & Services → OAuth consent screen**
    - User type: **External**.
-   - App name: `Gambitly`, support email, developer email.
+   - App name: `Counity`, support email, developer email.
    - Authorized domains: your production app domain + `supabase.co`.
    - Scopes: `userinfo.email`, `userinfo.profile`, `openid` (default).
    - Add yourself as a Test user while the app is in `Testing` mode.
@@ -39,7 +39,7 @@ into Supabase, the buttons start working.
 
 1. Go to <https://developers.facebook.com/apps> → **Create App** → use case
    **Authenticate and request data from users with Facebook Login** →
-   App type **Business** (or **Consumer**, depending on org). Name: `Gambitly`.
+   App type **Business** (or **Consumer**, depending on org). Name: `Counity`.
 2. **Add product → Facebook Login → Web**
    - Site URL: `https://<APP_URL>`
 3. **Facebook Login → Settings**
@@ -47,7 +47,7 @@ into Supabase, the buttons start working.
 4. **App Settings → Basic**
    - Privacy Policy URL: `https://<APP_URL>/privacy`
    - Terms of Service URL: `https://<APP_URL>/terms`
-   - App icon: 1024×1024 Gambitly logo.
+   - App icon: 1024×1024 Counity logo.
    - Category: Education.
    - Copy **App ID** and **App secret**.
 5. **App Review → Permissions and features**
@@ -101,3 +101,4 @@ into Supabase, the buttons start working.
 - [ ] Facebook App Review submitted (`email` + `public_profile`).
 - [ ] Production rollout blocked until Facebook review is approved
       (`Development mode` only lets testers in).
+

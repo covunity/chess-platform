@@ -109,9 +109,9 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
         zIndex: 50,
       }}
     >
-      <Link to="/" className="flex items-center gap-2" aria-label="Gambitly home" style={{ flexShrink: 0 }}>
-        <span className="logo-mark" aria-hidden="true" />
-        <span style={{ fontFamily: 'var(--font-serif)', fontSize: 20, color: 'var(--ink-1)' }}>Gambitly</span>
+      <Link to="/" aria-label="Counity home" style={{ flexShrink: 0, display: 'flex' }}>
+        <img src="/icons/logo-light.svg" alt="" className="nav-logo nav-logo--light" />
+        <img src="/icons/logo-dark.svg"  alt="" className="nav-logo nav-logo--dark"  />
       </Link>
 
       {/* Nav links */}

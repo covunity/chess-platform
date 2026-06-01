@@ -78,7 +78,7 @@ function pad2(n: number): string {
 function memoFor(creatorDisplay: string, when: Date): string {
   const mm = pad2(when.getUTCMonth() + 1)
   const yyyy = when.getUTCFullYear()
-  return `Gambitly payout T${mm}-${yyyy} ${creatorDisplay}`
+  return `Counity payout T${mm}-${yyyy} ${creatorDisplay}`
 }
 
 /**

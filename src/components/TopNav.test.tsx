@@ -85,9 +85,9 @@ describe('TopNav', () => {
     expect(screen.getByRole('banner')).toBeInTheDocument()
   })
 
-  it('renders Gambitly brand name', () => {
+  it('renders Counity brand name', () => {
     renderNav()
-    expect(screen.getByText('Gambitly')).toBeInTheDocument()
+    expect(screen.getByLabelText('Counity home')).toBeInTheDocument()
   })
 
   it('has a link to the homepage', () => {

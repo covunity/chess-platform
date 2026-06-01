@@ -15,9 +15,8 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
     <div className="auth-split">
       <div className="auth-brand">
         <div className="auth-brand__logo">
-          <Link to="/" className="auth-brand__logo-link" aria-label={t('auth.backHome')}>
-            <span className="logo-mark" aria-hidden="true" />
-            <span className="auth-brand__logo-name">{t('nav.title')}</span>
+          <Link to="/" aria-label={t('auth.backHome')}>
+            <img src="/icons/logo-dark.svg" alt="Counity" style={{ height: 72, width: 'auto', display: 'block', marginLeft: '-35px' }} />
           </Link>
         </div>
 

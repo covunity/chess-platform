@@ -1,4 +1,4 @@
-# Gambitly Design System
+﻿# Counity Design System
 
 > Source files: `styles.css`, `shared.jsx`, `design-system/color.html`, `design-system/typography.html`, `screens/*.jsx`
 > Design target: Desktop 1440px. Aesthetic: modern SaaS, friendly, lots of whitespace.
@@ -161,7 +161,7 @@ PGN textarea: add `.mono` class (JetBrains Mono, 12.5px, line-height 1.6).
 Circular, 32px default. Background varies by user (use `oklch(0.85 0.07 200)` for the default/current user). Initials in font-weight 600, font-size 12px.
 
 ### Logo Mark
-`.logo-mark`: chess-board pattern icon (CSS gradient, 22×22px, border-radius 5px) + "Gambitly" in Newsreader serif 20px.
+`.logo-mark`: chess-board pattern icon (CSS gradient, 22×22px, border-radius 5px) + "Counity" in Newsreader serif 20px.
 
 ---
 
@@ -365,3 +365,4 @@ Rendered via Unicode chess pieces with CSS, not images. Board is a `8×8` CSS gr
 **`MiniBoard`** (for cards, lesson tree, admin queue): same as ChessBoard, `showCoords={false}`, default size 120px.
 
 **"Your move" indicator:** dark pill overlay (`rgba(20,22,26,0.85)`), top-right corner, "Your move" text, 11px.
+

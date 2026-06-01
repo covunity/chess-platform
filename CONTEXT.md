@@ -1,4 +1,4 @@
-# Gambitly — Domain Glossary
+﻿# Counity — Domain Glossary
 
 Canonical terms used across the codebase. When a term is ambiguous or
 overloaded, the definition here wins.
@@ -379,3 +379,4 @@ CREATE POLICY analytics_snapshots_admin_select
 can write. The RPC itself raises `'42501'` if `auth.uid()` is set and
 does not resolve to an admin, so non-admins can't trigger an
 unauthorized recompute.
+

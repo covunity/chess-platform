@@ -1,4 +1,4 @@
-# Gambitly — Chess Course Platform
+﻿# Counity — Chess Course Platform
 
 A modern SaaS platform for learning chess through structured courses. Built with React 18, TypeScript, Vite, and Supabase. Vietnamese-first UI with English support.
 
@@ -128,3 +128,4 @@ Pushes to `main` automatically deploy to Vercel via GitHub Actions. Set the foll
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
 - `VITE_VIDEO_PROVIDER` (set to `bunny` for production; omit or set to `supabase` for dev/staging)
+

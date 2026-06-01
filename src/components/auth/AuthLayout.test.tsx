@@ -35,8 +35,8 @@ describe('AuthLayout', () => {
     expect(screen.getByTestId('form-content')).toBeInTheDocument()
   })
 
-  it('renders logo-mark', () => {
+  it('renders brand logo image', () => {
     renderLayout()
-    expect(document.querySelector('.logo-mark')).toBeInTheDocument()
+    expect(screen.getByAltText('Counity')).toBeInTheDocument()
   })
 })
