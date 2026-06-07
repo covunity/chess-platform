@@ -107,6 +107,7 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
         position: 'sticky',
         top: 0,
         zIndex: 50,
+        minHeight: 70,
       }}
     >
       <Link to="/" aria-label="Counity home" style={{ flexShrink: 0, display: 'flex' }}>

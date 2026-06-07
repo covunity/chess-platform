@@ -7,12 +7,15 @@ import {
   getLearnerStats,
   getEnrolledCoursesProgress,
   getRecommendedCourses,
+  getDashboardWishlistCourses,
 } from '../lib/dashboardApi'
 import type {
   LearnerStats,
   EnrolledCourseProgress,
   RecommendedCourse,
 } from '../lib/dashboardApi'
+import { getWishlistCourses } from '../lib/wishlistApi'
+import type { WishlistCourse } from '../lib/wishlistApi'
 import { listMyOrders } from '../lib/orderApi'
 import type { MyOrderRow } from '../lib/orderApi'
 import MiniBoard from '../components/MiniBoard'
@@ -57,6 +60,14 @@ function BookIcon() {
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
       <path d="M4 4h11a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4z" />
       <path d="M4 4v15h12" />
+    </svg>
+  )
+}
+
+function HeartIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
     </svg>
   )
 }
@@ -255,6 +266,7 @@ export default function LearnerDashboardPage() {
   const [pendingOrders, setPendingOrders] = useState<MyOrderRow[]>([])
   const [cancelledOrders, setCancelledOrders] = useState<MyOrderRow[]>([])
   const [recommended, setRecommended] = useState<RecommendedCourse[]>([])
+  const [wishlistCourses, setWishlistCourses] = useState<WishlistCourse[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -266,13 +278,15 @@ export default function LearnerDashboardPage() {
       getRecommendedCourses(supabase, user.id, 3),
       listMyOrders(supabase, { status: 'pending' }),
       listMyOrders(supabase, { status: 'cancelled' }),
-    ]).then(([statsRes, enrolledRes, recRes, pendingRes, cancelledRes]) => {
+      getWishlistCourses(supabase, user.id),
+    ]).then(([statsRes, enrolledRes, recRes, pendingRes, cancelledRes, wishlistRes]) => {
       if (cancelled) return
       if (statsRes.stats) setStats(statsRes.stats)
       setEnrolled(enrolledRes.courses ?? [])
       setRecommended(recRes.courses ?? [])
       setPendingOrders(pendingRes.orders)
       setCancelledOrders(cancelledRes.orders)
+      setWishlistCourses(wishlistRes.courses ?? [])
       setLoading(false)
     })
     return () => { cancelled = true }
@@ -553,6 +567,107 @@ export default function LearnerDashboardPage() {
           </div>
         )}
       </section>
+
+      {/* Wishlist section */}
+      {wishlistCourses.length > 0 && (
+        <section style={{ marginBottom: 36 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--ink-1)', margin: 0 }}>
+              {t('dashboard.wishlistHeading', 'Danh sách quan tâm')}
+            </h2>
+            <span style={{ fontSize: 13, color: 'var(--accent-ink)', fontWeight: 500 }}>
+              {t('dashboard.wishlistCount', '{{count}} khóa học', { count: wishlistCourses.length })}
+            </span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+            {wishlistCourses.map(course => (
+              <Link
+                key={course.id}
+                to={`/courses/${course.id}`}
+                data-testid={`wishlist-course-${course.id}`}
+                style={{ textDecoration: 'none', color: 'inherit' }}
+              >
+                <div
+                  style={{
+                    background: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--r-lg)',
+                    overflow: 'hidden',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    cursor: 'pointer',
+                  }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'
+                    ;(e.currentTarget as HTMLElement).style.boxShadow = 'var(--sh-1)'
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
+                    ;(e.currentTarget as HTMLElement).style.boxShadow = 'none'
+                  }}
+                >
+                  {/* Thumbnail */}
+                  <div
+                    style={{
+                      width: '100%',
+                      height: 180,
+                      background: 'var(--surface-2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      overflow: 'hidden',
+                      position: 'relative',
+                    }}
+                  >
+                    {course.thumbnail_url ? (
+                      <img
+                        src={course.thumbnail_url}
+                        alt={course.title}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <div style={{ fontSize: 40, color: 'var(--ink-4)' }}>🎓</div>
+                    )}
+                  </div>
+                  {/* Content */}
+                  <div style={{ padding: 16 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                      <HeartIcon />
+                      <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>
+                        {new Date(course.added_at).toLocaleDateString('vi-VN', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                        })}
+                      </span>
+                    </div>
+                    <h3 style={{
+                      fontSize: 14,
+                      fontWeight: 600,
+                      color: 'var(--ink-1)',
+                      margin: '0 0 8px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical' as const,
+                    }}>
+                      {course.title}
+                    </h3>
+                    <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 12 }}>
+                      {course.creator_name ?? 'Unknown'} · ⭐ {course.rating_avg.toFixed(1)}
+                    </div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: course.price === 0 ? 'var(--success)' : 'var(--ink-1)' }}>
+                      {course.price === 0
+                        ? t('dashboard.priceFree', 'Miễn phí')
+                        : `${course.price.toLocaleString('vi-VN')} ₫`}
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Bottom row: Practice + Recommended */}
       <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 24 }}>

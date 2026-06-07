@@ -18,6 +18,7 @@ import { getPendingOrderForCourse } from '../lib/orderApi'
 import type { Order } from '../lib/orderApi'
 import { getActiveCampaignForCourse, computeCampaignDiscount } from '../lib/campaignsApi'
 import type { Campaign } from '../lib/campaignsApi'
+import { addToWishlist, removeFromWishlist, isInWishlist } from '../lib/wishlistApi'
 import { useAuth } from '../context/AuthContext'
 import { formatPrice } from '../lib/utils'
 import ChessBoard from '../components/ChessBoard/ChessBoard'
@@ -1203,6 +1204,8 @@ export default function CourseDetailPage() {
   const [displayedReviews, setDisplayedReviews] = useState<CourseDetail['reviews']>([])
   const [reviewPage, setReviewPage] = useState(1)
   const [reviewsLoadingMore, setReviewsLoadingMore] = useState(false)
+  const [isInWishlistState, setIsInWishlistState] = useState(false)
+  const [wishlistLoading, setWishlistLoading] = useState(true)
 
   const isCourseCreator = !!(course && user && course.creator_id === user.id)
 
@@ -1228,17 +1231,21 @@ export default function CourseDetailPage() {
   }, [courseId])
 
   useEffect(() => {
-    if (!user || !courseId || !course) return
+    if (!user || !courseId || !course) {
+      setWishlistLoading(false)
+      return
+    }
     if (course.creator_id === user.id) return
-    checkUserEnrollment(supabase, courseId, user.id).then(enrolled => {
-      setIsEnrolled(enrolled)
-    })
-    getUserReview(supabase, courseId, user.id).then(({ review }) => {
-      setUserReview(review)
-    })
-    getPendingOrderForCourse(supabase, courseId, user.id).then(({ order }) => {
-      setPendingOrder(order)
-    })
+    setWishlistLoading(true)
+    Promise.all([
+      checkUserEnrollment(supabase, courseId, user.id).then(enrolled => setIsEnrolled(enrolled)),
+      getUserReview(supabase, courseId, user.id).then(({ review }) => setUserReview(review)),
+      getPendingOrderForCourse(supabase, courseId, user.id).then(({ order }) => setPendingOrder(order)),
+      isInWishlist(supabase, user.id, courseId).then(({ inWishlist }) => {
+        setIsInWishlistState(inWishlist)
+        setWishlistLoading(false)
+      }),
+    ])
   }, [user, courseId, course])
 
   async function handleLoadMoreReviews() {
@@ -1249,6 +1256,30 @@ export default function CourseDetailPage() {
     setDisplayedReviews(prev => [...prev, ...more])
     setReviewPage(nextPage)
     setReviewsLoadingMore(false)
+  }
+
+  async function handleToggleWishlist() {
+    // If user not logged in, redirect to login
+    if (!user) {
+      navigate(`/login?redirect=/courses/${courseId}`)
+      return
+    }
+    
+    if (!courseId) return
+    
+    if (isInWishlistState) {
+      // Remove from wishlist
+      const { error } = await removeFromWishlist(supabase, user.id, courseId)
+      if (!error) {
+        setIsInWishlistState(false)
+      }
+    } else {
+      // Add to wishlist
+      const { error } = await addToWishlist(supabase, user.id, courseId)
+      if (!error) {
+        setIsInWishlistState(true)
+      }
+    }
   }
 
   function toggleChapter(chapterId: string) {
@@ -1731,12 +1762,17 @@ export default function CourseDetailPage() {
               </button>
 
               {/* Wishlist */}
-              {!isCourseCreator && (
-                <button type="button" className="btn btn-secondary" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              {!isCourseCreator && !isEnrolled && (
+                <button 
+                  type="button" 
+                  onClick={handleToggleWishlist}
+                  disabled={wishlistLoading && !!user}
+                  className="btn btn-secondary" 
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill={isInWishlistState && user ? 'oklch(0.7 0.16 80)' : 'none'} stroke={isInWishlistState && user ? 'oklch(0.7 0.16 80)' : 'currentColor'} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
                   </svg>
-                  {t('courseDetail.addWishlist')}
+                  {t(isInWishlistState && user ? 'courseDetail.removeWishlist' : 'courseDetail.addWishlist')}
                 </button>
               )}
 

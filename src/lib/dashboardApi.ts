@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { CourseLevel } from './creatorApi'
+import { getWishlistCourses } from './wishlistApi'
 
 export interface LearnerStats {
   currentStreak: number
@@ -337,4 +338,13 @@ export async function getRecommendedCourses(
   })
 
   return { courses: candidates.slice(0, Math.max(0, limit)), error: null }
+}
+
+// ── wishlist courses ────────────────────────────────────────────────────
+
+export async function getDashboardWishlistCourses(
+  client: SupabaseClient,
+  userId: string
+) {
+  return getWishlistCourses(client, userId)
 }
