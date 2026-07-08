@@ -60,7 +60,7 @@ export default function AdminSidebar() {
     >
       {/* Logo + eyebrow */}
       <div className="px-4 pt-5 pb-4">
-        <Link to="/" className="flex items-center gap-2 mb-1" aria-label="Counity home" style={{ textDecoration: 'none' }}>
+        <Link to="/" className="flex items-center gap-2 mb-1" aria-label="Covunity home" style={{ textDecoration: 'none' }}>
           <span className="logo-mark" aria-hidden="true" />
           <span className="font-serif text-base">
             <span style={{ color: '#9610d5' }}>Co</span>

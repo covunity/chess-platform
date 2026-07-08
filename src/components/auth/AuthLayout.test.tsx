@@ -37,6 +37,6 @@ describe('AuthLayout', () => {
 
   it('renders brand logo image', () => {
     renderLayout()
-    expect(screen.getByAltText('Counity')).toBeInTheDocument()
+    expect(screen.getByAltText('Covunity')).toBeInTheDocument()
   })
 })

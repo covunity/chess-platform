@@ -110,7 +110,7 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
         minHeight: 70,
       }}
     >
-      <Link to="/" aria-label="Counity home" style={{ flexShrink: 0, display: 'flex' }}>
+      <Link to="/" aria-label="Covunity home" style={{ flexShrink: 0, display: 'flex' }}>
         <img src="/icons/logo-light.svg" alt="" className="nav-logo nav-logo--light" />
         <img src="/icons/logo-dark.svg"  alt="" className="nav-logo nav-logo--dark"  />
       </Link>

@@ -16,7 +16,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       <div className="auth-brand">
         <div className="auth-brand__logo">
           <Link to="/" aria-label={t('auth.backHome')}>
-            <img src="/icons/logo-dark.svg" alt="Counity" style={{ height: 72, width: 'auto', display: 'block', marginLeft: '-35px' }} />
+            <img src="/icons/logo-dark.svg" alt="Covunity" style={{ height: 72, width: 'auto', display: 'block', marginLeft: '-35px' }} />
           </Link>
         </div>
 

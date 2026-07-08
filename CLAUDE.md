@@ -1,4 +1,4 @@
-﻿# Counity Chess Course Platform — CLAUDE.md
+﻿# Covunity Chess Course Platform — CLAUDE.md
 
 > PRD v1.1 | Phase 1 MVP | May 2026
 
@@ -176,7 +176,7 @@ Platform fee stored per tier in `account_tiers.platform_fee_pct`. The global `co
 | D-19 | Search uses PostgreSQL `ILIKE`. No Elasticsearch. |
 | D-20 | ToS and Privacy Policy are static pages. |
 | D-21 | Board-direct authoring co-exists with PGN; PGN is hidden behind a per-user `users.editor_advanced` toggle in Profile settings. Default is board-only. |
-| D-22 | Shapes attach to **nodes** in the variation tree, not to board positions; stored and round-tripped via structured PGN comments (`[Counity:v1]{...}`). |
+| D-22 | Shapes attach to **nodes** in the variation tree, not to board positions; stored and round-tripped via structured PGN comments (`[Covunity:v1]{...}`). |
 | D-24 | Viewer mode (`is_view_only`) is a per-lesson opt-in for `type='chess'` only; D-12 forward-only still holds for interactive lesson mode. |
 | D-25 | Zustand introduced for editor state only (`treeStore`); player and viewer modes remain on local `useState`. |
 

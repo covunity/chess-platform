@@ -6,9 +6,9 @@ export default function PrivacyPage() {
 
       <div className="prose" style={{ color: 'var(--ink-2)', lineHeight: 1.75, fontSize: 15 }}>
         <p>
-          Counity (&ldquo;chúng tôi&rdquo;, &ldquo;nền tảng&rdquo;) cam kết bảo vệ quyền riêng tư của bạn.
+          Covunity (&ldquo;chúng tôi&rdquo;, &ldquo;nền tảng&rdquo;) cam kết bảo vệ quyền riêng tư của bạn.
           Chính sách này giải thích cách chúng tôi thu thập, sử dụng và bảo vệ thông tin cá nhân khi bạn
-          sử dụng trang web và dịch vụ của Counity.
+          sử dụng trang web và dịch vụ của Covunity.
         </p>
 
         <h2 className="font-serif text-xl mt-10 mb-4" style={{ color: 'var(--ink-1)' }}>1. Thông tin chúng tôi thu thập</h2>
@@ -43,7 +43,7 @@ export default function PrivacyPage() {
 
         <h2 className="font-serif text-xl mt-10 mb-4" style={{ color: 'var(--ink-1)' }}>2. Mục đích sử dụng thông tin</h2>
         <ul style={{ paddingLeft: 20, listStyleType: 'disc' }}>
-          <li>Cung cấp, duy trì và cải thiện dịch vụ Counity.</li>
+          <li>Cung cấp, duy trì và cải thiện dịch vụ Covunity.</li>
           <li>Xử lý đơn hàng và xác nhận thanh toán.</li>
           <li>Hiển thị tiến độ học tập và gợi ý khóa học phù hợp.</li>
           <li>Gửi thông báo liên quan đến tài khoản (xác nhận đăng ký, đặt lại mật khẩu, cập nhật đơn hàng).</li>
@@ -68,7 +68,7 @@ export default function PrivacyPage() {
 
         <h2 className="font-serif text-xl mt-10 mb-4" style={{ color: 'var(--ink-1)' }}>5. Cookie và lưu trữ cục bộ</h2>
         <p>
-          Counity sử dụng localStorage để lưu phiên đăng nhập và tùy chọn giao diện.
+          Covunity sử dụng localStorage để lưu phiên đăng nhập và tùy chọn giao diện.
           Chúng tôi không sử dụng cookie theo dõi của bên thứ ba. Không có quảng cáo trên nền tảng.
         </p>
 
@@ -84,7 +84,7 @@ export default function PrivacyPage() {
 
         <h2 className="font-serif text-xl mt-10 mb-4" style={{ color: 'var(--ink-1)' }}>7. Bảo vệ trẻ em</h2>
         <p>
-          Counity không hướng đến trẻ em dưới 13 tuổi. Nếu phát hiện tài khoản thuộc về trẻ em dưới 13 tuổi,
+          Covunity không hướng đến trẻ em dưới 13 tuổi. Nếu phát hiện tài khoản thuộc về trẻ em dưới 13 tuổi,
           chúng tôi sẽ xóa tài khoản và dữ liệu liên quan.
         </p>
 

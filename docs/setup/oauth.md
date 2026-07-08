@@ -23,7 +23,7 @@ into Supabase, the buttons start working.
 1. Go to <https://console.cloud.google.com> → create or pick a project.
 2. **APIs & Services → OAuth consent screen**
    - User type: **External**.
-   - App name: `Counity`, support email, developer email.
+   - App name: `Covunity`, support email, developer email.
    - Authorized domains: your production app domain + `supabase.co`.
    - Scopes: `userinfo.email`, `userinfo.profile`, `openid` (default).
    - Add yourself as a Test user while the app is in `Testing` mode.
@@ -39,7 +39,7 @@ into Supabase, the buttons start working.
 
 1. Go to <https://developers.facebook.com/apps> → **Create App** → use case
    **Authenticate and request data from users with Facebook Login** →
-   App type **Business** (or **Consumer**, depending on org). Name: `Counity`.
+   App type **Business** (or **Consumer**, depending on org). Name: `Covunity`.
 2. **Add product → Facebook Login → Web**
    - Site URL: `https://<APP_URL>`
 3. **Facebook Login → Settings**
@@ -47,7 +47,7 @@ into Supabase, the buttons start working.
 4. **App Settings → Basic**
    - Privacy Policy URL: `https://<APP_URL>/privacy`
    - Terms of Service URL: `https://<APP_URL>/terms`
-   - App icon: 1024×1024 Counity logo.
+   - App icon: 1024×1024 Covunity logo.
    - Category: Education.
    - Copy **App ID** and **App secret**.
 5. **App Review → Permissions and features**

@@ -1,4 +1,4 @@
-﻿# Counity — Chess Course Platform
+﻿# Covunity — Chess Course Platform
 
 A modern SaaS platform for learning chess through structured courses. Built with React 18, TypeScript, Vite, and Supabase. Vietnamese-first UI with English support.
 

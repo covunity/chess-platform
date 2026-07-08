@@ -1,4 +1,4 @@
-﻿# Counity — Domain Glossary
+﻿# Covunity — Domain Glossary
 
 Canonical terms used across the codebase. When a term is ambiguous or
 overloaded, the definition here wins.

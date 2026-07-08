@@ -85,9 +85,9 @@ describe('TopNav', () => {
     expect(screen.getByRole('banner')).toBeInTheDocument()
   })
 
-  it('renders Counity brand name', () => {
+  it('renders Covunity brand name', () => {
     renderNav()
-    expect(screen.getByLabelText('Counity home')).toBeInTheDocument()
+    expect(screen.getByLabelText('Covunity home')).toBeInTheDocument()
   })
 
   it('has a link to the homepage', () => {

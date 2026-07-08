@@ -299,7 +299,7 @@ body {
 
 /* Theme-adaptive full-banner logo used in TopNav */
 .nav-logo {
-  height: 68px;
+  height: 75px;
   width: auto;
   display: block;
   flex-shrink: 0;
@@ -308,7 +308,7 @@ body {
 [data-theme="dark"] .nav-logo--light { display: none; }
 [data-theme="dark"] .nav-logo--dark  { display: block; }
 
-/* Dotless-i (ı) with a purple tittle for the brand name "Counity" */
+/* Dotless-i (ı) with a purple tittle for the brand name "Covunity" */
 .brand-dotless-i {
   position: relative;
   display: inline-block;
