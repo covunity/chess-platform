@@ -133,6 +133,7 @@ export async function confirmOrderViaPayos(
   });
 
   if (error) {
+    console.error("[DEBUG] Chi tiết lỗi từ Postgres:", JSON.stringify(error, null, 2));
     const message = (error as { message?: string }).message ?? "";
     const code = (error as { code?: string }).code ?? "";
     if (code === "23505" || /unique/i.test(message)) {
@@ -290,7 +291,10 @@ serve(async (req: Request) => {
   //   - error:               log and swallow; admin emergency-confirm fallback
   if (outcome.kind === "error") {
     // Do not echo the payload — PRD-0005 §7 risk row.
-    console.error("payos-webhook: rpc error", { kind: outcome.kind });
+    console.error("payos-webhook: rpc error", {
+      kind: outcome.kind,
+      message: outcome.message,
+    });
   } else if (outcome.kind === "late_paid") {
     console.warn("payos-webhook: late paid (expired → active) — D9a");
   } else if (outcome.kind === "refund_pending") {
