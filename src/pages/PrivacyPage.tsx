@@ -94,13 +94,13 @@ export default function PrivacyPage() {
           Với những thay đổi quan trọng, chúng tôi sẽ thông báo qua email hoặc banner trên trang web.
         </p>
 
-        <h2 className="font-serif text-xl mt-10 mb-4" style={{ color: 'var(--ink-1)' }}>9. Liên hệ</h2>
+        {/* <h2 className="font-serif text-xl mt-10 mb-4" style={{ color: 'var(--ink-1)' }}>9. Liên hệ</h2>
         <p>
           Nếu có câu hỏi về chính sách quyền riêng tư, vui lòng liên hệ:
         </p>
         <ul style={{ paddingLeft: 20, listStyleType: 'disc' }}>
           <li>Email: <a href="mailto:support@gambitly.com" className="link-accent">support@gambitly.com</a></li>
-        </ul>
+        </ul> */}
       </div>
     </main>
   )
