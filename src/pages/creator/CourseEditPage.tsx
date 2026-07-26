@@ -20,8 +20,9 @@ import { parsePgn, extractLeafPaths, leafPathToPgn } from '../../utils/parsePgn'
 import type { Chapter, CourseLevel, CourseStatus, Lesson, LessonType, PublishReadiness } from '../../lib/creatorApi'
 import LessonEditor from '../../components/LessonEditor/LessonEditor'
 import CourseTagsSelect from '../../components/CourseTagsSelect'
+import NewChapterModal, { type NewChapterSubmitData } from '../../components/creator/NewChapterModal'
 import { useAuth } from '../../context/AuthContext'
-import { useAccountTiers } from '../../lib/accountTiers'
+import { useAccountTiers, computeFeeFloor } from '../../lib/accountTiers'
 import { fetchCoursePriceLimits, getLimitForLevel } from '../../lib/coursePriceLimits'
 import type { CoursePriceLimit } from '../../lib/coursePriceLimits'
 import { Video, ChessKnight, Puzzle, Eye, ExternalLink } from 'lucide-react'
@@ -545,6 +546,7 @@ export default function CourseEditPage() {
   const [displayedLesson, setDisplayedLesson] = useState<Lesson | null>(null)
   const [isLessonTransitioning, setIsLessonTransitioning] = useState(false)
   const [newLessonChapterId, setNewLessonChapterId] = useState<string | null>(null)
+  const [showNewChapterModal, setShowNewChapterModal] = useState(false)
 
   const [courseTitle, setCourseTitle] = useState('')
   const [courseDescription, setCourseDescription] = useState('')
@@ -721,16 +723,88 @@ export default function CourseEditPage() {
     refreshReadiness()
   }
 
-  async function handleAddChapter() {
+  function handleOpenAddChapterModal() {
+    setShowNewChapterModal(true)
+  }
+
+  async function handleCreateChapterSubmit(data: NewChapterSubmitData) {
     if (!courseId) return
     const position = chapters.length
-    const { chapter } = await createChapter(supabase, courseId, {
-      title: `${t('creator.courseEdit.chapterPlaceholder')} ${position + 1}`,
+    const { chapter, error: chErr } = await createChapter(supabase, courseId, {
+      title: data.chapterTitle,
       position,
     })
-    if (chapter) {
-      setChapters(prev => [...prev, { ...chapter, lessons: [] }])
-      await refreshReadiness()
+
+    if (chErr || !chapter) {
+      showToast('Lỗi tạo chương!')
+      return
+    }
+
+    // Handle lesson creation depending on inputType
+    if (data.inputType === 'pgn' && data.parsedGames.length > 0) {
+      for (let i = 0; i < data.parsedGames.length; i++) {
+        const g = data.parsedGames[i]
+        const { lesson } = await createLesson(supabase, chapter.id, {
+          title: g.title,
+          type: 'chess',
+          position: i,
+          free_preview: false,
+        })
+        if (lesson) {
+          await updateLesson(supabase, lesson.id, {
+            pgn_data: g.pgn,
+            board_perspective: data.boardPerspective,
+          })
+        }
+      }
+    } else if (data.inputType === 'fen' && data.rawText.trim()) {
+      const fenPgn = `[FEN "${data.rawText.trim()}"]\n*`
+      const { lesson } = await createLesson(supabase, chapter.id, {
+        title: 'Thế cờ',
+        type: 'chess',
+        position: 0,
+        free_preview: false,
+      })
+      if (lesson) {
+        await updateLesson(supabase, lesson.id, {
+          pgn_data: fenPgn,
+          board_perspective: data.boardPerspective,
+        })
+      }
+    } else if (data.inputType === 'url' && data.rawText.trim()) {
+      const { lesson } = await createLesson(supabase, chapter.id, {
+        title: 'Bài học từ URL',
+        type: 'chess',
+        position: 0,
+        free_preview: false,
+      })
+      if (lesson) {
+        await updateLesson(supabase, lesson.id, {
+          description: data.rawText.trim(),
+          board_perspective: data.boardPerspective,
+        })
+      }
+    } else {
+      // Empty type or fallback: create 1 default blank lesson
+      await createLesson(supabase, chapter.id, {
+        title: `${t('creator.courseEdit.lessonPlaceholder')} 1`,
+        type: 'chess',
+        position: 0,
+        free_preview: false,
+      })
+    }
+
+    // Refresh chapters list
+    const { chapters: freshChapters } = await listChapters(supabase, courseId)
+    setChapters(freshChapters)
+    await refreshReadiness()
+    setShowNewChapterModal(false)
+
+    // Auto-select newly created lesson
+    const newChapter = freshChapters.find(ch => ch.id === chapter.id)
+    const firstLesson = newChapter?.lessons?.[0]
+    if (firstLesson) {
+      switchLesson(firstLesson)
     }
   }
 
@@ -901,7 +975,7 @@ export default function CourseEditPage() {
       {/* Curriculum Sidebar */}
       <aside
         data-testid="curriculum-sidebar"
-        style={{ width: 260, background: 'var(--surface-2)', borderRight: '1px solid var(--border)', flexShrink: 0 }}
+        style={{ width: 320, background: 'var(--surface-2)', borderRight: '1px solid var(--border)', flexShrink: 0 }}
         className="flex flex-col"
       >
         <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
@@ -990,7 +1064,7 @@ export default function CourseEditPage() {
                       opacity: atLimit ? 0.5 : undefined,
                     }}
                     disabled={atLimit}
-                    onClick={handleAddChapter}
+                    onClick={handleOpenAddChapterModal}
                   >
                     {t('creator.courseEdit.addChapter')}
                   </button>
@@ -1178,6 +1252,34 @@ export default function CourseEditPage() {
                     {coursePriceError}
                   </p>
                 )}
+                {(profile?.account_tier_id || profile?.role === 'admin') && (() => {
+                  const tier = profile?.account_tier_id ? getTier(profile.account_tier_id) : null
+                  if (!tier && profile?.role !== 'admin') return null
+                  const feePct = profile?.role === 'admin' ? 0 : (tier?.platform_fee_pct ?? 20)
+                  if (coursePrice === 0) {
+                    return (
+                      <p data-testid="ci-fee-preview" className="text-xs mt-1" style={{ color: 'var(--success)' }}>
+                        {t('creator.newCourse.feePreview.free')}
+                      </p>
+                    )
+                  }
+                  const feeAmount = computeFeeFloor(coursePrice, feePct)
+                  const payoutAmount = coursePrice - feeAmount
+                  return (
+                    <p data-testid="ci-fee-preview" className="text-xs mt-1 text-(--ink-2)">
+                      {t('creator.newCourse.feePreview.label')}{' '}
+                      <span className="font-medium">
+                        {t('creator.newCourse.feePreview.pct', { pct: feePct })}{' '}
+                        {t('creator.newCourse.feePreview.feeAmount', { amount: feeAmount.toLocaleString('vi-VN') })}
+                      </span>
+                      {' · '}
+                      {t('creator.newCourse.feePreview.youReceive')}{' '}
+                      <span className="font-semibold" style={{ color: 'var(--success)' }}>
+                        {t('creator.newCourse.feePreview.payoutAmount', { amount: payoutAmount.toLocaleString('vi-VN') })}
+                      </span>
+                    </p>
+                  )
+                })()}
               </div>
               <div style={{ flex: 1 }}>
                 <label className="label" htmlFor="ci-level">{t('creator.courseEdit.courseInfo.labelLevel')}</label>
@@ -1295,6 +1397,15 @@ export default function CourseEditPage() {
             </div>
           </div>
         </div>
+      )}
+      {/* New Chapter Modal */}
+      {showNewChapterModal && (
+        <NewChapterModal
+          defaultChapterNumber={chapters.length + 1}
+          onCancel={() => setShowNewChapterModal(false)}
+          onCreate={handleCreateChapterSubmit}
+          t={t}
+        />
       )}
     </div>
   )

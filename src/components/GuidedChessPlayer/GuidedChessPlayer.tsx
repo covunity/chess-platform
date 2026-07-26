@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next'
 import { Chess } from 'chess.js'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import ChessgroundView from '../ChessBoard/ChessgroundView'
-import { parsePgn } from '../../utils/parsePgn'
+import { parsePgn, formatSanForDisplay } from '../../utils/parsePgn'
+import { renderSanWithIcon } from '../../utils/renderSanWithIcon'
 import type { PgnNode, Shape, RichTextDoc } from '../../utils/parsePgn'
 import PromotionPicker from './PromotionPicker'
 import type { PromotionPiece } from './PromotionPicker'
@@ -591,8 +592,10 @@ export default function GuidedChessPlayer({
     moveNumber: number
     white?: string
     whiteId?: string
+    whiteNote?: RichTextDoc | null
     black?: string
     blackId?: string
+    blackNote?: RichTextDoc | null
     note?: RichTextDoc | null
   }
   const moveLogSourceNodes: PgnNode[] = isViewer ? parsed.mainLine : pathFromRoot
@@ -606,14 +609,32 @@ export default function GuidedChessPlayer({
     if (node.side === 'w') {
       playedFullMoves[idx].white = node.san
       playedFullMoves[idx].whiteId = node.id
+      if (node.note) {
+        playedFullMoves[idx].whiteNote = node.note
+        if (!playedFullMoves[idx].note) playedFullMoves[idx].note = node.note
+      }
     } else {
       playedFullMoves[idx].black = node.san
       playedFullMoves[idx].blackId = node.id
-    }
-    if (node.note && !playedFullMoves[idx].note) {
-      playedFullMoves[idx].note = node.note
+      if (node.note) {
+        playedFullMoves[idx].blackNote = node.note
+        if (!playedFullMoves[idx].note) playedFullMoves[idx].note = node.note
+      }
     }
   }
+
+  const moveLogRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!currentNodeId || currentNodeId === 'root') return
+    const activeEl =
+      moveLogRef.current?.querySelector(`[data-testid="move-log-annotation-${currentNodeId}"]`) ??
+      moveLogRef.current?.querySelector(`[data-testid="move-jump-${currentNodeId}"]`) ??
+      moveLogRef.current?.querySelector(`.guided-player-move-san-current`)
+    if (activeEl && typeof activeEl.scrollIntoView === 'function') {
+      activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }
+  }, [currentNodeId])
 
   // Annotations from path (covers main line and variations)
 
@@ -798,7 +819,7 @@ export default function GuidedChessPlayer({
         </div>
 
         {/* Scrollable body: move log + your-turn + coach note */}
-        <div data-testid="guided-player-move-log" className="guided-player-annotation-body">
+        <div ref={moveLogRef} data-testid="guided-player-move-log" className="guided-player-annotation-body">
           {playedFullMoves.map((entry, idx) => {
             const isLast = idx === playedFullMoves.length - 1
             const whiteIsCurrent = !!entry.whiteId && entry.whiteId === currentNodeId
@@ -824,10 +845,10 @@ export default function GuidedChessPlayer({
                         className={`guided-player-move-san guided-player-move-san-jump${whiteIsCurrent ? ' guided-player-move-san-current' : ''}`}
                         onClick={() => entry.whiteId && setCurrentNodeId(entry.whiteId)}
                       >
-                        {entry.white}
+                        {renderSanWithIcon(entry.white)}
                       </button>
                     ) : (
-                      <span className={`guided-player-move-san${whiteIsCurrent ? ' guided-player-move-san-current' : ''}`}>{entry.white}</span>
+                      <span className={`guided-player-move-san${whiteIsCurrent ? ' guided-player-move-san-current' : ''}`}>{renderSanWithIcon(entry.white)}</span>
                     )
                   ) : (
                     <span className="guided-player-move-san" />
@@ -841,20 +862,43 @@ export default function GuidedChessPlayer({
                         className={`guided-player-move-san guided-player-move-san-jump${blackIsCurrent ? ' guided-player-move-san-current' : ''}`}
                         onClick={() => entry.blackId && setCurrentNodeId(entry.blackId)}
                       >
-                        {entry.black}
+                        {renderSanWithIcon(entry.black)}
                       </button>
                     ) : (
-                      <span className={`guided-player-move-san${blackIsCurrent ? ' guided-player-move-san-current' : ''}`}>{entry.black}</span>
+                      <span className={`guided-player-move-san${blackIsCurrent ? ' guided-player-move-san-current' : ''}`}>{renderSanWithIcon(entry.black)}</span>
                     )
                   )}
                 </div>
-                {entry.note && showAnnotationNotes && (
-                  <div
-                    data-testid={`move-log-annotation-${entry.moveNumber}`}
-                    className="guided-player-move-annotation"
-                  >
-                    <NoteView note={entry.note} />
-                  </div>
+                {showAnnotationNotes && (entry.whiteNote || entry.blackNote || entry.note) && (
+                  <>
+                    {entry.whiteNote && (
+                      <div
+                        data-testid={`move-log-annotation-${entry.moveNumber}`}
+                        className="guided-player-move-annotation"
+                        style={{ whiteSpace: 'pre-wrap' }}
+                      >
+                        <NoteView note={entry.whiteNote} />
+                      </div>
+                    )}
+                    {entry.blackNote && entry.blackNote !== entry.whiteNote && (
+                      <div
+                        data-testid={`move-log-annotation-${entry.moveNumber}`}
+                        className="guided-player-move-annotation"
+                        style={{ whiteSpace: 'pre-wrap' }}
+                      >
+                        <NoteView note={entry.blackNote} />
+                      </div>
+                    )}
+                    {!entry.whiteNote && !entry.blackNote && entry.note && (
+                      <div
+                        data-testid={`move-log-annotation-${entry.moveNumber}`}
+                        className="guided-player-move-annotation"
+                        style={{ whiteSpace: 'pre-wrap' }}
+                      >
+                        <NoteView note={entry.note} />
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )

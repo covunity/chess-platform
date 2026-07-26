@@ -940,11 +940,93 @@ body {
 }
 
 .guided-player-move-annotation {
-  margin: 0;
-  font-size: 14px;
-  color: var(--ink-2);
-  line-height: 1.55;
-  padding-left: 30px;
+  margin: 6px 0 10px;
+  font-size: 13.5px;
+  color: var(--ink-1);
+  line-height: 1.6;
+  padding: 10px 14px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  white-space: pre-wrap;
+}
+
+/* Board coordinates: Lichess / Chess.com style (files in bottom-left of rank 1 squares, ranks in top-right of file h squares) */
+.cg-wrap coords {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none !important;
+  user-select: none !important;
+  font-family: var(--font-sans, system-ui, sans-serif) !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+  opacity: 0.95 !important;
+}
+
+.cg-wrap coords.ranks {
+  display: flex !important;
+  flex-direction: column-reverse !important;
+  top: 0 !important;
+  right: 0 !important;
+  left: auto !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.cg-wrap coords.ranks.black {
+  flex-direction: column !important;
+}
+
+.cg-wrap coords.ranks coord {
+  height: 12.5% !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: flex-end !important;
+  padding: 3px 4px 0 0 !important;
+  transform: none !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+}
+
+.cg-wrap coords.files {
+  display: flex !important;
+  flex-direction: row !important;
+  bottom: 0 !important;
+  top: auto !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.cg-wrap coords.files.black {
+  flex-direction: row-reverse !important;
+}
+
+.cg-wrap coords.files coord {
+  width: 12.5% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: flex-start !important;
+  padding: 0 0 3px 4px !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+}
+
+/* Alternating color contrast for light vs dark squares (matching Chess.com / Lichess) */
+.cg-wrap coords.ranks coord:nth-child(odd),
+.cg-wrap coords.files coord:nth-child(odd) {
+  color: #739552 !important;
+}
+
+.cg-wrap coords.ranks coord:nth-child(even),
+.cg-wrap coords.files coord:nth-child(even) {
+  color: #eeeed2 !important;
 }
 
 /* Your turn / opponent prompts */
@@ -1086,6 +1168,14 @@ body {
 }
 
 /* TipTap editor — remove browser default focus outline on contenteditable */
+.ProseMirror {
+  min-height: 80px;
+  max-height: 100%;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  line-height: 1.6;
+  color: var(--ink-1);
+}
 .ProseMirror:focus {
   outline: none;
 }
@@ -1112,4 +1202,17 @@ body {
   list-style-type: decimal;
   padding-left: 20px;
   margin: 0 0 6px;
+}
+
+/* Move list piece icon styling — bold, enlarged, high contrast on light & dark themes */
+.chess-piece-glyph {
+  font-size: 1.3em;
+  font-weight: 800;
+  line-height: 1;
+  display: inline-block;
+  margin-right: 2px;
+  vertical-align: -1px;
+  color: var(--ink-1);
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.4));
+  font-family: "Segoe UI Symbol", "DejaVu Sans", "Arial Unicode MS", system-ui, sans-serif;
 }

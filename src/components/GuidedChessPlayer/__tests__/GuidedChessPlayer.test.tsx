@@ -1786,9 +1786,9 @@ describe('GuidedChessPlayer — rewind sibling lesson (issue #244)', () => {
     // SAMPLE_PGN main line is e4 e5 Nf3 Nc6 Bb5 — three full-move blocks.
     expect(screen.getByTestId('move-block-1')).toHaveTextContent(/e4/)
     expect(screen.getByTestId('move-block-1')).toHaveTextContent(/e5/)
-    expect(screen.getByTestId('move-block-2')).toHaveTextContent(/Nf3/)
-    expect(screen.getByTestId('move-block-2')).toHaveTextContent(/Nc6/)
-    expect(screen.getByTestId('move-block-3')).toHaveTextContent(/Bb5/)
+    expect(screen.getByTestId('move-block-2')).toHaveTextContent(/Nf3|Mf3|♘f3/)
+    expect(screen.getByTestId('move-block-2')).toHaveTextContent(/Nc6|Mc6|♘c6/)
+    expect(screen.getByTestId('move-block-3')).toHaveTextContent(/Bb5|Tb5|♗b5/)
   })
 
   it('lesson mode only shows played moves in the move log', () => {
@@ -1807,8 +1807,8 @@ describe('GuidedChessPlayer — rewind sibling lesson (issue #244)', () => {
         mode="viewer"
       />
     )
-    // Click "Nf3" — should advance currentNodeId so the prev-arrow becomes enabled.
-    const nf3 = screen.getByRole('button', { name: 'Nf3' })
+    // Click "Nf3" (rendered with icon ♘f3 in UI display) — should advance currentNodeId so the prev-arrow becomes enabled.
+    const nf3 = screen.getByRole('button', { name: /Nf3|Mf3|♘\s*f3/ })
     await user.click(nf3)
     expect(screen.getByTestId('viewer-prev-btn')).toBeEnabled()
   })

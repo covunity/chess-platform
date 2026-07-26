@@ -2,12 +2,60 @@
 -- Run after all migrations: psql $DATABASE_URL -f supabase/seed.sql
 -- Idempotent: uses INSERT ... ON CONFLICT DO NOTHING.
 
+-- ── Enable pgcrypto extension for auth user password hashing ──────────────────
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
+
 -- ── Account tier (required FK) ────────────────────────────────────────────────
 INSERT INTO public.account_tiers (code, name_vi, platform_fee_pct, max_chapters_per_course)
   VALUES ('individual', 'Cá nhân', 20, 10)
   ON CONFLICT (code) DO NOTHING;
 
--- ── Seed creator user ─────────────────────────────────────────────────────────
+-- ── Seed Admin user ───────────────────────────────────────────────────────────
+-- Email: admin@gambitly.demo | Password: password123
+INSERT INTO auth.users (
+  id, instance_id, email, encrypted_password, email_confirmed_at,
+  confirmation_token, recovery_token, email_change_token_new, email_change, reauthentication_token,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at, role, aud
+) VALUES (
+  '00000000-0000-0000-0000-000000000000',
+  '00000000-0000-0000-0000-000000000000',
+  'admin@gambitly.demo',
+  extensions.crypt('password123', extensions.gen_salt('bf')),
+  now(),
+  '', '', '', '', '',
+  '{"provider":"email","providers":["email"]}',
+  '{"name":"Demo Admin"}',
+  now(), now(), 'authenticated', 'authenticated'
+) ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.users (id, email, name, role, account_tier_id)
+  VALUES (
+    '00000000-0000-0000-0000-000000000000',
+    'admin@gambitly.demo',
+    'Demo Admin',
+    'admin',
+    'individual'
+  )
+  ON CONFLICT (id) DO UPDATE SET role = 'admin';
+
+-- ── Seed Creator user ─────────────────────────────────────────────────────────
+-- Email: creator@gambitly.demo | Password: password123
+INSERT INTO auth.users (
+  id, instance_id, email, encrypted_password, email_confirmed_at,
+  confirmation_token, recovery_token, email_change_token_new, email_change, reauthentication_token,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at, role, aud
+) VALUES (
+  '00000000-0000-0000-0000-000000000001',
+  '00000000-0000-0000-0000-000000000000',
+  'creator@gambitly.demo',
+  extensions.crypt('password123', extensions.gen_salt('bf')),
+  now(),
+  '', '', '', '', '',
+  '{"provider":"email","providers":["email"]}',
+  '{"name":"Demo Creator"}',
+  now(), now(), 'authenticated', 'authenticated'
+) ON CONFLICT (id) DO NOTHING;
+
 INSERT INTO public.users (id, email, name, role, account_tier_id)
   VALUES (
     '00000000-0000-0000-0000-000000000001',
@@ -16,7 +64,7 @@ INSERT INTO public.users (id, email, name, role, account_tier_id)
     'creator',
     'individual'
   )
-  ON CONFLICT (id) DO NOTHING;
+  ON CONFLICT (id) DO UPDATE SET role = 'creator';
 
 -- ── Seed demo course ──────────────────────────────────────────────────────────
 INSERT INTO public.courses (

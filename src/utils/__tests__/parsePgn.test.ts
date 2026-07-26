@@ -1,6 +1,6 @@
 import { readFileSync } from "fs";
 import { join } from "path";
-import { parsePgn } from "../parsePgn";
+import { parsePgn, formatSanForDisplay } from "../parsePgn";
 
 // ── Fixture loader ────────────────────────────────────────────────────────────
 
@@ -425,6 +425,29 @@ describe("parsePgn — tree structure (Slice 1A)", () => {
           n.id !== "root"
       );
       expect(annotatedVariationNodes.length).toBeGreaterThan(0);
+    });
+
+    it("supports Vietnamese and Unicode piece icons in PGN moves", () => {
+      const pgn = `1. e4 e5 2. Mf3 Mc6 3. Tb5 a6 4. Ba4 Mf6 5. O-O`;
+      const r = parsePgn(pgn);
+      expect(r.valid).toBe(true);
+      expect(r.mainLine[2].san).toBe("Nf3");
+      expect(r.mainLine[3].san).toBe("Nc6");
+      expect(r.mainLine[4].san).toBe("Bb5");
+    });
+
+    it("formats SAN moves with Unicode piece icons for UI display", () => {
+      expect(formatSanForDisplay("Nc3")).toBe("♘c3");
+      expect(formatSanForDisplay("Nc6")).toBe("♘c6");
+      expect(formatSanForDisplay("Mc3")).toBe("♘c3");
+      expect(formatSanForDisplay("Bg7")).toBe("♗g7");
+      expect(formatSanForDisplay("Bb5")).toBe("♗b5");
+      expect(formatSanForDisplay("Tb5")).toBe("♗b5");
+      expect(formatSanForDisplay("Qd4")).toBe("♕d4");
+      expect(formatSanForDisplay("Ke2")).toBe("♔e2");
+      expect(formatSanForDisplay("e4")).toBe("e4");
+      expect(formatSanForDisplay("c5")).toBe("c5");
+      expect(formatSanForDisplay("exd5")).toBe("exd5");
     });
   });
 });

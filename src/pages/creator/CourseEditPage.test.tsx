@@ -169,11 +169,13 @@ describe('CourseEditPage', () => {
     })
   })
 
-  it('calls createChapter when "+ Add chapter" is clicked', async () => {
+  it('opens NewChapterModal and calls createChapter when submitted', async () => {
     renderPage()
     await waitFor(() => screen.getByText('Introduction'))
 
     await userEvent.click(screen.getByTestId('add-chapter-btn'))
+    await waitFor(() => screen.getByTestId('new-chapter-modal'))
+    await userEvent.click(screen.getByTestId('new-chapter-submit-btn'))
 
     await waitFor(() => {
       expect(mockCreateChapter).toHaveBeenCalledWith(

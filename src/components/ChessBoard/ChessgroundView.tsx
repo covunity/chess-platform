@@ -93,6 +93,7 @@ function toConfig(
     fen: props.fen,
     orientation: color,
     turnColor,
+    coordinates: true,
     viewOnly: props.viewOnly ?? false,
     highlight: {
       lastMove: false, // we manage highlights manually via squareClasses

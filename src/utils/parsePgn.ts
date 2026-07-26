@@ -113,6 +113,71 @@ function makeNodeId(
   return fnv1a32(`${parentId ?? "root"}/${from}${to}${promotion}`);
 }
 
+/**
+ * Normalizes SAN move string converting Unicode piece icons (♔♕♖♗♘♚♛♜♝♞) or
+ * Vietnamese piece letters (V, H, X, T, M) to standard English SAN piece letters (K, Q, R, B, N).
+ * Pawns have no piece letter prefix.
+ */
+export function normalizeSanPiece(san: string): string {
+  if (!san) return san;
+
+  // 1. Replace Unicode piece icons
+  let clean = san
+    .replace(/[♔♚]/g, "K")
+    .replace(/[♕♛]/g, "Q")
+    .replace(/[♖♜]/g, "R")
+    .replace(/[♗♝]/g, "B")
+    .replace(/[♘♞]/g, "N")
+    .replace(/[♙♟]/g, "");
+
+  // 2. Normalize UPPERCASE Vietnamese piece letter prefixes if present (V->K, H->Q, X->R, T->B, M->N)
+  // Note: lowercase 'h' is file h (pawn move like h4, hxg5), so we ONLY match UPPERCASE V, H, X, T, M.
+  if (/^[VHXTM][a-h1-8x=]/.test(clean)) {
+    const first = clean[0];
+    const rest = clean.slice(1);
+    let piece = first;
+    if (first === "V") piece = "K";
+    else if (first === "H") piece = "Q";
+    else if (first === "X") piece = "R";
+    else if (first === "T") piece = "B";
+    else if (first === "M") piece = "N";
+    clean = piece + rest;
+  }
+
+  return clean;
+}
+
+/**
+ * Formats a SAN move string for UI display with Unicode chess piece icons.
+ * Converts English piece letters (N, B, R, Q, K) or Vietnamese piece letters (M, T, X, H, V)
+ * to Unicode piece icons (♘, ♗, ♖, ♕, ♔).
+ * Pawns have no piece letter prefix (e.g. e4, c5, f4, g6).
+ *
+ * Examples:
+ * - "Nc3" / "Mc3" -> "♘c3"
+ * - "Nc6" / "Mc6" -> "♘c6"
+ * - "Bg7" / "Tg7" -> "♗g7"
+ * - "Bb5" / "Tb5" -> "♗b5"
+ * - "Qd4" / "Hd4" -> "♕d4"
+ * - "Ke2" / "Ve2" -> "♔e2"
+ * - "e4", "c5", "exd5" -> unchanged!
+ */
+export function formatSanForDisplay(san: string): string {
+  if (!san) return san;
+  if (/^[NBRQKVMTHX]/.test(san)) {
+    const first = san[0];
+    const rest = san.slice(1);
+    let icon = first;
+    if (first === "N" || first === "M") icon = "♘";      // Mã / Knight
+    else if (first === "B" || first === "T") icon = "♗"; // Tượng / Bishop
+    else if (first === "R" || first === "X") icon = "♖"; // Xe / Rook
+    else if (first === "Q" || first === "H") icon = "♕"; // Hậu / Queen
+    else if (first === "K" || first === "V") icon = "♔"; // Vua / King
+    return icon + rest;
+  }
+  return san;
+}
+
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const START_FEN =
@@ -207,6 +272,8 @@ function tokenize(pgn: string): Token[] {
       const word = pgn.slice(i, j);
       i = j;
 
+
+
       if (RESULT_RE.test(word)) {
         tokens.push({ type: "RESULT", value: word });
       } else if (MOVE_NUMBER_RE.test(word)) {
@@ -215,14 +282,14 @@ function tokenize(pgn: string): Token[] {
         tokens.push({ type: "NAG", value: word });
       } else {
         // Handle "1...c5" / "2.e4" — move number glued to SAN without a space
-        const glued = word.match(/^(\d+\.+)([A-Za-z].*)$/);
+        const glued = word.match(/^(\d+\.+)(.+)$/);
         if (glued) {
           tokens.push({ type: "MOVE_NUMBER", value: glued[1] });
-          const san = glued[2].replace(/[!?]+$/, "");
+          const san = normalizeSanPiece(glued[2].replace(/[!?]+$/, ""));
           tokens.push({ type: "SAN", value: san });
         } else {
-          // Strip move annotation suffixes (!!, ??, !?, ?!, !, ?) from SAN
-          const san = word.replace(/[!?]+$/, "");
+          // Strip move annotation suffixes (!!, ??, !?, ?!, !, ?) from SAN and normalize piece icon
+          const san = normalizeSanPiece(word.replace(/[!?]+$/, ""));
           tokens.push({ type: "SAN", value: san });
         }
       }
@@ -406,10 +473,15 @@ function parseVariation(
     if (tok.type === "SAN") {
       idx.val++;
       let moveResult: ReturnType<Chess["move"]>;
+      const normVal = normalizeSanPiece(tok.value);
       try {
-        moveResult = chess.move(tok.value);
+        moveResult = chess.move(normVal);
       } catch {
-        throw new Error(`Invalid move: "${tok.value}"`);
+        try {
+          moveResult = chess.move(tok.value);
+        } catch {
+          throw new Error(`Invalid move: "${tok.value}"`);
+        }
       }
 
       const depth = parent.depthFromRoot + 1;

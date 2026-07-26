@@ -397,7 +397,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
                   <BoardAuthoringSurface
                     store={treeStore}
                     perspective={perspective}
-                    size={460}
+                    size={580}
                     boardEditorOpen={boardEditorOpen}
                     onBoardEditorOpenChange={setBoardEditorOpen}
                   />
@@ -471,7 +471,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
               playerSide={puzzlePlayerSide}
               onPlayerSideChange={(side) => setPuzzlePlayerSide(side)}
               perspective={perspective}
-              size={460}
+              size={580}
             />
           </>
         ) : null}
@@ -503,6 +503,8 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
       <div
         data-testid="lesson-preview-pane"
         style={{
+          width: 410,
+          flexShrink: 0,
           background: "var(--surface-2)",
           borderLeft: "1px solid var(--border)",
           display: "flex",

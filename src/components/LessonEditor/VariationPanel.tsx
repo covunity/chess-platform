@@ -1,10 +1,12 @@
-import { useSyncExternalStore, useState, useMemo } from 'react'
+import { useSyncExternalStore, useState, useMemo, useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronUp, X } from 'lucide-react'
 import RichNoteEditor from '../RichNoteEditor/RichNoteEditor'
+import NoteView from '../GuidedChessPlayer/NoteView'
 import type { TreeStore } from './treeStore'
-import type { PgnNode, RichTextDoc } from '../../utils/parsePgn'
+import { formatSanForDisplay, type PgnNode, type RichTextDoc } from '../../utils/parsePgn'
+import { renderSanWithIcon } from '../../utils/renderSanWithIcon'
 
 function buildNodeMap(root: PgnNode): Map<string, PgnNode> {
   const map = new Map<string, PgnNode>()
@@ -109,7 +111,7 @@ function MoveCell({
       }}
     >
       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-        {node.san}
+        {renderSanWithIcon(node.san)}
       </span>
       {hasNote && (
         <span aria-label="Có ghi chú" style={{ fontSize: 10, color: 'var(--ink-3)', flexShrink: 0 }}>
@@ -233,6 +235,28 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
     const rows: ReactNode[] = []
     let cursor: PgnNode | null = startNode
 
+    if (tree.note && !isEmptyDoc(tree.note)) {
+      rows.push(
+        <div
+          key="note-root"
+          className="guided-player-move-annotation"
+          style={{
+            margin: '6px 0 10px',
+            padding: '10px 14px',
+            background: 'var(--surface-3)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--r-md)',
+            fontSize: 13,
+            lineHeight: 1.6,
+            color: 'var(--ink-1)',
+            whiteSpace: 'pre-wrap',
+          }}
+        >
+          <NoteView note={tree.note} />
+        </div>
+      )
+    }
+
     while (cursor !== null) {
       const node = cursor
 
@@ -268,6 +292,50 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
             {bNode ? renderMoveCell(bNode) : <div />}
           </div>
         )
+
+        if (wNode.note && !isEmptyDoc(wNode.note)) {
+          rows.push(
+            <div
+              key={`note-w-${wNode.id}`}
+              className="guided-player-move-annotation"
+              style={{
+                margin: '6px 0 10px 28px',
+                padding: '10px 14px',
+                background: 'var(--surface-3)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--r-md)',
+                fontSize: 13,
+                lineHeight: 1.6,
+                color: 'var(--ink-1)',
+                whiteSpace: 'pre-wrap',
+              }}
+            >
+              <NoteView note={wNode.note} />
+            </div>
+          )
+        }
+
+        if (bNode && bNode.note && !isEmptyDoc(bNode.note)) {
+          rows.push(
+            <div
+              key={`note-b-${bNode.id}`}
+              className="guided-player-move-annotation"
+              style={{
+                margin: '6px 0 10px 28px',
+                padding: '10px 14px',
+                background: 'var(--surface-3)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--r-md)',
+                fontSize: 13,
+                lineHeight: 1.6,
+                color: 'var(--ink-1)',
+                whiteSpace: 'pre-wrap',
+              }}
+            >
+              <NoteView note={bNode.note} />
+            </div>
+          )
+        }
 
         for (let i = 1; i < wNode.children.length; i++) {
           rows.push(renderVariationBlock(wNode.children[i]))
@@ -310,6 +378,28 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
           </div>
         )
 
+        if (bNode.note && !isEmptyDoc(bNode.note)) {
+          rows.push(
+            <div
+              key={`note-b-only-${bNode.id}`}
+              className="guided-player-move-annotation"
+              style={{
+                margin: '6px 0 10px 28px',
+                padding: '10px 14px',
+                background: 'var(--surface-3)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--r-md)',
+                fontSize: 13,
+                lineHeight: 1.6,
+                color: 'var(--ink-1)',
+                whiteSpace: 'pre-wrap',
+              }}
+            >
+              <NoteView note={bNode.note} />
+            </div>
+          )
+        }
+
         for (let i = 1; i < bNode.children.length; i++) {
           rows.push(renderVariationBlock(bNode.children[i]))
         }
@@ -337,6 +427,19 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
     if (!isRoot) store.getState().setNote(currentNodeId, isEmptyDoc(doc) ? null : doc)
   }
 
+  const listRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!currentNodeId || currentNodeId === 'root') return
+    const targetEl =
+      listRef.current?.querySelector(`[data-testid="note-w-${currentNodeId}"]`) ??
+      listRef.current?.querySelector(`[data-testid="note-b-${currentNodeId}"]`) ??
+      listRef.current?.querySelector(`[data-testid="variation-node-${currentNodeId}"]`)
+    if (targetEl && typeof targetEl.scrollIntoView === 'function') {
+      targetEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }
+  }, [currentNodeId])
+
   return (
     <div
       style={{
@@ -353,7 +456,7 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
           display: 'flex',
           alignItems: 'center',
           gap: 8,
-          padding: '20px 28px 16px',
+          padding: '16px 24px',
           borderBottom: '1px solid var(--border)',
           flexShrink: 0,
         }}
@@ -404,13 +507,14 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
         )}
       </div>
 
-      {/* Variation list — grows to fill available height */}
+      {/* Variation list — single scrollable stream of moves + comments */}
       <div
+        ref={listRef}
         data-testid="variation-list"
         style={{
           flex: 1,
           overflowY: 'auto',
-          padding: '8px 28px',
+          padding: '12px 24px',
           minHeight: 0,
         }}
       >
@@ -419,7 +523,6 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
             {renderLine(tree.children[0])}
             {tree.children.slice(1).map(alt => renderVariationBlock(alt))}
           </>
-
         ) : (
           <div
             style={{
@@ -428,7 +531,6 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
               fontSize: 14,
               color: 'var(--ink-3)',
               fontStyle: 'italic',
-              lineHeight: 1.6,
             }}
           >
             {t('creator.lessonEditor.variationListEmpty', {
@@ -497,7 +599,7 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
       )}
 
       {/* Navigation buttons — identical to learner viewer mode */}
-      <div className="guided-player-actions">
+      <div className="guided-player-actions" style={{ flexShrink: 0, padding: '12px 24px' }}>
         <button
           type="button"
           data-testid="board-authoring-nav-begin"
@@ -548,7 +650,7 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
         </button>
       </div>
 
-      {/* Note section — pinned to bottom */}
+      {/* Note Editor section — compact bottom panel for editing notes */}
       <div
         data-testid="note-panel"
         style={{
@@ -557,10 +659,13 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
           display: 'flex',
           flexDirection: 'column',
           gap: 8,
-          padding: '16px 28px',
+          padding: '12px 24px',
+          background: 'var(--surface-2)',
+          maxHeight: 180,
+          overflowY: 'auto',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
           <span
             style={{
               fontSize: 11,
@@ -570,7 +675,7 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
               letterSpacing: '0.08em',
             }}
           >
-            {t('creator.lessonEditor.notePanelLabel', { defaultValue: 'Ghi chú' })}
+            {t('creator.lessonEditor.notePanelLabel', { defaultValue: 'Soạn Ghi Chú Cho Nước Này' })}
           </span>
           {!isRoot && currentNote && (
             <span
@@ -587,7 +692,7 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
           )}
         </div>
         {isRoot && (
-          <p style={{ fontSize: 13, color: 'var(--ink-3)', margin: 0 }}>
+          <p style={{ fontSize: 12, color: 'var(--ink-3)', margin: 0 }}>
             {t('creator.lessonEditor.notePanelRootHint', { defaultValue: 'Chọn một nước để thêm ghi chú' })}
           </p>
         )}

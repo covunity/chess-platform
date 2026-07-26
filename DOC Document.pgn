@@ -1,0 +1,589 @@
+[Event "Sici Kín Biến Nc3: Giới Thiệu"]
+[Date "2026.06.24"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B23"]
+[Opening "Sicilian Defense: Grand Prix Attack"]
+[StudyName "Sici Kín Biến Nc3"]
+[ChapterName "Giới Thiệu"]
+[ChapterURL "https://lichess.org/study/yI6uCuJH/RpkHWdBU"]
+[Annotator "https://lichess.org/@/KingGambit_Neverdie"]
+[UTCDate "2026.06.24"]
+[UTCTime "11:28:25"]
+
+1. e4 c5 2. Nc3 Nc6 3. f4 { CHƯƠNG MỘT
+Dãy nước đi chính: 1 e4 c5 2 Nc3 Nc6 3 f4 g6 4 Nf3 Bg7 5 Bb5
+.
+Nội dung dẫn nhập chương
+Trong chương này, chúng ta sẽ xử lý các biến thể mà bên Đen lên tượng cánh vua (fianchetto) và bên Trắng đặt quân tượng ở ô b5
+. Ô b5 rất có thể là ô tốt nhất cho quân tượng nếu bên Trắng không chọn phương án fianchetto tượng của mình
+. Chúng ta sẽ thấy các thiết lập với nước đi Bc4 gặp phải một số khó khăn trong chương tiếp theo, nhưng ý đồ chiến thuật về mặt vị trí trong việc làm chồng tốt cột c của bên Đen là điều không thể bàn cãi
+.
+Các Ván đấu 1-3: Cho thấy bên Đen cho phép việc bị chồng tốt cột c
+.
+Các Ván đấu 4-6: Tập trung vào dãy nước đi 5...Nd4 6 0-0 Nxb5
+.
+Ván đấu 7: Chứng kiến kỳ thủ Polgar thử nghiệm nước đi bất thường 6 Bd3
+.
+Các Ván đấu 8-11: Giới thiệu một cách khác để bên Đen tránh bị chồng tốt là chuẩn bị đối phó với Bb5 bằng nước đi ...Bd7 } 3... g6 4. Nf3 Bg7 5. Bb5 *
+
+
+[Event "Sici Kín Biến Nc3: Ván 1: Plaskett - J. Polgar (Hastings 1988)"]
+[Date "2026.06.24"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B23"]
+[Opening "Sicilian Defense: Grand Prix Attack"]
+[StudyName "Sici Kín Biến Nc3"]
+[ChapterName "Ván 1: Plaskett - J. Polgar (Hastings 1988)"]
+[ChapterURL "https://lichess.org/study/yI6uCuJH/obyDRzMh"]
+[Annotator "https://lichess.org/@/KingGambit_Neverdie"]
+[UTCDate "2026.06.24"]
+[UTCTime "11:32:54"]
+
+{ Thông qua Ván 1 (Plaskett - J. Polgar) và phần tóm tắt của Chương 1, tác giả James Plaskett muốn truyền đạt một bài học chiến lược cốt lõi: bên Đen không nên để các quân tốt cột c bị chồng
+.
+Cụ thể, những thông điệp chính mà tác giả muốn nhấn mạnh bao gồm:
+Sai lầm về cấu trúc: Nước đi 5...e6?! của bên Đen bị đánh giá là không khôn ngoan vì nó cho phép Trắng thực hiện nước 6 Bxc6!, làm hỏng cấu trúc tốt của Đen ngay từ giai đoạn khai cuộc
+.
+Sự bế tắc của bên Đen: Tác giả chỉ ra rằng khi các quân tốt cột c bị chồng (như trong ván 1, 2 và 3), thế trận của bên Đen hầu như luôn rất tệ và cực kỳ khó để xử lý, ngay cả khi trên lý thuyết vẫn có thể chơi được
+. Trong ván 1, Đen rơi vào tình trạng "không có chiến lược tự nhiên nào để theo đuổi" và phải đối mặt với một tương lai mù mịt về mặt vị trí
+.
+Sự dễ dàng của bên Trắng: Ngược lại với sự khó khăn của Đen, thế trận của bên Trắng trong cấu trúc này lại trở nên rất dễ triển khai
+. Trắng chỉ cần thực hiện các nước đi củng cố và ngăn chặn mưu đồ chiến thuật của đối phương là có thể đảm bảo chiến thắng
+.
+Hậu quả đối với các quân nhẹ: Tác giả dùng hình ảnh quân tượng ở a6 của bên Đen bị "chết mòn" (moribund) để minh họa cho việc các quân nhẹ của Đen hoàn toàn không có tầm hoạt động (scope) sau khi cấu trúc tốt bị phá vỡ
+.
+Tóm lại, ván đấu này được đưa ra làm ví dụ điển hình để tác giả cảnh báo người chơi cầm quân Đen phải tìm cách tránh bị chồng tốt (thường bằng nước 5...Nd4), đồng thời chỉ cho người cầm quân Trắng cách thiết lập một thế kìm kẹp chiến lược áp đảo khi đối phương mắc sai lầm }
+1. e4 c5 2. Nc3 Nc6 3. f4 g6 4. Nf3 Bg7 5. Bb5 e6?! { Nước đi này chắc chắn là không khôn ngoan
+. Nước đi 5...d6 cũng cho phép Trắng có cơ hội ăn vào c6 (xem Ván 2 và 3), vì vậy nước đi được đánh giá cao nhất của Đen thường là 5...Nd4, như đã thấy trong các Ván 4-7
+. Một phương án khác tương đối ít được khám phá dành cho những người chơi hệ Dragon là 5...Na5!?, dẫn đến thế trận Dragon Sicilian cổ điển rất thỏa mãn } 6. Bxc6 bxc6 { Lựa chọn ăn lại bằng 6...dxc6 đã được thử trong ván Moutosis-Erdogan, Thổ Nhĩ Kỳ 1992, nhưng Trắng tốt hơn sau 7 Qe2 Ne7 8 0-0 0-0 9 d3 b6 10 Nd1 Ba6 11 Nf2 } 7. e5! { Ô d6 trông đã rất hấp dẫn
+. Bên Đen cũng từng mắc sai lầm cấu trúc tương tự trong ván Sveshnikov-Remis, Oviedo 1992, nơi Trắng chơi f2-f4 ở nước thứ hai và thay 0-0 bằng Nc3; ván đó tiếp tục: 7 c4!? Ne7 8 d3 0-0 9 Nc3 d5 10 Qe2 Rb8 11 Qf2 khi Đen rơi vào một thế trận tồi tệ } 7... d5 { Nỗ lực rũ bỏ điểm yếu đó nhưng lại làm cô lập cặp tốt cột c } 8. exd6 { Trong ván Hebbinghaus-Kraenzle tại Bundesliga Đức năm 1995, Trắng đã bỏ qua cơ hội vàng này và chơi 8 d3?, cuối cùng ván đấu chỉ có kết quả hòa } 8... Qxd6 9. d3 Nf6 { Đen từng cố gắng đẩy bớt quân tốt yếu trong ván Honfi-Czebe, Budapest 1995, với 9...c4. Tuy nhiên, Honfi đã giữ các quân tượng yên vị với 10 d4 và nắm giữ ưu thế chiến lược lớn sau 10...Ne7 11 Qe2 0-0 12 Ne4 Qd5 13 c3 } 10. O-O Ba6 11. b3 O-O 12. Qe1 { Về mặt cấu trúc, Đen đang gặp khó khăn và không có chiến lược tự nhiên nào để theo đuổi (hãy lưu ý quân tượng "chết mòn" ở a6)
+. Trắng chỉ cần ngăn chặn mọi mưu đồ chiến thuật để đảm bảo chiến thắng } 12... Nd5 13. Bd2 Rad8 14. Ne4 Qc7 15. Ne5 Bb7 { Nếu 15...Bxe5 16 fxe5 Qxe5? thì 17 Nf6+ thắng } (15... Bxe5 16. fxe5 Qxe5 17. Nf6+) 16. Qf2 f6 17. Nc4 e5 { Nước đi 17...f5 cũng không giúp ích gì vì 18 Nxc5 Bxa1 19 Nxe6 và 20 Nxd8 } (17... f5 18. Nxc5 Bxa1 19. Nxe6) 18. fxe5 fxe5 19. Qxc5 { Giờ đây tình cảnh của bên Đen đã trở nên vô vọng
+. Các quân tượng của Đen không có tầm hoạt động và bên Đen bị kẹt, không thể làm gì được } 19... Qd7 20. Bg5 Rb8 21. Qxa7 Nf4 22. Qc5 Qf5 23. Ne3 Qd7 24. g3 h6 25. gxf4 hxg5 26. fxg5 *
+
+
+[Event "Sici Kín Biến Nc3: Ván 2: Hebden - Fedorowicz (Lewisham 1981)"]
+[Date "2026.06.25"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B23"]
+[Opening "Sicilian Defense: Grand Prix Attack"]
+[StudyName "Sici Kín Biến Nc3"]
+[ChapterName "Ván 2: Hebden - Fedorowicz (Lewisham 1981)"]
+[ChapterURL "https://lichess.org/study/yI6uCuJH/OnRZmLER"]
+[Annotator "https://lichess.org/@/KingGambit_Neverdie"]
+[UTCDate "2026.06.25"]
+[UTCTime "00:47:55"]
+
+{ Thông qua Ván 2 (Hebden - Fedorowicz, 1981), tác giả James Plaskett tiếp tục củng cố bài học cốt lõi của chương một và truyền đạt những điểm chiến lược quan trọng sau:
+Hậu quả của việc chồng tốt: Tác giả nhấn mạnh rằng ván đấu này là minh chứng tiếp theo cho bài học chính: bên Đen không nên để các quân tốt cột c bị chồng
+. Cấu trúc này dẫn đến những thế trận mà bên Đen hầu như luôn tệ, rất khó xử lý, trong khi bên Trắng lại có một ván đấu "tự triển khai" (rất dễ chơi)
+.
+Sự vô hại của cặp tượng Đen: Plaskett chỉ ra rằng trong cấu trúc này, thực tế là các quân tượng của bên Đen hoàn toàn không có tầm hoạt động (no scope)
+. Mặc dù Đen có lợi thế cặp tượng trên lý thuyết, nhưng chúng không thể tìm được mục tiêu hay vị trí tích cực, khiến bên Đen rơi vào tình trạng bế tắc, không biết phải làm gì
+.
+Chiến thuật "Gọng kìm Nimzowitsch": Tác giả muốn người chơi thấy sức mạnh của nước đi 16 c4!, thiết lập một "gọng kìm" kiểu Nimzowitsch để khóa chặt thế trận
+. Lúc này, quân tốt ở ô c5 của bên Đen trở thành một mục tiêu yếu bị nhắm tới cố định
+.
+Sự bế tắc tuyệt đối của bên Đen: Ván đấu cho thấy bên Đen bị dồn vào thế trận mà tác giả mô tả là "chỉ có thể ngồi chờ đợi sự kết thúc"
+. Điều này cho thấy sai lầm về mặt chiến lược ngay từ khai cuộc (để bị chồng tốt) có thể dẫn đến một quá trình sụp đổ không thể cứu vãn về mặt vị trí
+.
+Tóm lại, ván 2 được sử dụng để khẳng định rằng cấu trúc tốt bị phá vỡ không chỉ là một điểm yếu tạm thời mà là một thảm họa về vị trí khiến các quân nhẹ của Đen (đặc biệt là tượng) trở nên vô dụng }
+1. e4 c5 2. Nc3 Nc6 3. f4 g6 4. Nf3 Bg7 5. Bb5 d6 6. Bxc6+ bxc6 7. d3 { Thứ tự nước đi thực tế của ván đấu là: 2 f4 Nc6 3 Nf3 g6 4 Bb5 Bg7 5 Bxc6 bxc6 6 d3 d6 7 Nc3 } 7... Nh6 { Nước đi 7...Nf6 có lẽ là một lựa chọn tốt hơn và sẽ dẫn chúng ta đến ví dụ tiếp theo (Ván 3) } 8. O-O f5 { Bên Đen phải phong tỏa cánh vua, nếu không sẽ có nguy cơ bị áp đảo hoàn toàn. Ví dụ: 8...0-0 9 Qe1 Bg4?! 10 f5 Bxf3 11 Rxf3 e6 12 f6 và bên Trắng đã thắng một quân trong ván Weeramanrry-Bolden, giải US Open năm 1994 } (8... O-O 9. Qe1 Bg4 10. f5 Bxf3 11. Rxf3 e6 12. f6) 9. Qe1 O-O 10. e5 Qc7 11. Qg3 Rb8 12. Re1 Nf7 13. b3 Nd8 14. Na4 Ne6 { Một kế hoạch luân chuyển quân mã đến vị trí tích cực nhất của nó, một ý tưởng mà chúng ta sẽ gặp lại sau này. Tuy nhiên, sự thật là trong cấu trúc thế trận này, các quân tượng của bên Đen không có tầm hoạt động và bên Đen bị kẹt, không biết phải làm gì. } 15. Bb2 d5 16. c4 { "Gọng kìm" kiểu Nimzowitsch được thiết lập và quân tốt ở ô c5 trở thành mục tiêu bị nhắm tới } 16... Rd8 17. Rad1 Ba6 18. Bc1 Qa5 19. Bd2 Qc7 20. Qf2 { Nước đi 20 Ng5 cũng rất áp đảo vì nó loại bỏ quân phòng thủ tốt c } 20... d4 21. Qh4 Bf8 22. h3 Qd7 { Bên Đen giờ đây chỉ có thể ngồi chờ đợi sự kết thúc } 23. Ba5 Rdc8 24. Ng5 { Bài học chính từ ván đấu này (cùng với Ván 1 và 3) là bên Đen không nên để các quân tốt cột c bị chồng.
+Các thế trận dẫn đến từ việc đó hầu như luôn tệ đối với Đen, trong khi bên Trắng lại triển khai thế trận và tổ chức tấn công rất dễ dàng } { [%cal Gh7h5] } 24... h5 (24... Nxg5 25. Nxc5 Qe8 26. fxg5 Bb7 27. e6) 25. Nxe6 Qxe6 26. Nxc5 *
+
+
+[Event "Sici Kín Biến Nc3: ván 3 Plaskett - Tiviakov (Dhaka 1997)"]
+[Date "2026.06.25"]
+[Result "0-1"]
+[Variant "Standard"]
+[ECO "B23"]
+[Opening "Sicilian Defense: Closed, Traditional"]
+[StudyName "Sici Kín Biến Nc3"]
+[ChapterName "ván 3 Plaskett - Tiviakov (Dhaka 1997)"]
+[ChapterURL "https://lichess.org/study/yI6uCuJH/nZwFb6lH"]
+[Annotator "https://lichess.org/@/KingGambit_Neverdie"]
+[UTCDate "2026.06.25"]
+[UTCTime "01:47:27"]
+
+{ Thông qua Ván 3 (Plaskett - Tiviakov, Dhaka 1997), tác giả James Plaskett muốn truyền đạt và nhấn mạnh những bài học chiến lược sâu sắc sau đây:
+Sự nguy hiểm của cấu trúc tốt chồng: Đây là ví dụ cuối cùng trong bộ ba ván đấu (1, 2 và 3) minh chứng cho bài học chủ chốt của chương: bên Đen không nên để các quân tốt cột c bị chồng
+. Tác giả chỉ ra rằng ngay cả một Đại kiện tướng hàng đầu như Tiviakov cũng phải thừa nhận rằng thế trận sau khi bị chồng tốt là "thua về mặt chiến lược" (strategically lost)
+.
+Cặp tượng vô dụng: Tác giả giải thích lý do tại sao bên Đen lại gặp rắc rối dù sở hữu cặp tượng. Trong cấu trúc này, cặp tượng của bên Đen hoàn toàn không có mục tiêu để tấn công và không có tầm hoạt động, khiến chúng trở nên vô hại
+. Tác giả thậm chí còn mô tả quân tượng ô trắng của Đen khiến anh ta giống như đang "bị chấp quân" (in effect a piece down)
+.
+Sự khác biệt với Khai cuộc Anh: Một điểm thú vị mà tác giả muốn truyền đạt là sự so sánh với Khai cuộc Anh (English Opening). Dù có cấu trúc tương tự (nhưng ngược màu), thế trận này lại rất tệ cho Đen vì bên Trắng có khả năng thiết lập một thế trận kìm kẹp (clamp) hiệu quả ở cánh hậu
+.
+Chiến thuật kìm kẹp cánh hậu: Tác giả giới thiệu kế hoạch sử dụng quân mã (Na4) kết hợp với các nước đẩy tốt (c2-c4, b2-b3) và tượng (Ba5) để khóa chặt cánh hậu của Đen. Trong thế trận này, quân tốt yếu ở c5 sẽ sớm muộn cũng bị mất, khiến tương lai của bên Đen trở nên rất "ảm đạm" (dismal)
+.
+Đánh giá thế trận phức tạp: Ván đấu này còn cho thấy một hiện tượng kỳ lạ: cả hai kỳ thủ sau ván đấu đều nghĩ mình từng có thế trận thắng, nhưng thực tế cả hai đều sai
+. Điều này nhấn mạnh rằng Grand Prix Attack có thể tạo ra những thế trận mà việc đánh giá đúng đắn là cực kỳ khó khăn, ngay cả với các chuyên gia
+.
+Tóm lại, tác giả dùng ván 3 để khẳng định rằng việc để bị chồng tốt cột c không chỉ là một điểm yếu nhỏ mà là một sai lầm chiến lược nghiêm trọng, dẫn đến việc cặp tượng bị vô hiệu hóa và bên Đen bị kìm kẹp hoàn toàn }
+1. e4 c5 2. Nc3 Nc6 3. Bb5 g6 { Sau ván đấu, Sergei Tiviakov tuyên bố rằng anh ấy đã không thích nước đi này rồi. Nước đi 3...Nd4 mới là phản ứng tiêu chuẩn } 4. Bxc6 bxc6 5. f4 Bg7 6. Nf3 Nf6 7. d3 d6 { Thông qua một thứ tự nước đi bất thường, chúng ta đã đạt đến một thế trận thường nảy sinh sau dãy nước: 2 Nc3 Nc6 3 f4 g6 4 Nf3 Bg7 5 Bb5 d6 6 Bxc6+ bxc6 7 d3 Nf6 } 8. O-O O-O 9. Qe1 Ne8 { Một kế hoạch luân chuyển quân tiêu chuẩn. Cách đó không xa, kỳ thủ Iudalchev khi đối đầu với Nguyễn Anh Dũng đã chơi 9...Rb8 10 b3 Ne8 11 Bd2 Nc7 12 Qh4 Nb5 13 e5! Nd4 14 Nxd4 cxd4 15 Ne4 và Trắng đã giành chiến thắngnb } (9... Rb8 10. b3 Ne8 11. Bd2 Nc7 12. Qh4 Nb5 13. e5 Nd4 14. Nxd4 cxd4 15. Ne4 { [%csl Ge5][%cal Gd6e5,Gf4e5,Gg7e5] }) 10. Bd2 { (Plaskett) đã không chắc chắn mình muốn đặt các quân cờ của mình ở đâu, vì vậy tạm thời chỉ tiếp tục phát triển quân } 10... f5 11. e5 Nc7 { Phân tích chiến lược: Trong bữa tối cùng ngày hôm đó, các Đại kiện tướng Tiviakov và Malisauskas đã nhận định rằng Đen đã thua về mặt chiến lược ở thế trận này! Sự miễn cưỡng của tôi khi chấp nhận điều đó một phần bắt nguồn từ việc so sánh với các biến trong Khai cuộc Anh (English Opening) nơi Đen chơi ...e7-e5, ...Bb4 và ...Bxc3. Nếu những thế trận đó ổn cho Trắng, thì tại sao Đen lại gặp rắc rối ở đây?
+,
+.
+Tuy nhiên, nếu nhìn vào việc Fedorowicz đã bị kìm kẹp như thế nào ở ván đấu trước (Ván 2), rõ ràng là chúng ta đang đối mặt với một cấu trúc tương tự: cặp tượng không có việc gì để làm. Tiviakov đề xuất nước đi 12 Na4!? để khóa chặt cánh hậu với các nước đi như c2-c4, b2-b3 và Ba5. Mặc dù điều này không tệ cho Đen như khi đã chơi ...d6-d5 (vì sau đó tốt c5 sẽ bị mất), nhưng thế trận vẫn rất ảm đạm } 12. Qe2 { Một nước đi thiếu chính xác do đánh giá sai lầm về thế trận sẽ đạt được ở nước thứ 17. Thay vào đó, ván Hodgson-De Firmian, Wijk aan Zee 1986, đã diễn ra như sau: 12 Qh4 Ne6 13 Rae1 d4 14 Nxd4 cxd4 15 exd6 exd6 16 Qxd8 Rxd8 17 Na4 f7 khi Đen đã chơi khá tốt nhưng cuối cùng vẫn thua. Giờ đây, Tiviakov nắm lấy cơ hội để có được một số hoạt động } (12. b3 { [%csl Gc4] }) 12... Ne6 13. Rae1 c4 { Tất nhiên là bên Đen không ngần ngại thực hiện nước đi này } 14. d4 { Có một số đòn chiến thuật mà Trắng có thể xem xét sau 14 dxc4 Qb6+ 15 Kh1 Qxb2 16 Rb1 Qa3 17 Rb3 Qa5 nhưng chúng không có lợi cho Trắng } (14. dxc4 Qb6+ 15. Kh1 Qxb2 16. Rb1 Qa3 17. Rb3 Qa5) 14... d5 15. Na4 Ba6 { Đen vội vã tranh chấp ở cánh hậu } 16. Nc5 Nxc5 17. dxc5 d4 { Nếu không chơi nước này, Trắng sẽ chơi 18 c3 để thiết lập một thế kìm kẹp thắng thế } 18. c3 d3 19. Qf2 { Phân tích sau ván đấu: Sau ván đấu, cả hai bên đều cho rằng mình đã có một thế trận thắng về chiến lược! Đây là một hiện tượng rất bất thường. Sau đó, chúng tôi kết luận rằng cả hai đều đã sai } 19... Rb8 20. Be3 e6 21. Rd1 Qd5 22. h3 Rf7 23. Rd2 Bf8 24. Kh2 Rb5 { Ở đây tôi bắt đầu suy sụp khi thấy rằng không chỉ đơn giản là Trắng mở toang thế trận ở cánh vua để tấn công, mà quân tượng ô trắng tồi tệ của Đen thực tế đã khiến anh ta như bị chấp quân } 25. Nd4 { Chúng tôi đã phân tích 25 Ng5! là nước đi tốt nhất. Bất kỳ nước đi nào khác như ...h7-h6 sẽ làm yếu nghiêm trọng vị trí vua Đen sau khi Trắng tiến tốt g2-g4, và trong khi đó việc mất tốt c5 cũng không quá nghiêm trọng } (25. Ng5 Rfb7 26. g4 Bxc5 27. Bxc5 Rxc5 28. Nxe6) 25... Ra5 26. b3 Bxc5!? 27. bxc4 { Áp lực thời gian cũng không giúp ích được gì. Thế trận của Trắng nhanh chóng xấu đi
+. } 27... Bxc4 28. Rb1 Rxa2 { Sập bẫy! } 29. Nxe6 Rxd2 30. Bxd2 { Thật điên rồ! Khi ăn quân ở c4, tôi đã thấy rằng ở đây tôi có nước 30 Bxc5!, nhưng sau đó tôi lại tự thuyết phục mình không chơi nó vì tin rằng nước đi trong ván đấu có thể chứng minh là còn tốt hơn nữa! Sau 30 Bxc5!, thế trận tốt nhất của Đen sẽ là 30...Bb5! 31 Qxd2 Qxe6 32 Qe3 với việc Trắng duy trì sự bù đắp tốt cho quân tốt đã mất } (30. Bxc5 Bb5 31. Qxd2 Qxe6 32. Qe3) 30... Rb7 { Kết thúc hy vọng của Trắng } 31. Nxc5 Rxb1 32. Be3 d2 0-1
+
+
+[Event "Sici Kín Biến Nc3: Ván 4: Hodgson - Rowson (Rotherham 1997)"]
+[Date "2026.06.25"]
+[Result "1-0"]
+[Variant "Standard"]
+[ECO "B21"]
+[Opening "Sicilian Defense: McDonnell Attack"]
+[StudyName "Sici Kín Biến Nc3"]
+[ChapterName "Ván 4: Hodgson - Rowson (Rotherham 1997)"]
+[ChapterURL "https://lichess.org/study/yI6uCuJH/hGsf8aZ8"]
+[Annotator "https://lichess.org/@/KingGambit_Neverdie"]
+[UTCDate "2026.06.25"]
+[UTCTime "02:48:12"]
+
+{ Thông qua Ván 4 (Hodgson - Rowson, 1997), tác giả James Plaskett muốn truyền tải những thông điệp chiến lược và bài học quan trọng sau đây dành cho cả hai bên:
+Cách đối phó thông minh nhất cho bên Đen: Sau khi đã chỉ ra những hiểm họa của việc bị chồng tốt trong ba ván đầu tiên, tác giả khẳng định nước đi 5...Nd4 là "ý tưởng thông minh nhất" để tránh cấu trúc tốt xấu đó
+. Nước đi này giúp Đen duy trì một trạng thái lý thuyết rất tốt
+.
+Sự cân bằng về mặt lý thuyết: Tác giả nhấn mạnh rằng các hệ thống có 5 Bb5 Nd4 là hoàn toàn ổn cho bên Đen và dẫn đến các thế trận cân bằng
+. Ngay cả khi bên Trắng tìm cách giành ưu thế bằng nước 8 e5!? để hạn chế cặp tượng, thế trận vẫn hoàn toàn có thể chơi được cho người cầm quân Đen
+.
+Sức mạnh tiềm tàng của Grand Prix Attack: Mặc dù Đen đạt được thế trận cân bằng, ván đấu này là lời cảnh báo rằng bên Trắng vẫn có thể "tạo ra một cuộc tấn công từ hư không"
+. Tác giả muốn người chơi thấy rằng ngay cả trong một thế trận trông có vẻ an toàn, những nước đi như 16 Na4! và đòn tấn công bất ngờ 18 Ba7! có thể khiến bên Đen sụp đổ nhanh chóng nếu không cảnh giác
+.
+Đánh giá kết quả ván đấu: Một điểm quan trọng tác giả muốn làm rõ là kết quả 1-0 của ván đấu này không phản ánh sự yếu kém của khai cuộc bên Đen. Ông khẳng định dãy nước 7...d5 8 e5 là "hoàn toàn có thể chơi được" (quite playable) bất chấp việc Rowson đã thất bại trong ván đấu cụ thể này
+.
+Tóm lại, ván 4 được dùng để giới thiệu phương án giải quyết tối ưu cho Đen chống lại Bb5, đồng thời nhắc nhở rằng Grand Prix Attack luôn tiềm ẩn những đòn phối hợp sắc bén đòi hỏi sự chính xác cao độ từ đối thủ }
+1. e4 c5 2. f4 g6 3. Nf3 Bg7 4. Nc3 Nc6 5. Bb5 Nd4 { Nước đi này, nhằm tránh việc bị chồng tốt, có vẻ là ý tưởng thông minh nhất, và trạng thái lý thuyết của thế trận bên Đen ở đây là rất tốt
+. Ba ván đấu trước đó (Ván 1, 2, 3) hẳn đã cho thấy điều gì có thể xảy ra với bên Đen nếu đối thủ của họ thực hiện được nước đi Bxc6 } 6. O-O { Sau nước 6 Ba4 Qa5 7 b5 hoặc 6 Nxd4 cxd4 7 Ne2 Qb6 8 d3 d5! 9 e5 f6!, bên Trắng thậm chí còn phải vật lộn để đạt được sự cân bằng
+.
+Tuy nhiên, nước 6 a4!? đã được Michael Adams (cùng những người khác) thử nghiệm. Đen thường chơi 6...e6 (nước 6...Nxb5 7 axb5 d6 8 0-0 Nf6 cũng không có gì sai) và sau đó
+:
+a) 7 0-0 Ne7 8 e5 (nếu Trắng định chơi theo cách này thì nước 7 e5 ngay lập tức chắc chắn sẽ thích hợp hơn) 8...a6 9 Bc4 (sau nước 9 Bd3 Nxf3+ 10 Qxf3 d5! bên Trắng đã hoàn toàn bị rối loạn trong ván Adams-Morovic, Las Palmas 1993) 9...d5 10 exd6 và giờ đây cả 10...Qxd6 và 10...Nf5 theo sau là ...Nxd6 đều hoàn toàn thỏa đáng cho bên Đen
+.
+b) 7 e5!? a6 8 Bc4 d5 9 exd6 Qxd6 10 d3 Ne7 11 Ne4 Qc7 12 c3 với một thế trận phức tạp trong tương lai (ví dụ ván Ekebjaerg-Jezek, 1992-94)
+.
+Đối với nước 6 Bd3, hãy xem Ván đấu số 7 } (6. Ba4 Qa5 7. Bb3 b5) (6. Nxd4 cxd4 7. Ne2 Qb6 8. Bd3 d5 9. e5 f6) (6. a4 Nxb5 (6... e6 7. O-O (7. e5 a6 8. Bc4 d5 9. exd6 Qxd6 10. d3 Ne7 11. Ne4 Qc7 12. c3) 7... Ne7 8. e5 a6 9. Bc4 (9. Bd3 Nxf3+ 10. Qxf3 d5 11. exd6 Qxd6 { [%csl Gd5][%cal Ge7d5] })) 7. axb5 d6 8. O-O) 6... Nxb5 { Sau 6...a6 7 Bd3, Trắng có một phiên bản tốt hơn của Ván 7, trong đó Đen đã tốn một nhịp cho nước đi ...a7-a6 không thực sự hữu ích
+. Tuy nhiên, Đen vẫn xoay xở để cân bằng thế trận trong ván Adams-Anand, Groningen 1997, sau các nước 7...d6 8 Nxd4 cxd4 9 Ne2 Nf6 10 Kh1 (10 c3 dxc3 11 bxc3 0-0 12 Bc2 b5 cũng không mang lại gì cho Trắng) 10...Bd7 11 b4 0-0 12 Bb2 Qb6 } (6... a6 7. Bd3 d6 8. Nxd4 cxd4 9. Ne2 Nf6 10. Kh1 (10. c3 dxc3 11. bxc3 O-O 12. Bc2 b5) 10... Bd7 11. b4 O-O 12. Bb2 Qb6) 7. Nxb5 d5 { Nước đi mang tính quyết định nhất. Nước đi trầm lặng hơn 7...d6 là chủ đề của hai ván đấu chính tiếp theo (Ván 5 và 6) } 8. e5 { Trắng hy vọng sẽ hạn chế được tầm hoạt động của cặp tượng đối phương
+. Đây có vẻ là một nỗ lực tốt hơn để giành ưu thế so với nước 8 exd5 a6 9 Nc3 Nf6, nơi tầm hoạt động của quân tượng lên cánh vua (fianchetto) có ý nghĩa quan trọng đối với bên Đen
+. Ví dụ: 10 d4 c4! (nếu 10...Nxd5 11 dxc5! Nxc3 12 Qxd8+ Kxd8 13 bxc3 Bxc3 14 Rb1 mang lại cho Trắng cơ hội tấn công tốt trong tàn cuộc) 11 Ne5 Nd5 12 Qf3 e6! với một thế trận không rõ ràng trong ván Hodgson-Rowson, Rotherham (ván đấu thứ 4 của cùng trận đấu này) 1997
+. Nước 8 d3 cũng đã được thử nghiệm nhưng Đen không cần phải quá lo lắng, ví dụ như trong ván H. Hunt-Rowson 1999, Đen đã có một tàn cuộc đầy hứa hẹn } { [%cal Gd5d4,Gd8b6] } (8. exd5 a6 9. Nc3 Nf6 10. d4 c4 (10... Nxd5 11. dxc5 Nxc3 12. Qxd8+ Kxd8 13. bxc3 Bxc3 14. Rb1) 11. Ne5 Nxd5 12. Qf3 e6) 8... a6 { Cả hai nước 8...d4!? và 8...Qb6!? cũng rất đáng để bên Đen khám phá } 9. Nc3 Bg4 { Ở đây nước 9...d4 cũng có thể chơi được, ví dụ: 10 Ne4 Qd5 11 d3 Nh6 12 Qe1 0-0 13 a4 (như trong ván Reinderman-Alterman 1998) và dẫn đến sự cân bằng
+. } (9... d4 10. Ne4 Qd5 11. d3 Nh6 12. Qe1 O-O 13. a4) 10. d4 { [%csl Gc4,Gb3][%cal Gc5c4,Gb2b3] } 10... cxd4 { Trong ván Hebden-Koshy, Dhaka 1995, Đen đã thử 10...c4?!, nhưng sau 11 b3! Rc8 12 Na4, Trắng đã có thể tận dụng lợi thế dẫn trước về phát triển quân } (10... c4 11. b3 Rc8 12. Na4) 11. Qxd4 e6 12. Qb4!? Bxf3 { Trong ván O. Jackson-Gallagher năm 1999, Đen đã cải thiện bằng nước 12...b5!, giúp đạt được sự cân bằn } (12... b5) 13. Rxf3 Qe7 { Nước 13...b5 vẫn có thể chơi được, mặc dù không tốt bằng ở nước đi trước đó } 14. Qa4+ Qd7 15. Qxd7+ Kxd7 16. Na4! Rb8 17. Be3 Ne7 18. Ba7! { Thế trận trông có vẻ an toàn cho Đen, nhưng Hodgson bất ngờ tung ra đòn tấn công từ hư không. Nước đi này cực kỳ khó để đối phó } 18... Rbe8 19. Rb3 b5 { Nếu Đen chơi 19...Kc8 20 Nc5 b5 21 a4 thì mọi thứ sẽ sụp đổ } (19... Kc8 20. Nc5 b5 21. a4) 20. Nc5+ Kc8 21. Ra3 { Rõ ràng là Đen đã hoàn toàn thua } 21... g5 22. Rxa6 gxf4 23. a4 bxa4 { 1-0 White wins. } 24. Nd3 Kb7 25. R1xa4 Ra8 26. Rd6 Nf5 27. Nc5+ Kc7 28. Bb6+ Kb8 29. Rxa8+ Kxa8 30. Rd7 Kb8 31. Rc7 1-0
+
+
+[Event "Sici Kín Biến Nc3: Ván 5: Hebden - Ftacnik (Hastings 1983/84)"]
+[Date "2026.06.26"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B21"]
+[Opening "Sicilian Defense: McDonnell Attack"]
+[StudyName "Sici Kín Biến Nc3"]
+[ChapterName "Ván 5: Hebden - Ftacnik (Hastings 1983/84)"]
+[ChapterURL "https://lichess.org/study/yI6uCuJH/RmZTaDzj"]
+[Annotator "https://lichess.org/@/KingGambit_Neverdie"]
+[UTCDate "2026.06.26"]
+[UTCTime "10:41:26"]
+
+{ Thông qua Ván 5 (Hebden - Ftacnik, 1983/84), tác giả James Plaskett muốn truyền tải những bài học chiến thuật và chiến lược quan trọng sau đây:
+Lựa chọn lối chơi điềm tĩnh cho bên Đen: Sau khi tránh được việc bị chồng tốt bằng nước 5...Nd4, tác giả chỉ ra rằng nước đi 7...d6 cho thấy bên Đen đang lập kế hoạch cho một "phương pháp xử lý điềm tĩnh hơn" (quieter treatment) so với nước đi 7...d5 ở ván trước
+.
+Khai thác ưu thế cặp tượng lâu dài: Mục tiêu chiến lược của bên Đen trong ván này là duy trì một thế trận "rất vững chắc" và "dần dần khai thác ưu thế từ cặp tượng" của mình
+. Đây là một bài học về sự kiên nhẫn trong chiến lược khi cấu trúc tốt vẫn còn nguyên vẹn.
+Cảnh giác với sự tấn công của bên Trắng: Tác giả đưa ra lời cảnh báo rằng dù thế trận vững chắc, bên Đen "phải cẩn thận để không cho phép bên Trắng xây dựng một cuộc tấn công mạnh mẽ ở cánh vua"
+.
+Sự phản biện bằng đòn phối hợp: Ván đấu minh chứng rằng sự nôn nóng hoặc sai lầm trong tấn công của bên Trắng (nước 19 f5?) có thể bị trừng phạt đích đáng. Tác giả nhấn mạnh đòn phối hợp 21...Nxe4! là một sự "bác bỏ hoàn toàn" (refutes) lối chơi của bên Trắng, cho thấy sức mạnh của sự chính xác trong tính toán khi đối đầu với Grand Prix Attack
+.
+Tầm quan trọng của sự cẩn trọng: Tác giả kết luận rằng sau khi đạt được lợi thế, bên Đen chỉ cần thể hiện một chút sự cẩn trọng trong các nước đi tiếp theo là có thể ghi điểm và giành chiến thắng
+.
+Tóm lại, ván 5 được dùng để hướng dẫn người chơi cách triển khai một chiến lược phòng thủ-phản công bền vững, ưu tiên tính ổn định của cấu trúc và giá trị lâu dài của các quân nhẹ thay vì các cuộc đối đầu nảy lửa ngay từ đầu. }
+1. e4 c5 2. f4 g6 3. Nf3 Bg7 4. Nc3 Nc6 5. Bb5 Nd4 6. O-O Nxb5 7. Nxb5 d6 { Phân tích chiến lược: Nước đi 7...d6 cho thấy bên Đen đang lập kế hoạch cho một phương pháp xử lý điềm tĩnh hơn so với nước 7...d5 (đã xem ở Ván 4)
+. Bên Đen đặt mục tiêu dần dần khai thác ưu thế từ cặp tượng của mình, và trong khi đó vẫn duy trì một thế trận rất vững chắc
+. Tuy nhiên, người cầm quân Đen phải cẩn thận để không cho phép bên Trắng xây dựng một cuộc tấn công mạnh mẽ ở cánh vua } 8. a4 { Nước đi này nhằm ngăn chặn bên Đen mở rộng không gian ở cánh hậu với các nước ...a7-a6 và ...b7-b5
+. Lựa chọn 8 d3 sẽ được xem xét trong ván đấu chính tiếp theo (Ván 6) } 8... a6 { Phân tích phương án khác: Bên Đen cũng có thể trì hoãn nước đi này, ví dụ: 8...Nf6 9 d3 0-0 10 Qe1 e6!? 11 Qh4 và khi đó nước 11...a6 đã bị đáp trả bằng 12 Nxd6!? Qxd6 13 e5 Qd8 14 f5, dẫn đến một thế trận rất lộn xộn trong ván Hracek-Alterman tại giải Vô địch Đồng đội Châu Âu, Pula 1997 } (8... Nf6 9. d3 O-O 10. Qe1 e6 11. Qh4 a6 12. Nxd6 Qxd6 13. e5 Qd8 14. f5 Nd7 15. f6 Bh8 16. Bh6 Re8 17. Rae1 b5 18. Ng5 Bb7 19. Bg7 h5 20. Bxh8 Kxh8 21. Nxf7+) 9. Nc3 Nf6 10. Qe1 O-O 11. d3 e6 12. Kh1 { Bên Trắng lựa chọn cách xây dựng thế trận chậm rãi, nhưng nước đi 12 e5!? cũng là một khả năng có thể thực hiện } 12... b6 13. Bd2 Bd7 14. Nd1 b5 15. axb5 axb5 16. Rxa8 Qxa8 { Lời bình: Đại kiện tướng Richard Réti từng nói rằng đây (ô a8) là ô tốt nhất cho quân hậu, nhưng có lẽ lúc đó ông ấy đang không bị tấn công } 17. Qh4 Bc6 18. Nf2 Qd8 { Một nước đi dự phòng trước ý đồ đẩy tốt 19 f5 của bên Trắng } 19. f5 exf5 20. Bg5 h6 21. Bxh6 Nxe4 { Phân tích đòn phối hợp: Đòn phối hợp đơn giản nhưng khôn ngoan này đã hoàn toàn bác bỏ (refutes) lối chơi của Hebden } 22. Bg5 Nxf2+ 23. Qxf2 Qd7 { Giờ đây Ftacnik chỉ cần thể hiện một chút cẩn trọng trong các nước đi tiếp theo để ghi điểm giành chiến thắng } 24. b3 Re8 25. h4 Re6 26. Bf4 Qe7 27. Qg3 Bxf3 28. gxf3 Bf6 29. h5 Bh4 30. Qh3 g5 31. Bg3 Bxg3 32. Qxg3 Kg7 33. d4 cxd4 34. Rd1 f4 35. Qf2 Kh6 36. Rf1 Re3 37. Qd2 Qf6 38. Qa5 g4 39. Qa8 gxf3 *
+
+
+[Event "Sici Kín Biến Nc3: Ván 6: Plaskett - Schmidt (Trnava 1984)"]
+[Date "2026.06.26"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B21"]
+[Opening "Sicilian Defense: McDonnell Attack"]
+[StudyName "Sici Kín Biến Nc3"]
+[ChapterName "Ván 6: Plaskett - Schmidt (Trnava 1984)"]
+[ChapterURL "https://lichess.org/study/yI6uCuJH/CYWco9Hw"]
+[Annotator "https://lichess.org/@/KingGambit_Neverdie"]
+[UTCDate "2026.06.26"]
+[UTCTime "11:36:06"]
+
+{ Thử nghiệm các phương án tấn công mới: Thay vì các nước đi quen thuộc như 9 a4 hay 9 Qe1, tác giả muốn giới thiệu nước đi 9 e5!? như một lựa chọn thay thế thú vị nhằm phá vỡ cấu trúc và gây áp lực ngay lập tức lên trung tâm của Đen
+.
+Cảnh báo về sự rời rạc của các quân nhẹ: Tác giả phê phán nước đi 13...Nb4?! của bên Đen vì việc đưa quân mã đi quá xa khỏi việc bảo vệ vua là không phù hợp (not apposite)
+. Đây là bài học về việc giữ sự kết nối và khả năng phòng thủ cho vua khi đối mặt với Grand Prix Attack.
+Giá trị của đòn phối hợp và sự hỗn loạn (chaos): Tác giả muốn cho thấy sức mạnh của việc tạo ra sự phức tạp về mặt chiến thuật. Nước đi 21 Nd4! được ông mô tả là "bắt đầu tạo ra một sự hỗn loạn hoàn toàn" (introducing utter chaos)
+. Điều này cho thấy trong Grand Prix Attack, việc làm mất thăng bằng thế trận đôi khi quan trọng hơn việc duy trì sự ổn định.
+Sức mạnh của việc tập trung quân lực: Qua nước đi 26 Ref2!, tác giả nhấn mạnh rằng việc tập trung toàn bộ lực lượng vào các điểm yếu sẽ khiến đối phương cực kỳ khó xoay xở, đặc biệt là khi họ đang gặp áp lực về thời gian
+.
+Thừa nhận sự không hoàn hảo trong thực chiến: Tác giả cũng thành thật chỉ ra sai lầm của chính mình (nước 14 Ne4) và cho biết nếu được chơi lại, ông sẽ chọn nước đơn giản 14 Rf2
+. Điều này gửi đi thông điệp rằng ngay cả trong những ván đấu không hoàn hảo ("a most scrappy game"), việc duy trì thế chủ động và tạo ra các mối đe dọa liên tục vẫn có thể dẫn đến chiến thắng
+.
+Tóm lại, ván 6 là một ví dụ về tính thực chiến và sự sắc bén của các đòn phối hợp trong Grand Prix Attack, đồng thời nhắc nhở kỳ thủ phải luôn cảnh giác với việc điều động quân xa rời vua
+. }
+1. e4 c5 2. f4 g6 3. Nf3 Bg7 4. Nc3 Nc6 5. Bb5 Nd4 6. O-O Nxb5 7. Nxb5 d6 8. d3 Nf6 { Bên Đen cũng có thể thử nước 8...a6 9 Nc3 b5!? ở đây để chiếm lĩnh không gian bên cánh hậu, mặc dù việc thiếu phát triển ở cánh vua là một mối lo ngại } 9. e5 { Một lựa chọn thay thế thú vị thay cho các nước đi thông thường như 9 a4 hoặc 9 Qe1
+. } 9... dxe5 10. fxe5 Nd5 { Phân tích của tác giả: Ở nhà, tôi đã từng xem xét nước 10...Ng4 11 Bf4 a6 12 Nc3 Bxe5 13 Nxe5 Qd4+ 14 Kh1 Nxe5 15 Bxe5 Qxe5 16 Qf3 0-0 17 Rae1. Tôi nhớ mình đã tự thuyết phục bản thân rằng Trắng có thế trận tốt để bù đắp cho quân tốt bị mất, ví dụ: 17...Qd6 18 Qe3 đe dọa giành lại tốt ở e7 hoặc c5 (19 Ne4). Tuy nhiên, tôi cho rằng về mặt khách quan thì khó có thể nói Đen sẽ tệ hơn trong biến này } (10... Ng4 11. Bf4 a6 12. Nc3 Bxe5 13. Nxe5 Qd4+ 14. Kh1 Nxe5 15. Bxe5 Qxe5 16. Qf3 O-O 17. Rae1 Qd6 18. Qe3) 11. Qe1 O-O 12. Qh4 Qd7 13. Nc3 Nb4 { Việc đi quân mã xa rời việc bảo vệ vua trông không thích hợp } 14. Ne4 { Tôi không chắc mình đã nghĩ gì ở đây; nếu gặp lại thế trận này, tôi sẽ chơi nước đi đơn giản là 14 Rf2 } 14... Nxc2 { Gây ra một số tổn hại về mặt cấu trúc } 15. Bh6 f6 { Phân tích đòn phối hợp:
+Nếu 15...Nxa1? thì 16 Bxg7 Kxg7 17 Nf6! exf6 18 exf6+ Kh8 19 Qh6 Rg8 20 Ng5 và Trắng thắng
+.
+Phản ứng đối với 15...Qg4 là 16 Qxe7! Nxa1? 17 Nf6+ và Trắng cũng thắng } (15... Nxa1 16. Bxg7 Kxg7 17. Nf6 exf6 18. exf6+ Kh8 19. Qh6 Rg8 20. Ng5) (15... Qg4 16. Qxe7 Nxa1 17. Nf6+) 16. Rac1 Nd4 17. Bxg7 Kxg7 18. Rxc5 Ne6 19. Rc4 b6 20. exf6+ exf6 21. Nd4 { Bắt đầu tạo ra một sự hỗn loạn hoàn toàn (utter chaos) } 21... Nxd4 22. Nxf6 Ne2+ 23. Kh1 h6 24. Re4 Bb7 25. Rxe2 Qd6 { Việc tập trung lực lượng như thế này khiến Đen rất khó xoay xở, đặc biệt là khi đang gặp áp lực về thời gian } 26. Ref2 Qxd3 27. Nh5+ Kg8 28. Nf6+ Kg7 29. Nh5+ Kg8 30. Nf4 Qe4 31. Qxh6 { Giành được một quân tốt quan trọng
+. } 31... Rad8 32. Kg1 Rf6 33. Nh5 Rf7 34. Ng3 Qc6 { Ở thế trận này, bên Đen đã bị xử thua do hết thời gian (lost on time). Một ván đấu rất lộn xộn } *
+
+
+[Event "Sici Kín Biến Nc3: Ván 7: J. Polgar - Topalov (Dortmund 1996)"]
+[Date "2026.06.29"]
+[Result "1-0"]
+[Variant "Standard"]
+[ECO "B23"]
+[Opening "Sicilian Defense: Grand Prix Attack"]
+[StudyName "Sici Kín Biến Nc3"]
+[ChapterName "Ván 7: J. Polgar - Topalov (Dortmund 1996)"]
+[ChapterURL "https://lichess.org/study/yI6uCuJH/CFWYvzVo"]
+[Annotator "https://lichess.org/@/KingGambit_Neverdie"]
+[UTCDate "2026.06.29"]
+[UTCTime "12:53:20"]
+
+{ Sử dụng các phương án lắt léo để tránh lý thuyết: Tác giả chỉ ra rằng Judit Polgar đã sử dụng nước đi 6 Bd3!?, một nước đi được đánh giá là "lắt léo" (tricky) và không được giới lý thuyết đánh giá quá cao, nhằm mục đích đưa đối thủ ra khỏi những phương án khai cuộc chuẩn đã được nghiên cứu kỹ
+.
+Sự nguy hiểm khi mất phương hướng ở trung cuộc: Tác giả nhấn mạnh rằng dù Đen (Topalov) đã có những nước đi đối phó rất sáng tạo và đầy tham vọng (11...d5!? và 13...Bxc4!?), nhưng chỉ cần một nước đi thiếu chính xác và "vô định" (purposeless) như 20...Qh5? là đủ để Trắng lật ngược thế cờ
+,
+.
+Khả năng kiểm soát và kìm kẹp vị trí: Ván đấu minh họa cách Trắng tận dụng sai lầm của đối thủ để chiếm lĩnh các tuyến quan trọng (cột d) và triển khai các quân nhẹ cực kỳ khó chịu. Tác giả đặc biệt chú ý đến quân mã ở c8, gọi đó là một "quân mã khó chịu" (nasty knight) đã gây ra những vấn đề nghiêm trọng cho Đen
+.
+Vô hiệu hóa cặp tượng của đối phương: Một thông điệp quan trọng khác là ngay cả khi Đen sở hữu cặp tượng (thường được coi là lợi thế), Trắng vẫn có thể tạo ra một thế trận kìm kẹp khiến "cặp tượng của Đen hầu như không có đất diễn" (bishop pair has little scope)
+.
+Sự trừng phạt đối với những sai lầm thô thiển: Tác giả dùng nước đi 35...h6?? của Topalov như một lời nhắc nhở rằng trong những thế trận căng thẳng của Grand Prix Attack, một sai lầm thô thiển trong một vị trí đã vốn đã tệ sẽ dẫn đến kết cục thất bại ngay lập tức
+.
+Tóm lại, qua ván 7, tác giả muốn cho người đọc thấy Grand Prix Attack không chỉ có những đòn tấn công trực diện mà còn có những phương án lắt léo, ít tính lý thuyết nhưng có khả năng kìm kẹp vị trí cực kỳ mạnh mẽ nếu bên Đen không duy trì được sự chính xác trong suốt ván đấu }
+1. e4 c5 2. Nc3 Nc6 3. f4 g6 4. Nf3 Bg7 5. Bb5 Nd4 6. Bd3 { Nước đi lắt léo này không được giới lý thuyết đánh giá quá cao } 6... d6 { Nước 6...e6 cho phép Trắng cơ hội thực hiện 7 Nxd4 cxd4 8 Nb5 d6 9 c3! và nếu 9...dxc3 10 dxc3, Đen sẽ gặp rắc rối với quân tốt d dễ bị tổn thương, ví dụ: 10...Ne7 11 Nxd6+! hoặc 10...a6 11 Qa4 } (6... e6 7. Nxd4 cxd4 8. Nb5 { [%csl Gc3][%cal Gc2c3] }) 7. Nxd4 cxd4 8. Ne2 Nf6 { Trong ván Dzindzihasvili-Hübner (giải Tilburg 1985), Đen đã bảo vệ tốt d4 chặt chẽ hơn bằng cách phát triển mã 8...Nh6!? và đạt được thế trận cân bằng sau 9 c3 dxc3 10 dxc3 0-0 11 0-0 d5 12 e5 Qb6+ 13 Kh1 f5 } (8... Nh6 9. c3 dxc3 10. dxc3 O-O 11. O-O d5 12. e5 Qb6+ 13. Kh1 f5) 9. O-O O-O 10. Qe1 { Nước 10 c3 là nước đi thông thường (nhưng không phải 10 Nxd4? Qb6 11 c3 e5 vì Trắng sẽ mất quân). Trong ván Basman-Adorjan (London 1975), Trắng không mấy thành công: 10...e5!? 11 cxd4 exd4 12 b3 Re8 13 Ng3 h5! 14 f5 h4 15 Ne2 Nxe4 16 Bxe4 Rxe4 17 d3 Re5 18 fxg6 fxg6 0-1. Đen cũng chơi tốt với 10...dxc3 11 bxc3 (nhằm tận dụng các quân tốt trung tâm; 11 dxc3 không mang lại gì) 11...b6, như trong ván Hodgson-Petursson (Reykjavik 1989). Có cảm giác rằng sau 10 c3, Trắng gặp khó khăn trong việc điều động lại các quân nhẹ và Đen có sự phát triển quân thoải mái hơn, vì vậy Polgar đã thử một cách bố trí khác } 10... Nd7 11. Bc4 d5 { Một nước đi đầy tham vọng. Nước 11...Qc7 12 d3 b6 13 b3 e6!? cũng rất đáng thử, ví dụ 14 f5 Bxb3 15 cxb3 Qc2 } 12. exd5 Nb6 13. d3 Nxc4 { Hết bất ngờ này đến bất ngờ khác. Nước 13...Nxd5 là lựa chọn ổn định, nhưng Topalov muốn khuấy động thế trận thêm nữa } 14. dxc4 b5 15. Qf2 bxc4 16. Nxd4 Qxd5 17. Be3 a5 18. c3 Rd8 19. Qc2 e6 20. Rad1 Qh5 { Một nước đi vô định. Lẽ ra Đen nên chơi 20...Bb7 } 21. Nc6 Rxd1 22. Rxd1 Bb7 23. Ne7+ Kh8 24. Rd7 Qb5 25. Qd2 { Sự thiếu chính xác của Đen đã giúp Judit Polgar chiếm lĩnh cột d và bắt đầu gây ra các vấn đề nghiêm trọng
+. } 25... Bd5 26. Rc7 Be4 27. Nc8 { Một quân mã cực kỳ khó chịu } 27... Qd5 28. Nd6 Kg8 29. Nxc4 Rb8 30. Qxd5 exd5 31. Ra7 Ra8 32. Nd6 { Trắng hơn một quân tốt và sở hữu các quân cờ năng động hơn. Đây là một thế trận đặc biệt mà cặp tượng của Đen hầu như không có đất diễn } 32... Bb1 33. Nxf7 Bxa2 34. Ng5 Re8 35. Bd4 Bh6 { Một sai lầm thô thiển trong một thế trận vốn đã tệ. Nước đi 35...Rxd4+ 36 cxd4 h5 37 Ra7 vẫn sẽ để Trắng chiếm ưu thế áp đảo } 36. Nxh7 { 1-0 White wins. } { Ván đấu này minh chứng cho việc Judit Polgar đã thử nghiệm phương án 6 Bd3 bất thường nhằm tránh các lý thuyết khai cuộc thông thường. Mặc dù Đen đã có những nước đi đối phó rất sáng tạo, nhưng sai lầm ở trung cuộc đã dẫn đến một thế trận kìm kẹp áp đảo của Trắng, cho thấy sức mạnh tiềm tàng của Grand Prix Attack khi bên Đen mất cảnh giác } 1-0
+
+
+[Event "Manila Interzonal"]
+[Site "Manila PHI"]
+[Date "1990.07.11"]
+[Round "11"]
+[White "Ian Rogers"]
+[Black "Vasily Smyslov"]
+[Result "1-0"]
+[Variant "Standard"]
+[ECO "B00"]
+[Opening "Rat Defense: Harmonist"]
+[StudyName "Sici Kín Biến Nc3"]
+[ChapterName "ván 8  Rogers vs Smyslov"]
+[ChapterURL "https://lichess.org/study/yI6uCuJH/0V0OFRk4"]
+[Annotator "https://lichess.org/@/KingGambit_Neverdie"]
+
+{ Thông qua Ván 8 (Rogers - Smyslov, 1990), tác giả James Plaskett muốn truyền tải những bài học chiến lược và tâm lý thi đấu quan trọng sau đây:
+Hiệu quả của phương án tránh chồng tốt: Tác giả khẳng định rằng đây là lần đầu tiên một ván đấu quan trọng được chơi với thứ tự nước đi tự nhiên và chính xác để Đen tránh bị chồng tốt (bằng nước 5...Bd7)
+. Ông đánh giá đây là một "nước đi tự nhiên và tốt" giúp Đen duy trì một thế trận ổn định hơn so với các ván đấu đầu tiên của chương
+.
+Sự linh hoạt trong cách điều động quân của Đen: Tác giả khen ngợi nước đi 9...Qd7! là nước đi "linh hoạt nhất", cho phép Đen giữ lại nhiều lựa chọn để phản công hoặc củng cố thế trận tùy theo hành động của Trắng
+.
+Bài học về kiểm soát trung tâm: Một thông điệp chiến lược cốt lõi mà tác giả nhấn mạnh là: "Nếu bạn không làm cho một trung tâm hoạt động tốt cho mình thì nó có thể trở thành một gánh nặng"
+. Khi Smyslov không tận dụng được trung tâm, Rogers đã ngay lập tức phản công bằng nước 31 d4! để lật ngược thế cờ
+.
+Cảnh báo về việc "mất phương hướng" (lose the thread): Tác giả chỉ ra rằng ngay cả một đại kiện tướng lừng lẫy như Smyslov cũng bắt đầu "mất phương hướng" từ nước thứ 29 (nước 29...Bf8?)
+. Điều này cho thấy trong Grand Prix Attack, chỉ một vài nước đi thiếu chính xác về vị trí cũng có thể dẫn đến việc đánh mất hoàn toàn thế chủ động
+.
+Sự khốc liệt và tầm quan trọng của tính chính xác đến phút cuối: Tác giả mô tả ván đấu là một "cuộc đấu tranh kinh khủng" (tremendous struggle)
+. Việc Smyslov bỏ lỡ cơ hội hòa cờ bằng đòn phối hợp đẹp mắt ở tàn cuộc (61...Ne7!!) là lời nhắc nhở rằng trong hệ thống này, người chơi phải duy trì sự cảnh giác và tính toán chính xác cho đến tận nước đi cuối cùng
+.
+Tóm lại, ván 8 được dùng để minh chứng rằng mặc dù Đen có thể đạt được một thế trận tốt và tránh được các điểm yếu về cấu trúc, nhưng Grand Prix Attack vẫn luôn tiềm ẩn những áp lực vị trí cực lớn, đòi hỏi người chơi phải xử lý trung tâm và tàn cuộc một cách cực kỳ tinh tế. }
+1. e4 d6 2. f4 c5 3. Nf3 Nc6 4. Nc3 g6 5. Bb5 Bd7 { Thực tế đây là lần đầu tiên ván đấu quan trọng này được chơi với thứ tự nước đi tự nhiên và các nước đi tốt.
+Vấn đề là nước 7...e6 có thể bị đáp trả bằng 8 f5! exf5 9 exf5 Nxf5 10 g5 với một đợt tấn công mạnh mẽ (như trong ván Sutovsky-Kempinski, Polanica Zdroj 1999, trong khi nước 7...Nf6 8 Kh1 0-0 9 Bxc6 Bxc6 cũng đầy hứa hẹn cho Trắng trong ván Epishin-Petrosian, Groningen 1990). } 6. d3 Bg7 7. O-O a6 8. Bxc6 Bxc6 9. Qe1 { Xem Ván 11 để biết một phương án phát triển quân khác liên quan đến dãy nước 9 Kh1 Qd7 10 Qe2!?. } 9... Qd7 { Đây là nước đi linh hoạt nhất. } 10. Kh1 { Nếu Trắng chơi 10 Qh4 thì 10...f5! là một câu trả lời tốt. Nước đi 10 a4 được phân tích trong Ván 9 và 10. } 10... Nh6 { Bên Đen giữ lại lựa chọn đẩy tốt ...f7-f5, nhưng có lẽ cũng không có gì sai sót lớn nếu chơi 10...Nf6, miễn là Đen không vội vã lao vào một cuộc tấn công cánh vua bằng cách nhập thành quá sớm } 11. Bd2 { ogers nghĩ rằng nước đi này hơi quá thụ động (ông ấy thích sự chủ động) và gợi ý nước thí tốt 11 f5!? thay thế; nếu 11...gxf5 12 Qh4 fxe4 13 Nxe4. Có lẽ vậy. } 11... b5 { Trong ván Baker-King, 4NCL 1997, Đen đã vội vã chặn cánh vua bằng 11...f5, nhưng sau 12 Nd5!? fxe4 13 Qxe4 Nf7 14 Rae1, bên Trắng đã nhanh chóng thiết lập được thế kìm kẹp lên trận thế. } 12. Rb1 b4 13. Nd1 f5 14. Ng5 Nf7 15. exf5 gxf5 16. Nf3 O-O 17. Ne3 Rae8 18. Qg3 Kh8 19. Qh3 e6 20. Nc4 Rg8 { Bên Đen có các lợi thế tương tự như trong Ván 9 (Ljubojevic-Kasparov), với một sự khác biệt đáng kể là vua của ông không được an toàn bằng. Điều này khiến việc mở rộng thế trận trở nên lắt léo hơn một chút } 21. Ng5 Nxg5 22. fxg5 Bf8 23. c3 Rg6 24. cxb4 cxb4 25. Rbc1 Be7 { Nước 25...Bxg5 sẽ là một đợt đổi quân rất đúng ý đồ của bên Đen. } 26. Qh5 e5 27. h4 f4 28. Rf2 Rb8 { Hoặc 28...h3+ 29 Kg1 Qxd3 30 Bxb4 và thế trận của Trắng vẫn ổn. } (28... Qh3+ 29. Kg1 Qxd3 30. Bxb4) 29. Kh2 Bf8 { Quân tượng quay trở lại g7, nhưng sẽ tốt hơn nhiều nếu chuyển nó sang ô c7 bằng nước 29...Bc7, khi đó bên Đen đang chơi rất tốt. Smyslov bắt đầu mất phương hướng } 30. b3 Bg7 31. d4 { Nếu bạn không tạo ra được một trung tâm hoạt động tốt cho mình thì nó có thể trở thành một gánh nặng. Rogers bắt đầu phản công. } 31... Re6 32. Rd1 Qe8 { Bên Đen lẽ ra nên giữ lại quân hậu bằng nước 32...Qc7! (sau đó 33 d5 Be8) khi ông có xu hướng tận dụng hoạt động của các quân cờ tốt hơn } 33. Qxe8+ Bxe8 34. d5 Rg6 35. g3 fxg3+ 36. Kxg3 h5 37. Be3 Kg8 38. Bb6 Rb7 39. Be3 Bf7 40. Na5 Rc7 41. Nc4 Bf8 42. Rdf1 Rg7 43. Bd2 Rb7 44. Ne3 a5 45. Kh2 Rb8 46. Nf5 Rg6 47. Ne3 Rg7 48. Nf5 Rg6 49. Nh6+ Bxh6 50. Rxf7 Rf8 51. Rxf8+ Bxf8 52. Kg2 Rg7 53. Be3 e4 54. Bf4 Rf7 55. Bg3 Rb7 56. Rf6 Rb5 57. Bxd6 Bg7 58. Rf5 Kh7 59. g6+ Kxg6 60. Rg5+ Kf7 61. Rxh5 Bf6 62. Bf4 Kg6 63. Rh6+ Kf5 64. Kg3 Rc5 65. Rh5+ Kg6 66. Kg4 Bd4 67. Rg5+ Kf7 68. Rf5+ Ke8 69. d6 { 1-0 White wins. } { Smyslov vẫn duy trì sự cảnh giác, vì vậy Rogers đã đổi một cặp quân nhẹ và đưa được xe xuống hàng thứ bảy.
+Smyslov đã bỏ lỡ một cơ hội hòa cờ đẹp mắt ở nước thứ 61: nước đi 61...Ne7!! sẽ giúp bắt xe và giành lại ưu thế.
+Cuối cùng, Rogers đã giành chiến thắng sau một cuộc đấu tranh kinh khủng. } 1-0
+
+
+[Event "Linares"]
+[Site "Linares, Spain"]
+[Date "1991.??.??"]
+[Round "12"]
+[White "Ljubojevic, Ljubomir"]
+[Black "Kasparov, Garry"]
+[Result "0-1"]
+[WhiteElo "2590"]
+[BlackElo "2800"]
+[Variant "Standard"]
+[ECO "B23"]
+[Opening "Sicilian Defense: Closed"]
+[StudyName "Sici Kín Biến Nc3"]
+[ChapterName "ván 9 Ljubojevic, Ljubomir - Kasparov, Garry"]
+[ChapterURL "https://lichess.org/study/yI6uCuJH/4LozLBbU"]
+[Annotator "https://lichess.org/@/KingGambit_Neverdie"]
+
+{ Thông qua Ván 9 (Ljubojevic - Kasparov, 1991), bạn có thể rút ra những bài học chiến lược, chiến thuật và tâm lý thi đấu rất quan trọng trong hệ thống Grand Prix Attack như sau:
+1. Sự đổi mới về cấu trúc và khai cuộc
+Thử nghiệm nước đi mới: Tác giả chỉ ra rằng nước 10 a4!? của Trắng là một ý tưởng mới vào thời điểm đó, thay thế cho nước 10 Kh1 truyền thống
+. Điều này cho thấy trong Grand Prix Attack, việc thay đổi thứ tự nước đi hoặc thử nghiệm các phương án ít phổ biến có thể tạo ra những thách thức mới cho đối thủ.
+Sự linh hoạt của bên Đen: Kasparov đã chọn nước 9...Qd7!?, được đánh giá là nước đi linh hoạt nhất để đối phó với các kế hoạch của Trắng
+.
+2. Chiến lược vô hiệu hóa đòn tấn công cánh vua
+Sử dụng nước đẩy tốt f5: Bài học quan trọng nhất từ cách chơi của Kasparov là việc đẩy tốt ...f7-f5 sớm để "lấy đi chất độc" (take the sting out) khỏi bất kỳ ý đồ xây dựng quân tấn công nào của Trắng ở cánh vua
+.
+Nhập thành xa (0-0-0): Sau khi đã làm suy yếu khả năng tấn công của Trắng ở cánh vua, Đen chủ động nhập thành xa (16...0-0-0) để đưa vua đến một "mái nhà" an toàn hơn, đồng thời tạo điều kiện để phản công ngược lại
+.
+3. Sức mạnh của cặp tượng và kiểm soát cột mở
+Trong kịch bản nhập thành ngược chiều, Kasparov đã chứng minh rằng khi Đen gấp đôi quân xe trên cột g và mở rộng tầm hoạt động cho cặp tượng, Trắng sẽ phải chịu áp lực cực lớn
+.
+4. Bài học về sai lầm và áp lực thời gian
+Ván đấu này là một minh chứng điển hình cho việc ngay cả những siêu đại kiện tướng cũng có thể mắc sai lầm nghiêm trọng dưới áp lực:
+Sai lầm của Kasparov: Ông đã mắc một "sai lầm khủng khiếp" với nước 28...Rxg2?? thay vì chơi 28...Qg7! để duy trì thế thắng
+.
+Sự bỏ lỡ của Ljubojevic: Bên Trắng đã có nhiều cơ hội thắng rõ rệt (ví dụ ở nước 32 hoặc 35) nhưng đều bỏ lỡ do áp lực thời gian và sự thiếu chính xác
+.
+Sai lầm quyết định: Nước đi cuối cùng trong giai đoạn kiểm soát thời gian (40 Kf1??) đã khiến Trắng thất bại ngay lập tức
+.
+5. Sự kiên trì và yếu tố "may mắn" của các thiên tài
+Tác giả nhấn mạnh rằng Kasparov đã thành công trong việc cứu vãn một ván đấu tưởng như đã mất "từ con số không"
+.
+Bài học ở đây là: trong những thế trận lộn xộn của Grand Prix Attack, việc duy trì áp lực lên đối phương có thể dẫn đến những sai lầm bất ngờ từ phía họ. Như Plaskett trích dẫn: "Những tài năng vĩ đại nhất thế giới cũng rất may mắn" – nhưng sự may mắn đó thường đến từ việc họ luôn tạo ra những bài toán khó giải cho đối thủ
+.
+Tóm lại, ván 9 dạy bạn cách chủ động vô hiệu hóa cánh vua của Trắng, cách chuyển hướng tấn công sang cánh hậu và tầm quan trọng của việc giữ bình tĩnh để tận dụng sai lầm của đối phương trong những tình huống hỗn loạn nhất của ván đấu. }
+1. e4 c5 2. Nc3 d6 3. f4 Nc6 4. Nf3 g6 5. Bb5 Bd7 6. O-O Bg7 7. d3 a6 8. Bxc6 Bxc6 9. Qe1 Qd7 10. a4 b6 { Khai cuộc: Hệ thống này là một thử nghiệm mới vào thời điểm đó; các ván đấu trước đây thường thấy nước 10 Kh1
+.
+Lựa chọn của Đen: Trong biến thể này, Đen thường nhập thành xa. Tác giả dẫn chứng một số ví dụ khác để so sánh
+:
+Ván Hebden - Summerscale (1994): Đen chọn hướng đi hoàn toàn khác khi đánh trực diện vào trung tâm với ...f7-f5 và đạt kết quả hòa
+.
+Ván Jansa - Stohl (1992 & 1995): Các nước đi sớm ...f7-f5 dẫn đến những thế trận phức tạp, nơi Đen thường giành được ưu thế hoặc ít nhất là một thế trận không rõ ràng } 11. b3 Nf6 12. h3 Nh5 13. Bd2 f5 { Chiến thuật của Kasparov: Bằng cách này, Đen đã vô hiệu hóa hoàn toàn ý đồ xây dựng lực lượng của Trắng ở cánh vua } 14. exf5 gxf5 15. Qh4 Nf6 16. Rae1 O-O-O { Nhập thành ngược chiều: Sau khi vô hiệu hóa cánh vua, Kasparov đưa vua của mình đi tìm một "mái nhà" an toàn hơn ở phía bên kia bàn cờ } 17. a5 b5 18. b4 cxb4 19. Na2 Nd5 20. Nxb4 Bf6 21. Qf2 Nxb4 22. Bxb4 Rhg8 23. Re2 Rg6 24. Qe1 Rdg8 { Sức ép cực lớn: Kasparov gấp đôi quân xe trên cột g và bắt đầu mở rộng không gian hoạt động cho cặp tượng của mình. Trong kịch bản nhập thành ngược chiều này, Trắng đang phải chịu áp lực nặng nề hơn nhiều } 25. Kh2 e5 26. fxe5 Bxe5+ 27. Kh1 Qb7 { Ghi chú của Kasparov: Kasparov sau đó nhận định rằng nước 27...Qg7! sẽ đơn giản hơn để duy trì ưu thế } 28. d4 Rxg2!! { Sai lầm nghiêm trọng: Một nước đi sai lầm thảm hại. Theo Kasparov, đáng lẽ nên chơi 28...Qg7 29 Qf2 Bf4 để duy trì đợt tấn công mạnh mẽ } 29. Rxg2 Rxg2 { Đòn phản công bị bỏ lỡ: Kasparov có lẽ đã không nhìn ra rằng nếu 29...Bxf3 30 Rxf3 Rxf3 thì Trắng sẽ đáp trả bằng đòn 31 Qc3+! Qxc3 32 Rxg8+ và Đen buộc phải chịu thua } 30. Kxg2 Qg7+ 31. Kh1 { Thế trận ngã ngũ: Đến đây, lẽ ra mọi thứ đã kết thúc cho bên Đen } 31... Bf4 { [%cal Gd4d5] } 32. Qe6+ { Nước đi mạnh hơn: Trắng có thể thắng ngay lập tức với 32 d5 Bxd5 33 Qc3+ buộc Đen đầu hàng } 32... Bd7 33. Qd5 Qg3 34. Qa8+ { Sự thiếu chính xác của Trắng: Dù không làm mất đi chiến thắng, nhưng việc đưa hậu rời xa trung tâm khiến Trắng cần phải chơi cực kỳ chính xác để đảm bảo kết quả. Nước 34 Re1! được đánh giá là đơn giản hơn } 34... Kc7 35. Re1 { Đánh mất chiến thắng: Sai lầm này khiến Trắng mất nửa điểm. Ljubojevic có thể thắng nếu đi đúng dãy nước: 35 Qa7+ Kd8 36 Qb8+ Ke7 37 Re1+ Kf7 38 Qb7 Qxh3+ 39 Kg1 } 35... Qxh3+ 36. Kg1 Qg3+ 37. Kf1 Qh3+ 38. Ke2 { Cầu hòa: Nếu Trắng chơi 38 Kg1 Qg3+ thì ván đấu sẽ kết thúc bằng chiếu vĩnh cửu } 38... Bc6 39. Qa7+ Kc8 40. Rf1 { Sai lầm quyết định: Như thường lệ, nước đi cuối cùng trong giai đoạn áp lực thời gian (time control) là sai lầm mang tính quyết định. Trắng có thể hòa bằng nhiều cách, ví dụ 40 Qd4 Qg4+ 41 Kd3 Qg3+ } 40... Qg2+ 41. Ke1 Bg3+ 42. Kd1 Qxf1+ 43. Ne1 Bxe1 { 0-1 Black wins. } { Tổng kết của tác giả:
+Plaskett nhận định rằng đây là một trong những lần Kasparov đã thành công trong việc cứu vãn một ván đấu tưởng như đã mất từ con số không (trước đó là các ván gặp Timman và Korchnoi). Như một đại kiện tướng đã nhận xét về tài năng vĩ đại của thế giới: "Họ cũng rất may mắn"u } 0-1
+
+
+[Event "Reykjavik World Cup"]
+[Site "Reykjavik ISL"]
+[Date "1991.09.28"]
+[Round "5"]
+[White "Ljubomir Ljubojevic"]
+[Black "Lajos Portisch"]
+[Result "1-0"]
+[Variant "Standard"]
+[ECO "B23"]
+[Opening "Sicilian Defense: Closed"]
+[StudyName "Sici Kín Biến Nc3"]
+[ChapterName "ván 10 Ljubomir Ljubojevic - Lajos Portisch"]
+[ChapterURL "https://lichess.org/study/yI6uCuJH/EPasvLd2"]
+[Annotator "https://lichess.org/@/KingGambit_Neverdie"]
+
+1. e4 c5 2. Nc3 d6 3. f4 Nc6 4. Nf3 g6 5. Bb5 Bd7 6. O-O Bg7 7. d3 a6 8. Bxc6 Bxc6 9. Qe1 Qd7 10. a4 b6 11. h3 Nf6 12. Bd2 h5 13. e5 Nh7 14. exd6 Qxd6 15. Ne5 Bxe5 16. fxe5 Qd4+ 17. Qf2 Qxf2+ 18. Rxf2 Nf8 19. Raf1 Rh7 20. a5 b5 21. b4 cxb4 22. Na2 b3 23. Nb4 Bb7 24. cxb3 Ne6 25. Rc1 Rd8 26. Be3 Rd7 27. Rd2 f6 28. Nxa6 fxe5 29. Nc5 Nxc5 30. Rxc5 Ba6 31. Rxe5 Rf7 32. Bc5 Rf5 33. Rde2 Rxe5 34. Rxe5 Kf7 35. d4 e6 36. Re3 Rd5 37. b4 Rf5 38. Bd6 Rd5 39. Rf3+ Ke8 40. Rf8+ Kd7 41. Be5 { 1-0 White wins. } 1-0
+
+
+[Event "Hastings 1998/99"]
+[Site "Hastings ENG"]
+[Date "1999.01.06"]
+[Round "8"]
+[White "Harold James Plaskett"]
+[Black "Sergei Yuryevich Shipov"]
+[Result "1-0"]
+[WhiteElo "2455"]
+[BlackElo "2635"]
+[Variant "Standard"]
+[ECO "B23"]
+[Opening "Sicilian Defense: Closed"]
+[StudyName "Sici Kín Biến Nc3"]
+[ChapterName "ván 11 Harold James Plaskett - Sergei Yuryevich Shipov"]
+[ChapterURL "https://lichess.org/study/yI6uCuJH/XqzZOeEQ"]
+[Annotator "https://lichess.org/@/KingGambit_Neverdie"]
+
+1. e4 c5 2. Nc3 d6 3. f4 Nc6 4. Nf3 g6 5. Bb5 Bd7 6. O-O Bg7 7. d3 a6 8. Bxc6 Bxc6 9. Kh1 Qd7 10. Qe2 f5 11. Nd5 Rd8 12. Ng5 Nf6 13. Nb6 Qc7 14. Nc4 fxe4 15. Ne6 Qc8 16. f5 Rg8 17. Nb6 exd3 18. cxd3 Qb8 19. fxg6 Bh8 20. g7 Bxg7 21. Bg5 Bh8 22. Rae1 Rd7 23. Rxf6 exf6 24. Nxc5+ Kd8 25. Ncxd7 Bxd7 26. Qe7+ Kc7 27. Nd5+ { 1-0 White wins. } 1-0
+
+
+[Event "Sici Kín Biến Nc3: ván 12 Wedberg - Kharlov (Haninge 1992)"]
+[Date "2026.06.30"]
+[Result "0-1"]
+[Variant "Standard"]
+[ECO "B23"]
+[Opening "Sicilian Defense: Grand Prix Attack, Schofman Variation"]
+[StudyName "Sici Kín Biến Nc3"]
+[ChapterName "ván 12 Wedberg - Kharlov (Haninge 1992)"]
+[ChapterURL "https://lichess.org/study/yI6uCuJH/hoMMB0ec"]
+[Annotator "https://lichess.org/@/KingGambit_Neverdie"]
+[UTCDate "2026.06.30"]
+[UTCTime "10:42:28"]
+
+1. e4 c5 2. Nc3 Nc6 3. f4 g6 4. Nf3 Bg7 5. Bc4 e6 6. f5 Nge7 7. fxe6 fxe6 8. d3 d5 9. Bb3 b5 10. exd5 exd5 11. O-O c4 12. dxc4 dxc4 13. Qxd8+ Nxd8 14. Nxb5 cxb3 15. Nc7+ Kd7 16. Nxa8 bxc2 17. Bf4 Rf8 18. Ne5+ Bxe5 19. Bxe5 Rxf1+ 20. Rxf1 Ndc6 21. Bc3 Ba6 22. Rc1 Bd3 23. Kf2 Nd5 24. Bd2 Ncb4 25. a3 Nc6 26. Re1 Bf5 27. h3 h5 28. Kg3 Nd4 29. Kh4 Nb3 30. Bg5 Bd3 31. Kg3 Nc5 32. Kf3 Ne6 33. Bc1 h4 34. Kf2 Bf5 35. g3 Nc5 36. Kf3 Nd3 37. Rg1 Nxc1 38. Rxc1 hxg3 39. Kxg3 Ne3 { 0-1 Black wins. } 0-1
+
+
+[Event "Sici Kín Biến Nc3: ván 13 Hebden - Speelman (Giải Vô địch Anh, Torquay 1982)"]
+[Date "2026.06.30"]
+[Result "0-1"]
+[Variant "Standard"]
+[ECO "B23"]
+[Opening "Sicilian Defense: Grand Prix Attack, Schofman Variation"]
+[StudyName "Sici Kín Biến Nc3"]
+[ChapterName "ván 13 Hebden - Speelman (Giải Vô địch Anh, Torquay 1982)"]
+[ChapterURL "https://lichess.org/study/yI6uCuJH/lCXEGKMH"]
+[Annotator "https://lichess.org/@/KingGambit_Neverdie"]
+[UTCDate "2026.06.30"]
+[UTCTime "10:38:31"]
+
+1. e4 c5 2. f4 g6 3. Nf3 Bg7 4. Nc3 Nc6 5. Bc4 e6 6. f5 Nge7 7. fxe6 fxe6 8. d3 O-O 9. Bg5 h6 10. Bh4 g5 11. Bf2 d5 12. Bb3 g4 13. Nd2 c4 14. dxc4 d4 15. Na4 Rxf2 16. Kxf2 Qa5 17. Rf1 Bd7 18. Kg1 Ne5 19. c3 Bxa4 20. cxd4 Nd3 21. Qxg4 Qxd2 22. Qxe6+ Kh8 23. Bxa4 Qxb2 24. Rad1 Qxd4+ 25. Kh1 Nc6 26. Rd2 Qe3 27. Bxc6 Qxd2 { 0-1 Black wins. } 0-1
+
+
+[Event "Sici Kín Biến Nc3: ván 14 Chandler - Arnason (Moscow 1990)"]
+[Date "2026.06.30"]
+[Result "1/2-1/2"]
+[Variant "Standard"]
+[ECO "B23"]
+[Opening "Sicilian Defense: Closed"]
+[StudyName "Sici Kín Biến Nc3"]
+[ChapterName "ván 14 Chandler - Arnason (Moscow 1990)"]
+[ChapterURL "https://lichess.org/study/yI6uCuJH/GaUBYzjt"]
+[Annotator "https://lichess.org/@/KingGambit_Neverdie"]
+[UTCDate "2026.06.30"]
+[UTCTime "10:45:18"]
+
+1. e4 c5 2. Nc3 d6 3. f4 Nc6 4. Nf3 g6 5. Bc4 Bg7 6. O-O e6 7. f5 gxf5 8. d3 Nf6 9. exf5 O-O 10. a3 d5 11. Ba2 exf5 12. Bg5 Be6 13. Qd2 Ne7 14. Ne2 Ng6 15. Ng3 Qd6 16. Bxf6 Bxf6 17. Nh5 Bh8 18. Qh6 f6 19. Rae1 Rae8 20. c3 Rf7 21. d4 c4 22. Bb1 Qf8 23. Qd2 Bg7 24. Qf2 { 1/2-1/2  } 1/2-1/2
+
+
+[Event "Sici Kín Biến Nc3: ván 15 Abramovic - Kozul (Yugoslavia 1985)"]
+[Date "2026.06.30"]
+[Result "0-1"]
+[Variant "Standard"]
+[ECO "B23"]
+[Opening "Sicilian Defense: Grand Prix Attack"]
+[StudyName "Sici Kín Biến Nc3"]
+[ChapterName "ván 15 Abramovic - Kozul (Yugoslavia 1985)"]
+[ChapterURL "https://lichess.org/study/yI6uCuJH/VnS9CsRv"]
+[Annotator "https://lichess.org/@/KingGambit_Neverdie"]
+[UTCDate "2026.06.30"]
+[UTCTime "10:49:23"]
+
+1. e4 c5 2. Nc3 Nc6 3. f4 d6 4. Nf3 g6 5. Bc4 Bg7 6. O-O e6 7. f5 exf5 8. Qe1 Nge7 9. d3 h6 10. Qg3 Ne5 11. Bb5+ Bd7 12. Bf4 Nxf3+ 13. Rxf3 Bxc3 14. Bxd7+ Qxd7 15. bxc3 g5 16. Bd2 f4 17. Qe1 O-O-O 18. g3 fxg3 19. hxg3 Nc6 20. Rf5 Ne5 21. Qe2 Rde8 22. d4 Nc6 23. Qd3 Re7 24. dxc5 dxc5 25. Rxc5 Qg4 26. Rf1 Qxe4 27. Qxe4 Rxe4 28. Rxf7 Rd8 29. Rf2 Kc7 30. c4 b6 31. Rcf5 Ne5 32. c5 Ng4 33. cxb6+ axb6 34. Rg2 Red4 35. Rf7+ Kc6 36. Be1 Re8 { 0-1 Black wins. } 0-1
+
+
+[Event "Sici Kín Biến Nc3: ván 17 Hellers - Gelfand (Olympiad Novi Sad 1990)"]
+[Date "2026.06.30"]
+[Result "0-1"]
+[Variant "Standard"]
+[ECO "B23"]
+[Opening "Sicilian Defense: Closed"]
+[StudyName "Sici Kín Biến Nc3"]
+[ChapterName "ván 17 Hellers - Gelfand (Olympiad Novi Sad 1990)"]
+[ChapterURL "https://lichess.org/study/yI6uCuJH/5rCZhiFf"]
+[Annotator "https://lichess.org/@/KingGambit_Neverdie"]
+[UTCDate "2026.06.30"]
+[UTCTime "11:19:43"]
+
+1. e4 c5 2. Nc3 d6 3. f4 Nc6 4. Nf3 g6 5. Bc4 Bg7 6. O-O e6 7. f5 exf5 8. d3 Nge7 9. Qe1 h6 10. exf5 Bxf5 11. g4 Bxg4 12. Bxf7+ Kxf7 13. Ne5+ Kg8 14. Nxg4 Nd4 15. Qf2 Ndf5 16. Qg2 Qd7 17. Ne4 Rf8 18. c3 b6 19. Bf4 d5 20. Nd2 d4 21. Ne4 g5 22. Be5 Bxe5 23. Nxe5 Qe6 24. Ng4 dxc3 25. Rae1 Qc6 26. bxc3 Kg7 27. d4 Ng6 28. dxc5 bxc5 29. Qf2 Nd4 30. Nef6 h5 31. cxd4 hxg4 32. Ne8+ Qxe8 { 0-1 Black wins. } 0-1
+
+
+[Event "Sici Kín Biến Nc3: ván 18 Spangenberg, Hugo vs Ftacnik, Lubomir Moscow ol (Men) · 1994 · Sicilian,"]
+[Date "2026.06.30"]
+[Result "0-1"]
+[Variant "Standard"]
+[ECO "B23"]
+[Opening "Sicilian Defense: Closed"]
+[StudyName "Sici Kín Biến Nc3"]
+[ChapterName "ván 18 Spangenberg, Hugo vs Ftacnik, Lubomir Moscow ol (Men) · 1994 · Sicilian,"]
+[ChapterURL "https://lichess.org/study/yI6uCuJH/1XSYV4rT"]
+[Annotator "https://lichess.org/@/KingGambit_Neverdie"]
+[UTCDate "2026.06.30"]
+[UTCTime "11:25:58"]
+
+1. e4 c5 2. Nc3 d6 3. f4 g6 4. Nf3 Bg7 5. Bc4 e6 6. O-O Ne7 7. d3 Nbc6 8. f5 d5 9. Bb3 dxe4 10. fxg6 exf3 11. gxf7+ Kf8 12. Qxf3 Qd4+ 13. Kh1 Ne5 14. Qe2 Qg4 15. Qf2 b6 16. h3 Qg6 17. Bf4 Bb7 18. Rae1 c4 19. dxc4 Nxf7 20. Nb5 Nf5 21. Nc7 Re8 22. Nxe8 Bd4 23. Qd2 Rg8 24. Re2 Qg3 { 0-1 Black wins. } 0-1
+
+
+[Event "Sici Kín Biến Nc3: ván 19 Short, Nigel D vs Oll, Lembit Keres mem · 1998 · Sicilian, closed (B23) ·"]
+[Date "2026.06.30"]
+[Result "1-0"]
+[Variant "Standard"]
+[ECO "B23"]
+[Opening "Sicilian Defense: Closed"]
+[StudyName "Sici Kín Biến Nc3"]
+[ChapterName "ván 19 Short, Nigel D vs Oll, Lembit Keres mem · 1998 · Sicilian, closed (B23) ·"]
+[ChapterURL "https://lichess.org/study/yI6uCuJH/oIkWo7pM"]
+[Annotator "https://lichess.org/@/KingGambit_Neverdie"]
+[UTCDate "2026.06.30"]
+[UTCTime "11:32:59"]
+
+1. e4 c5 2. Nc3 d6 3. f4 Nc6 4. Nf3 g6 5. Bc4 Bg7 6. O-O e6 7. d3 Nge7 8. Qe1 O-O 9. f5 d5 10. Bb3 c4 11. dxc4 d4 12. f6 Bxf6 13. e5 Bg7 14. Ne4 Nxe5 15. Nxe5 Bxe5 16. Bg5 f5 17. Qh4 Rf7 18. Nf6+ Bxf6 19. Bxf6 Qf8 20. Bxd4 Nc6 21. Be3 Qe7 22. Qxe7 Rxe7 23. c5 Kg7 24. Bg5 Re8 25. Rad1 h6 26. Bd2 e5 27. Bc3 Be6 28. Bxe6 Rxe6 29. Rd7+ Re7 30. Rxe7+ Nxe7 31. Bxe5+ Kf7 32. Rd1 Nc6 33. Bc7 Re8 34. Kf2 Re7 35. Bd6 Re4 36. c3 a5 37. b3 a4 38. Bc7 Re7 39. Bb6 axb3 40. axb3 f4 41. b4 Ne5 42. Bd8 Re8 43. Bc7 Kf6 44. Bxe5+ Rxe5 45. Rd7 Re3 46. c4 Rc3 47. Rxb7 Rxc4 48. Ke2 Rc2+ 49. Kd3 Rxg2 50. c6 Ke6 51. b5 f3 52. c7 Kd7 53. b6 { 1-0 White wins. } 1-0
+
+
+[Event "Sici Kín Biến Nc3: ván 20 Short, Nigel D vs Gelfand, Boris Candidates qf1 · 1991 · Sicilian, closed"]
+[Date "2026.06.30"]
+[Result "1-0"]
+[Variant "Standard"]
+[ECO "B23"]
+[Opening "Sicilian Defense: Closed"]
+[StudyName "Sici Kín Biến Nc3"]
+[ChapterName "ván 20 Short, Nigel D vs Gelfand, Boris Candidates qf1 · 1991 · Sicilian, closed"]
+[ChapterURL "https://lichess.org/study/yI6uCuJH/pHx6ANOo"]
+[Annotator "https://lichess.org/@/KingGambit_Neverdie"]
+[UTCDate "2026.06.30"]
+[UTCTime "11:43:00"]
+
+1. e4 c5 2. Nc3 d6 3. f4 Nc6 4. Nf3 g6 5. Bc4 Bg7 6. O-O e6 7. d3 Nge7 8. Qe1 Nd4 9. Nxd4 cxd4 10. Ne2 O-O 11. Bb3 Nc6 12. Bd2 d5 13. e5 f6 14. exf6 Bxf6 15. Kh1 a5 16. a4 Qd6 17. Ng1 Bd7 18. Nf3 Nb4 19. Qf2 Qc5 20. Bc3 Nc6 21. Rae1 b6 22. Bd2 Nb4 23. Qg3 b5 24. f5 exf5 25. Ne5 Be8 26. axb5 Qxb5 27. Rxf5 Kh8 28. Rxf6 Rxf6 29. Ng4 Rf5 30. Nh6 Rh5 31. Qf4 { 1-0 White wins. } 1-0
+
+
+[Event "Sici Kín Biến Nc3: ván 21 Anand, Viswanathan vs Gelfand, Boris Reggio Emilia 9192 · 1991 · Sicilian"]
+[Date "2026.06.30"]
+[Result "1/2-1/2"]
+[Variant "Standard"]
+[ECO "B23"]
+[Opening "Sicilian Defense: Closed"]
+[StudyName "Sici Kín Biến Nc3"]
+[ChapterName "ván 21 Anand, Viswanathan vs Gelfand, Boris Reggio Emilia 9192 · 1991 · Sicilian"]
+[ChapterURL "https://lichess.org/study/yI6uCuJH/gjXCKVr3"]
+[Annotator "https://lichess.org/@/KingGambit_Neverdie"]
+[UTCDate "2026.06.30"]
+[UTCTime "12:28:26"]
+
+1. e4 c5 2. Nc3 d6 3. f4 Nc6 4. Nf3 g6 5. Bc4 Bg7 6. O-O e6 7. d3 Nge7 8. Qe1 h6 9. Bb3 a6 10. a4 Rb8 11. Qg3 Nd4 12. Nxd4 cxd4 13. Ne2 b5 14. axb5 axb5 15. Qf2 Qb6 16. f5 exf5 17. exf5 gxf5 18. Ng3 Be5 19. Bf4 Be6 20. Rae1 Qc7 21. Nh5 Kd7 22. Re2 Rbf8 23. Bxe6+ fxe6 24. c3 Bxf4 25. Nxf4 e5 26. Rfe1 Rf7 27. Nh5 dxc3 28. d4 Qb6 29. bxc3 Rc8 30. dxe5 Qxf2+ 31. Kxf2 dxe5 32. Rd1+ Ke6 33. Nf4+ Kf6 34. Rd6+ Kg7 35. Rxe5 Ng8 36. Rxb5 Nf6 37. Kf1 Rxc3 38. Rxf5 Rc1+ 39. Ke2 Re7+ 40. Ne6+ Kg6 41. Re5 Rc8 42. Re3 Rce8 43. Kd3 Rd7 44. Rg3+ Kh7 { 1/2-1/2  } 1/2-1/2
+
+
+[Event "Sici Kín Biến Nc3: ván 22 Topalov, Veselin vs Van Wely, Loek Hoogovens · 1996 · Sicilian, closed (B"]
+[Date "2026.06.30"]
+[Result "1-0"]
+[Variant "Standard"]
+[ECO "B23"]
+[Opening "Sicilian Defense: Closed"]
+[StudyName "Sici Kín Biến Nc3"]
+[ChapterName "ván 22 Topalov, Veselin vs Van Wely, Loek Hoogovens · 1996 · Sicilian, closed (B"]
+[ChapterURL "https://lichess.org/study/yI6uCuJH/tZjStlNK"]
+[Annotator "https://lichess.org/@/KingGambit_Neverdie"]
+[UTCDate "2026.06.30"]
+[UTCTime "12:31:27"]
+
+1. e4 c5 2. Nc3 d6 3. f4 Nc6 4. Nf3 g6 5. Bc4 Bg7 6. O-O e6 7. d3 Nge7 8. Qe1 h6 9. Bb3 Nd4 10. Nxd4 cxd4 11. Ne2 O-O 12. Kh1 f5 13. Ng1 Kh8 14. Nf3 Bd7 15. Bd2 Rc8 16. Qg3 fxe4 17. dxe4 d5 18. exd5 exd5 19. Nh4 Rf6 20. Nf3 Nf5 21. Qf2 Bb5 22. Rfe1 Bc4 23. Nxd4 Qb6 24. c3 Nxd4 25. Be3 Rf7 26. Bxc4 dxc4 27. Rad1 Re8 28. Bxd4 Rxe1+ 29. Qxe1 Bxd4 30. Rxd4 Qxb2 31. h3 Qb5 32. Qe6 Kg7 33. Rxc4 h5 34. a4 Qb1+ 35. Kh2 Qc1 36. Qe5+ Kh7 37. Qd5 Re7 38. Qd4 Rf7 39. Qxa7 Qe1 40. Qg1 Qe2 41. Qd4 Qf1 42. Rb4 Re7 43. Qf6 Rg7 44. Re4 Qf2 45. Qd4 Qc2 46. Re5 Qa2 47. Qe4 Kh6 48. Re8 Kh7 49. Rf8 Rf7 50. Rb8 { 1-0 White wins. } 1-0
+
+
+[Event "Sici Kín Biến Nc3: ván 23 Plaskett, H James vs Velimirovic, Dragoljub Belgrade GMA op · 1988 · Sici"]
+[Date "2026.06.30"]
+[Result "1-0"]
+[Variant "Standard"]
+[ECO "B23"]
+[Opening "Sicilian Defense: Grand Prix Attack"]
+[StudyName "Sici Kín Biến Nc3"]
+[ChapterName "ván 23 Plaskett, H James vs Velimirovic, Dragoljub Belgrade GMA op · 1988 · Sici"]
+[ChapterURL "https://lichess.org/study/yI6uCuJH/oKLWGfzx"]
+[Annotator "https://lichess.org/@/KingGambit_Neverdie"]
+[UTCDate "2026.06.30"]
+[UTCTime "13:21:12"]
+
+1. e4 c5 2. Nc3 Nc6 3. f4 e6 4. Nf3 d5 5. Bb5 Nf6 6. Qe2 Be7 7. O-O O-O 8. Bxc6 bxc6 9. d3 a5 10. Bd2 a4 11. Ne5 Qc7 12. Rf3 Ne8 13. Re1 Nd6 14. Rh3 g6 15. Ng4 f5 16. Nh6+ Kg7 17. exd5 Bf6 18. dxe6 Bxe6 19. Qxe6 Rae8 20. Nd5 Bd4+ 21. Kf1 Qd8 22. Ne7 Rf6 23. Qe2 Bxb2 24. c3 c4 25. Qe5 Ne4 26. Rxe4 fxe4 27. Ng4 Qxe7 28. Rxh7+ { 1-0 White wins. } 1-0
+
+
+[Event "Sici Kín Biến Nc3: ván 24 Watson, William N vs Kupreichik, Viktor D Hastings 8485 · 1984 · Sicilian"]
+[Date "2026.06.30"]
+[Result "1-0"]
+[Variant "Standard"]
+[ECO "B23"]
+[Opening "Sicilian Defense: Closed"]
+[StudyName "Sici Kín Biến Nc3"]
+[ChapterName "ván 24 Watson, William N vs Kupreichik, Viktor D Hastings 8485 · 1984 · Sicilian"]
+[ChapterURL "https://lichess.org/study/yI6uCuJH/kaB4vRjF"]
+[Annotator "https://lichess.org/@/KingGambit_Neverdie"]
+[UTCDate "2026.06.30"]
+[UTCTime "13:23:02"]
+
+1. e4 c5 2. Nc3 e6 3. f4 d5 4. Nf3 Nc6 5. Bb5 Nf6 6. Ne5 Qc7 7. Qf3 a6 8. Bxc6+ bxc6 9. O-O Bd6 10. d3 O-O 11. Kh1 a5 12. Bd2 Ba6 13. Rfe1 Rad8 14. Rad1 c4 15. dxc4 dxc4 16. Qg3 Kh8 17. Nf3 Bb4 18. Ng5 Rd4 19. e5 Ng8 20. Qf2 Rd7 21. f5 h6 22. f6 g6 23. Qh4 Rfd8 24. Nf3 Bf8 25. Ne4 c3 26. bxc3 c5 27. Rb1 Bb7 28. Rxb7 Qxb7 29. Nxc5 Qd5 30. Nxd7 Rxd7 31. c4 Qc5 32. a4 h5 33. Rb1 Bh6 34. Bxh6 Nxh6 35. Qf4 Ng8 36. h3 Qf8 37. c5 Rc7 38. Ng5 Nh6 39. Ne4 Kg8 40. g4 Qa8 41. Kh2 Kh7 42. Ng5+ Kg8 43. Ne4 Kh7 44. gxh5 Nf5 45. hxg6+ fxg6 46. Ng5+ Kh8 47. Nxe6 Rc6 48. Qe4 Qc8 49. Qxc6 Qxc6 50. Rb8+ Kh7 { 1-0 White wins. } 1-0
+

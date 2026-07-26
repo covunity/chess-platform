@@ -224,10 +224,10 @@ export default function NewCoursePage() {
                   {priceError}
                 </p>
               )}
-              {profile?.account_tier_id && (() => {
-                const tier = getTier(profile.account_tier_id)
-                if (!tier) return null
-                const feePct = tier.platform_fee_pct
+              {(profile?.account_tier_id || profile?.role === 'admin') && (() => {
+                const tier = profile?.account_tier_id ? getTier(profile.account_tier_id) : null
+                if (!tier && profile?.role !== 'admin') return null
+                const feePct = profile?.role === 'admin' ? 0 : (tier?.platform_fee_pct ?? 20)
                 if (price === 0) {
                   return (
                     <p data-testid="fee-preview" className="text-xs mt-1" style={{ color: 'var(--success)' }}>

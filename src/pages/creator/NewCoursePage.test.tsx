@@ -192,4 +192,19 @@ describe('NewCoursePage', () => {
       expect(preview).toHaveTextContent('40.000')
     })
   })
+
+  it('shows 0% platform fee for admin role', async () => {
+    mockUseAuth.mockReturnValue({ profile: { id: 'u-admin', role: 'admin', account_tier_id: 'individual' } })
+    renderPage()
+    const priceInput = screen.getByTestId('course-price-input')
+    await userEvent.clear(priceInput)
+    await userEvent.type(priceInput, '100000')
+    await waitFor(() => {
+      const preview = screen.getByTestId('fee-preview')
+      // Admin pays 0% fee -> 0 fee, 100000 payout
+      expect(preview).toHaveTextContent('0%')
+      expect(preview).toHaveTextContent('0₫')
+      expect(preview).toHaveTextContent('100.000₫')
+    })
+  })
 })

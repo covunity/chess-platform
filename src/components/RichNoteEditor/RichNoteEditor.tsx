@@ -204,6 +204,10 @@ export default function RichNoteEditor({
         borderRadius: 'var(--r-sm)',
         background: disabled ? 'var(--surface-2)' : 'var(--surface)',
         opacity: disabled ? 0.6 : 1,
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        maxHeight: '100%',
         overflow: 'hidden',
       }}
     >
@@ -216,6 +220,7 @@ export default function RichNoteEditor({
           padding: '3px 5px',
           borderBottom: '1px solid var(--border)',
           background: 'var(--surface-2)',
+          flexShrink: 0,
         }}
       >
         {/* Inline formatting */}
@@ -285,7 +290,7 @@ export default function RichNoteEditor({
 
       {/* Editor content */}
       <div
-        style={{ padding: '8px 10px', minHeight: 64, fontSize: 13 }}
+        style={{ padding: '8px 10px', flex: 1, overflowY: 'auto', minHeight: 80, fontSize: 13 }}
         data-placeholder={placeholder}
       >
         <EditorContent editor={editor} />
