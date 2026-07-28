@@ -59,10 +59,11 @@ jobs:
       - name: Push Database Migrations to Supabase Production
         if: steps.filter.outputs.migrations == 'true'
         run: |
-          if [ -n "$SUPABASE_ACCESS_TOKEN" ]; then
-            supabase db push --include-all
+          if [ -n "$SUPABASE_ACCESS_TOKEN" ] && [ -n "$SUPABASE_DB_PASSWORD" ]; then
+            echo "Pushing migrations to Supabase Production..."
+            supabase db push --linked --include-all --password "$SUPABASE_DB_PASSWORD"
           else
-            echo "SUPABASE_ACCESS_TOKEN secret is not configured. Skipping database push."
+            echo "SUPABASE_ACCESS_TOKEN or SUPABASE_DB_PASSWORD secret is not configured in GitHub Secrets. Skipping database push."
           fi
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -72,23 +73,22 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - run: npm ci
-      - run: npm install --global vercel@latest
-      - name: Pull Vercel environment
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-      - name: Build
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-      - name: Deploy to production
+
+      - name: Deploy to Vercel Production
         id: deploy
         run: |
-          url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
-          echo "url=$url" >> $GITHUB_OUTPUT
+          if [ -n "$VERCEL_TOKEN" ] && [ -n "$VERCEL_PROJECT_ID" ] && [ -n "$VERCEL_ORG_ID" ]; then
+            npm ci
+            npm install --global vercel@latest
+            vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+            vercel build --prod --token="$VERCEL_TOKEN"
+            url=$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")
+            echo "url=$url" >> $GITHUB_OUTPUT
+          else
+            echo "VERCEL_TOKEN, VERCEL_PROJECT_ID, or VERCEL_ORG_ID is not configured in GitHub Secrets. Skipping Vercel deploy."
+            echo "url=https://github.com/covunity/chess-platform" >> $GITHUB_OUTPUT
+          fi
         env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
