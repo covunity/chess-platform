@@ -100,17 +100,15 @@ export async function isInWishlist(
   try {
     const res = client
       .from('course_wishlists')
-      ?.select?.('id')
-      ?.eq?.('user_id', userId)
-      ?.eq?.('course_id', courseId)
+      .select('id')
+      .eq('user_id', userId)
+      .eq('course_id', courseId) as unknown as { maybeSingle?: () => Promise<{ data: unknown; error: unknown }> }
 
     if (!res) return { inWishlist: false, error: null }
 
-    const { data, error } = typeof (res as { maybeSingle?: () => Promise<unknown> }).maybeSingle === 'function'
-      ? await (res as { maybeSingle: () => Promise<{ data: unknown; error: unknown }> }).maybeSingle()
-      : (typeof (res as unknown as Promise<unknown>).then === 'function'
-          ? await (res as unknown as Promise<{ data?: unknown; error?: unknown }>)
-          : { data: null, error: null })
+    const { data, error } = typeof res.maybeSingle === 'function'
+      ? await res.maybeSingle()
+      : { data: null, error: null }
 
     if (error) {
       return { inWishlist: false, error: new Error((error as { message?: string })?.message ?? 'Failed to check wishlist') }
@@ -138,7 +136,7 @@ export async function getWishlistCourses(
   try {
     const res = client
       .from('course_wishlists')
-      ?.select?.(`
+      .select(`
         added_at,
         courses:course_id (
           id,
@@ -149,14 +147,14 @@ export async function getWishlistCourses(
           reviews ( rating )
         )
       `)
-      ?.eq?.('user_id', userId)
-      ?.order?.('added_at', { ascending: false })
+      .eq('user_id', userId)
+      .order('added_at', { ascending: false }) as unknown as Promise<{ data: unknown; error: unknown }>
 
     if (!res || typeof (res as unknown as Promise<unknown>).then !== 'function') {
       return { courses: [], error: null }
     }
 
-    const { data, error } = await (res as unknown as Promise<{ data: unknown; error: unknown }>)
+    const { data, error } = await res
 
     if (error) {
       return { courses: null, error: new Error((error as { message?: string })?.message ?? 'Failed to fetch wishlist') }
