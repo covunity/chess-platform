@@ -51,14 +51,19 @@ jobs:
               - 'supabase/migrations/**'
 
       - name: Setup Supabase CLI
-        if: steps.filter.outputs.migrations == 'true' && secrets.SUPABASE_ACCESS_TOKEN != ''
+        if: steps.filter.outputs.migrations == 'true'
         uses: supabase/setup-cli@v1
         with:
           version: latest
 
       - name: Push Database Migrations to Supabase Production
-        if: steps.filter.outputs.migrations == 'true' && secrets.SUPABASE_ACCESS_TOKEN != ''
-        run: supabase db push --include-all
+        if: steps.filter.outputs.migrations == 'true'
+        run: |
+          if [ -n "$SUPABASE_ACCESS_TOKEN" ]; then
+            supabase db push --include-all
+          else
+            echo "SUPABASE_ACCESS_TOKEN secret is not configured. Skipping database push."
+          fi
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
