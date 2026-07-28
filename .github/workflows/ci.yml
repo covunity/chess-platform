@@ -41,6 +41,28 @@ jobs:
       url: ${{ steps.deploy.outputs.url }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Check for migration changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            migrations:
+              - 'supabase/migrations/**'
+
+      - name: Setup Supabase CLI
+        if: steps.filter.outputs.migrations == 'true' && secrets.SUPABASE_ACCESS_TOKEN != ''
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Push Database Migrations to Supabase Production
+        if: steps.filter.outputs.migrations == 'true' && secrets.SUPABASE_ACCESS_TOKEN != ''
+        run: supabase db push --include-all
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20

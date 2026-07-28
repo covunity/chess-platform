@@ -69,14 +69,8 @@ vi.mock('../../lib/coursePriceLimits', () => ({
   clearCoursePriceLimitsCache: vi.fn(),
 }))
 
-vi.mock('../../context/AuthContext', () => ({
-  useAuth: vi.fn(() => ({
-    profile: { id: 'u1', email: 'creator@test.com', name: 'Creator', role: 'creator', account_tier_id: 'individual', created_at: '' },
-    user: null,
-    loading: false,
-    profileLoading: false,
-  })),
-}))
+const { mockUseAuth } = vi.hoisted(() => ({ mockUseAuth: vi.fn() }))
+vi.mock('../../context/AuthContext', () => ({ useAuth: mockUseAuth }))
 
 vi.mock('../../lib/accountTiers', () => ({
   useAccountTiers: vi.fn(() => ({
@@ -134,6 +128,12 @@ function renderPage(courseId = 'c1') {
 describe('CourseEditPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockUseAuth.mockReturnValue({
+      profile: { id: 'u1', email: 'creator@test.com', name: 'Creator', role: 'creator', account_tier_id: 'individual', created_at: '' },
+      user: null,
+      loading: false,
+      profileLoading: false,
+    })
     mockListChapters.mockResolvedValue({ chapters: mockChapters, error: null })
     mockCreateChapter.mockResolvedValue({ chapter: { id: 'ch3', course_id: 'c1', title: 'New Chapter', position: 2, created_at: '' }, error: null })
     mockUpdateChapter.mockResolvedValue({ chapter: { ...mockChapters[0], title: 'Renamed' }, error: null })
@@ -269,8 +269,8 @@ describe('CourseEditPage', () => {
     expect(screen.getByTestId('add-chapter-btn')).not.toBeDisabled()
   })
 
-  it('add-chapter button is disabled at tier limit', async () => {
-    // Override mockChapters to have 10 chapters (individual tier max)
+  it('add-chapter button remains enabled for admin role even with 10+ chapters', async () => {
+    mockUseAuth.mockReturnValue({ profile: { id: 'u-admin', role: 'admin', account_tier_id: 'individual' } })
     const tenChapters = Array.from({ length: 10 }, (_, i) => ({
       id: `ch${i + 1}`,
       course_id: 'c1',
@@ -283,6 +283,8 @@ describe('CourseEditPage', () => {
 
     renderPage()
     await waitFor(() => screen.getByTestId('add-chapter-btn'))
-    expect(screen.getByTestId('add-chapter-btn')).toBeDisabled()
+    // Admin has no maxChapters cap → chapter counter is absent and button is not disabled
+    expect(screen.queryByTestId('chapter-counter')).not.toBeInTheDocument()
+    expect(screen.getByTestId('add-chapter-btn')).not.toBeDisabled()
   })
 })

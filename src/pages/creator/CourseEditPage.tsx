@@ -1037,9 +1037,11 @@ export default function CourseEditPage() {
 
         <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)' }}>
           {(() => {
-            const maxChapters = profile?.account_tier_id
-              ? (getTier(profile.account_tier_id)?.max_chapters_per_course ?? null)
-              : null
+            const maxChapters = profile?.role === 'admin'
+              ? null
+              : (profile?.account_tier_id
+                ? (getTier(profile.account_tier_id)?.max_chapters_per_course ?? null)
+                : null)
             const atLimit = maxChapters != null && chapters.length >= maxChapters
             return (
               <>
