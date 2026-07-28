@@ -92,7 +92,7 @@ describe('TopNav', () => {
 
   it('has a link to the homepage', () => {
     renderNav()
-    expect(screen.getByRole('link', { name: /gambitly home/i })).toHaveAttribute('href', '/')
+    expect(screen.getByRole('link', { name: /covunity home/i })).toHaveAttribute('href', '/')
   })
 
   describe('when logged out', () => {

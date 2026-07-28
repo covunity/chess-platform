@@ -127,8 +127,8 @@ describe('LessonEditor rewire for chess type', () => {
       await waitFor(() => {
         expect(screen.getByTestId('variation-list')).toBeInTheDocument()
       })
-      // Should show Bc5 as the move in the variation list
-      expect(screen.getByTestId('variation-list')).toHaveTextContent('Bc5')
+      // Should show Bc5 (or figurine ♗c5) as the move in the variation list
+      expect(screen.getByTestId('variation-list')).toHaveTextContent(/Bc5|♗c5/)
     })
 
     it('saves a PGN with [FEN "..."] tag when the tree has a custom starting FEN', async () => {

@@ -30,19 +30,26 @@ export async function addToWishlist(
   userId: string,
   courseId: string
 ): Promise<AddToWishlistResult> {
-  const { data, error } = await client
-    .from('course_wishlists')
-    .insert({
-      user_id: userId,
-      course_id: courseId,
-    })
-    .select()
-    .single()
-
-  if (error || !data) {
-    return { item: null, error: new Error((error as { message?: string })?.message ?? 'Failed to add to wishlist') }
+  if (!client || typeof client.from !== 'function') {
+    return { item: null, error: new Error('Invalid client') }
   }
-  return { item: data as WishlistItem, error: null }
+  try {
+    const { data, error } = await client
+      .from('course_wishlists')
+      .insert({
+        user_id: userId,
+        course_id: courseId,
+      })
+      .select()
+      .single()
+
+    if (error || !data) {
+      return { item: null, error: new Error((error as { message?: string })?.message ?? 'Failed to add to wishlist') }
+    }
+    return { item: data as WishlistItem, error: null }
+  } catch (err) {
+    return { item: null, error: err instanceof Error ? err : new Error('Failed to add to wishlist') }
+  }
 }
 
 // ── Remove from wishlist ────────────────────────────────────────────────
@@ -56,16 +63,23 @@ export async function removeFromWishlist(
   userId: string,
   courseId: string
 ): Promise<RemoveFromWishlistResult> {
-  const { error } = await client
-    .from('course_wishlists')
-    .delete()
-    .eq('user_id', userId)
-    .eq('course_id', courseId)
-
-  if (error) {
-    return { error: new Error((error as { message?: string })?.message ?? 'Failed to remove from wishlist') }
+  if (!client || typeof client.from !== 'function') {
+    return { error: new Error('Invalid client') }
   }
-  return { error: null }
+  try {
+    const { error } = await client
+      .from('course_wishlists')
+      .delete()
+      .eq('user_id', userId)
+      .eq('course_id', courseId)
+
+    if (error) {
+      return { error: new Error((error as { message?: string })?.message ?? 'Failed to remove from wishlist') }
+    }
+    return { error: null }
+  } catch (err) {
+    return { error: err instanceof Error ? err : new Error('Failed to remove from wishlist') }
+  }
 }
 
 // ── Check if in wishlist ────────────────────────────────────────────────
@@ -80,17 +94,31 @@ export async function isInWishlist(
   userId: string,
   courseId: string
 ): Promise<IsInWishlistResult> {
-  const { data, error } = await client
-    .from('course_wishlists')
-    .select('id')
-    .eq('user_id', userId)
-    .eq('course_id', courseId)
-    .maybeSingle()
-
-  if (error) {
-    return { inWishlist: false, error: new Error((error as { message?: string })?.message ?? 'Failed to check wishlist') }
+  if (!client || typeof client.from !== 'function') {
+    return { inWishlist: false, error: null }
   }
-  return { inWishlist: !!data, error: null }
+  try {
+    const res = client
+      .from('course_wishlists')
+      ?.select?.('id')
+      ?.eq?.('user_id', userId)
+      ?.eq?.('course_id', courseId)
+
+    if (!res) return { inWishlist: false, error: null }
+
+    const { data, error } = typeof (res as { maybeSingle?: () => Promise<unknown> }).maybeSingle === 'function'
+      ? await (res as { maybeSingle: () => Promise<{ data: unknown; error: unknown }> }).maybeSingle()
+      : (typeof (res as unknown as Promise<unknown>).then === 'function'
+          ? await (res as unknown as Promise<{ data?: unknown; error?: unknown }>)
+          : { data: null, error: null })
+
+    if (error) {
+      return { inWishlist: false, error: new Error((error as { message?: string })?.message ?? 'Failed to check wishlist') }
+    }
+    return { inWishlist: !!data, error: null }
+  } catch {
+    return { inWishlist: false, error: null }
+  }
 }
 
 // ── Get wishlist courses ────────────────────────────────────────────────
@@ -104,58 +132,71 @@ export async function getWishlistCourses(
   client: SupabaseClient,
   userId: string
 ): Promise<GetWishlistResult> {
-  const { data, error } = await client
-    .from('course_wishlists')
-    .select(`
-      added_at,
-      courses:course_id (
-        id,
-        title,
-        thumbnail_url,
-        price,
-        users:creator_id ( name ),
-        reviews ( rating )
-      )
-    `)
-    .eq('user_id', userId)
-    .order('added_at', { ascending: false })
-
-  if (error) {
-    return { courses: null, error: new Error((error as { message?: string })?.message ?? 'Failed to fetch wishlist') }
+  if (!client || typeof client.from !== 'function') {
+    return { courses: [], error: null }
   }
+  try {
+    const res = client
+      .from('course_wishlists')
+      ?.select?.(`
+        added_at,
+        courses:course_id (
+          id,
+          title,
+          thumbnail_url,
+          price,
+          users:creator_id ( name ),
+          reviews ( rating )
+        )
+      `)
+      ?.eq?.('user_id', userId)
+      ?.order?.('added_at', { ascending: false })
 
-  const rows = (data ?? []) as unknown as Array<{
-    added_at: string
-    courses: {
-      id: string
-      title: string
-      thumbnail_url: string | null
-      price: number
-      users: { name?: string } | null
-      reviews: Array<{ rating: number }> | null
-    } | null
-  }>
+    if (!res || typeof (res as unknown as Promise<unknown>).then !== 'function') {
+      return { courses: [], error: null }
+    }
 
-  const courses: WishlistCourse[] = rows
-    .filter(row => row.courses) // Ensure course still exists
-    .map(row => {
-      const course = row.courses!
-      const reviews = Array.isArray(course.reviews) ? course.reviews : []
-      const ratings = reviews.map(r => r.rating)
-      const rating_avg = ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0
-      const creator = course.users as { name?: string } | null
+    const { data, error } = await (res as unknown as Promise<{ data: unknown; error: unknown }>)
 
-      return {
-        id: course.id,
-        title: course.title,
-        thumbnail_url: course.thumbnail_url,
-        price: course.price,
-        creator_name: creator?.name ?? null,
-        rating_avg,
-        rating_count: ratings.length,
-        added_at: row.added_at,
-      }
-    })
+    if (error) {
+      return { courses: null, error: new Error((error as { message?: string })?.message ?? 'Failed to fetch wishlist') }
+    }
 
-  return { courses, error: null }
+    const rows = (data ?? []) as unknown as Array<{
+      added_at: string
+      courses: {
+        id: string
+        title: string
+        thumbnail_url: string | null
+        price: number
+        users: { name?: string } | null
+        reviews: Array<{ rating: number }> | null
+      } | null
+    }>
+
+    const courses: WishlistCourse[] = rows
+      .filter(row => row && row.courses)
+      .map(row => {
+        const course = row.courses!
+        const reviews = Array.isArray(course.reviews) ? course.reviews : []
+        const ratings = reviews.map(r => r.rating)
+        const rating_avg = ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0
+        const creator = course.users as { name?: string } | null
+
+        return {
+          id: course.id,
+          title: course.title,
+          thumbnail_url: course.thumbnail_url,
+          price: course.price,
+          creator_name: creator?.name ?? null,
+          rating_avg,
+          rating_count: ratings.length,
+          added_at: row.added_at,
+        }
+      })
+
+    return { courses, error: null }
+  } catch {
+    return { courses: [], error: null }
+  }
 }
