@@ -289,7 +289,7 @@ body {
 .logo-mark {
   width: 20px;
   height: 28px;
-  background-image: url('/icons/logo-icon.svg');
+  background-image: url('/icons/logo-icon.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
