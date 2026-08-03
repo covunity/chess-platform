@@ -250,8 +250,17 @@ export default function HomePage() {
                     position: 'absolute',
                   }}
                 />
-                <div style={{ transform: 'rotate(-3deg)', boxShadow: '0 30px 80px rgba(20,22,26,0.18)', zIndex: 1 }}>
-                  <ChessBoard fen={INITIAL_FEN} size={400} showCoords={false} />
+                <div style={{ transform: 'rotate(-3deg)', boxShadow: '0 30px 80px rgba(20,22,26,0.18)', zIndex: 1, borderRadius: 'var(--r-md)', overflow: 'hidden' }}>
+                  <img
+                    src="/bancotrangchu.jpg"
+                    alt="Bàn cờ trang chủ"
+                    style={{
+                      width: 400,
+                      height: 400,
+                      objectFit: 'cover',
+                      display: 'block',
+                    }}
+                  />
                 </div>
 
                 {/* Floating annotation card */}
