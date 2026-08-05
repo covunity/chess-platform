@@ -352,13 +352,17 @@ body {
 .auth-split {
   display: grid;
   grid-template-columns: 1fr 1.05fr;
-  height: 100vh;
+  min-height: 100vh;
   overflow: hidden;
 }
 
 @media (max-width: 768px) {
   .auth-split {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    height: auto;
+    overflow: visible;
   }
 }
 
@@ -375,7 +379,12 @@ body {
 
 @media (max-width: 768px) {
   .auth-brand {
-    padding: 24px 28px;
+    padding: 16px 20px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+  }
+  .auth-brand__logo {
+    margin-bottom: 0;
   }
 }
 
@@ -475,6 +484,14 @@ body {
   overflow-y: auto;
   padding: 24px 24px;
   background: var(--surface);
+}
+
+@media (max-width: 768px) {
+  .auth-form-panel {
+    overflow-y: visible;
+    padding: 24px 16px 40px;
+    flex: 1;
+  }
 }
 
 .auth-form-panel__inner {

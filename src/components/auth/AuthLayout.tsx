@@ -6,21 +6,17 @@ import { useTranslation } from 'react-i18next'
 export default function AuthLayout({ children }: { children: ReactNode }) {
   const { t } = useTranslation()
 
-  useEffect(() => {
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = '' }
-  }, [])
-
   return (
     <div className="auth-split">
       <div className="auth-brand">
         <div className="auth-brand__logo">
           <Link to="/" aria-label={t('auth.backHome')}>
-            <img src="/icons/logo-dark.png" alt="Covunity" style={{ height: 58, width: 'auto', display: 'block', marginLeft: '-28px' }} />
+            <img src="/icons/logo-light.png" alt="Covunity" className="nav-logo--light" style={{ height: 40, width: 'auto' }} />
+            <img src="/icons/logo-dark.png" alt="" className="nav-logo--dark" style={{ height: 40, width: 'auto' }} />
           </Link>
         </div>
 
-        <div className="auth-brand__body">
+        <div className="auth-brand__body hidden md:flex">
           <h1 className="auth-brand__headline">
             {t('auth.brand.headline1')}
             <br />
@@ -31,7 +27,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           <p className="auth-brand__sub">{t('auth.brand.sub')}</p>
         </div>
 
-        <div className="auth-brand__stats">
+        <div className="auth-brand__stats hidden md:flex">
           <div className="auth-brand__stat">
             <span className="auth-brand__stat-number">{t('auth.brand.stat1Number')}</span>
             <span className="auth-brand__stat-label">{t('auth.brand.stat1Label')}</span>
@@ -46,7 +42,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        <div className="auth-brand__board" aria-hidden="true" />
+        <div className="auth-brand__board hidden md:block" aria-hidden="true" />
       </div>
 
       <div className="auth-form-panel">
