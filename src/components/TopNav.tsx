@@ -138,7 +138,7 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
         minHeight: 64,
       }}
     >
-      <Link to="/" aria-label="Covunity home" style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+      <Link to="/" aria-label="Covunity home" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', transform: 'translateY(-2px)' }}>
         <img src="/icons/logo-light.png" alt="" className="nav-logo nav-logo--light" style={{ height: 30, width: 'auto' }} />
         <img src="/icons/logo-dark.png"  alt="" className="nav-logo nav-logo--dark"  style={{ height: 30, width: 'auto' }} />
       </Link>
