@@ -61,8 +61,8 @@ export default function AdminSidebar() {
       {/* Logo + eyebrow */}
       <div className="px-4 pt-5 pb-4">
         <Link to="/" aria-label="Covunity home" className="mb-2" style={{ display: 'flex' }}>
-          <img src="/icons/logo-light.png" alt="" className="nav-logo nav-logo--light" style={{ height: 42, width: 'auto' }} />
-          <img src="/icons/logo-dark.png"  alt="" className="nav-logo nav-logo--dark"  style={{ height: 42, width: 'auto' }} />
+          <img src="/icons/logo-light.png" alt="" className="nav-logo nav-logo--light" style={{ height: 34, width: 'auto' }} />
+          <img src="/icons/logo-dark.png"  alt="" className="nav-logo nav-logo--dark"  style={{ height: 34, width: 'auto' }} />
         </Link>
         <p
           className="text-(--ink-3) uppercase font-medium tracking-widest"

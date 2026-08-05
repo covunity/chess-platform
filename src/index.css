@@ -312,7 +312,7 @@ body {
 
 /* Theme-adaptive full-banner logo used in TopNav */
 .nav-logo {
-  height: 50px;
+  height: 40px;
   width: auto;
   display: block;
   flex-shrink: 0;
