@@ -1375,7 +1375,7 @@ export default function CourseDetailPage() {
   const totalLessons = course.lessons_count
 
   return (
-    <main>
+    <main className={!isCourseCreator && !isEnrolled ? "pb-24 md:pb-0" : ""}>
       {/* ── Creator-of-course banner (informational only) ──────────────────── */}
       {isCourseCreator && (
         <div
@@ -1935,10 +1935,10 @@ export default function CourseDetailPage() {
       </section>
 
       {/* Mobile Sticky Bottom CTA Bar */}
-      {!isCourseCreator && (
+      {!isCourseCreator && !isEnrolled && (
         <div
-          className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-4 py-3 flex items-center justify-between shadow-2xl border-t border-(--border)"
-          style={{ background: 'var(--surface)' }}
+          className="md:hidden fixed bottom-3 left-3 right-3 z-40 px-4 py-3 rounded-2xl flex items-center justify-between shadow-2xl border border-(--border) backdrop-blur-md"
+          style={{ background: 'var(--surface)', opacity: 0.96 }}
         >
           <div>
             <span style={{ fontSize: 11, color: 'var(--ink-3)', display: 'block' }}>Giao dịch an toàn</span>
