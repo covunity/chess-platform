@@ -209,8 +209,8 @@ describe('LearnerDashboardPage', () => {
     renderPage()
     await waitFor(() => {
       expect(screen.getByTestId('recommended-card')).toBeInTheDocument()
+      expect(screen.getByTestId('recommended-c10')).toBeInTheDocument()
     })
-    expect(screen.getByTestId('recommended-c10')).toBeInTheDocument()
     expect(screen.getByTestId('recommended-c10').textContent ?? '').toMatch(/Caro-Kann/)
     // Recommended links to course detail
     const link = screen.getByTestId('recommended-link-c10')

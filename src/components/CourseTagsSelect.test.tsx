@@ -70,7 +70,7 @@ describe('CourseTagsSelect', () => {
     await waitFor(() => expect(mockListCreatorTags).toHaveBeenCalled())
     const select = screen.getByTestId('popular-tag-select')
     await userEvent.selectOptions(select, 'openings')
-    expect(onChange).toHaveBeenCalledWith(['openings'])
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith(['openings']))
   })
 
   it('changing popular tag replaces the previous one', async () => {
@@ -79,7 +79,7 @@ describe('CourseTagsSelect', () => {
     const select = screen.getByTestId('popular-tag-select')
     expect(select).toHaveValue('openings')
     await userEvent.selectOptions(select, 'tactics')
-    expect(onChange).toHaveBeenCalledWith(['tactics', 'Najdorf'])
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith(['tactics', 'Najdorf']))
   })
 
   it('shows selected popular tag as the select value, not as a chip', async () => {
