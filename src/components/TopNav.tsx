@@ -349,104 +349,37 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
 
       {/* Right side controls */}
       <div className="flex items-center" style={{ marginLeft: 'auto', gap: 8 }}>
-        {!hideSearch && (
-          <button
-            type="button"
-            className="md:hidden"
-            aria-label={t('home.searchPlaceholder')}
-            onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
-            style={{
-              width: 36,
-              height: 36,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'transparent',
-              border: 'none',
-              borderRadius: 'var(--r-md)',
-              color: 'var(--ink-2)',
-              cursor: 'pointer',
-            }}
-          >
-            <Search size={18} />
-          </button>
-        )}
+        {/* Desktop Controls */}
+        <div className="hidden md:flex items-center" style={{ gap: 8 }}>
+          <ThemeToggle />
+          {user ? (
+            <UserAvatarMenu placement="bottom-right" />
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link to="/login" className="btn btn-secondary btn-sm">{t('nav.signIn')}</Link>
+              <Link to="/signup" className="btn btn-accent btn-sm">{t('nav.createAccount')}</Link>
+            </div>
+          )}
+        </div>
 
-        <ThemeToggle />
-
-        {user ? (
-          <UserAvatarMenu placement="bottom-right" />
-        ) : (
-          <div className="flex items-center gap-2">
-            <Link to="/login" className="btn btn-secondary btn-sm">{t('nav.signIn')}</Link>
-            <Link to="/signup" className="btn btn-accent btn-sm hidden sm:inline-flex">{t('nav.createAccount')}</Link>
-          </div>
-        )}
-
-        {/* Mobile Hamburger Toggle Button */}
-        {navLinks.length > 0 && (
-          <button
-            type="button"
-            className="md:hidden flex items-center justify-center"
-            aria-label="Toggle mobile menu"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            style={{
-              width: 36,
-              height: 36,
-              background: 'transparent',
-              border: 'none',
-              borderRadius: 'var(--r-md)',
-              color: 'var(--ink-1)',
-              cursor: 'pointer',
-            }}
-          >
-            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-        )}
-      </div>
-
-      {/* Mobile Search Overlay */}
-      {mobileSearchOpen && !hideSearch && (
-        <div
-          className="md:hidden"
+        {/* Mobile: ONLY ONE Menu Button */}
+        <button
+          type="button"
+          className="md:hidden flex items-center justify-center p-2 rounded-lg"
+          aria-label="Toggle mobile menu"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            right: 0,
-            padding: 12,
-            background: 'var(--surface)',
-            borderBottom: '1px solid var(--border)',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            zIndex: 49,
+            width: 40,
+            height: 40,
+            background: 'var(--surface-2)',
+            border: '1px solid var(--border)',
+            color: 'var(--ink-1)',
+            cursor: 'pointer',
           }}
         >
-          <div style={{ position: 'relative' }}>
-            <input
-              ref={mobileSearchRef}
-              autoFocus
-              type="text"
-              value={overlayQuery}
-              onChange={handleSearchChange}
-              onKeyDown={(e) => {
-                handleSearchKeyDown(e)
-                if (e.key === 'Enter') setMobileSearchOpen(false)
-              }}
-              placeholder={t('home.searchPlaceholder')}
-              style={{
-                width: '100%',
-                height: 40,
-                padding: '0 36px 0 14px',
-                borderRadius: 'var(--r-md)',
-                border: '1px solid var(--border)',
-                background: 'var(--bg)',
-                fontSize: 14,
-                color: 'var(--ink-1)',
-              }}
-            />
-          </div>
-        </div>
-      )}
+          {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
+      </div>
 
       {/* Mobile Navigation Drawer */}
       {mobileMenuOpen && (
@@ -460,14 +393,82 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
             bottom: 0,
             background: 'var(--surface)',
             zIndex: 48,
-            padding: 20,
+            padding: '20px 16px',
             overflowY: 'auto',
             display: 'flex',
             flexDirection: 'column',
-            gap: 12,
+            gap: 16,
           }}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {/* Mobile Search Bar inside Drawer */}
+          {!hideSearch && (
+            <div style={{ position: 'relative', width: '100%' }}>
+              <input
+                ref={mobileSearchRef}
+                type="text"
+                value={overlayQuery}
+                onChange={handleSearchChange}
+                onKeyDown={(e) => {
+                  handleSearchKeyDown(e)
+                  if (e.key === 'Enter') setMobileMenuOpen(false)
+                }}
+                placeholder={t('home.searchPlaceholder')}
+                style={{
+                  width: '100%',
+                  height: 42,
+                  padding: '0 40px 0 14px',
+                  borderRadius: 'var(--r-md)',
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg)',
+                  fontSize: 14,
+                  color: 'var(--ink-1)',
+                }}
+              />
+              <button
+                type="button"
+                aria-label={t('home.searchPlaceholder')}
+                onClick={() => {
+                  const val = overlayQuery.trim()
+                  setOverlayResults([])
+                  setMobileMenuOpen(false)
+                  if (val) navigate(`/?q=${encodeURIComponent(val)}`)
+                }}
+                style={{
+                  position: 'absolute',
+                  right: 8,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--ink-2)',
+                  padding: 4,
+                }}
+              >
+                <Search size={18} />
+              </button>
+            </div>
+          )}
+
+          {/* Theme Toggle Bar inside Mobile Drawer */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '10px 14px',
+              borderRadius: 'var(--r-md)',
+              background: 'var(--surface-2)',
+              border: '1px solid var(--border)',
+            }}
+          >
+            <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--ink-1)' }}>
+              Giao diện (Theme)
+            </span>
+            <ThemeToggle />
+          </div>
+
+          {/* Nav links */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {navLinks.map(link => (
               <NavLink
                 key={link.to}
@@ -475,9 +476,9 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
                 end={link.end}
                 onClick={() => setMobileMenuOpen(false)}
                 style={({ isActive }) => ({
-                  padding: '12px 16px',
+                  padding: '12px 14px',
                   borderRadius: 'var(--r-md)',
-                  fontSize: 16,
+                  fontSize: 15,
                   color: isActive ? 'var(--ink-1)' : 'var(--ink-2)',
                   background: isActive ? 'var(--surface-2)' : 'transparent',
                   textDecoration: 'none',
@@ -506,8 +507,13 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
             ))}
           </div>
 
-          {!user && (
-            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
+          {/* Auth section inside Mobile Drawer */}
+          {user ? (
+            <div style={{ marginTop: 'auto', paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+              <UserAvatarMenu placement="bottom-right" />
+            </div>
+          ) : (
+            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
               <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center' }}>
                 {t('nav.signIn')}
               </Link>

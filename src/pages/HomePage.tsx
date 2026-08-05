@@ -336,28 +336,29 @@ export default function HomePage() {
       </section>
 
       {/* Filter section */}
-      <section id="course-section"  style={{ padding: '32px 56px 0' }}>
+      <section id="course-section" className="px-4 pt-6 pb-2 md:px-14 md:pt-10 md:pb-4">
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
           {/* Title row */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <div>
               <h2
                 style={{
                   fontFamily: 'var(--font-serif)',
-                  fontSize: 32,
-                  lineHeight: 1.1,
+                  fontSize: 'clamp(22px, 4.5vw, 32px)',
+                  lineHeight: 1.2,
                   color: 'var(--ink-1)',
                   margin: 0,
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {t('home.browseAll')}
               </h2>
-              <p style={{ fontSize: 13, color: 'var(--ink-3)', margin: '4px 0 0' }}>
+              <p style={{ fontSize: 13, color: 'var(--ink-3)', margin: '2px 0 0' }}>
                 {t('home.coursesCount', { count: courses.length })}
               </p>
             </div>
 
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', alignSelf: 'flex-start' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
               </svg>
@@ -371,7 +372,6 @@ export default function HomePage() {
                   })
                 }}
                 style={{
-                  width: 180,
                   height: 36,
                   padding: '0 10px',
                   borderRadius: 'var(--r-md)',
@@ -388,21 +388,22 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Pills row */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          {/* Pills row (Horizontal Scrollable Chips on Mobile) */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 whitespace-nowrap">
             {LEVELS.map(lvl => (
               <button
                 key={lvl.key}
                 type="button"
                 onClick={() => setLevel(lvl.key as CourseLevel | 'all')}
                 style={{
-                  height: 32,
+                  height: 34,
                   padding: '0 14px',
                   borderRadius: 'var(--r-sm)',
                   fontSize: 13,
                   fontWeight: 500,
                   cursor: 'pointer',
                   border: 'none',
+                  flexShrink: 0,
                   background: level === lvl.key ? 'var(--ink-1)' : 'var(--surface-2)',
                   color: level === lvl.key ? 'var(--on-ink-1)' : 'var(--ink-2)',
                   transition: 'background 0.15s',
@@ -412,7 +413,7 @@ export default function HomePage() {
               </button>
             ))}
 
-            <div style={{ width: 1, height: 20, background: 'var(--border-strong)', margin: '0 4px' }} />
+            <div style={{ width: 1, height: 20, background: 'var(--border-strong)', flexShrink: 0, margin: '0 2px' }} />
 
             {TAGS.map(tg => (
               <button
@@ -420,13 +421,14 @@ export default function HomePage() {
                 type="button"
                 onClick={() => setTag(tg.key)}
                 style={{
-                  height: 32,
+                  height: 34,
                   padding: '0 14px',
                   borderRadius: 'var(--r-sm)',
                   fontSize: 13,
                   fontWeight: 500,
                   cursor: 'pointer',
                   border: 'none',
+                  flexShrink: 0,
                   background: tag === tg.key ? 'var(--accent)' : 'var(--surface-2)',
                   color: tag === tg.key ? '#fff' : 'var(--ink-2)',
                   transition: 'background 0.15s',
@@ -435,13 +437,12 @@ export default function HomePage() {
                 {t(tg.labelKey)}
               </button>
             ))}
-
           </div>
         </div>
       </section>
 
       {/* Course grid */}
-      <section style={{ padding: '32px 56px 64px' }}>
+      <section className="px-4 py-6 md:px-14 md:py-12">
         <div
           data-testid="course-grid"
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
