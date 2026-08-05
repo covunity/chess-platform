@@ -142,20 +142,18 @@ export default function HomePage() {
       )}
       {/* Hero */}
       <section
+        className="px-4 py-8 md:px-14 md:py-16"
         style={{
-          padding: '60px 56px 36px',
           background: 'linear-gradient(180deg, var(--bg) 0%, var(--surface-2) 100%)',
           borderBottom: '1px solid var(--border)',
+          overflow: 'hidden',
         }}
       >
         <div
+          className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14 items-center"
           style={{
             maxWidth: 1280,
             margin: '0 auto',
-            display: 'grid',
-            gridTemplateColumns: '1.1fr 1fr',
-            gap: 60,
-            alignItems: 'center',
           }}
         >
           {/* Left */}
@@ -175,8 +173,8 @@ export default function HomePage() {
             <h1
               style={{
                 fontFamily: 'var(--font-serif)',
-                fontSize: 64,
-                lineHeight: 1.05,
+                fontSize: 'clamp(28px, 5vw, 64px)',
+                lineHeight: 1.1,
                 letterSpacing: '-0.025em',
                 color: 'var(--ink-1)',
                 margin: 0,
@@ -184,14 +182,14 @@ export default function HomePage() {
             >
               {hero('headline1', 'home.heroHeadline1')}
               <br />
-              <p style={{ color: 'var(--accent-ink)', }}>
+              <span style={{ color: 'var(--accent-ink)' }}>
                 {hero('headline2', 'home.heroHeadline2')}
-              </p>
+              </span>
             </h1>
 
             <p
               style={{
-                fontSize: 17,
+                fontSize: 16,
                 color: 'var(--ink-2)',
                 maxWidth: 520,
                 lineHeight: 1.55,
@@ -222,6 +220,9 @@ export default function HomePage() {
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
+              width: '100%',
+              maxWidth: '100%',
+              margin: '0 auto',
             }}
           >
             {heroConfig?.imageUrl ? (
@@ -240,23 +241,24 @@ export default function HomePage() {
                 }}
               />
             ) : (
-              <>
+              <div style={{ position: 'relative', width: '100%', maxWidth: 400, margin: '0 auto', display: 'flex', justifyContent: 'center' }}>
                 <div
                   style={{
                     background: 'radial-gradient(circle at center, oklch(0.85 0.07 200 / 0.4), transparent 60%)',
                     borderRadius: '50%',
-                    width: 460,
-                    height: 460,
+                    width: '100%',
+                    maxWidth: 360,
+                    aspectRatio: '1/1',
                     position: 'absolute',
                   }}
                 />
-                <div style={{ transform: 'rotate(-3deg)', boxShadow: '0 30px 80px rgba(20,22,26,0.18)', zIndex: 1, borderRadius: 'var(--r-md)', overflow: 'hidden' }}>
+                <div style={{ transform: 'rotate(-2deg)', boxShadow: '0 20px 60px rgba(20,22,26,0.18)', zIndex: 1, borderRadius: 'var(--r-md)', overflow: 'hidden', width: '100%', maxWidth: 360, aspectRatio: '1/1' }}>
                   <img
                     src="/bancotrangchu.jpg"
                     alt="Bàn cờ trang chủ"
                     style={{
-                      width: 400,
-                      height: 400,
+                      width: '100%',
+                      height: '100%',
                       objectFit: 'cover',
                       display: 'block',
                     }}
@@ -265,55 +267,54 @@ export default function HomePage() {
 
                 {/* Floating annotation card */}
                 <div
-                  className="card"
+                  className="card hidden sm:block"
                   style={{
                     position: 'absolute',
-                    top: 20,
-                    right: -20,
-                    width: 240,
-                    padding: 14,
-                    transform: 'rotate(4deg)',
+                    top: 10,
+                    right: -10,
+                    width: 220,
+                    padding: 12,
+                    transform: 'rotate(3deg)',
                     boxShadow: 'var(--sh-3)',
                     zIndex: 2,
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                     <div
                       className="avatar"
                       style={{ background: 'oklch(0.85 0.07 200)', color: 'var(--ink-1)', fontSize: 12, fontWeight: 600, flexShrink: 0 }}
                     >
                       A
                     </div>
-                    <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-1)' }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-1)' }}>
                       {hero('annotationAuthor', 'home.heroAnnotationAuthor')}
                     </span>
                   </div>
-                  <p style={{ fontSize: 12, color: 'var(--ink-2)', fontStyle: 'italic', margin: 0, lineHeight: 1.5 }}>
+                  <p style={{ fontSize: 11.5, color: 'var(--ink-2)', fontStyle: 'italic', margin: 0, lineHeight: 1.4 }}>
                     {hero('annotation', 'home.heroAnnotation')}
                   </p>
                 </div>
 
                 {/* Floating bookmark card */}
                 <div
-                  className="card"
+                  className="card hidden sm:flex"
                   style={{
                     position: 'absolute',
-                    bottom: 20,
-                    left: -20,
-                    width: 200,
-                    padding: 12,
+                    bottom: 10,
+                    left: -10,
+                    width: 190,
+                    padding: 10,
                     transform: 'rotate(-2deg)',
                     boxShadow: 'var(--sh-3)',
                     zIndex: 2,
-                    display: 'flex',
                     alignItems: 'center',
-                    gap: 10,
+                    gap: 8,
                   }}
                 >
                   <div
                     style={{
-                      width: 32,
-                      height: 32,
+                      width: 28,
+                      height: 28,
                       background: 'var(--accent-soft)',
                       borderRadius: 'var(--r-sm)',
                       display: 'flex',
@@ -324,11 +325,11 @@ export default function HomePage() {
                   >
                     🔖
                   </div>
-                  <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>
+                  <span style={{ fontSize: 11.5, color: 'var(--ink-2)' }}>
                     {hero('bookmark', 'home.heroBookmark')}
                   </span>
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>

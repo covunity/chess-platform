@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
-import { Search } from 'lucide-react'
+import { Search, Menu, X } from 'lucide-react'
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
@@ -17,9 +17,12 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
   const location = useLocation()
   const { user, profile, profileLoading } = useAuth()
   const searchRef = useRef<HTMLInputElement>(null)
+  const mobileSearchRef = useRef<HTMLInputElement>(null)
   const [bookmarkCount, setBookmarkCount] = useState(0)
   const [overlayQuery, setOverlayQuery] = useState('')
   const [overlayResults, setOverlayResults] = useState<PublicCourse[]>([])
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const overlayRef = useRef<HTMLDivElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -95,48 +98,54 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
     })
   }, [user])
 
+  useEffect(() => {
+    setMobileMenuOpen(false)
+    setMobileSearchOpen(false)
+  }, [location.pathname])
+
+  const navLinks = user
+    ? [
+        { to: '/', labelKey: 'nav.browse', end: true },
+        ...(!profileLoading
+          ? profile?.role === 'admin'
+            ? [
+                { to: '/admin', labelKey: 'nav.admin', end: false },
+                { to: '/creator', labelKey: 'nav.creatorStudio', end: false },
+              ]
+            : profile?.role === 'creator'
+              ? [{ to: '/creator', labelKey: 'nav.creatorStudio', end: false }]
+              : [
+                  { to: '/practice', labelKey: 'nav.practice', end: false },
+                  { to: '/dashboard', labelKey: 'nav.library', end: false },
+                  { to: '/become-creator', labelKey: 'nav.becomeCreator', end: false },
+                ]
+          : []),
+      ]
+    : []
+
   return (
     <header
       role="banner"
-      className="h-16 flex items-center"
+      className="h-16 flex items-center justify-between"
       style={{
-        padding: '0 32px',
-        gap: 24,
+        padding: '0 16px',
+        gap: 12,
         background: 'var(--surface)',
         borderBottom: '1px solid var(--border-strong)',
         position: 'sticky',
         top: 0,
         zIndex: 50,
-        minHeight: 70,
+        minHeight: 64,
       }}
     >
       <Link to="/" aria-label="Covunity home" style={{ flexShrink: 0, display: 'flex' }}>
-        <img src="/icons/logo-light.png" alt="" className="nav-logo nav-logo--light" />
-        <img src="/icons/logo-dark.png"  alt="" className="nav-logo nav-logo--dark"  />
+        <img src="/icons/logo-light.png" alt="" className="nav-logo nav-logo--light" style={{ height: 38, width: 'auto' }} />
+        <img src="/icons/logo-dark.png"  alt="" className="nav-logo nav-logo--dark"  style={{ height: 38, width: 'auto' }} />
       </Link>
 
-      {/* Nav links */}
-      <nav className="flex items-center" style={{ gap: 4 }}>
-        {(user
-          ? [
-              { to: '/', labelKey: 'nav.browse', end: true },
-              ...(!profileLoading
-                ? profile?.role === 'admin'
-                  ? [
-                      { to: '/admin', labelKey: 'nav.admin', end: false },
-                      { to: '/creator', labelKey: 'nav.creatorStudio', end: false },
-                    ]
-                  : profile?.role === 'creator'
-                    ? [{ to: '/creator', labelKey: 'nav.creatorStudio', end: false }]
-                    : [
-                        { to: '/practice', labelKey: 'nav.practice', end: false },
-                        { to: '/dashboard', labelKey: 'nav.library', end: false },
-                        { to: '/become-creator', labelKey: 'nav.becomeCreator', end: false },
-                      ]
-                : []),
-            ]
-          : []
-        ).map(link => (
+      {/* Desktop Nav links */}
+      <nav className="hidden md:flex items-center" style={{ gap: 4 }}>
+        {navLinks.map(link => (
           <NavLink
             key={link.to}
             to={link.to}
@@ -186,190 +195,329 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
         ))}
       </nav>
 
-      {/* Search box */}
-      {!hideSearch && <div style={{ position: 'relative', flex: 1, maxWidth: user ? 320 : 560 }}>
-        <input
-          ref={searchRef}
-          role="searchbox"
-          type="text"
-          value={overlayQuery}
-          onChange={handleSearchChange}
-          onKeyDown={handleSearchKeyDown}
-          placeholder={t('home.searchPlaceholder')}
-          style={{
-            width: '100%',
-            height: 38,
-            padding: '0 40px 0 14px',
-            borderRadius: 'var(--r-md)',
-            border: '1px solid var(--border)',
-            background: 'var(--bg)',
-            fontSize: 13,
-            color: 'var(--ink-3)',
-          }}
-        />
-        <button
-          type="button"
-          aria-label={t('home.searchPlaceholder')}
-          onClick={() => {
-            const val = overlayQuery.trim()
-            setOverlayResults([])
-            searchRef.current?.blur()
-            if (val) {
-              navigate(`/?q=${encodeURIComponent(val)}`)
-            } else {
-              navigate('/')
-            }
-          }}
-          style={{
-            position: 'absolute',
-            right: 6,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            width: 28,
-            height: 28,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'transparent',
-            border: 'none',
-            borderRadius: 'var(--r-sm)',
-            cursor: 'pointer',
-            color: 'var(--ink-3)',
-            padding: 0,
-          }}
-        >
-          <Search size={14} />
-        </button>
-        {overlayQuery.length > 0 && overlayResults.length > 0 && (
-          <div
-            ref={overlayRef}
-            data-testid="search-overlay"
+      {/* Desktop Search box */}
+      {!hideSearch && (
+        <div className="hidden md:block" style={{ position: 'relative', flex: 1, maxWidth: user ? 320 : 480 }}>
+          <input
+            ref={searchRef}
+            role="searchbox"
+            type="text"
+            value={overlayQuery}
+            onChange={handleSearchChange}
+            onKeyDown={handleSearchKeyDown}
+            placeholder={t('home.searchPlaceholder')}
+            style={{
+              width: '100%',
+              height: 38,
+              padding: '0 40px 0 14px',
+              borderRadius: 'var(--r-md)',
+              border: '1px solid var(--border)',
+              background: 'var(--bg)',
+              fontSize: 13,
+              color: 'var(--ink-3)',
+            }}
+          />
+          <button
+            type="button"
+            aria-label={t('home.searchPlaceholder')}
+            onClick={() => {
+              const val = overlayQuery.trim()
+              setOverlayResults([])
+              searchRef.current?.blur()
+              if (val) {
+                navigate(`/?q=${encodeURIComponent(val)}`)
+              } else {
+                navigate('/')
+              }
+            }}
             style={{
               position: 'absolute',
-              top: '100%',
-              left: 0,
-              right: 0,
-              marginTop: 4,
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--r-md)',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-              zIndex: 100,
-              overflow: 'hidden',
+              right: 6,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: 28,
+              height: 28,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'transparent',
+              border: 'none',
+              borderRadius: 'var(--r-sm)',
+              cursor: 'pointer',
+              color: 'var(--ink-3)',
+              padding: 0,
             }}
           >
-            {overlayResults.map(course => (
-              <button
-                key={course.id}
-                type="button"
-                data-testid={`search-overlay-result-${course.id}`}
-                onClick={() => {
-                  setOverlayQuery('')
-                  setOverlayResults([])
-                  navigate(`/courses/${course.id}`)
-                }}
-                className="flex items-center gap-3"
-                style={{
-                  width: '100%',
-                  textAlign: 'left',
-                  padding: '8px 12px',
-                  border: 'none',
-                  borderBottom: '1px solid var(--border)',
-                  background: 'transparent',
-                  cursor: 'pointer',
-                }}
-              >
-                <div
+            <Search size={14} />
+          </button>
+          {overlayQuery.length > 0 && overlayResults.length > 0 && (
+            <div
+              ref={overlayRef}
+              data-testid="search-overlay"
+              style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                marginTop: 4,
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--r-md)',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                zIndex: 100,
+                overflow: 'hidden',
+              }}
+            >
+              {overlayResults.map(course => (
+                <button
+                  key={course.id}
+                  type="button"
+                  data-testid={`search-overlay-result-${course.id}`}
+                  onClick={() => {
+                    setOverlayQuery('')
+                    setOverlayResults([])
+                    navigate(`/courses/${course.id}`)
+                  }}
+                  className="flex items-center gap-3"
                   style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 'var(--r-sm)',
-                    overflow: 'hidden',
-                    flexShrink: 0,
-                    background: 'var(--surface-2)',
+                    width: '100%',
+                    textAlign: 'left',
+                    padding: '8px 12px',
+                    border: 'none',
+                    borderBottom: '1px solid var(--border)',
+                    background: 'transparent',
+                    cursor: 'pointer',
                   }}
                 >
-                  {course.thumbnail_url ? (
-                    <img
-                      src={course.thumbnail_url}
-                      alt=""
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 18,
-                        color: 'var(--ink-4)',
-                      }}
-                    >
-                      ♟
-                    </div>
-                  )}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
                   <div
                     style={{
-                      fontSize: 13,
-                      fontWeight: 500,
-                      color: 'var(--ink-1)',
+                      width: 48,
+                      height: 48,
+                      borderRadius: 'var(--r-sm)',
                       overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                      background: 'var(--surface-2)',
                     }}
                   >
-                    {course.title}
+                    {course.thumbnail_url ? (
+                      <img
+                        src={course.thumbnail_url}
+                        alt=""
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 18,
+                          color: 'var(--ink-4)',
+                        }}
+                      >
+                        ♟
+                      </div>
+                    )}
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 2 }}>
-                    {course.price === 0
-                      ? t('home.free')
-                      : formatPrice(course.price)}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 500,
+                        color: 'var(--ink-1)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {course.title}
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 2 }}>
+                      {course.price === 0
+                        ? t('home.free')
+                        : formatPrice(course.price)}
+                    </div>
                   </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
+      {/* Right side controls */}
       <div className="flex items-center" style={{ marginLeft: 'auto', gap: 8 }}>
+        {!hideSearch && (
+          <button
+            type="button"
+            className="md:hidden"
+            aria-label={t('home.searchPlaceholder')}
+            onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+            style={{
+              width: 36,
+              height: 36,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'transparent',
+              border: 'none',
+              borderRadius: 'var(--r-md)',
+              color: 'var(--ink-2)',
+              cursor: 'pointer',
+            }}
+          >
+            <Search size={18} />
+          </button>
+        )}
+
         <ThemeToggle />
-        {/* Bell icon */}
-        {/* <button
-          type="button"
-          aria-label={t('nav.notifications')}
-          style={{
-            width: 38,
-            height: 38,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'transparent',
-            border: 'none',
-            borderRadius: 'var(--r-md)',
-            cursor: 'pointer',
-            color: 'var(--ink-2)',
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-          </svg>
-        </button> */}
 
         {user ? (
           <UserAvatarMenu placement="bottom-right" />
         ) : (
-          <>
+          <div className="flex items-center gap-2">
             <Link to="/login" className="btn btn-secondary btn-sm">{t('nav.signIn')}</Link>
-            <Link to="/signup" className="btn btn-accent btn-sm">{t('nav.createAccount')}</Link>
-          </>
+            <Link to="/signup" className="btn btn-accent btn-sm hidden sm:inline-flex">{t('nav.createAccount')}</Link>
+          </div>
+        )}
+
+        {/* Mobile Hamburger Toggle Button */}
+        {navLinks.length > 0 && (
+          <button
+            type="button"
+            className="md:hidden flex items-center justify-center"
+            aria-label="Toggle mobile menu"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            style={{
+              width: 36,
+              height: 36,
+              background: 'transparent',
+              border: 'none',
+              borderRadius: 'var(--r-md)',
+              color: 'var(--ink-1)',
+              cursor: 'pointer',
+            }}
+          >
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
         )}
       </div>
+
+      {/* Mobile Search Overlay */}
+      {mobileSearchOpen && !hideSearch && (
+        <div
+          className="md:hidden"
+          style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            padding: 12,
+            background: 'var(--surface)',
+            borderBottom: '1px solid var(--border)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            zIndex: 49,
+          }}
+        >
+          <div style={{ position: 'relative' }}>
+            <input
+              ref={mobileSearchRef}
+              autoFocus
+              type="text"
+              value={overlayQuery}
+              onChange={handleSearchChange}
+              onKeyDown={(e) => {
+                handleSearchKeyDown(e)
+                if (e.key === 'Enter') setMobileSearchOpen(false)
+              }}
+              placeholder={t('home.searchPlaceholder')}
+              style={{
+                width: '100%',
+                height: 40,
+                padding: '0 36px 0 14px',
+                borderRadius: 'var(--r-md)',
+                border: '1px solid var(--border)',
+                background: 'var(--bg)',
+                fontSize: 14,
+                color: 'var(--ink-1)',
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Navigation Drawer */}
+      {mobileMenuOpen && (
+        <div
+          className="md:hidden"
+          style={{
+            position: 'fixed',
+            top: 64,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'var(--surface)',
+            zIndex: 48,
+            padding: 20,
+            overflowY: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {navLinks.map(link => (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                end={link.end}
+                onClick={() => setMobileMenuOpen(false)}
+                style={({ isActive }) => ({
+                  padding: '12px 16px',
+                  borderRadius: 'var(--r-md)',
+                  fontSize: 16,
+                  color: isActive ? 'var(--ink-1)' : 'var(--ink-2)',
+                  background: isActive ? 'var(--surface-2)' : 'transparent',
+                  textDecoration: 'none',
+                  fontWeight: 500,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                })}
+              >
+                <span>{t(link.labelKey)}</span>
+                {link.labelKey === 'nav.library' && bookmarkCount > 0 && (
+                  <span
+                    style={{
+                      background: 'var(--ink-1)',
+                      color: 'var(--on-ink-1)',
+                      borderRadius: 999,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      padding: '2px 8px',
+                    }}
+                  >
+                    {bookmarkCount}
+                  </span>
+                )}
+              </NavLink>
+            ))}
+          </div>
+
+          {!user && (
+            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
+              <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center' }}>
+                {t('nav.signIn')}
+              </Link>
+              <Link to="/signup" onClick={() => setMobileMenuOpen(false)} className="btn btn-accent" style={{ width: '100%', justifyContent: 'center' }}>
+                {t('nav.createAccount')}
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
     </header>
   )
 }
