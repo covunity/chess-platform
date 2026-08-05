@@ -143,12 +143,8 @@ function LessonRow({
 
   return (
     <div
+      className="flex items-center gap-3 px-3 py-3 md:px-5 md:pl-10 border-t border-(--border)"
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 10,
-        padding: '10px 20px 10px 48px',
-        borderTop: '1px solid var(--border)',
         cursor: canPlay || !isEnrolled ? 'pointer' : 'default',
       }}
       onClick={() => {
@@ -171,7 +167,7 @@ function LessonRow({
       >
         <LessonTypeIcon type={lesson.type} />
       </div>
-      <span style={{ fontSize: 13.5, color: 'var(--ink-1)', flex: 1 }}>{lesson.title}</span>
+      <span style={{ fontSize: 13.5, color: 'var(--ink-1)', flex: 1, minWidth: 0, overflowWrap: 'break-word' }}>{lesson.title}</span>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {lesson.free_preview && (
           <button
@@ -229,26 +225,22 @@ function ChapterAccordion({
         type="button"
         data-testid={`chapter-header-${chapter.id}`}
         onClick={onToggle}
+        className="w-full flex items-center justify-between px-3.5 py-3 md:px-5 md:py-4 transition-colors"
         style={{
-          width: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '16px 20px',
           background: expanded ? 'var(--surface-2)' : 'var(--surface)',
           border: 'none',
           cursor: 'pointer',
           textAlign: 'left',
-          gap: 12,
+          gap: 10,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
           <ChevronIcon open={expanded} />
-          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-1)' }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-1)', minWidth: 0, overflowWrap: 'break-word' }}>
             {t('courseDetail.chapterLabel', { n: index + 1, title: chapter.title })}
           </span>
         </div>
-        <span style={{ fontSize: 12, color: 'var(--ink-3)', flexShrink: 0 }}>
+        <span style={{ fontSize: 12, color: 'var(--ink-3)', flexShrink: 0, whiteSpace: 'nowrap' }}>
           {t('courseDetail.lessonsCount', { count: chapter.lessons.length })}
         </span>
       </button>
@@ -276,14 +268,7 @@ function RatingsHistogram({ course }: { course: CourseDetail }) {
 
   return (
     <div
-      className="card"
-      style={{
-        padding: 24,
-        display: 'grid',
-        gridTemplateColumns: 'auto 1fr',
-        gap: 32,
-        alignItems: 'center',
-      }}
+      className="card p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-4 sm:gap-8 items-center"
     >
       <div style={{ textAlign: 'center' }}>
         <div
@@ -1499,26 +1484,15 @@ export default function CourseDetailPage() {
       {/* ── Hero strip ─────────────────────────────────────────────────────── */}
       <section
         data-testid="course-hero"
-        style={{
-          background: 'var(--surface)',
-          borderBottom: '1px solid var(--border)',
-          padding: '32px 56px',
-        }}
+        className="px-4 py-6 md:px-14 md:py-10 border-b border-(--border) bg-(--surface)"
       >
         <div
-          style={{
-            maxWidth: 1280,
-            margin: '0 auto',
-            display: 'grid',
-            gridTemplateColumns: '1.4fr 1fr',
-            gap: 60,
-            alignItems: 'start',
-          }}
+          className="max-w-[1280px] mx-auto grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-8 lg:gap-14 items-start"
         >
           {/* Left column */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {/* Breadcrumb */}
-            <nav style={{ fontSize: 12, color: 'var(--ink-3)', display: 'flex', gap: 6, alignItems: 'center' }}>
+            <nav className="text-xs text-(--ink-3) flex flex-wrap gap-1.5 items-center">
               <Link to="/" style={{ color: 'var(--ink-3)', textDecoration: 'none' }}>
                 {t('courseDetail.breadcrumb')}
               </Link>
@@ -1544,9 +1518,9 @@ export default function CourseDetailPage() {
             <h1
               style={{
                 fontFamily: 'var(--font-serif)',
-                fontSize: 48,
-                lineHeight: 1.05,
-                letterSpacing: '-0.025em',
+                fontSize: 'clamp(24px, 5.5vw, 44px)',
+                lineHeight: 1.15,
+                letterSpacing: '-0.02em',
                 color: 'var(--ink-1)',
                 margin: 0,
               }}
@@ -1556,34 +1530,38 @@ export default function CourseDetailPage() {
 
             {/* Description */}
             {course.description && (
-              <p style={{ fontSize: 16, color: 'var(--ink-2)', lineHeight: 1.55, maxWidth: 600, margin: 0 }}>
+              <p style={{ fontSize: 15, color: 'var(--ink-2)', lineHeight: 1.55, maxWidth: 600, margin: 0 }}>
                 {course.description}
               </p>
             )}
 
             {/* Creator + meta row */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div
-                className="avatar"
-                style={{
-                  width: 40,
-                  height: 40,
-                  background: 'oklch(0.85 0.07 200)',
-                  color: 'var(--ink-1)',
-                  fontSize: 14,
-                  fontWeight: 600,
-                  flexShrink: 0,
-                }}
-              >
-                {course.creator_name ? course.creator_name.split(' ').pop()?.[0] ?? 'C' : 'C'}
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm">
+              <div className="flex items-center gap-3">
+                <div
+                  className="avatar"
+                  style={{
+                    width: 40,
+                    height: 40,
+                    background: 'oklch(0.85 0.07 200)',
+                    color: 'var(--ink-1)',
+                    fontSize: 14,
+                    fontWeight: 600,
+                    flexShrink: 0,
+                  }}
+                >
+                  {course.creator_name ? course.creator_name.split(' ').pop()?.[0] ?? 'C' : 'C'}
+                </div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-1)' }}>{course.creator_name}</div>
+                  {course.creator_bio && (
+                    <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>{course.creator_bio}</div>
+                  )}
+                </div>
               </div>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-1)' }}>{course.creator_name}</div>
-                {course.creator_bio && (
-                  <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>{course.creator_bio}</div>
-                )}
-              </div>
-              <div style={{ width: 1, height: 32, background: 'var(--border-strong)' }} />
+
+              <div className="hidden sm:block" style={{ width: 1, height: 28, background: 'var(--border-strong)' }} />
+
               <div data-testid="hero-rating" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 <StarRow rating={course.rating_avg} size={13} />
                 <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-1)' }}>
@@ -1593,7 +1571,9 @@ export default function CourseDetailPage() {
                   ({t('courseDetail.ratingsCount', { count: course.rating_count })})
                 </span>
               </div>
-              <div style={{ width: 1, height: 32, background: 'var(--border-strong)' }} />
+
+              <div className="hidden sm:block" style={{ width: 1, height: 28, background: 'var(--border-strong)' }} />
+
               <div data-testid="hero-enrollment" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
@@ -1605,7 +1585,7 @@ export default function CourseDetailPage() {
             </div>
 
             {/* Stats row */}
-            <div style={{ display: 'flex', gap: 24 }}>
+            <div className="flex flex-wrap items-center gap-6 sm:gap-8 pt-2">
               {[
                 { testId: 'stat-lessons', value: totalLessons, label: t('courseDetail.statLessons') },
                 { testId: 'stat-runtime', value: formatHours(course.hours_total), label: t('courseDetail.statRuntime') },
@@ -1821,25 +1801,18 @@ export default function CourseDetailPage() {
       </section>
 
       {/* ── Curriculum + Reviews + Sidebar ─────────────────────────────────── */}
-      <section style={{ padding: '48px 56px 80px' }}>
+      <section className="px-4 py-8 md:px-14 md:py-16">
         <div
-          style={{
-            maxWidth: 1280,
-            margin: '0 auto',
-            display: 'grid',
-            gridTemplateColumns: '1.5fr 1fr',
-            gap: 56,
-            alignItems: 'start',
-          }}
+          className="max-w-[1280px] mx-auto grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-8 lg:gap-14 items-start"
         >
           {/* Left — Curriculum + Reviews */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 36 }}>
             {/* Curriculum heading */}
             <div>
               <h2
                 style={{
                   fontFamily: 'var(--font-serif)',
-                  fontSize: 28,
+                  fontSize: 26,
                   color: 'var(--ink-1)',
                   margin: '0 0 4px',
                 }}
@@ -1876,9 +1849,9 @@ export default function CourseDetailPage() {
               <h2
                 style={{
                   fontFamily: 'var(--font-serif)',
-                  fontSize: 28,
+                  fontSize: 26,
                   color: 'var(--ink-1)',
-                  margin: '0 0 20px',
+                  margin: '0 0 16px',
                 }}
               >
                 {t('courseDetail.studentReviews')}
@@ -1928,10 +1901,10 @@ export default function CourseDetailPage() {
           </div>
 
           {/* Right — Sidebar cards */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, position: 'sticky', top: 80 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {/* What you'll learn */}
             {course.what_you_learn.length > 0 && (
-              <div className="card" style={{ padding: 24 }}>
+              <div className="card p-4 sm:p-6">
                 <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-1)', margin: '0 0 14px' }}>
                   {t('courseDetail.whatYouLearn')}
                 </h3>
@@ -1948,7 +1921,7 @@ export default function CourseDetailPage() {
 
             {/* Prerequisites */}
             {course.prerequisites && (
-              <div className="card" style={{ padding: 24 }}>
+              <div className="card p-4 sm:p-6">
                 <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-1)', margin: '0 0 10px' }}>
                   {t('courseDetail.prerequisites')}
                 </h3>
@@ -1960,6 +1933,32 @@ export default function CourseDetailPage() {
           </div>
         </div>
       </section>
+
+      {/* Mobile Sticky Bottom CTA Bar */}
+      {!isCourseCreator && (
+        <div
+          className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-4 py-3 flex items-center justify-between shadow-2xl border-t border-(--border)"
+          style={{ background: 'var(--surface)' }}
+        >
+          <div>
+            <span style={{ fontSize: 11, color: 'var(--ink-3)', display: 'block' }}>Giao dịch an toàn</span>
+            <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700, color: 'var(--ink-1)' }}>
+              {course.price === 0 ? t('courseDetail.free') : formatPrice(course.price)}
+            </div>
+          </div>
+          <button
+            type="button"
+            data-testid="mobile-sticky-cta"
+            aria-hidden="true"
+            tabIndex={-1}
+            className="btn btn-accent btn-md"
+            onClick={handleCTAClick}
+            disabled={enrolling}
+          >
+            {ctaLabel}
+          </button>
+        </div>
+      )}
 
       {/* ── Modals ──────────────────────────────────────────────────────────── */}
 
