@@ -60,12 +60,9 @@ export default function AdminSidebar() {
     >
       {/* Logo + eyebrow */}
       <div className="px-4 pt-5 pb-4">
-        <Link to="/" className="flex items-center gap-2 mb-1" aria-label="Covunity home" style={{ textDecoration: 'none' }}>
-          <span className="logo-mark" aria-hidden="true" />
-          <span className="font-serif text-base">
-            <span style={{ color: '#9610d5' }}>Co</span>
-            <span className="text-(--ink-1)">un<span className="brand-dotless-i">ı</span>ty</span>
-          </span>
+        <Link to="/" aria-label="Covunity home" className="mb-2" style={{ display: 'flex' }}>
+          <img src="/icons/logo-light.png" alt="" className="nav-logo nav-logo--light" style={{ height: 42, width: 'auto' }} />
+          <img src="/icons/logo-dark.png"  alt="" className="nav-logo nav-logo--dark"  style={{ height: 42, width: 'auto' }} />
         </Link>
         <p
           className="text-(--ink-3) uppercase font-medium tracking-widest"
