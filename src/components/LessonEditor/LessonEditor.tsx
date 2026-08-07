@@ -397,7 +397,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
                   <BoardAuthoringSurface
                     store={treeStore}
                     perspective={perspective}
-                    size={493}
+                    size={468}
                     boardEditorOpen={boardEditorOpen}
                     onBoardEditorOpenChange={setBoardEditorOpen}
                   />
@@ -471,7 +471,7 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
               playerSide={puzzlePlayerSide}
               onPlayerSideChange={(side) => setPuzzlePlayerSide(side)}
               perspective={perspective}
-              size={493}
+              size={468}
             />
           </>
         ) : null}

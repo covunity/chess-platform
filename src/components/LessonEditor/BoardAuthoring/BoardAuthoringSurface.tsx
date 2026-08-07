@@ -70,7 +70,7 @@ function isPromotionMove(fen: string, from: string, to: string): boolean {
 export default function BoardAuthoringSurface({
   store,
   perspective = 'white',
-  size = 493,
+  size = 468,
   boardEditorOpen: boardEditorOpenProp,
   onBoardEditorOpenChange,
 }: BoardAuthoringSurfaceProps) {
