@@ -299,7 +299,7 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
               key={`note-w-${wNode.id}`}
               className="guided-player-move-annotation"
               style={{
-                margin: '6px 0 10px 28px',
+                margin: '6px 0 10px 0',
                 padding: '10px 14px',
                 background: 'var(--surface-3)',
                 border: '1px solid var(--border)',
@@ -321,7 +321,7 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
               key={`note-b-${bNode.id}`}
               className="guided-player-move-annotation"
               style={{
-                margin: '6px 0 10px 28px',
+                margin: '6px 0 10px 0',
                 padding: '10px 14px',
                 background: 'var(--surface-3)',
                 border: '1px solid var(--border)',
@@ -384,7 +384,7 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
               key={`note-b-only-${bNode.id}`}
               className="guided-player-move-annotation"
               style={{
-                margin: '6px 0 10px 28px',
+                margin: '6px 0 10px 0',
                 padding: '10px 14px',
                 background: 'var(--surface-3)',
                 border: '1px solid var(--border)',
@@ -456,7 +456,7 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
           display: 'flex',
           alignItems: 'center',
           gap: 8,
-          padding: '16px 24px',
+          padding: '16px 20px',
           borderBottom: '1px solid var(--border)',
           flexShrink: 0,
         }}
@@ -514,7 +514,7 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
         style={{
           flex: 1,
           overflowY: 'auto',
-          padding: '12px 24px',
+          padding: '12px 20px',
           minHeight: 0,
         }}
       >
@@ -599,7 +599,7 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
       )}
 
       {/* Navigation buttons — identical to learner viewer mode */}
-      <div className="guided-player-actions" style={{ flexShrink: 0, padding: '12px 24px' }}>
+      <div className="guided-player-actions" style={{ flexShrink: 0, padding: '12px 20px' }}>
         <button
           type="button"
           data-testid="board-authoring-nav-begin"
@@ -659,7 +659,7 @@ export default function VariationPanel({ store }: { store: TreeStore }) {
           display: 'flex',
           flexDirection: 'column',
           gap: 8,
-          padding: '12px 24px',
+          padding: '12px 20px',
           background: 'var(--surface-2)',
           maxHeight: 180,
           overflowY: 'auto',
