@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { parsePgn, extractLeafPaths } from "../../utils/parsePgn";
@@ -175,6 +175,34 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   useEffect(() => {
     if (saveRef) saveRef.current = handleSave
   });
+
+  // Debounced background auto-save (1s after any change to title, description, perspective, activeTab)
+  const isFirstMount = useRef(true);
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+    const timer = setTimeout(() => {
+      handleSave();
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [title, description, perspective, activeTab, hasRewindMode]);
+
+  // Subscribe to treeStore changes for chess/puzzle moves auto-save
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    const unsubscribe = treeStore.subscribe(() => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        handleSave();
+      }, 1000);
+    });
+    return () => {
+      clearTimeout(timer);
+      unsubscribe();
+    };
+  }, [treeStore]);
 
   return (
     <div

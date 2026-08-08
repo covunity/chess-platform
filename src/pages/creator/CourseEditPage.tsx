@@ -619,6 +619,9 @@ export default function CourseEditPage() {
   }, [courseId])
 
   const switchLesson = useCallback((lesson: Lesson) => {
+    if (saveLessonRef.current) {
+      try { saveLessonRef.current() } catch (err) { console.error('Auto-save error on switch:', err) }
+    }
     if (lessonTransitionRef.current) clearTimeout(lessonTransitionRef.current)
     setSelectedLesson(lesson)
     setShowCourseInfo(false)
@@ -981,7 +984,14 @@ export default function CourseEditPage() {
         <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
           <button
             type="button"
-            onClick={() => { setSelectedLesson(null); setDisplayedLesson(null); setShowCourseInfo(true) }}
+            onClick={() => {
+              if (saveLessonRef.current) {
+                try { saveLessonRef.current() } catch (err) { console.error('Auto-save error on showCourseInfo:', err) }
+              }
+              setSelectedLesson(null)
+              setDisplayedLesson(null)
+              setShowCourseInfo(true)
+            }}
             className="group"
             style={{
               width: '100%',
