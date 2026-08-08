@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { vi, beforeEach } from 'vitest'
 import { I18nextProvider } from 'react-i18next'
@@ -42,10 +42,8 @@ function renderSelect(props: Partial<React.ComponentProps<typeof CourseTagsSelec
 describe('CourseTagsSelect', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockListCreatorTags.mockResolvedValue({ tags: [], error: null })
-    mockCreateCreatorTag.mockImplementation((_c: unknown, creatorId: string, name: string) =>
-      Promise.resolve({ tag: makeTag(name), error: null })
-    )
+    mockListCreatorTags.mockResolvedValue({ tags: [makeTag('Najdorf'), makeTag('French')], error: null })
+    mockCreateCreatorTag.mockImplementation(async (_s, _id, name) => ({ tag: makeTag(name), error: null }))
   })
 
   it('loads creator tags on mount', async () => {
@@ -69,7 +67,7 @@ describe('CourseTagsSelect', () => {
     const { onChange } = renderSelect()
     await waitFor(() => expect(mockListCreatorTags).toHaveBeenCalled())
     const select = screen.getByTestId('popular-tag-select')
-    await userEvent.selectOptions(select, 'openings')
+    fireEvent.change(select, { target: { value: 'openings' } })
     await waitFor(() => expect(onChange).toHaveBeenCalledWith(['openings']))
   })
 
@@ -78,7 +76,7 @@ describe('CourseTagsSelect', () => {
     await waitFor(() => expect(mockListCreatorTags).toHaveBeenCalled())
     const select = screen.getByTestId('popular-tag-select')
     expect(select).toHaveValue('openings')
-    await userEvent.selectOptions(select, 'tactics')
+    fireEvent.change(select, { target: { value: 'tactics' } })
     await waitFor(() => expect(onChange).toHaveBeenCalledWith(['tactics', 'Najdorf']))
   })
 
@@ -94,12 +92,12 @@ describe('CourseTagsSelect', () => {
     const { onChange } = renderSelect()
     await waitFor(() => expect(mockListCreatorTags).toHaveBeenCalled())
     const input = screen.getByTestId('custom-tag-input')
-    await userEvent.type(input, 'Najdorf{Enter}')
+    await userEvent.type(input, 'Sicilian{Enter}')
     await waitFor(() => {
-      expect(mockCreateCreatorTag).toHaveBeenCalledWith(expect.anything(), 'u1', 'Najdorf')
+      expect(mockCreateCreatorTag).toHaveBeenCalledWith(expect.anything(), 'u1', 'Sicilian')
     })
     await waitFor(() => {
-      expect(onChange).toHaveBeenCalledWith(['Najdorf'])
+      expect(onChange).toHaveBeenCalledWith(['Sicilian'])
     })
   })
 
