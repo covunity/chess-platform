@@ -152,6 +152,9 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
     setPreviewInfo({ videoId: videoLesson.id, videoStatus: videoLesson.video_status, url, format, embedUrl });
   };
 
+  const isDirtyRef = useRef(false);
+  const handleSaveRef = useRef<(() => void) | null>(null);
+
   const handleSave = () => {
     if (isVideoUploading) {
       setShowUploadWarnOnSave(true);
@@ -170,11 +173,28 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
       pgnToSave = serializePgn(treeState.tree, startingFen);
     }
     onSave({ type: activeTab, pgn_data: pgnToSave, board_perspective: perspective, is_free_preview: lesson.is_free_preview, title, description: description || null, has_rewind_mode: hasRewindMode });
+    isDirtyRef.current = false;
   };
 
+  handleSaveRef.current = handleSave;
+
   useEffect(() => {
-    if (saveRef) saveRef.current = handleSave
+    if (saveRef) saveRef.current = handleSave;
   });
+
+  // Reset dirty flag on lesson id change
+  useEffect(() => {
+    isDirtyRef.current = false;
+  }, [lesson.id]);
+
+  // Save on unmount if dirty
+  useEffect(() => {
+    return () => {
+      if (isDirtyRef.current && handleSaveRef.current) {
+        handleSaveRef.current();
+      }
+    };
+  }, []);
 
   // Debounced background auto-save (1s after any change to title, description, perspective, activeTab)
   const isFirstMount = useRef(true);
@@ -183,8 +203,11 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
       isFirstMount.current = false;
       return;
     }
+    isDirtyRef.current = true;
     const timer = setTimeout(() => {
-      handleSave();
+      if (isDirtyRef.current && handleSaveRef.current) {
+        handleSaveRef.current();
+      }
     }, 1000);
     return () => clearTimeout(timer);
   }, [title, description, perspective, activeTab, hasRewindMode]);
@@ -193,9 +216,12 @@ export default function LessonEditor({ lesson, onSave, chapterLessons, onSelectL
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
     const unsubscribe = treeStore.subscribe(() => {
+      isDirtyRef.current = true;
       clearTimeout(timer);
       timer = setTimeout(() => {
-        handleSave();
+        if (isDirtyRef.current && handleSaveRef.current) {
+          handleSaveRef.current();
+        }
       }, 1000);
     });
     return () => {
