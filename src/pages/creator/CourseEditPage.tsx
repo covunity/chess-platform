@@ -544,6 +544,10 @@ export default function CourseEditPage() {
   const [confirmDeleteLesson, setConfirmDeleteLesson] = useState<Lesson | null>(null)
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null)
   const [displayedLesson, setDisplayedLesson] = useState<Lesson | null>(null)
+  const selectedLessonRef = useRef<Lesson | null>(null)
+  useEffect(() => {
+    selectedLessonRef.current = selectedLesson
+  }, [selectedLesson])
   const [isLessonTransitioning, setIsLessonTransitioning] = useState(false)
   const [newLessonChapterId, setNewLessonChapterId] = useState<string | null>(null)
   const [showNewChapterModal, setShowNewChapterModal] = useState(false)
@@ -863,6 +867,7 @@ export default function CourseEditPage() {
       lessons: (ch.lessons ?? []).map(l => l.id === lesson.id ? { ...l, free_preview: newValue } : l),
     })))
     setSelectedLesson(prev => prev?.id === lesson.id ? { ...prev, free_preview: newValue } : prev)
+    setDisplayedLesson(prev => prev?.id === lesson.id ? { ...prev, free_preview: newValue } : prev)
     await updateLesson(supabase, lesson.id, { free_preview: newValue })
   }
 
@@ -936,10 +941,12 @@ export default function CourseEditPage() {
     if (needsChapterRefresh && courseId) {
       const { chapters: fresh } = await listChapters(supabase, courseId)
       setChapters(fresh)
-      const updatedLesson = fresh.flatMap(ch => ch.lessons ?? []).find(l => l.id === selectedLesson.id)
-      if (updatedLesson) {
-        setSelectedLesson(updatedLesson)
-        setDisplayedLesson(updatedLesson)
+      if (selectedLessonRef.current?.id === selectedLesson.id) {
+        const updatedLesson = fresh.flatMap(ch => ch.lessons ?? []).find(l => l.id === selectedLesson.id)
+        if (updatedLesson) {
+          setSelectedLesson(updatedLesson)
+          setDisplayedLesson(updatedLesson)
+        }
       }
     } else {
       setChapters(prev => prev.map(ch => ({
