@@ -164,17 +164,23 @@ interface LessonRowProps {
   lesson: Lesson
   onDelete: (l: Lesson) => void
   onOpenEditor: (l: Lesson) => void
+  onUpdateTitle?: (id: string, title: string) => void
   t: (k: string) => string
 }
 
-function LessonRow({ lesson, onDelete, onOpenEditor, t }: LessonRowProps) {
+function LessonRow({ lesson, onDelete, onOpenEditor, onUpdateTitle, t }: LessonRowProps) {
   const [title, setTitle] = useState(lesson.title)
   const [editing, setEditing] = useState(false)
+
+  useEffect(() => {
+    setTitle(lesson.title)
+  }, [lesson.title])
 
   async function handleBlur() {
     setEditing(false)
     if (title !== lesson.title) {
       await updateLesson(supabase, lesson.id, { title })
+      onUpdateTitle?.(lesson.id, title)
     }
   }
 
@@ -234,17 +240,24 @@ interface ChapterBlockProps {
   onOpenNewLessonDialog: (chapterId: string) => void
   onDeleteLesson: (l: Lesson) => void
   onOpenEditor: (l: Lesson) => void
+  onUpdateLessonTitle?: (id: string, title: string) => void
+  onUpdateChapterTitle?: (id: string, title: string) => void
   t: (k: string) => string
 }
 
-function ChapterBlock({ chapter, onDeleteChapter, onOpenNewLessonDialog, onDeleteLesson, onOpenEditor, t }: ChapterBlockProps) {
+function ChapterBlock({ chapter, onDeleteChapter, onOpenNewLessonDialog, onDeleteLesson, onOpenEditor, onUpdateLessonTitle, onUpdateChapterTitle, t }: ChapterBlockProps) {
   const [title, setTitle] = useState(chapter.title)
   const [editing, setEditing] = useState(false)
+
+  useEffect(() => {
+    setTitle(chapter.title)
+  }, [chapter.title])
 
   async function handleBlur() {
     setEditing(false)
     if (title !== chapter.title) {
       await updateChapter(supabase, chapter.id, { title })
+      onUpdateChapterTitle?.(chapter.id, title)
     }
   }
 
@@ -292,6 +305,7 @@ function ChapterBlock({ chapter, onDeleteChapter, onOpenNewLessonDialog, onDelet
           lesson={lesson}
           onDelete={onDeleteLesson}
           onOpenEditor={onOpenEditor}
+          onUpdateTitle={onUpdateLessonTitle}
           t={t}
         />
       ))}
@@ -634,6 +648,19 @@ export default function CourseEditPage() {
       setDisplayedLesson(lesson)
       setIsLessonTransitioning(false)
     }, 100)
+  }, [])
+
+  const handleUpdateLessonTitle = useCallback((id: string, newTitle: string) => {
+    setChapters(prev => prev.map(ch => ({
+      ...ch,
+      lessons: (ch.lessons ?? []).map(l => l.id === id ? { ...l, title: newTitle } : l),
+    })))
+    setSelectedLesson(prev => prev?.id === id ? { ...prev, title: newTitle } : prev)
+    setDisplayedLesson(prev => prev?.id === id ? { ...prev, title: newTitle } : prev)
+  }, [])
+
+  const handleUpdateChapterTitle = useCallback((id: string, newTitle: string) => {
+    setChapters(prev => prev.map(ch => ch.id === id ? { ...ch, title: newTitle } : ch))
   }, [])
 
   useEffect(() => {
@@ -1046,6 +1073,8 @@ export default function CourseEditPage() {
                 onOpenNewLessonDialog={chapterId => setNewLessonChapterId(chapterId)}
                 onDeleteLesson={l => setConfirmDeleteLesson(l)}
                 onOpenEditor={l => switchLesson(l)}
+                onUpdateLessonTitle={handleUpdateLessonTitle}
+                onUpdateChapterTitle={handleUpdateChapterTitle}
                 t={t}
               />
             ))
