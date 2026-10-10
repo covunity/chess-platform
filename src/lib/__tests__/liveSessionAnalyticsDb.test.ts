@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import { execSync } from 'child_process'
+import { isDockerDbAvailable } from '../../test/dbTestHelper'
 import {
   computeSessionOperationalMetrics,
   computeSessionGameAnalytics,
@@ -50,7 +51,7 @@ function runAsUserThrows(userId: string, query: string): boolean {
   }
 }
 
-describe('TASK 9.4 — Real PostgreSQL Verification: Live Session Operational & Chess Analytics', () => {
+describe.skipIf(!isDockerDbAvailable())('TASK 9.4 — Real PostgreSQL Verification: Live Session Operational & Chess Analytics', () => {
   const creatorId = '94949494-0001-4444-9494-111111111111'
   const assistantId = '94949494-0002-4444-9494-222222222222'
   const studentAliceId = '94949494-0003-4444-9494-333333333333'

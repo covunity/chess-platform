@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { execSync } from 'child_process'
+import { isDockerDbAvailable } from '../../test/dbTestHelper'
 
 function runSql(query: string): string {
   const cmd = 'docker exec -i supabase_db_chess-course-platform psql -U postgres -d postgres -t -A -q -v ON_ERROR_STOP=1'
@@ -17,7 +18,7 @@ function runSqlThrows(query: string): boolean {
   }
 }
 
-describe('TASK 7 & 7.1 — Real Database Authorization, Terminal DELETE Invariant & Teacher Authority', () => {
+describe.skipIf(!isDockerDbAvailable())('TASK 7 & 7.1 — Real Database Authorization, Terminal DELETE Invariant & Teacher Authority', () => {
   const creatorId = '11111111-1111-1111-1111-111111111111'
   const otherCreatorId = '22222222-2222-2222-2222-222222222222'
   const assistantId = '33333333-3333-3333-3333-333333333333'

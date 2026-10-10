@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import { execSync } from 'child_process'
+import { isDockerDbAvailable } from '../../test/dbTestHelper'
 
 function runSql(query: string): string {
   const cmd = 'docker exec -i supabase_db_chess-course-platform psql -U postgres -d postgres -t -A -q -v ON_ERROR_STOP=1'
@@ -53,7 +54,7 @@ function runAsUserThrows(userId: string, query: string): boolean {
   }
 }
 
-describe('TASK 8.1 — Real PostgreSQL Verification: Live Chat Persistence & Isolation', () => {
+describe.skipIf(!isDockerDbAvailable())('TASK 8.1 — Real PostgreSQL Verification: Live Chat Persistence & Isolation', () => {
   const teacherId = '77777777-cccc-1111-cccc-777777777771'
   const assistantId = '77777777-cccc-2222-cccc-777777777772'
   const studentWhiteAId = '77777777-cccc-3333-cccc-777777777773'

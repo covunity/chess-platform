@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { execSync } from 'child_process'
+import { isDockerDbAvailable } from '../../test/dbTestHelper'
 
 function runSql(query: string): string {
   const cmd = 'docker exec -i supabase_db_chess-course-platform psql -U postgres -d postgres -t -A -q -v ON_ERROR_STOP=1'
@@ -7,7 +8,7 @@ function runSql(query: string): string {
   return output.split('\n')[0]?.trim() ?? ''
 }
 
-describe('TASK 4A — Live Session & Lesson Course Integrity Enforcement', () => {
+describe.skipIf(!isDockerDbAvailable())('TASK 4A — Live Session & Lesson Course Integrity Enforcement', () => {
   const creatorId = '00000000-0000-0000-0000-000000000001'
   let course1Id: string
   let course2Id: string
@@ -206,7 +207,7 @@ describe('TASK 4A — Live Session & Lesson Course Integrity Enforcement', () =>
   })
 })
 
-describe('TASK 4A.1 — Preserve live_sessions lesson/course invariant when lessons or chapters move', () => {
+describe.skipIf(!isDockerDbAvailable())('TASK 4A.1 — Preserve live_sessions lesson/course invariant when lessons or chapters move', () => {
   const creatorId = '00000000-0000-0000-0000-000000000001'
   let courseAId: string
   let courseBId: string
