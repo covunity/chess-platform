@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { CourseLevel, LessonType } from './creatorApi'
+import type { CourseLevel, LessonType, CourseType, LiveCourseStatus } from './creatorApi'
 
 export type SortOption = 'newest' | 'popular' | 'rating'
 
@@ -19,6 +19,10 @@ export interface PublicCourse {
   hours_total: number
   created_at: string
   enrollment_count: number
+  course_type?: CourseType
+  live_room_id?: string | null
+  live_schedule?: string | null
+  live_status?: LiveCourseStatus
 }
 
 export interface ListPublishedCoursesOptions {
@@ -26,6 +30,7 @@ export interface ListPublishedCoursesOptions {
   level?: CourseLevel
   tag?: string
   sort?: SortOption
+  course_type?: CourseType
 }
 
 export interface CourseDetailLesson {
@@ -79,6 +84,7 @@ export async function getCourseDetail(
       .select(`
         id, title, description, thumbnail_url, price, original_price, promo_ends_at,
         level, language, tags, creator_id, what_you_learn, prerequisites, created_at,
+        course_type, live_room_id, live_schedule, live_status,
         creator:creator_id ( name ),
         reviews ( id, rating, title, body, created_at, reviewer:reviewer_id ( name, avatar_url, bio ) ),
         enrollments ( id ),
@@ -177,6 +183,10 @@ export async function getCourseDetail(
       hours_total,
       enrollment_count: enrollments.length,
       created_at: row.created_at as string,
+      course_type: (row.course_type as CourseType) ?? 'standard',
+      live_room_id: (row.live_room_id as string | null) ?? null,
+      live_schedule: (row.live_schedule as string | null) ?? null,
+      live_status: (row.live_status as LiveCourseStatus) ?? 'scheduled',
       what_you_learn,
       prerequisites: (row.prerequisites as string | null) ?? null,
       chapters,
@@ -255,10 +265,18 @@ export async function listPublishedCourses(
       avg_rating,
       rating_count,
       enrollment_count,
+      course_type,
+      live_room_id,
+      live_schedule,
+      live_status,
       users:creator_id ( name ),
       chapters ( lessons ( id ) )
     `)
     .eq('status', 'published')
+
+  if (options.course_type) {
+    query = query.eq('course_type', options.course_type)
+  }
 
   if (options.q) {
     // Escape SQL LIKE wildcards and PostgREST filter syntax chars
@@ -309,8 +327,51 @@ export async function listPublishedCourses(
       hours_total: 0,
       created_at: row.created_at as string,
       enrollment_count: (row.enrollment_count as number) ?? 0,
+      course_type: (row.course_type as CourseType) ?? 'standard',
+      live_room_id: (row.live_room_id as string | null) ?? null,
+      live_schedule: (row.live_schedule as string | null) ?? null,
+      live_status: (row.live_status as LiveCourseStatus) ?? 'scheduled',
     }
   })
 
   return { courses, error: null }
+}
+
+export interface LiveClassroomAccessResult {
+  is_course_room: boolean
+  is_session?: boolean
+  session_id?: string
+  session_title?: string
+  session_status?: string
+  livekit_room_name?: string
+  allowed: boolean
+  role?: 'teacher' | 'student' | 'assistant'
+  reason?: 'not_enrolled' | 'unauthenticated' | 'invalid_room_id' | 'session_not_live' | string
+  course_id?: string
+  course_title?: string
+  live_schedule?: string
+  price?: number
+  is_creator?: boolean
+  is_admin?: boolean
+  is_assistant?: boolean
+  is_enrolled?: boolean
+  teacher_id?: string
+  creator_id?: string
+}
+
+export async function checkLiveClassroomAccess(
+  client: SupabaseClient,
+  roomId: string,
+  userId?: string | null
+): Promise<{ access: LiveClassroomAccessResult | null; error: Error | null }> {
+  const { data, error } = await client.rpc('check_live_classroom_access', {
+    p_room_id: roomId,
+    p_user_id: userId || null,
+  })
+
+  if (error) {
+    return { access: null, error: error as unknown as Error }
+  }
+
+  return { access: (data as LiveClassroomAccessResult) ?? null, error: null }
 }

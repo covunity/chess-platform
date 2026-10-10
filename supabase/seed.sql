@@ -66,6 +66,88 @@ INSERT INTO public.users (id, email, name, role, account_tier_id)
   )
   ON CONFLICT (id) DO UPDATE SET role = 'creator';
 
+-- ── Seed Teacher user ─────────────────────────────────────────────────────────
+-- Email: teacher@gambitly.demo | Password: password123
+INSERT INTO auth.users (
+  id, instance_id, email, encrypted_password, email_confirmed_at,
+  confirmation_token, recovery_token, email_change_token_new, email_change, reauthentication_token,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at, role, aud
+) VALUES (
+  '00000000-0000-0000-0000-000000000002',
+  '00000000-0000-0000-0000-000000000000',
+  'teacher@gambitly.demo',
+  extensions.crypt('password123', extensions.gen_salt('bf')),
+  now(),
+  '', '', '', '', '',
+  '{"provider":"email","providers":["email"]}',
+  '{"name":"Thầy Dạy Cờ (Teacher)"}',
+  now(), now(), 'authenticated', 'authenticated'
+) ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.users (id, email, name, role, account_tier_id)
+  VALUES (
+    '00000000-0000-0000-0000-000000000002',
+    'teacher@gambitly.demo',
+    'Thầy Dạy Cờ (Teacher)',
+    'creator',
+    'individual'
+  )
+  ON CONFLICT (id) DO UPDATE SET role = 'creator', name = 'Thầy Dạy Cờ (Teacher)';
+
+-- ── Seed Student 1 user ───────────────────────────────────────────────────────
+-- Email: student1@gambitly.demo | Password: password123
+INSERT INTO auth.users (
+  id, instance_id, email, encrypted_password, email_confirmed_at,
+  confirmation_token, recovery_token, email_change_token_new, email_change, reauthentication_token,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at, role, aud
+) VALUES (
+  '00000000-0000-0000-0000-000000000003',
+  '00000000-0000-0000-0000-000000000000',
+  'student1@gambitly.demo',
+  extensions.crypt('password123', extensions.gen_salt('bf')),
+  now(),
+  '', '', '', '', '',
+  '{"provider":"email","providers":["email"]}',
+  '{"name":"Học Viên 1 (Nam)"}',
+  now(), now(), 'authenticated', 'authenticated'
+) ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.users (id, email, name, role)
+  VALUES (
+    '00000000-0000-0000-0000-000000000003',
+    'student1@gambitly.demo',
+    'Học Viên 1 (Nam)',
+    'learner'
+  )
+  ON CONFLICT (id) DO UPDATE SET role = 'learner', name = 'Học Viên 1 (Nam)';
+
+-- ── Seed Student 2 user ───────────────────────────────────────────────────────
+-- Email: student2@gambitly.demo | Password: password123
+INSERT INTO auth.users (
+  id, instance_id, email, encrypted_password, email_confirmed_at,
+  confirmation_token, recovery_token, email_change_token_new, email_change, reauthentication_token,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at, role, aud
+) VALUES (
+  '00000000-0000-0000-0000-000000000004',
+  '00000000-0000-0000-0000-000000000000',
+  'student2@gambitly.demo',
+  extensions.crypt('password123', extensions.gen_salt('bf')),
+  now(),
+  '', '', '', '', '',
+  '{"provider":"email","providers":["email"]}',
+  '{"name":"Học Viên 2 (Linh)"}',
+  now(), now(), 'authenticated', 'authenticated'
+) ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.users (id, email, name, role)
+  VALUES (
+    '00000000-0000-0000-0000-000000000004',
+    'student2@gambitly.demo',
+    'Học Viên 2 (Linh)',
+    'learner'
+  )
+  ON CONFLICT (id) DO UPDATE SET role = 'learner', name = 'Học Viên 2 (Linh)';
+
 -- ── Seed demo course ──────────────────────────────────────────────────────────
 INSERT INTO public.courses (
   id, creator_id, title, description, price, level, language, status
@@ -238,3 +320,40 @@ INSERT INTO public.lessons (
   '1. Ke7 { [gambitly:v1]{"p":"correct","s":[{"kind":"circle","square":"e7","color":"green"},{"kind":"circle","square":"e8","color":"yellow"}],"n":{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Đối lập trực tiếp! Vua trắng chiếm ô e7, đẩy Vua đen ra và dẫn đường cho Tốt phong cấp."}]}]}} } (1. e6? { [gambitly:v1]{"p":"mistake","n":{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Đẩy Tốt ngay là sai — sau Ke7 của Đen, Tốt bị chặn và ván cờ hòa!"}]}]}} } 1... Ke7) 1... Ke8 2. e6 { [gambitly:v1]{"p":"correct"} } 2... Kd8 3. e7+ { [gambitly:v1]{"p":"correct"} } 3... Kc7 4. e8=Q { [gambitly:v1]{"p":"correct"} }'
 )
 ON CONFLICT (id) DO NOTHING;
+
+-- ── Seed Live Course ──────────────────────────────────────────────────────────
+-- Creator: teacher@gambitly.demo (00000000-0000-0000-0000-000000000002)
+-- Room ID: live-italy-deepdive
+-- Student 1: Enrolled (00000000-0000-0000-0000-000000000003)
+-- Student 2: Not enrolled (00000000-0000-0000-0000-000000000004)
+INSERT INTO public.courses (
+  id, creator_id, title, description, price, level, language, status,
+  course_type, live_room_id, live_schedule, live_status
+) VALUES (
+  '00000000-0000-0000-0000-000000000020',
+  '00000000-0000-0000-0000-000000000002',
+  'Lớp Cờ Vua Trực Tuyến: Chiến Thuật Khai Cuộc Chuyên Sâu',
+  'Lớp học trực tuyến tương tác trực tiếp với Thầy Dạy Cờ. Thực hành trực tiếp trên bàn cờ thời gian thực, giao tiếp giọng nói và ghép cặp đấu tập.',
+  0,
+  'intermediate',
+  'vi',
+  'published',
+  'live',
+  'live-italy-deepdive',
+  'Thứ 3 & Thứ 5 hàng tuần (19:30 - 21:00)',
+  'live'
+) ON CONFLICT (id) DO UPDATE SET
+  course_type = 'live',
+  live_room_id = 'live-italy-deepdive',
+  live_schedule = 'Thứ 3 & Thứ 5 hàng tuần (19:30 - 21:00)',
+  live_status = 'live',
+  status = 'published';
+
+-- Enrollment for Student 1 (Nam) in the Live Course
+INSERT INTO public.enrollments (
+  id, course_id, user_id
+) VALUES (
+  '00000000-0000-0000-0000-000000000030',
+  '00000000-0000-0000-0000-000000000020',
+  '00000000-0000-0000-0000-000000000003'
+) ON CONFLICT (course_id, user_id) DO NOTHING;

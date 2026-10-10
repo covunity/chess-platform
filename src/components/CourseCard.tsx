@@ -118,6 +118,32 @@ export default function CourseCard({
       <div style={{ position: 'relative', aspectRatio: '16/10', background: 'var(--surface-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
         {badgeLabel && <Badge label={badgeLabel} color={badgeColor} testId={badgeKind ? `badge-${badgeKind}` : undefined} />}
 
+        {course.course_type === 'live' && (
+          <span
+            data-testid="live-badge"
+            style={{
+              position: 'absolute',
+              top: 12,
+              right: 12,
+              padding: '2px 8px',
+              borderRadius: 'var(--r-sm)',
+              fontSize: 10.5,
+              fontWeight: 700,
+              letterSpacing: '0.05em',
+              color: '#fff',
+              background: 'var(--danger)',
+              boxShadow: '0 2px 8px rgba(239, 68, 68, 0.4)',
+              zIndex: 2,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+            {t('home.badgeLive')}
+          </span>
+        )}
+
         {firstTagLabel && (
           <span
             className="thumbnail-tag"
@@ -164,9 +190,16 @@ export default function CourseCard({
           {course.title}
         </h3>
 
-        <p style={{ fontSize: 12.5, color: 'var(--ink-3)', margin: 0 }}>
-          {course.creator_name}
-        </p>
+        <div className="flex items-center justify-between gap-2">
+          <p style={{ fontSize: 12.5, color: 'var(--ink-3)', margin: 0 }}>
+            {course.creator_name}
+          </p>
+          {course.course_type === 'live' && course.live_schedule && (
+            <span className="text-xs text-(--danger) font-medium truncate" title={course.live_schedule}>
+              📅 {course.live_schedule}
+            </span>
+          )}
+        </div>
 
         {/* Tags */}
         {course.tags.length > 0 && (

@@ -45,6 +45,8 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import CheckoutPage from './pages/CheckoutPage'
 import ConfirmPurchasePage from './pages/ConfirmPurchasePage'
+import LiveClassroomPage from './pages/LiveClassroomPage'
+import LiveSessionAnalyticsPage from './pages/LiveSessionAnalyticsPage'
 
 function PublicShell() {
   return (
@@ -96,6 +98,12 @@ export default function App() {
         {/* Lesson player — full screen, no TopNav/Footer */}
         <Route path="/learn/:courseId/:lessonId" element={<LessonPlayerPage />} />
         <Route path="/learn/:courseId" element={<LessonPlayerPage />} />
+
+        {/* Live Classroom — full screen, no TopNav/Footer */}
+        <Route path="/live/session/:sessionId/analytics" element={<LiveSessionAnalyticsPage />} />
+        <Route path="/live/session/:sessionId" element={<LiveClassroomPage />} />
+        <Route path="/live/:roomId" element={<LiveClassroomPage />} />
+        <Route path="/live" element={<LiveClassroomPage />} />
 
         {/* Auth pages — full-screen, no TopNav/Footer */}
         <Route path="/login" element={<LoginPage />} />

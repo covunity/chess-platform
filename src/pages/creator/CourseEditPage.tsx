@@ -17,7 +17,7 @@ import {
   manageRewindSiblings,
 } from '../../lib/creatorApi'
 import { parsePgn, extractLeafPaths, leafPathToPgn } from '../../utils/parsePgn'
-import type { Chapter, CourseLevel, CourseStatus, Lesson, LessonType, PublishReadiness } from '../../lib/creatorApi'
+import type { Chapter, CourseLevel, CourseStatus, CourseType, LiveCourseStatus, Lesson, LessonType, PublishReadiness } from '../../lib/creatorApi'
 import LessonEditor from '../../components/LessonEditor/LessonEditor'
 import CourseTagsSelect from '../../components/CourseTagsSelect'
 import NewChapterModal, { type NewChapterSubmitData } from '../../components/creator/NewChapterModal'
@@ -25,8 +25,9 @@ import { useAuth } from '../../context/AuthContext'
 import { useAccountTiers, computeFeeFloor } from '../../lib/accountTiers'
 import { fetchCoursePriceLimits, getLimitForLevel } from '../../lib/coursePriceLimits'
 import type { CoursePriceLimit } from '../../lib/coursePriceLimits'
-import { Video, ChessKnight, Puzzle, Eye, ExternalLink } from 'lucide-react'
+import { Video, ChessKnight, Puzzle, Eye, ExternalLink, Copy, Check } from 'lucide-react'
 import { Switch } from '../../components/ui/switch'
+import LiveSessionsPanel from '../../components/creator/LiveSessionsPanel'
 
 function LessonTypeIcon({ type, size = 15 }: { type: LessonType; size?: number }) {
   const props = { size, strokeWidth: 2, 'aria-hidden': true as const }
@@ -341,6 +342,8 @@ interface PublishBarProps {
   courseId: string
   courseTitle: string
   status: CourseStatus
+  courseType?: CourseType
+  liveRoomId?: string | null
   readiness: PublishReadiness
   publishing: boolean
   onPublish: () => void
@@ -355,13 +358,33 @@ interface PublishBarProps {
   t: (k: string) => string
 }
 
-function PublishBar({ courseId, courseTitle, status, readiness, publishing, onPublish, onUnpublish, onSaveLesson, onToggleFreePreview, isFreePreview, hasRewindMode, onRewindModeChange, isChessLesson, isRewindSibling, t }: PublishBarProps) {
+function PublishBar({ courseId, courseTitle, status, courseType, liveRoomId, readiness, publishing, onPublish, onUnpublish, onSaveLesson, onToggleFreePreview, isFreePreview, hasRewindMode, onRewindModeChange, isChessLesson, isRewindSibling, t }: PublishBarProps) {
   const barStyle: React.CSSProperties = {
     padding: '8px 20px',
     background: 'var(--surface)',
     borderBottom: '1px solid var(--border)',
     flexShrink: 0,
   }
+
+  const liveRoomBtn = courseType === 'live' && (
+    <a
+      href={`/live/${liveRoomId || courseId}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      data-testid="publishbar-live-room-btn"
+      className="btn btn-sm shrink-0 flex items-center gap-1.5"
+      style={{
+        background: 'rgba(239, 68, 68, 0.12)',
+        color: '#ef4444',
+        border: '1px solid rgba(239, 68, 68, 0.35)',
+        fontWeight: 500,
+      }}
+    >
+      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+      <span>{t('creator.courseEdit.courseInfo.openLiveRoom')}</span>
+      <ExternalLink size={12} />
+    </a>
+  )
 
   const left = (
     <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -371,6 +394,21 @@ function PublishBar({ courseId, courseTitle, status, readiness, publishing, onPu
       >
         {courseTitle}
       </span>
+      {courseType === 'live' && (
+        <span
+          className="shrink-0 font-semibold"
+          style={{
+            fontSize: 10.5,
+            padding: '1px 7px',
+            background: 'rgba(239, 68, 68, 0.15)',
+            color: '#ef4444',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            borderRadius: 999,
+          }}
+        >
+          🔴 LIVE
+        </span>
+      )}
       <div className="flex items-center gap-1.5 shrink-0">
         <span style={{ width: 7, height: 7, borderRadius: '50%', background: STATUS_DOT[status] ?? 'var(--ink-4)' }} />
         <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>
@@ -430,6 +468,7 @@ function PublishBar({ courseId, courseTitle, status, readiness, publishing, onPu
     return (
       <div data-testid="publish-bar" className="flex items-center gap-3" style={barStyle}>
         {left}
+        {liveRoomBtn}
         {rewindSwitch}
         {freePreviewBtn}
         {onSaveLesson && (
@@ -447,6 +486,7 @@ function PublishBar({ courseId, courseTitle, status, readiness, publishing, onPu
   return (
     <div data-testid="publish-bar" className="flex items-center gap-3" style={barStyle}>
       {left}
+      {liveRoomBtn}
       {rewindSwitch}
       {freePreviewBtn}
       {onSaveLesson && (
@@ -578,6 +618,12 @@ export default function CourseEditPage() {
   const [coursePriceError, setCoursePriceError] = useState('')
   const [priceLimits, setPriceLimits] = useState<CoursePriceLimit[]>([])
   const [showCourseInfo, setShowCourseInfo] = useState(false)
+  const [showLiveSessions, setShowLiveSessions] = useState(false)
+  const [courseType, setCourseType] = useState<CourseType>('standard')
+  const [liveRoomId, setLiveRoomId] = useState('')
+  const [liveSchedule, setLiveSchedule] = useState('')
+  const [liveStatus, setLiveStatus] = useState<LiveCourseStatus>('scheduled')
+  const [copiedLink, setCopiedLink] = useState(false)
 
   useEffect(() => {
     setLessonRewindMode(displayedLesson?.has_rewind_mode ?? false)
@@ -643,6 +689,7 @@ export default function CourseEditPage() {
     if (lessonTransitionRef.current) clearTimeout(lessonTransitionRef.current)
     setSelectedLesson(lesson)
     setShowCourseInfo(false)
+    setShowLiveSessions(false)
     setIsLessonTransitioning(true)
     lessonTransitionRef.current = setTimeout(() => {
       setDisplayedLesson(lesson)
@@ -671,7 +718,7 @@ export default function CourseEditPage() {
     if (!courseId) return
     Promise.all([
       listChapters(supabase, courseId),
-      supabase.from('courses').select('title, description, thumbnail_url, price, level, status, tags').eq('id', courseId).single(),
+      supabase.from('courses').select('title, description, thumbnail_url, price, level, status, tags, course_type, live_room_id, live_schedule, live_status').eq('id', courseId).single(),
     ]).then(([chaptersResult, courseResult]) => {
       setChapters(chaptersResult.chapters)
       if (courseResult.data) {
@@ -684,6 +731,10 @@ export default function CourseEditPage() {
         setCoursePrice(c.price ?? 0)
         setCourseLevel((c.level ?? 'beginner') as CourseLevel)
         setCourseTags(Array.isArray(c.tags) ? c.tags as string[] : [])
+        setCourseType((c.course_type ?? 'standard') as CourseType)
+        setLiveRoomId(c.live_room_id ?? '')
+        setLiveSchedule(c.live_schedule ?? '')
+        setLiveStatus((c.live_status ?? 'scheduled') as LiveCourseStatus)
       }
       setLoading(false)
       const firstLesson = chaptersResult.chapters.flatMap(ch => ch.lessons ?? [])[0]
@@ -751,6 +802,10 @@ export default function CourseEditPage() {
       price: coursePrice,
       level: courseLevel,
       tags: courseTags,
+      course_type: courseType,
+      live_room_id: courseType === 'live' ? (liveRoomId.trim() || `live-${courseId.slice(0, 8)}`) : null,
+      live_schedule: courseType === 'live' ? (liveSchedule.trim() || null) : null,
+      live_status: courseType === 'live' ? liveStatus : 'scheduled',
     })
     setSavingCourseInfo(false)
     showToast(t('creator.courseEdit.courseInfo.saved'))
@@ -1015,15 +1070,17 @@ export default function CourseEditPage() {
         style={{ width: 320, background: 'var(--surface-2)', borderRight: '1px solid var(--border)', flexShrink: 0 }}
         className="flex flex-col"
       >
-        <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 6 }}>
           <button
             type="button"
+            data-testid="sidebar-course-info-btn"
             onClick={() => {
               if (saveLessonRef.current) {
                 try { saveLessonRef.current() } catch (err) { console.error('Auto-save error on showCourseInfo:', err) }
               }
               setSelectedLesson(null)
               setDisplayedLesson(null)
+              setShowLiveSessions(false)
               setShowCourseInfo(true)
             }}
             className="group"
@@ -1033,15 +1090,15 @@ export default function CourseEditPage() {
               padding: '8px 10px',
               borderRadius: 'var(--r-sm)',
               border: '1px solid',
-              borderColor: showCourseInfo && !selectedLesson ? 'var(--accent-border)' : 'var(--border)',
+              borderColor: showCourseInfo && !selectedLesson && !showLiveSessions ? 'var(--accent-border)' : 'var(--border)',
               cursor: 'pointer',
               fontSize: 13.5,
               fontWeight: 500,
               display: 'flex',
               alignItems: 'center',
               gap: 6,
-              background: showCourseInfo && !selectedLesson ? 'var(--accent-soft)' : 'var(--surface)',
-              color: showCourseInfo && !selectedLesson ? 'var(--accent-ink)' : 'var(--ink-2)',
+              background: showCourseInfo && !selectedLesson && !showLiveSessions ? 'var(--accent-soft)' : 'var(--surface)',
+              color: showCourseInfo && !selectedLesson && !showLiveSessions ? 'var(--accent-ink)' : 'var(--ink-2)',
             }}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0, opacity: 0.7 }}>
@@ -1049,6 +1106,40 @@ export default function CourseEditPage() {
               <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
             </svg>
             {t('creator.courseEdit.courseInfo.link')}
+          </button>
+
+          <button
+            type="button"
+            data-testid="sidebar-live-sessions-btn"
+            onClick={() => {
+              if (saveLessonRef.current) {
+                try { saveLessonRef.current() } catch (err) { console.error('Auto-save error on showLiveSessions:', err) }
+              }
+              setSelectedLesson(null)
+              setDisplayedLesson(null)
+              setShowCourseInfo(false)
+              setShowLiveSessions(true)
+            }}
+            className="group"
+            style={{
+              width: '100%',
+              textAlign: 'left',
+              padding: '8px 10px',
+              borderRadius: 'var(--r-sm)',
+              border: '1px solid',
+              borderColor: showLiveSessions ? 'var(--accent-border)' : 'var(--border)',
+              cursor: 'pointer',
+              fontSize: 13.5,
+              fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              background: showLiveSessions ? 'var(--accent-soft)' : 'var(--surface)',
+              color: showLiveSessions ? 'var(--accent-ink)' : 'var(--ink-2)',
+            }}
+          >
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+            <span>Lịch học trực tuyến (Live)</span>
           </button>
         </div>
 
@@ -1142,6 +1233,8 @@ export default function CourseEditPage() {
             courseId={courseId}
             courseTitle={courseTitle}
             status={courseStatus}
+            courseType={courseType}
+            liveRoomId={liveRoomId}
             readiness={readiness}
             publishing={publishing}
             onPublish={handlePublish}
@@ -1156,7 +1249,13 @@ export default function CourseEditPage() {
             t={t}
           />
         )}
-        {isLessonTransitioning ? (
+        {showLiveSessions ? (
+          <LiveSessionsPanel
+            courseId={courseId!}
+            courseType={courseType}
+            chapters={chapters}
+          />
+        ) : isLessonTransitioning ? (
           <LessonEditorSkeleton lessonType={selectedLesson?.type} />
         ) : displayedLesson ? (
           <div
@@ -1358,6 +1457,101 @@ export default function CourseEditPage() {
                   value={courseTags}
                   onChange={setCourseTags}
                 />
+              </div>
+            )}
+
+            {/* Live Classroom Settings */}
+            {courseType === 'live' && (
+              <div
+                data-testid="live-settings-card"
+                className="p-5 rounded-(--r-md) flex flex-col gap-4"
+                style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+                    <span className="font-semibold text-sm text-(--ink-1)">
+                      {t('creator.courseEdit.courseInfo.liveSettingsHeading')}
+                    </span>
+                  </div>
+                  <a
+                    href={`/live/${liveRoomId || courseId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-sm btn-secondary flex items-center gap-1.5"
+                    style={{ color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.35)' }}
+                  >
+                    <span>{t('creator.courseEdit.courseInfo.openLiveRoom')}</span>
+                    <ExternalLink size={13} />
+                  </a>
+                </div>
+
+                {/* Live Status Control */}
+                <div>
+                  <label className="label">{t('creator.courseEdit.courseInfo.liveStatusLabel')}</label>
+                  <div className="flex gap-2">
+                    {(['scheduled', 'live', 'ended'] as LiveCourseStatus[]).map(st => (
+                      <button
+                        key={st}
+                        type="button"
+                        data-testid={`live-status-btn-${st}`}
+                        onClick={() => setLiveStatus(st)}
+                        className="btn btn-sm"
+                        style={{
+                          background: liveStatus === st
+                            ? (st === 'live' ? 'var(--danger)' : 'var(--ink-1)')
+                            : 'var(--surface)',
+                          color: liveStatus === st ? '#fff' : 'var(--ink-2)',
+                          borderColor: liveStatus === st
+                            ? (st === 'live' ? 'var(--danger)' : 'var(--ink-1)')
+                            : 'var(--border)',
+                        }}
+                      >
+                        {st === 'live' && <span className="mr-1.5">🔴</span>}
+                        {t(`creator.courseEdit.courseInfo.status${st.charAt(0).toUpperCase() + st.slice(1)}`)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Classroom Link */}
+                <div>
+                  <label className="label">{t('creator.courseEdit.courseInfo.copyLiveLink')}</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      className="input flex-1 font-mono text-sm opacity-80 cursor-default select-all"
+                      value={`${window.location.origin}/live/${liveRoomId || courseId}`}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm flex items-center gap-1.5"
+                      onClick={() => {
+                        const url = `${window.location.origin}/live/${liveRoomId || courseId}`
+                        navigator.clipboard.writeText(url)
+                        setCopiedLink(true)
+                        setTimeout(() => setCopiedLink(false), 2000)
+                      }}
+                    >
+                      {copiedLink ? <Check size={14} className="text-(--success)" /> : <Copy size={14} />}
+                      <span>{copiedLink ? t('creator.courseEdit.courseInfo.linkCopied') : t('creator.courseEdit.courseInfo.copyLiveLink')}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Schedule */}
+                <div>
+                  <label className="label" htmlFor="ci-live-schedule">{t('creator.courseEdit.courseInfo.liveScheduleLabel')}</label>
+                  <input
+                    id="ci-live-schedule"
+                    type="text"
+                    className="input"
+                    placeholder="Ví dụ: Thứ 3 & Thứ 5 hàng tuần (19:30 - 21:00)"
+                    value={liveSchedule}
+                    onChange={e => setLiveSchedule(e.target.value)}
+                  />
+                </div>
               </div>
             )}
 

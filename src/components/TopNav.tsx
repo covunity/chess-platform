@@ -9,6 +9,7 @@ import { listPublishedCourses } from '../lib/coursesApi'
 import type { PublicCourse } from '../lib/coursesApi'
 import { formatPrice } from '../lib/utils'
 import ThemeToggle from './ThemeToggle'
+import LanguageToggle from './LanguageToggle'
 import UserAvatarMenu from './UserAvatarMenu'
 
 export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } = {}) {
@@ -351,6 +352,7 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
       <div className="flex items-center" style={{ marginLeft: 'auto', gap: 8 }}>
         {/* Desktop Controls */}
         <div className="hidden md:flex items-center" style={{ gap: 8 }}>
+          <LanguageToggle />
           <ThemeToggle />
           {user ? (
             <UserAvatarMenu placement="bottom-right" />
@@ -449,7 +451,7 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
             </div>
           )}
 
-          {/* Theme Toggle Bar inside Mobile Drawer */}
+          {/* Theme and Language toggle row */}
           <div
             style={{
               display: 'flex',
@@ -462,9 +464,12 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
             }}
           >
             <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--ink-1)' }}>
-              Giao diện (Theme)
+              {t('nav.themeOrLang', 'Giao diện & Ngôn ngữ')}
             </span>
-            <ThemeToggle />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <LanguageToggle />
+              <ThemeToggle />
+            </div>
           </div>
 
           {/* Nav links */}

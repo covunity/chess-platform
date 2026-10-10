@@ -1,10 +1,12 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-export type CourseStatus  = 'draft' | 'published'
-export type CourseLevel   = 'beginner' | 'intermediate' | 'advanced' | 'professional'
-export type LessonType    = 'video' | 'chess' | 'puzzle'
-export type VideoProvider = 'supabase' | 'cloudflare' | 'bunny'
-export type VideoStatus   = 'idle' | 'uploading' | 'processing' | 'ready' | 'error'
+export type CourseStatus     = 'draft' | 'published'
+export type CourseLevel      = 'beginner' | 'intermediate' | 'advanced' | 'professional'
+export type CourseType       = 'standard' | 'live'
+export type LiveCourseStatus = 'scheduled' | 'live' | 'ended'
+export type LessonType       = 'video' | 'chess' | 'puzzle'
+export type VideoProvider    = 'supabase' | 'cloudflare' | 'bunny'
+export type VideoStatus      = 'idle' | 'uploading' | 'processing' | 'ready' | 'error'
 
 export interface Course {
   id: string
@@ -17,6 +19,10 @@ export interface Course {
   language: 'vi' | 'en'
   tags: string[]
   status: CourseStatus
+  course_type?: CourseType
+  live_room_id?: string | null
+  live_schedule?: string | null
+  live_status?: LiveCourseStatus
   created_at: string
   updated_at: string
 }
@@ -72,6 +78,10 @@ export interface CreateCourseInput {
   level: CourseLevel
   language: 'vi' | 'en'
   tags: string[]
+  course_type?: CourseType
+  live_room_id?: string
+  live_schedule?: string
+  live_status?: LiveCourseStatus
 }
 
 export interface CreateChapterInput {
@@ -670,4 +680,19 @@ export async function fetchCoursesWithStats(
 
     return { courseId, students: distinctStudents, revenue, rating }
   })
+}
+
+/**
+ * Generates a clean, user-friendly live classroom room ID.
+ * Format: live-xxxx-yyyy (e.g. live-7b2q-94kp)
+ */
+export function generateLiveRoomId(): string {
+  const chars = 'abcdefghjkmnpqrstuvwxyz23456789'
+  let part1 = ''
+  let part2 = ''
+  for (let i = 0; i < 4; i++) {
+    part1 += chars.charAt(Math.floor(Math.random() * chars.length))
+    part2 += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return `live-${part1}-${part2}`
 }

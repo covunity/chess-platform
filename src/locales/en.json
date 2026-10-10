@@ -11,7 +11,16 @@
     "dashboard": "Dashboard",
     "creatorStudio": "Creator Studio",
     "admin": "Admin",
-    "greeting": "Hi {{name}}!"
+    "greeting": "Hi {{name}}!",
+    "themeOrLang": "Theme & Language",
+    "browse": "Browse",
+    "practice": "Practice",
+    "library": "My Learning",
+    "notifications": "Notifications",
+    "profile": "Profile",
+    "creatorPayoutSettings": "Payout Settings",
+    "becomeCreator": "Become a creator",
+    "registerBusiness": "Register business"
   },
   "footer": {
     "becomeCreator": "Become a creator",
@@ -47,12 +56,124 @@
     "errors": {
       "motivation": "Please describe your motivation (at least 20 characters).",
       "experience": "Please describe your experience (at least 20 characters).",
-      "generic": "Could not submit the application. Please try again."
+      "generic": "Could not submit the application. Please try again.",
+      "businessName": "Please enter business name.",
+      "businessRegistrationNo": "Please enter business registration number.",
+      "federationOrTeam": "Please enter federation or club.",
+      "centerAddress": "Please enter training center address.",
+      "centerSize": "Please enter a valid size (students > 0)."
+    },
+    "alreadyEnterpriseHeading": "You are already an enterprise creator.",
+    "alreadyEnterpriseBody": "Your account has been upgraded to the enterprise tier. Continue creating content in Creator Studio.",
+    "upgradeBanner": "Upgrade your creator account to enterprise for reduced platform fees and more chapters.",
+    "upgradeHeading": "Upgrade to Enterprise",
+    "upgradeIntro": "Choose the plan that fits you. Once approved, your platform fee and chapter limits will be updated immediately.",
+    "upgradeSubmit": "Submit upgrade request",
+    "tierSelector": {
+      "heading": "Select account tier",
+      "feeLabel": "Platform fee: {{pct}}%",
+      "maxChaptersLabel": "Max {{max}} chapters/course",
+      "maxLessonsLabel": "Max {{max}} lessons/course"
+    },
+    "fields": {
+      "businessName": "Business name",
+      "businessRegistrationNo": "Business registration number",
+      "federationOrTeam": "Federation / Club",
+      "centerAddress": "Training center address",
+      "centerSize": "Scale (number of students)"
+    },
+    "combined": {
+      "authSection": "Account Information",
+      "applicationSection": "Creator Application (optional)",
+      "optionalHint": "Optional — you can complete this after confirming your email.",
+      "fieldNameLabel": "Display name",
+      "fieldEmailLabel": "Email",
+      "fieldPasswordLabel": "Password",
+      "fieldPasswordHint": "At least 6 characters.",
+      "submitBtn": "Create account & submit",
+      "orLogin": "Already have an account?",
+      "loginLink": "Sign in",
+      "errors": {
+        "name": "Please enter display name.",
+        "email": "Please enter email.",
+        "password": "Password must be at least 6 characters."
+      }
+    },
+    "payoutInfo": {
+      "section": "Payout Information",
+      "sectionHint": "Creator earnings are paid manually to this bank account. All fields are required.",
+      "bankLabel": "Bank",
+      "bankPlaceholder": "Select bank…",
+      "accountNumberLabel": "Account number",
+      "accountNumberHint": "Digits only, 6–19 characters.",
+      "accountHolderLabel": "Account holder name",
+      "accountHolderHint": "CAPITAL LETTERS, unaccented, matching bank records.",
+      "bankBranchLabel": "Bank branch",
+      "errors": {
+        "bankCode": "Please select a bank.",
+        "accountNumber": "Account number must be 6–19 digits.",
+        "accountHolder": "Please enter account holder name.",
+        "bankBranch": "Please enter bank branch."
+      }
     }
   },
   "home": {
     "headline": "Learn chess with grandmasters",
-    "subheadline": "In-depth chess courses for all skill levels"
+    "subheadline": "In-depth chess courses for all skill levels",
+    "eyebrow": "FOR THE AMBITIOUS",
+    "heroHeadline1": "Learn chess like",
+    "heroHeadline2": "a grandmaster's apprentice.",
+    "heroSubparagraph": "In-depth chess courses from top grandmasters. Learn at your own pace with an interactive board right in your browser.",
+    "heroCta1": "Explore all courses",
+    "heroCta2": "▶ Free preview",
+    "heroTrust": "✓ 7-day refund guarantee · ✓ Free preview for every course · ✓ Vietnamese & English",
+    "heroAnnotation": "\"This is how I teach my students to open the game.\"",
+    "heroAnnotationAuthor": "GM Anh Le",
+    "heroBookmark": "23 bookmarks · ready to review",
+    "creatorCta": {
+      "eyebrow": "FOR CREATORS",
+      "heading": "Share your chess knowledge.",
+      "body": "Join as an individual creator to teach your way, or register a business account to unlock more features.",
+      "individualCta": "Become an individual creator",
+      "businessCta": "Register business account",
+      "individualHint": "Start teaching today",
+      "businessHint": "For organizations and teams"
+    },
+    "browseAll": "All Courses",
+    "coursesCount": "{{count}} courses · sorted by newest",
+    "filtersBtn": "Filters",
+    "sortLabel": "Sort by",
+    "sortNewest": "Newest",
+    "sortPopular": "Most Popular",
+    "sortRating": "Highest Rated",
+    "levelAll": "All levels",
+    "levelBeginner": "Beginner",
+    "levelIntermediate": "Intermediate",
+    "levelAdvanced": "Advanced",
+    "levelProfessional": "Professional",
+    "tagOpenings": "Openings",
+    "tagTactics": "Tactics",
+    "tagEndgame": "Endgame",
+    "tagStrategy": "Strategy",
+    "emptyHeading": "No matching courses found.",
+    "emptySubtext": "Try removing a few filters.",
+    "emptyCtaClear": "Clear filters",
+    "free": "Free",
+    "badgeFree": "Free",
+    "badgeNew": "New",
+    "badgeBestseller": "Bestseller",
+    "badgeLive": "LIVE",
+    "filterAllFormats": "All formats",
+    "filterStandard": "Self-paced",
+    "filterLive": "Live Online",
+    "lessons": "{{count}} lessons",
+    "searchPlaceholder": "Search openings, courses, instructors…",
+    "searchOverlayTitle": "Search Courses",
+    "searchNoResults": "No results found.",
+    "levelBadgeBeginner": "Beginner",
+    "levelBadgeIntermediate": "Intermediate",
+    "levelBadgeAdvanced": "Advanced",
+    "levelBadgeProfessional": "Professional"
   },
   "terms": {
     "title": "Terms of Service"
@@ -73,7 +194,13 @@
       "vouchers": "Vouchers",
       "users": "Users",
       "creatorApplications": "Creator applications",
-      "reports": "Reports"
+      "reports": "Reports",
+      "campaigns": "Campaigns",
+      "creatorFees": "Creator Overrides",
+      "tiers": "Account Tiers",
+      "payouts": "Creator Payouts",
+      "heroConfig": "Hero Configuration",
+      "coursePriceLimits": "Price Limits"
     },
     "analytics": {
       "pageTitle": "Analytics",
@@ -107,7 +234,19 @@
         "kpiOrders": "Orders",
         "kpiPlatformFee": "Platform fee",
         "kpiCreatorPayout": "Creator payout",
-        "deltaNone": "—"
+        "deltaNone": "—",
+        "trendTitle": "Revenue Trend",
+        "trendAxisRevenue": "Revenue (VND)",
+        "trendAxisDate": "Date",
+        "topCoursesTitle": "Top 10 Courses by Revenue",
+        "topCreatorsTitle": "Top 10 Creators by Revenue",
+        "colRank": "#",
+        "colCourse": "Course",
+        "colCreator": "Creator",
+        "colRevenue": "Revenue",
+        "colPayout": "Creator Payout",
+        "emptyRange": "No data for this period",
+        "chartLoading": "Loading chart…"
       },
       "content": {
         "sectionTitle": "Content",
@@ -121,7 +260,8 @@
         "level": {
           "beginner": "Beginner",
           "intermediate": "Intermediate",
-          "advanced": "Advanced"
+          "advanced": "Advanced",
+          "professional": "Professional"
         },
         "language": {
           "vi": "Vietnamese",
@@ -146,7 +286,97 @@
       }
     },
     "vouchers": {
-      "pageTitle": "Vouchers"
+      "pageTitle": "Vouchers",
+      "intro": "Create and manage voucher codes manually. Each voucher has a unique code, total quota, and per-user limit.",
+      "createBtn": "Create new voucher",
+      "searchPlaceholder": "Search by voucher code…",
+      "filter": {
+        "all": "All statuses",
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "colCode": "Code",
+      "colDiscount": "Discount",
+      "colQuota": "Used / Quota",
+      "colPerUserLimit": "Max/user",
+      "colDates": "Dates",
+      "colStatus": "Status",
+      "colActions": "",
+      "quotaUnlimited": "Unlimited",
+      "perUserLimit": "{{count}} times",
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "edit": "Edit",
+      "deactivate": "Disable",
+      "delete": "Delete",
+      "deleteLockedTooltip": "Voucher has already been used and cannot be deleted. Disable it instead.",
+      "lockedFieldTooltip": "Voucher has already been used; this field cannot be edited.",
+      "empty": "No vouchers yet.",
+      "loadError": "Could not load vouchers.",
+      "actionDeactivateSuccess": "Voucher disabled",
+      "actionDeactivateError": "Could not disable voucher. Please try again.",
+      "actionDeleteSuccess": "Voucher deleted",
+      "actionDeleteError": "Could not delete voucher. Please try again.",
+      "confirmDelete": "Delete this voucher? This cannot be undone.",
+      "drawer": {
+        "title": "Voucher usage log",
+        "close": "Close",
+        "empty": "This voucher has not been used yet.",
+        "loadError": "Could not load usage records.",
+        "colUser": "User",
+        "colOrder": "Order",
+        "colDiscount": "Discount",
+        "colUsedAt": "Date"
+      },
+      "form": {
+        "createTitle": "Create new voucher",
+        "editTitle": "Edit voucher",
+        "codeLabel": "Voucher code",
+        "codePlaceholder": "e.g., WELCOME10",
+        "codeHint": "6–20 characters, A–Z and 0–9 (uppercase).",
+        "discountTypeLabel": "Discount type",
+        "discountTypePercentage": "Percentage",
+        "discountTypeFixedAmount": "Fixed amount",
+        "discountValueLabel": "Value",
+        "discountValuePercentHint": "Enter a number from 0 to 100.",
+        "discountValueFixedHint": "Enter amount (VND).",
+        "maxDiscountLabel": "Max discount (optional)",
+        "maxDiscountHint": "Applies to percentage only. Leave blank for no limit.",
+        "totalQuotaLabel": "Total quota",
+        "totalQuotaHint": "Blank = unlimited.",
+        "perUserLimitLabel": "Max per user",
+        "perUserLimitHint": "Maximum number of times one user can use this voucher.",
+        "scopeLabel": "Applicable courses",
+        "scopeAll": "All courses",
+        "scopeSome": "Selected courses only",
+        "campaignLabel": "Link to campaign (optional)",
+        "campaignNone": "No linked campaign",
+        "startsAtLabel": "Starts at",
+        "endsAtLabel": "Ends at",
+        "save": "Save voucher",
+        "saving": "Saving…",
+        "cancel": "Cancel",
+        "errors": {
+          "codeRequired": "Please enter voucher code.",
+          "codeInvalidFormat": "Voucher code must be 6–20 characters (A–Z, 0–9).",
+          "codeAlreadyExists": "This voucher code already exists. Please choose another.",
+          "discountValueRequired": "Please enter discount value.",
+          "discountValueNumeric": "Value must be a non-negative integer.",
+          "discountValuePercentRange": "Percentage must be between 0 and 100.",
+          "maxDiscountNumeric": "Max discount must be a positive integer.",
+          "totalQuotaNumeric": "Total quota must be a positive integer or blank.",
+          "perUserLimitNumeric": "Max per user must be an integer ≥ 1.",
+          "startsAtRequired": "Please select a start date.",
+          "endsAtRequired": "Please select an end date.",
+          "endsAfterStarts": "End date must be after start date.",
+          "scopeSomeEmpty": "Please select at least 1 course or switch to All.",
+          "courseNotFound": "One of the selected courses no longer exists.",
+          "lockedAfterUse": "Voucher has already been used; this field cannot be edited.",
+          "submitFailed": "Could not save voucher. Please try again."
+        }
+      }
     },
     "creatorApplications": {
       "pageTitle": "Creator applications",
@@ -249,6 +479,20 @@
         "cancel": "Close",
         "confirm": "Cancel order",
         "error": "Couldn't cancel order. Please try again."
+      },
+      "manualConfirm": {
+        "action": "Manual confirm",
+        "dialogTitle": "Confirm manual payment",
+        "dialogBody": "You are manually confirming order",
+        "reasonLabel": "Reason for manual confirmation",
+        "reasonPlaceholder": "PayOS webhook failed but bank statement confirms payment received",
+        "reasonRowLabel": "Manual confirm reason",
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "toastSuccess": "Order manually confirmed",
+        "errors": {
+          "reasonRequired": "Please enter a reason"
+        }
       }
     },
     "users": {
@@ -269,13 +513,316 @@
       "changeRoleBody": "Change {{name}} from {{from}} to {{to}}?",
       "changeRoleWarning": "This will update the user's access immediately.",
       "cancel": "Cancel",
-      "confirm": "Confirm"
+      "confirm": "Confirm",
+      "changeTier": "Change tier",
+      "changeTierTitle": "Change account tier?",
+      "changeTierBody": "Change tier for {{name}}",
+      "changeTierSelectLabel": "Select new tier",
+      "changeTierFeeNote": "Platform fee: {{pct}}% · Max {{max}} chapters/course",
+      "changeTierError": "Could not change tier. Please try again."
     },
     "forbidden": {
       "title": "403 — Access Denied",
       "body": "You don't have permission to access this page."
     },
-    "comingSoon": "Coming soon"
+    "comingSoon": "Coming soon",
+    "campaigns": {
+      "pageTitle": "Promotional Campaigns",
+      "intro": "Create and manage automated discount campaigns applied to all or selected courses. Only 1 campaign can be active at a time.",
+      "createBtn": "Create new campaign",
+      "searchPlaceholder": "Search by campaign name…",
+      "filter": {
+        "all": "All statuses",
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "colName": "Name",
+      "colDiscount": "Discount",
+      "colScope": "Scope",
+      "colDates": "Dates",
+      "colStatus": "Status",
+      "colOrders": "Orders applied",
+      "colActions": "",
+      "scopeAll": "All courses",
+      "scopeNCourses": "{{count}} courses",
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "edit": "Edit",
+      "deactivate": "Stop campaign",
+      "confirmDeactivate": "Once stopped, a campaign cannot be reactivated. To run it again, create a new campaign.",
+      "deactivateDialogTitle": "Stop campaign \"{{name}}\"?",
+      "deactivateDialogCancel": "Cancel",
+      "deactivateDialogConfirm": "Stop campaign",
+      "deactivateDialogPending": "Stopping…",
+      "empty": "No campaigns found.",
+      "loadError": "Could not load campaigns.",
+      "actionDeactivateSuccess": "Campaign stopped",
+      "actionDeactivateError": "Could not stop campaign. Please try again.",
+      "form": {
+        "createTitle": "Create new campaign",
+        "editTitle": "Edit campaign",
+        "nameLabel": "Campaign name",
+        "namePlaceholder": "e.g., Spring Sale 2026",
+        "descriptionLabel": "Description (optional)",
+        "descriptionPlaceholder": "Brief notes for internal management.",
+        "discountTypeLabel": "Discount type",
+        "discountTypePercentage": "Percentage",
+        "discountTypeFixedAmount": "Fixed amount",
+        "discountValueLabel": "Value",
+        "discountValuePercentHint": "Enter a number from 0 to 100.",
+        "discountValueFixedHint": "Enter amount (VND).",
+        "maxDiscountLabel": "Max discount (optional)",
+        "maxDiscountHint": "Applies to percentage only. Leave blank for no limit.",
+        "scopeLabel": "Applicable courses",
+        "scopeAll": "All courses",
+        "scopeSome": "Selected courses only",
+        "startsAtLabel": "Starts at",
+        "endsAtLabel": "Ends at",
+        "save": "Save campaign",
+        "saving": "Saving…",
+        "cancel": "Cancel",
+        "errors": {
+          "nameRequired": "Please enter campaign name.",
+          "discountValueRequired": "Please enter discount value.",
+          "discountValueNumeric": "Value must be a non-negative integer.",
+          "discountValuePercentRange": "Percentage must be between 0 and 100.",
+          "maxDiscountNumeric": "Max discount must be a positive integer.",
+          "startsAtRequired": "Please select a start date.",
+          "endsAtRequired": "Please select an end date.",
+          "endsAfterStarts": "End date must be after start date.",
+          "scopeSomeEmpty": "Please select at least 1 course or switch to All.",
+          "overlap": "Another campaign is active during this period. End it first or choose different dates.",
+          "submitFailed": "Could not save campaign. Please try again."
+        }
+      },
+      "courseMultiSelect": {
+        "searchPlaceholder": "Search courses by name…",
+        "selectedCount": "Selected: {{count}}",
+        "empty": "No courses found.",
+        "truncated": "… and {{count}} others"
+      }
+    },
+    "payouts": {
+      "pageTitle": "Creator Payouts",
+      "pendingHeading": "Pending Payouts",
+      "exportCsv": "Export CSV",
+      "exporting": "Exporting…",
+      "empty": "No payouts pending.",
+      "colCreator": "Creator",
+      "colBank": "Bank",
+      "colAccount": "Account Number",
+      "colAmount": "Amount",
+      "colOrders": "Orders",
+      "colActions": "",
+      "markComplete": "Mark as Complete",
+      "missingPayoutInfo": {
+        "heading": "Missing Payout Information",
+        "body": "The creators below have pending balances but haven't provided bank details. Please contact them.",
+        "colCreator": "Creator",
+        "colPendingBalance": "Pending Balance"
+      },
+      "markCompleteDialog": {
+        "title": "Mark payout complete",
+        "body": "Enter the bank transaction reference number for",
+        "referenceLabel": "Bank reference code",
+        "referencePlaceholder": "e.g., FT26139ABC123",
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "saving": "Saving…",
+        "error": "Could not mark complete. Please try again."
+      },
+      "exportError": "Could not export CSV. Please try again.",
+      "actionSuccess": "Payout updated",
+      "loadError": "Could not load payouts."
+    },
+    "creatorFees": {
+      "pageTitle": "Creator Overrides",
+      "intro": "Manage platform fee and chapter/lesson caps per creator. By default taken from tier; override to customize for specific creators.",
+      "searchPlaceholder": "Search by name or email…",
+      "filterAll": "All creators",
+      "filterOverridesOnly": "Only overridden creators",
+      "colCreator": "Creator",
+      "colTier": "Tier",
+      "colTierFee": "Tier Fee",
+      "colOverride": "Override",
+      "colEffectiveFee": "Effective Fee",
+      "colFee": "Platform Fee",
+      "colLessons": "Lessons / Course",
+      "colActions": "",
+      "overrideBadge": "Override",
+      "noOverride": "—",
+      "setOverride": "Set override",
+      "clearOverride": "Clear override",
+      "setLessonOverride": "Set override",
+      "clearLessonOverride": "Clear override",
+      "tierBaseFee": "Tier: {{pct}}%",
+      "tierBaseLessons": "Tier: {{max}}",
+      "empty": "No matching creators.",
+      "loadError": "Could not load creator fees.",
+      "modal": {
+        "setHeading": "Set fee override for {{name}}",
+        "clearHeading": "Clear fee override for {{name}}",
+        "setLessonHeading": "Set lesson cap override for {{name}}",
+        "clearLessonHeading": "Clear lesson cap override for {{name}}",
+        "tierFeeNote": "Current tier fee: {{pct}}%",
+        "tierLessonNote": "Current tier lesson cap: {{max}}",
+        "inputLabel": "Platform fee (%)",
+        "inputLessonLabel": "Max lessons / course",
+        "inputHint": "0 to 100, up to 2 decimals (e.g. 12.5).",
+        "inputLessonHint": "Integer from 1 to 10,000.",
+        "clearConfirm": "After clearing, creator will revert to tier fee ({{pct}}%). Existing orders remain unchanged.",
+        "clearLessonConfirm": "After clearing, creator will revert to tier limit ({{max}} lessons/course).",
+        "save": "Save override",
+        "confirmClear": "Clear override",
+        "cancel": "Cancel",
+        "saving": "Saving…"
+      },
+      "errors": {
+        "required": "Please enter a value.",
+        "numeric": "Must be a number (e.g. 12.5).",
+        "range": "Must be between 0 and 100.",
+        "lessonNumeric": "Must be a positive integer.",
+        "lessonRange": "Must be between 1 and 10,000.",
+        "saveFailed": "Could not save override. Please try again.",
+        "clearFailed": "Could not clear override. Please try again."
+      }
+    },
+    "tiers": {
+      "pageTitle": "Account Tier Settings",
+      "intro": "Adjust platform fees and chapter / lesson caps for each account tier. Changes apply to new orders and lessons — existing records are unaffected.",
+      "colTier": "Tier",
+      "colFee": "Platform fee",
+      "colMaxChapters": "Max chapters/course",
+      "colMaxLessons": "Max lessons/course",
+      "colRequiresApproval": "Requires approval",
+      "yes": "Yes",
+      "no": "No",
+      "edit": "Edit",
+      "empty": "No tiers found.",
+      "loadError": "Could not load tiers.",
+      "editDialogTitle": "Edit {{tier}}",
+      "editDialogHint": "Update platform fee, max chapters and lessons. Existing data will not be changed.",
+      "feeLabel": "Platform fee (%)",
+      "capLabel": "Max chapters / course",
+      "lessonLabel": "Max lessons / course",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "errors": {
+        "feeRequired": "Please enter fee %.",
+        "feeNumeric": "Fee % must be a number.",
+        "feeRange": "Fee % must be between 0 and 100.",
+        "capRequired": "Please enter max chapters.",
+        "capNumeric": "Chapters must be an integer.",
+        "capRange": "Chapters must be between 1 and 1000.",
+        "lessonRequired": "Please enter max lessons.",
+        "lessonNumeric": "Lessons must be an integer.",
+        "lessonRange": "Lessons must be between 1 and 10000.",
+        "saveFailed": "Could not save. Please try again."
+      }
+    },
+    "applications": {
+      "pageTitle": "Account Applications",
+      "tab": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "superseded": "Superseded"
+      },
+      "empty": "No applications in this state.",
+      "selectHint": "Select an application to view details.",
+      "filterAllTiers": "All tiers",
+      "colTier": "Requested tier",
+      "fieldTier": "Requested tier",
+      "fieldMotivation": "Motivation",
+      "fieldExperience": "Experience",
+      "fieldSample": "Sample link",
+      "fieldRejectionReason": "Rejection reason",
+      "approve": "Approve & upgrade",
+      "reject": "Reject",
+      "rejectReasonLabel": "Rejection reason",
+      "rejectReasonError": "Please enter rejection reason (min 5 chars).",
+      "confirmReject": "Reject application",
+      "cancel": "Cancel",
+      "approveError": "Could not approve application. Please try again.",
+      "rejectError": "Could not reject application. Please try again.",
+      "metadata": {
+        "businessName": "Business name",
+        "businessRegistrationNo": "Business registration number",
+        "federationOrTeam": "Federation / Team",
+        "centerAddress": "Center address",
+        "centerSize": "Scale"
+      },
+      "payoutInfo": {
+        "section": "Payout Information",
+        "bank": "Bank",
+        "accountNumber": "Account number",
+        "accountHolder": "Account holder",
+        "bankBranch": "Branch",
+        "duplicateWarningHeading": "⚠ This account matches {{count}} other user(s)",
+        "duplicateWarningBody": "Duplicate account numbers are not blocked; admin discretion advised:"
+      }
+    },
+    "heroConfig": {
+      "pageTitle": "Homepage Hero Content",
+      "intro": "Customize hero section content on the homepage. Leave fields blank to use defaults.",
+      "sectionText": "Text Content",
+      "sectionCards": "Floating Cards",
+      "cardsHint": "Floating cards only display when no custom right image is set.",
+      "sectionImage": "Right-side Image",
+      "imageHint": "Enter image URL to replace decorative board. Leave blank to show default board with floating cards.",
+      "eyebrowLabel": "Eyebrow text",
+      "headline1Label": "Headline line 1",
+      "headline2Label": "Headline line 2",
+      "headline2Hint": "Displays in italics with accent color.",
+      "subparagraphLabel": "Description",
+      "cta1Label": "CTA button",
+      "trustLabel": "Trust text",
+      "annotationAuthorLabel": "Annotation card author",
+      "annotationLabel": "Annotation content",
+      "bookmarkLabel": "Bookmark card text",
+      "imageUrlLabel": "Image URL",
+      "imagePreview": "Preview:",
+      "saveBtnLabel": "Save changes",
+      "savingLabel": "Saving…",
+      "savedMsg": "Changes saved successfully!",
+      "errorMsg": "Save failed. Please try again.",
+      "loadError": "Could not load configuration. Please reload the page."
+    },
+    "coursePriceLimits": {
+      "pageTitle": "Course Price Limits",
+      "intro": "Configure price limits by course skill level. Free courses (price = 0) are always allowed.",
+      "colLevel": "Level",
+      "colMin": "Min price",
+      "colMax": "Max price",
+      "edit": "Edit",
+      "empty": "No data.",
+      "loadError": "Could not load price limits. Please reload.",
+      "editDialogTitle": "Edit price limits — {{level}}",
+      "editDialogHint": "Enter price in VND. Free courses (0 VND) are always permitted.",
+      "minLabel": "Min price (₫)",
+      "maxLabel": "Max price (₫)",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving…",
+      "levelName": {
+        "beginner": "Beginner",
+        "intermediate": "Intermediate",
+        "advanced": "Advanced",
+        "professional": "Professional"
+      },
+      "errors": {
+        "minRequired": "Min price is required.",
+        "minNumeric": "Min price must be an integer.",
+        "minNegative": "Min price cannot be negative.",
+        "maxRequired": "Max price is required.",
+        "maxNumeric": "Max price must be an integer.",
+        "maxLteMin": "Max price must be greater than min price.",
+        "saveFailed": "Save failed. Please try again."
+      }
+    }
   },
   "creator": {
     "forbidden": {
@@ -301,6 +848,10 @@
         "filterAll": "All",
         "filterPublished": "Published",
         "filterDraft": "Draft",
+        "filterLive": "Live Online",
+        "badgeLive": "LIVE",
+        "badgeStandard": "Self-paced",
+        "hostLive": "Host Live",
         "export": "Export",
         "colCourse": "Course",
         "colStatus": "Status",
@@ -318,11 +869,33 @@
         "draft": "Draft"
       },
       "duplicateToast": "Course duplicated",
-      "duplicateError": "Could not duplicate course"
+      "duplicateError": "Could not duplicate course",
+      "builderHeading": "Course builder",
+      "builderContinue": "Continue editing",
+      "builderEditing": "editing \"{{title}}\"",
+      "builderLesson": "Lesson {{n}}",
+      "builderNoLessons": "Add lessons to begin editing.",
+      "builderSaveDraft": "Save draft",
+      "builderSubmitReview": "Publish",
+      "emptyHeading": "Create your first course.",
+      "emptyBody": "Walk learners through openings, tactics, and endgames with annotated PGN and video. Submit for review when ready to publish.",
+      "emptyCtaLabel": "+ Create new course"
     },
     "newCourse": {
       "pageTitle": "New course",
       "heading": "Create a new course",
+      "courseType": "Course format",
+      "typeStandard": "Video / Self-paced Course",
+      "typeStandardDesc": "Structured chapters with video lessons, annotated PGNs, and interactive puzzles.",
+      "typeLive": "Live Online Course (Live Classroom)",
+      "typeLiveDesc": "Teach live via interactive LiveKit chess classroom with voice, live board sync, and breakout games.",
+      "labelLiveSchedule": "Live class schedule",
+      "liveSchedulePlaceholder": "e.g. Every Tue & Thu (19:30 - 21:00)",
+      "labelLiveRoomId": "Live Room ID",
+      "btnGenerateRoomId": "New code",
+      "regenerateRoomId": "Generate a new random room ID",
+      "liveRoomIdHelper": "Automatically generated for you. You can keep it or customize it.",
+      "liveRoomPreviewLabel": "Live classroom link",
       "labelTitle": "Title",
       "labelDescription": "Description",
       "descriptionHelper": "Markdown supported",
@@ -350,7 +923,10 @@
         "youReceive": "You receive:",
         "payoutAmount": "{{amount}}₫",
         "free": "Free — no platform fee"
-      }
+      },
+      "levelProfessional": "Professional",
+      "priceRangeHint": "Price range for this level: ₫{{min}} – ₫{{max}}",
+      "priceRangeError": "Price must be between ₫{{min}} and ₫{{max}} for level {{level}} (or 0 for free)."
     },
     "tagsSelect": {
       "popularPlaceholder": "Select category",
@@ -390,7 +966,25 @@
         "labelPrice": "Price (₫)",
         "labelLevel": "Level",
         "save": "Save info",
-        "saved": "Course info saved!"
+        "saved": "Course info saved!",
+        "levelBeginner": "Beginner",
+        "levelIntermediate": "Intermediate",
+        "levelAdvanced": "Advanced",
+        "levelProfessional": "Professional",
+        "priceRangeHint": "Price range for this level: ₫{{min}} – ₫{{max}}",
+        "priceRangeError": "Price must be between ₫{{min}} and ₫{{max}} for level {{level}} (or 0 for free).",
+        "labelTags": "Tags",
+        "liveSettingsHeading": "Live Classroom Settings",
+        "liveStatusLabel": "Classroom status",
+        "statusScheduled": "Scheduled (Not started)",
+        "statusLive": "Live now (In session)",
+        "statusEnded": "Ended",
+        "openLiveRoom": "Open live classroom",
+        "copyLiveLink": "Copy classroom link",
+        "linkCopied": "Classroom link copied!",
+        "regenerateRoomId": "Generate a new random room ID",
+        "liveScheduleLabel": "Live class schedule",
+        "liveRoomIdLabel": "Room ID"
       },
       "newLesson": {
         "title": "Add new lesson",
@@ -410,7 +1004,31 @@
         "reasonLessons": "Need at least 1 lesson with content",
         "toastPublished": "Course published!",
         "toastUnpublished": "Course unpublished."
-      }
+      },
+      "newChapter": {
+        "title": "Add a new chapter",
+        "labelTitle": "Chapter title",
+        "titlePlaceholder": "Enter new chapter title...",
+        "inputTypeLabel": "Input data type",
+        "typeEmpty": "Empty",
+        "typeUrl": "URL",
+        "typeFen": "FEN",
+        "typePgn": "PGN",
+        "labelManualInput": "Manual input",
+        "placeholderUrl": "Enter URL (e.g., https://lichess.org/study/...)",
+        "placeholderFen": "Enter FEN string (e.g., r1bqkbnr/pppp1ppp/...)",
+        "placeholderPgn": "Paste PGN data (supports single or multi-game PGN)...",
+        "labelFileInput": "Or choose data file from computer",
+        "fileUploadHint": "Click or drag file (.pgn, .fen, .txt) here",
+        "labelPerspective": "Perspective",
+        "perspectiveWhite": "White",
+        "perspectiveBlack": "Black",
+        "createBtn": "Create chapter",
+        "creatingBtn": "Creating...",
+        "parsedSummary": "Parsed {{count}} games from PGN."
+      },
+      "saveRewindError": "Lesson saved, but failed to create Rewind. Please try again.",
+      "viewPublicPage": "View public page"
     },
     "lessonEditor": {
       "sidebarHeading": "Lessons",
@@ -470,13 +1088,60 @@
       "promoteVariation": "Make this the main line",
       "deleteSubtree": "Delete this move and its branches",
       "deleteSubtreeConfirm": "Delete this branch?",
-      "deleteSubtreeConfirmBody": "This will delete {{count}} move(s)."
+      "deleteSubtreeConfirmBody": "This will delete {{count}} move(s).",
+      "pgnAnnotationTip": "Place {comment} before move 1 to show start-of-lesson instructions. Place after a move to show upon completing that move.",
+      "hasRewindModeLabel": "Create Rewind for this lesson",
+      "rewindSiblingHeading": "Auto-synced Rewind lesson",
+      "rewindSiblingBody": "Content updates automatically with the source lesson. You can still rename and enable free preview. To edit content, open the source lesson.",
+      "rewindSiblingBodyWithSource": "Content updates automatically with source lesson \"{{source}}\". You can still rename and enable free preview.",
+      "rewindRemoveOnTypeSwitch": "This lesson has attached Rewinds. Switching to video will remove all Rewinds.",
+      "rewindRemoveConfirm": "Continue",
+      "rewindConfirmHeading": "Confirm Rewind creation",
+      "rewindConfirmBody": "Lesson has {{count}} branches — {{count}} Rewind lessons will be created.",
+      "rewindConfirmCreate": "Create {{count}} Rewinds",
+      "rewindNeedsPgn": "Add lesson content before enabling Rewind."
     },
     "deleteConfirm": {
       "title": "Delete course?",
       "body": "This will delete {{chapters}} chapters and {{lessons}} lessons.",
       "cancel": "Cancel",
       "confirm": "Delete"
+    },
+    "revenue": {
+      "tabLabel": "Revenue",
+      "pendingBalance": "Pending balance",
+      "lifetimeEarnings": "Total revenue",
+      "cadenceCaption": "Payouts processed every Monday",
+      "recentEarnings": {
+        "heading": "Recent earnings",
+        "colCourse": "Course",
+        "colBuyer": "Learner",
+        "colAmount": "You receive",
+        "colDate": "Date",
+        "empty": "No earnings yet"
+      },
+      "payoutHistory": {
+        "heading": "Payout history",
+        "colDate": "Date",
+        "colAmount": "Amount",
+        "colBank": "Bank",
+        "colReference": "Transaction reference",
+        "empty": "No payouts yet"
+      }
+    },
+    "settings": {
+      "payout": {
+        "pageTitle": "Payout Settings",
+        "eyebrow": "CREATOR SETTINGS",
+        "heading": "Payout Information",
+        "intro": "Update your bank account to receive creator payouts. Changes apply to subsequent payment cycles.",
+        "saveBtn": "Save changes",
+        "saving": "Saving…",
+        "savedAt": "Last updated {{date}}",
+        "saveSuccess": "Payout information saved.",
+        "saveError": "Could not save payout information. Please try again.",
+        "loadError": "Could not load payout information."
+      }
     }
   },
   "reviews": {
@@ -534,7 +1199,14 @@
     "commentBy": "By {{name}}",
     "inCourse": "In course: {{title}}",
     "hiddenLabel": "Hidden",
-    "selectToView": "Select a comment to view details."
+    "selectToView": "Select a comment to view details.",
+    "noCourseReports": "No courses reported.",
+    "dismissCourse": "Dismiss report",
+    "unpublishCourse": "Unpublish course",
+    "selectCourseToView": "Select a course to view details.",
+    "courseCreatedBy": "Created by {{name}}",
+    "tabComments": "Comments",
+    "tabCourses": "Courses"
   },
   "courseDetail": {
     "loading": "Loading...",
@@ -543,6 +1215,16 @@
     "purchase": "Purchase course",
     "enrollFree": "Enroll for free",
     "continueLearning": "Continue learning",
+    "liveBadge": "Live Online Course",
+    "liveSchedule": "Schedule:",
+    "liveStatus": "Status:",
+    "statusScheduled": "Scheduled",
+    "statusLive": "🔴 Live now",
+    "statusEnded": "Ended",
+    "joinLiveRoom": "🔴 Join Live Classroom",
+    "openTeacherLiveRoom": "🔴 Open Live Classroom (Host)",
+    "liveEnrollNotice": "This course takes place live via the LiveKit interactive classroom. You must enroll to gain access to the live classroom.",
+    "enrolledLiveNotice": "You are enrolled in this live course! Click below to enter the live classroom.",
     "addWishlist": "Add to wishlist",
     "launchPrice": "Launch price · ends in {{days}} days",
     "lifetimeAccess": "Lifetime access",
@@ -576,7 +1258,22 @@
     "pendingOrderBanner": "Your order is awaiting admin verification. The course will unlock as soon as it is confirmed.",
     "viewOrder": "View order",
     "continuePaying": "Continue to payment",
-    "paywallBanner": "This lesson requires purchasing the course to access."
+    "paywallBanner": "This lesson requires purchasing the course to access.",
+    "removeWishlist": "Remove from wishlist",
+    "previewAsLearner": "Preview as learner",
+    "creatorBannerTitle": "You are the author of this course.",
+    "creatorBannerDesc": "This is learner preview mode. To edit, go to Creator Studio.",
+    "reportCourse": "Report course",
+    "courseReportDialog": {
+      "heading": "Report course",
+      "inappropriate": "Inappropriate content",
+      "spam": "Spam / advertising",
+      "misleading": "Misleading information",
+      "contextPlaceholder": "Anything else to add? (optional)",
+      "cancel": "Cancel",
+      "submit": "Submit report",
+      "successMsg": "Report submitted. Thank you!"
+    }
   },
   "paywallSheet": {
     "title": "Unlock the full course",
@@ -671,6 +1368,15 @@
       "passwordNeedsNumber": "Password must have at least one number.",
       "passwordsNoMatch": "Passwords do not match.",
       "tosRequired": "You must agree to the terms of service."
+    },
+    "callback": {
+      "eyebrow": "Authentication",
+      "processing": "Authenticating…",
+      "helper": "Please wait a moment."
+    },
+    "errors": {
+      "oauthFailed": "Login with {{provider}} failed. Please try again.",
+      "oauthCallbackFailed": "Could not complete sign in. Please try again."
     }
   },
   "player": {
@@ -684,7 +1390,8 @@
     "bookmarkedToast": "Bookmarked · {{moveLabel}}",
     "bookmarkUndo": "Undo",
     "bookmarkMoveLabel": "Move {{played}} of {{total}}",
-    "adminWatermark": "Admin preview · not enrolled"
+    "adminWatermark": "Admin preview · not enrolled",
+    "lessonLoadError": "Could not load lesson. Please try again."
   },
   "dashboard": {
     "welcome": "WELCOME BACK, {{name}}",
@@ -728,7 +1435,9 @@
     "cancelledStatus": "Order cancelled",
     "cancelledReasonLabel": "Reason:",
     "cancelledShowReason": "View reason",
-    "cancelledHideReason": "Hide reason"
+    "cancelledHideReason": "Hide reason",
+    "wishlistHeading": "Wishlist",
+    "wishlistCount": "{{count}} courses"
   },
   "profile": {
     "eyebrow": "PERSONAL PROFILE",
@@ -760,7 +1469,10 @@
       "avatarRemove": "Could not remove the image. Please try again.",
       "saveProfile": "Could not save your information. Please try again.",
       "savePassword": "Could not update your password. Please try again."
-    }
+    },
+    "labelBio": "Short bio",
+    "bioPlaceholder": "One-line introduction (max 60 characters).",
+    "bioHint": "Shown when others hover over your name in comments and reviews."
   },
   "practice": {
     "eyebrow": "PRACTICE",
@@ -951,14 +1663,28 @@
     "viewerPrevMove": "Previous move",
     "viewerBeginMove": "First move",
     "viewerEndMove": "Last move",
-    "flipBoardAria": "Flip board"
+    "flipBoardAria": "Flip board",
+    "helperItems": [
+      "Click piece then click destination square, or drag-and-drop piece",
+      "Right-click and drag to draw arrows / highlight squares (hold Shift / Alt / Ctrl for colors)",
+      "Wrong move: piece snaps back, origin square glows red"
+    ],
+    "helperDismiss": "Dismiss guide",
+    "puzzleCompleteWrongAttempts": "You made {{count}} mistakes",
+    "puzzleCompleteBest": "Best: {{count}} mistakes",
+    "puzzleBestBadge": "Best: {{count}}",
+    "wrongMoveBanner": "Wrong move. Try again."
   },
   "theme": {
     "switchToDark": "Switch to dark mode",
     "switchToLight": "Switch to light mode"
   },
   "errors": {
-    "chapterLimitReached": "You have reached the chapter limit for your current account tier."
+    "chapterLimitReached": "You have reached the chapter limit for your current account tier.",
+    "lessonLimitReached": "You have reached the lesson limit per course for your account tier.",
+    "tierDowngradeBlocked": "Cannot downgrade tier: existing courses exceed the chapter limit of the new tier.",
+    "tierDowngradeBlockedWithCourses": "Cannot downgrade tier: the following courses exceed the chapter limit: {{courses}}.",
+    "andMore": "... and {{count}} other courses"
   },
   "video": {
     "errors": {
@@ -994,5 +1720,81 @@
         "deleteFailed": "Video deletion failed. Please try again."
       }
     }
+  },
+  "liveClassroom": {
+    "title": "Live Chess Classroom",
+    "room": "Classroom",
+    "connecting": "Connecting to Live Classroom...",
+    "connectingSubtitle": "Preparing secure WebRTC media and chess room",
+    "connectionError": "Classroom Connection Error",
+    "loginRequired": "Please sign in to join this live classroom.",
+    "back": "Back",
+    "retry": "Retry",
+    "leave": "Leave",
+    "boardControl": "Board Control:",
+    "teacherControlled": "Teacher Controlled",
+    "youGranted": "You (Granted by Teacher)",
+    "studentGranted": "Student ({{id}})",
+    "revokeControl": "Revoke Control",
+    "resetBoard": "Reset Board",
+    "raiseHand": "Raise Hand",
+    "lowerHand": "Lower Hand",
+    "handRaiseList": "Students requesting board interaction ({{count}}):",
+    "grant": "Grant",
+    "grantedBanner": "The teacher has granted you control of the main lecture board! Make your moves now.",
+    "lectureMode": "Lecture Mode",
+    "practiceMode": "Practice Mode",
+    "participants": "Participants ({{count}})",
+    "noCameras": "No cameras active",
+    "muteMic": "Mute Microphone",
+    "unmuteMic": "Unmute Microphone",
+    "turnOffCam": "Turn Off Camera",
+    "turnOnCam": "Turn On Camera",
+    "classroomChat": "Classroom Chat",
+    "practiceChat": "Practice Board Chat {{id}}",
+    "noMessages": "No messages yet. Say hello to the class!",
+    "noPracticeMessages": "Private chat between players and teacher. Send a message to get started!",
+    "chatPlaceholder": "Send message to class...",
+    "practiceChatPlaceholder": "Message opponent/teacher...",
+    "send": "Send",
+    "watchingBoard": "Watching Board {{id}}: {{white}} vs {{black}}",
+    "yourBoard": "Your Board (#{{id}}) — You are playing as {{color}}",
+    "spectatingBoard": "Spectating Board {{id}}: {{white}} vs {{black}}",
+    "noBoards": "No Active Practice Boards",
+    "noBoardsDescTeacher": "Click \"New Board\" to pair up students for virtual breakout games.",
+    "noBoardsDescStudent": "Wait for the coach to assign you to a practice match.",
+    "newBoard": "New Board",
+    "endBoard": "End Board",
+    "playing": "Playing",
+    "finished": "Finished",
+    "replay": "Replay:",
+    "createBoardTitle": "Create Practice Board",
+    "whitePlayer": "White Player:",
+    "blackPlayer": "Black Player:",
+    "selectParticipant": "Select participant...",
+    "startMatch": "Start Match",
+    "cancel": "Cancel",
+    "whiteTurn": "White's turn",
+    "blackTurn": "Black's turn",
+    "move": "Move {{num}}",
+    "gameOver": "Game Over",
+    "checkmate": "Checkmate! {{winner}} wins!",
+    "draw": "Draw!",
+    "teacherRole": "Teacher",
+    "assistantRole": "Assistant",
+    "studentRole": "Student",
+    "you": "You",
+    "participant": "Participant",
+    "white": "White",
+    "black": "Black",
+    "start": "Start",
+    "end": "End",
+    "practiceBoardsCount": "Practice Boards ({{count}})",
+    "boardLabel": "Board {{id}}: {{white}} vs {{black}}",
+    "enrollRequiredTitle": "Enrollment Required",
+    "enrollRequiredDesc": "This live online classroom belongs to the course \"{{title}}\". Only enrolled students and authorized instructors may enter.",
+    "enrollBtn": "View Course & Enroll",
+    "backHomeBtn": "Back to Home",
+    "courseLiveBadge": "Live Classroom"
   }
 }

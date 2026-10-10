@@ -91,6 +91,12 @@ describe('listPublishedCourses', () => {
     expect(client._query.contains).toHaveBeenCalledWith('tags', ['openings'])
   })
 
+  it('applies course_type filter', async () => {
+    const client = makeSupabase([])
+    await listPublishedCourses(client, { course_type: 'live' })
+    expect(client._query.eq).toHaveBeenCalledWith('course_type', 'live')
+  })
+
   it('returns empty array and error on supabase failure', async () => {
     const client = makeSupabase([], { message: 'DB error' })
     const { courses, error } = await listPublishedCourses(client)

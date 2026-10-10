@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
-import { createCourse } from '../../lib/creatorApi'
-import type { CourseLevel } from '../../lib/creatorApi'
+import { createCourse, generateLiveRoomId } from '../../lib/creatorApi'
+import type { CourseLevel, CourseType } from '../../lib/creatorApi'
 import { useAuth } from '../../context/AuthContext'
 import { useAccountTiers, computeFeeFloor } from '../../lib/accountTiers'
 import CourseTagsSelect from '../../components/CourseTagsSelect'
@@ -17,8 +17,13 @@ const MAX_THUMBNAIL_BYTES = 5 * 1024 * 1024
 export default function NewCoursePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { profile } = useAuth()
   const { getTier } = useAccountTiers()
+
+  const initialType: CourseType = searchParams.get('type') === 'live' ? 'live' : 'standard'
+  const [courseType, setCourseType] = useState<CourseType>(initialType)
+  const [liveSchedule, setLiveSchedule] = useState('')
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -93,6 +98,8 @@ export default function NewCoursePage() {
       }
     }
 
+    const cleanRoomId = courseType === 'live' ? generateLiveRoomId() : undefined
+
     const { course, error } = await createCourse(supabase, profile.id, {
       title: title.trim(),
       description: description || undefined,
@@ -101,6 +108,10 @@ export default function NewCoursePage() {
       level,
       language,
       tags,
+      course_type: courseType,
+      live_schedule: courseType === 'live' ? (liveSchedule.trim() || undefined) : undefined,
+      live_room_id: cleanRoomId,
+      live_status: courseType === 'live' ? 'scheduled' : undefined,
     })
 
     setSubmitting(false)
@@ -120,7 +131,77 @@ export default function NewCoursePage() {
         </h1>
 
         <form onSubmit={handleSubmit} noValidate>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+            {/* Course Format Selector */}
+            <div>
+              <label className="label">{t('creator.newCourse.courseType')}</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div
+                  data-testid="type-standard-btn"
+                  onClick={() => setCourseType('standard')}
+                  className="cursor-pointer p-4 rounded-(--r-md) border transition-all"
+                  style={{
+                    borderColor: courseType === 'standard' ? 'var(--accent)' : 'var(--border-strong)',
+                    background: courseType === 'standard' ? 'var(--accent-soft)' : 'var(--surface)',
+                  }}
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span style={{ fontSize: 18 }}>📚</span>
+                    <span className="font-semibold text-sm text-(--ink-1)">
+                      {t('creator.newCourse.typeStandard')}
+                    </span>
+                  </div>
+                  <p className="text-xs text-(--ink-3)" style={{ lineHeight: 1.45 }}>
+                    {t('creator.newCourse.typeStandardDesc')}
+                  </p>
+                </div>
+
+                <div
+                  data-testid="type-live-btn"
+                  onClick={() => setCourseType('live')}
+                  className="cursor-pointer p-4 rounded-(--r-md) border transition-all"
+                  style={{
+                    borderColor: courseType === 'live' ? 'var(--danger)' : 'var(--border-strong)',
+                    background: courseType === 'live' ? 'rgba(239, 68, 68, 0.08)' : 'var(--surface)',
+                  }}
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span style={{ fontSize: 18 }}>🔴</span>
+                    <span className="font-semibold text-sm text-(--ink-1)">
+                      {t('creator.newCourse.typeLive')}
+                    </span>
+                  </div>
+                  <p className="text-xs text-(--ink-3)" style={{ lineHeight: 1.45 }}>
+                    {t('creator.newCourse.typeLiveDesc')}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Live Course Settings (Conditional) */}
+            {courseType === 'live' && (
+              <div
+                data-testid="live-course-fields"
+                className="p-4 rounded-(--r-md) flex flex-col gap-3"
+                style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}
+              >
+                <div>
+                  <label className="label" htmlFor="live-schedule">
+                    {t('creator.newCourse.labelLiveSchedule')}
+                  </label>
+                  <input
+                    id="live-schedule"
+                    data-testid="live-schedule-input"
+                    type="text"
+                    className="input"
+                    placeholder={t('creator.newCourse.liveSchedulePlaceholder')}
+                    value={liveSchedule}
+                    onChange={e => setLiveSchedule(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Title */}
             <div>

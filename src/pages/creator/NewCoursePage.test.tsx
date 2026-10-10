@@ -11,7 +11,13 @@ const { mockCreateCourse, mockNavigate } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),
 }))
 
-vi.mock('../../lib/creatorApi', () => ({ createCourse: mockCreateCourse }))
+vi.mock('../../lib/creatorApi', async (importOriginal) => {
+  const mod = await importOriginal<typeof import('../../lib/creatorApi')>()
+  return {
+    ...mod,
+    createCourse: mockCreateCourse,
+  }
+})
 vi.mock('../../lib/supabase', () => ({ supabase: {} }))
 vi.mock('../../lib/coursePriceLimits', () => ({
   fetchCoursePriceLimits: vi.fn(() => Promise.resolve([])),
@@ -207,4 +213,40 @@ describe('NewCoursePage', () => {
       expect(preview).toHaveTextContent('100.000₫')
     })
   })
+
+  it('shows live schedule field when selecting live course type without exposing technical room ID', async () => {
+    renderPage()
+    expect(screen.queryByTestId('live-course-fields')).not.toBeInTheDocument()
+
+    // Click live course type
+    await userEvent.click(screen.getByTestId('type-live-btn'))
+    expect(screen.getByTestId('live-course-fields')).toBeInTheDocument()
+    expect(screen.getByTestId('live-schedule-input')).toBeInTheDocument()
+    // Technical room ID input is not shown to users
+    expect(screen.queryByTestId('live-room-id-input')).not.toBeInTheDocument()
+  })
+
+  it('submits live course with schedule and generated room ID', async () => {
+    renderPage()
+    await userEvent.type(screen.getByTestId('course-title-input'), 'Live Masterclass')
+    await userEvent.click(screen.getByTestId('type-live-btn'))
+    await userEvent.type(screen.getByTestId('live-schedule-input'), 'T3 & T5 20:00')
+
+    await userEvent.click(screen.getByTestId('submit-course-btn'))
+
+    await waitFor(() => {
+      expect(mockCreateCourse).toHaveBeenCalledWith(
+        expect.anything(),
+        'u1',
+        expect.objectContaining({
+          title: 'Live Masterclass',
+          course_type: 'live',
+          live_schedule: 'T3 & T5 20:00',
+          live_room_id: expect.stringMatching(/^live-/),
+          live_status: 'scheduled',
+        })
+      )
+    })
+  })
 })
+

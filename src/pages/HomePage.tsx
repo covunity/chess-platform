@@ -35,6 +35,12 @@ const LEVELS: Array<{ key: CourseLevel | 'all'; labelKey: string }> = [
   { key: 'professional', labelKey: 'home.levelProfessional' },
 ]
 
+const FORMATS: Array<{ key: 'all' | 'standard' | 'live'; labelKey: string; icon?: string }> = [
+  { key: 'all', labelKey: 'home.filterAllFormats' },
+  { key: 'standard', labelKey: 'home.filterStandard', icon: '📚' },
+  { key: 'live', labelKey: 'home.filterLive', icon: '🔴' },
+]
+
 import { POPULAR_TAGS as TAGS } from '../lib/popularTags'
 
 function CourseSkeleton() {
@@ -67,14 +73,43 @@ export default function HomePage() {
   const [bannerDismissed, setBannerDismissed] = useState(false)
   const [heroConfig, setHeroConfig] = useState<HeroConfig | null>(null)
 
+  const format = (searchParams.get('format') ?? 'all') as 'all' | 'standard' | 'live'
   const level = (searchParams.get('level') ?? 'all') as CourseLevel | 'all'
   const tag = searchParams.get('tag') ?? ''
   const sort = (searchParams.get('sort') ?? 'newest') as SortOption
   const q = searchParams.get('q') ?? ''
 
+  function setFormat(newFormat: 'all' | 'standard' | 'live') {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      if (newFormat === 'all') next.delete('format')
+      else next.set('format', newFormat)
+      return next
+    })
+  }
+
+  function setLevel(newLevel: CourseLevel | 'all') {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      if (newLevel === 'all') next.delete('level')
+      else next.set('level', newLevel)
+      return next
+    })
+  }
+
+  function setTag(newTag: string) {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      if (!newTag || next.get('tag') === newTag) next.delete('tag')
+      else next.set('tag', newTag)
+      return next
+    })
+  }
+
   useEffect(() => {
     listPublishedCourses(supabase, {
       q: q || undefined,
+      course_type: format !== 'all' ? format : undefined,
       level: level !== 'all' ? level : undefined,
       tag: tag || undefined,
       sort,
@@ -82,7 +117,7 @@ export default function HomePage() {
       setCourses(data)
       setLoading(false)
     })
-  }, [q, level, tag, sort])
+  }, [q, format, level, tag, sort])
 
   // Campaign fetch — independent of course filters so the banner doesn't
   // flicker on filter changes. Resolves anon-safe via campaigns RLS policy.
@@ -113,23 +148,6 @@ export default function HomePage() {
     setBannerDismissed(true)
   }
 
-  function setLevel(val: CourseLevel | 'all') {
-    setSearchParams(prev => {
-      const next = new URLSearchParams(prev)
-      if (val === 'all') next.delete('level')
-      else next.set('level', val)
-      return next
-    })
-  }
-
-  function setTag(val: string) {
-    setSearchParams(prev => {
-      const next = new URLSearchParams(prev)
-      if (next.get('tag') === val) next.delete('tag')
-      else next.set('tag', val)
-      return next
-    })
-  }
 
   function clearFilters() {
     setSearchParams({})
@@ -386,6 +404,40 @@ export default function HomePage() {
                 <option value="rating">{t('home.sortRating')}</option>
               </select>
             </div>
+          </div>
+
+          {/* Format filter row (All / Standard / Live) */}
+          <div className="flex items-center gap-2 mb-3 overflow-x-auto no-scrollbar whitespace-nowrap">
+            {FORMATS.map(fmt => (
+              <button
+                key={fmt.key}
+                type="button"
+                data-testid={`filter-format-${fmt.key}`}
+                onClick={() => setFormat(fmt.key)}
+                style={{
+                  height: 30,
+                  padding: '0 12px',
+                  borderRadius: 999,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  border: '1px solid',
+                  borderColor: format === fmt.key
+                    ? (fmt.key === 'live' ? 'rgba(239, 68, 68, 0.4)' : 'var(--ink-1)')
+                    : 'var(--border)',
+                  background: format === fmt.key
+                    ? (fmt.key === 'live' ? 'rgba(239, 68, 68, 0.12)' : 'var(--ink-1)')
+                    : 'transparent',
+                  color: format === fmt.key
+                    ? (fmt.key === 'live' ? '#ef4444' : 'var(--on-ink-1)')
+                    : 'var(--ink-3)',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {fmt.icon && <span className="mr-1.5">{fmt.icon}</span>}
+                {t(fmt.labelKey)}
+              </button>
+            ))}
           </div>
 
           {/* Pills row (Horizontal Scrollable Chips on Mobile) */}

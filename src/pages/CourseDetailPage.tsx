@@ -24,6 +24,7 @@ import { formatPrice } from '../lib/utils'
 import ChessBoard from '../components/ChessBoard/ChessBoard'
 import PaywallSheet from '../components/PaywallSheet'
 import UserNameCardTrigger from '../components/UserNameCard'
+import LiveSessionsList from '../components/course/LiveSessionsList'
 
 const INITIAL_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
@@ -1280,12 +1281,22 @@ export default function CourseDetailPage() {
     if (!course) return
 
     if (isCourseCreator) {
+      if (course.course_type === 'live') {
+        const liveTarget = course.live_room_id || course.id
+        navigate(`/live/${liveTarget}`)
+        return
+      }
       const firstLesson = course.chapters[0]?.lessons[0]
       if (firstLesson) navigate(`/learn/${courseId}/${firstLesson.id}`)
       return
     }
 
     if (isEnrolled) {
+      if (course.course_type === 'live') {
+        const liveTarget = course.live_room_id || course.id
+        navigate(`/live/${liveTarget}`)
+        return
+      }
       const firstLesson = course.chapters[0]?.lessons[0]
       if (firstLesson) navigate(`/learn/${courseId}/${firstLesson.id}`)
       return
@@ -1305,6 +1316,11 @@ export default function CourseDetailPage() {
       const result = await enrollForFree(supabase, course.id, user.id)
       if (result.error) {
         setEnrolling(false)
+        return
+      }
+      if (course.course_type === 'live') {
+        const liveTarget = course.live_room_id || course.id
+        navigate(`/live/${liveTarget}`)
         return
       }
       const lessonResult = await getFirstLesson(supabase, course.id)
@@ -1361,10 +1377,12 @@ export default function CourseDetailPage() {
     )
   }
 
+  const isLiveCourse = course.course_type === 'live'
+
   const ctaLabel = isCourseCreator
-    ? t('courseDetail.previewAsLearner')
+    ? (isLiveCourse ? t('courseDetail.openTeacherLiveRoom') : t('courseDetail.previewAsLearner'))
     : isEnrolled
-      ? t('courseDetail.continueLearning')
+      ? (isLiveCourse ? t('courseDetail.joinLiveRoom') : t('courseDetail.continueLearning'))
       : pendingOrder
         ? t('courseDetail.continuePaying')
         : course.price === 0
@@ -1507,7 +1525,34 @@ export default function CourseDetailPage() {
             </nav>
 
             {/* Pills */}
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              {isLiveCourse && (
+                <span
+                  data-testid="live-course-pill"
+                  className="pill"
+                  style={{
+                    background: 'rgba(220, 38, 38, 0.12)',
+                    color: 'oklch(0.6 0.22 25)',
+                    border: '1px solid rgba(220, 38, 38, 0.3)',
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 7,
+                      height: 7,
+                      borderRadius: '50%',
+                      background: 'oklch(0.6 0.22 25)',
+                      boxShadow: '0 0 8px rgba(220, 38, 38, 0.7)',
+                    }}
+                  />
+                  {t('courseDetail.liveBadge')}
+                </span>
+              )}
               {course.tags.map(tag => (
                 <span key={tag} className="pill pill-accent">{tag}</span>
               ))}
@@ -1533,6 +1578,65 @@ export default function CourseDetailPage() {
               <p style={{ fontSize: 15, color: 'var(--ink-2)', lineHeight: 1.55, maxWidth: 600, margin: 0 }}>
                 {course.description}
               </p>
+            )}
+
+            {/* Live course schedule & status box */}
+            {isLiveCourse && (
+              <div
+                data-testid="live-course-details-box"
+                className="card"
+                style={{
+                  padding: '16px 20px',
+                  background: 'var(--surface)',
+                  border: '1px solid rgba(220, 38, 38, 0.25)',
+                  boxShadow: '0 2px 12px rgba(220, 38, 38, 0.05)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12,
+                  maxWidth: 640,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: 'oklch(0.6 0.22 25)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'oklch(0.6 0.22 25)' }} />
+                      {t('courseDetail.liveBadge')}
+                    </span>
+                  </div>
+                  <span
+                    className="pill"
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      background: course.live_status === 'live' ? 'rgba(220, 38, 38, 0.15)' : 'var(--surface-2)',
+                      color: course.live_status === 'live' ? 'oklch(0.6 0.22 25)' : 'var(--ink-2)',
+                      border: course.live_status === 'live' ? '1px solid rgba(220, 38, 38, 0.3)' : '1px solid var(--border)',
+                    }}
+                  >
+                    {course.live_status === 'live'
+                      ? t('courseDetail.statusLive')
+                      : course.live_status === 'ended'
+                        ? t('courseDetail.statusEnded')
+                        : t('courseDetail.statusScheduled')}
+                  </span>
+                </div>
+
+                {course.live_schedule && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13.5, color: 'var(--ink-1)' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--ink-2)', flexShrink: 0 }}>
+                      <circle cx="12" cy="12" r="10" />
+                      <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                    <span><strong>{t('courseDetail.liveSchedule')}</strong> {course.live_schedule}</span>
+                  </div>
+                )}
+
+                <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.5 }}>
+                  {isEnrolled || isCourseCreator
+                    ? t('courseDetail.enrolledLiveNotice')
+                    : t('courseDetail.liveEnrollNotice')}
+                </p>
+              </div>
             )}
 
             {/* Creator + meta row */}
@@ -1620,6 +1724,31 @@ export default function CourseDetailPage() {
                 ? <img src={course.thumbnail_url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                 : <ChessBoard fen={INITIAL_FEN} size={260} showCoords={false} />
               }
+              {isLiveCourse && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 12,
+                    left: 12,
+                    background: 'rgba(220, 38, 38, 0.92)',
+                    color: '#fff',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: '0.06em',
+                    padding: '4px 10px',
+                    borderRadius: 9999,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    backdropFilter: 'blur(4px)',
+                    zIndex: 2,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                  }}
+                >
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'pulse 1.5s infinite' }} />
+                  LIVE CLASSROOM
+                </div>
+              )}
               <div
                 style={{
                   position: 'absolute',
@@ -1732,7 +1861,7 @@ export default function CourseDetailPage() {
                 className="btn btn-accent btn-lg"
                 style={{ width: '100%' }}
                 onClick={handleCTAClick}
-                disabled={enrolling || (isCourseCreator && !course.chapters[0]?.lessons[0])}
+                disabled={enrolling || (isCourseCreator && !isLiveCourse && !course.chapters[0]?.lessons[0])}
               >
                 {enrolling
                   ? <span data-testid="cta-loading" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
@@ -1782,11 +1911,18 @@ export default function CourseDetailPage() {
               <div style={{ height: 1, background: 'var(--border)' }} />
 
               {/* Feature list */}
-              {[
-                { title: t('courseDetail.lifetimeAccess'), sub: t('courseDetail.lifetimeAccessSub') },
-                { title: t('courseDetail.freePreviews'), sub: t('courseDetail.freePreviewsSub', { count: course.free_preview_count }) },
-                { title: t('courseDetail.audioLang'), sub: t('courseDetail.audioLangSub') },
-              ].map(feat => (
+              {(isLiveCourse
+                ? [
+                    { title: t('courseDetail.liveBadge'), sub: 'Phòng học trực tuyến LiveKit tương tác thời gian thực' },
+                    { title: t('courseDetail.liveSchedule'), sub: course.live_schedule || 'Lịch học theo thông báo giảng viên' },
+                    { title: t('courseDetail.lifetimeAccess'), sub: t('courseDetail.lifetimeAccessSub') },
+                  ]
+                : [
+                    { title: t('courseDetail.lifetimeAccess'), sub: t('courseDetail.lifetimeAccessSub') },
+                    { title: t('courseDetail.freePreviews'), sub: t('courseDetail.freePreviewsSub', { count: course.free_preview_count }) },
+                    { title: t('courseDetail.audioLang'), sub: t('courseDetail.audioLangSub') },
+                  ]
+              ).map(feat => (
                 <div key={feat.title} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                   <span style={{ color: 'var(--success)', marginTop: 2 }}><CheckIcon size={13} /></span>
                   <div>
@@ -1807,6 +1943,17 @@ export default function CourseDetailPage() {
         >
           {/* Left — Curriculum + Reviews */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 36 }}>
+            {/* Live Sessions Section for live courses */}
+            {isLiveCourse && (
+              <LiveSessionsList
+                courseId={course.id}
+                isEnrolled={isEnrolled}
+                isCourseCreator={isCourseCreator}
+                coursePrice={course.price}
+                onEnrollOrPurchase={handleCTAClick}
+              />
+            )}
+
             {/* Curriculum heading */}
             <div>
               <h2
@@ -1829,20 +1976,73 @@ export default function CourseDetailPage() {
             </div>
 
             {/* Chapter accordion list */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {course.chapters.map((chapter, idx) => (
-                <ChapterAccordion
-                  key={chapter.id}
-                  chapter={chapter}
-                  index={idx}
-                  expanded={expandedChapters.has(chapter.id)}
-                  onToggle={() => toggleChapter(chapter.id)}
-                  isEnrolled={isEnrolled || isCourseCreator}
-                  onPreview={(lesson) => navigate(`/learn/${course!.id}/${lesson.id}`)}
-                  onLock={() => setLockPromptOpen(true)}
-                />
-              ))}
-            </div>
+            {isLiveCourse && course.chapters.length === 0 ? (
+              <div
+                className="card p-6"
+                style={{
+                  background: 'var(--surface)',
+                  border: '1px dashed var(--border-strong)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: '50%',
+                      background: 'rgba(220, 38, 38, 0.1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 20,
+                      flexShrink: 0,
+                    }}
+                  >
+                    🔴
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink-1)', margin: 0 }}>
+                      Khóa học học trực tiếp qua phòng học LiveKit
+                    </h3>
+                    <p style={{ fontSize: 13, color: 'var(--ink-3)', margin: '4px 0 0' }}>
+                      Các buổi học được giảng viên tổ chức trực tiếp qua video, âm thanh và bàn cờ tương tác thời gian thực.
+                    </p>
+                  </div>
+                </div>
+                {course.live_schedule && (
+                  <div style={{ padding: '10px 14px', background: 'var(--surface-2)', borderRadius: 'var(--r-md)', fontSize: 13, color: 'var(--ink-1)' }}>
+                    <strong>Lịch học định kỳ:</strong> {course.live_schedule}
+                  </div>
+                )}
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    className="btn btn-accent btn-sm"
+                    onClick={handleCTAClick}
+                  >
+                    {isEnrolled || isCourseCreator ? t('courseDetail.joinLiveRoom') : (course.price === 0 ? t('courseDetail.enrollFree') : t('courseDetail.purchase'))}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {course.chapters.map((chapter, idx) => (
+                  <ChapterAccordion
+                    key={chapter.id}
+                    chapter={chapter}
+                    index={idx}
+                    expanded={expandedChapters.has(chapter.id)}
+                    onToggle={() => toggleChapter(chapter.id)}
+                    isEnrolled={isEnrolled || isCourseCreator}
+                    onPreview={(lesson) => navigate(`/learn/${course!.id}/${lesson.id}`)}
+                    onLock={() => setLockPromptOpen(true)}
+                  />
+                ))}
+              </div>
+            )}
 
             {/* Reviews section */}
             <div>

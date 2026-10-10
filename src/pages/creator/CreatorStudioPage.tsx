@@ -11,7 +11,7 @@ import {
   fetchCoursesWithStats,
 } from '../../lib/creatorApi'
 import type { Course, CourseStatus, CreatorKpis, CourseStats } from '../../lib/creatorApi'
-import { Pencil, Copy, Trash2 } from 'lucide-react'
+import { Pencil, Copy, Trash2, ExternalLink, Radio } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import RevenuePanel from '../../components/creator/RevenuePanel'
 import { formatPrice } from '../../lib/utils'
@@ -161,6 +161,20 @@ function KebabMenu({ course, onDelete, onDuplicate, t }: KebabMenuProps) {
             {t('creator.studio.table.kebabEdit')}
           </Link>
         </DropdownMenuItem>
+        {course.course_type === 'live' && (
+          <DropdownMenuItem asChild>
+            <a
+              href={`/live/${course.live_room_id || course.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid={`kebab-live-${course.id}`}
+              className="flex items-center gap-2 text-red-600 font-medium"
+            >
+              <Radio size={14} />
+              {t('creator.studio.table.hostLive')}
+            </a>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem
           data-testid={`kebab-duplicate-${course.id}`}
           onSelect={() => onDuplicate(course)}
@@ -504,7 +518,29 @@ export default function CreatorStudioPage() {
                                 aria-hidden="true"
                               />
                             )}
-                            <span data-testid={`course-title-${course.id}`} className="font-medium text-(--ink-1)">{course.title}</span>
+                            <div className="flex flex-col min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span data-testid={`course-title-${course.id}`} className="font-medium text-(--ink-1) truncate">{course.title}</span>
+                                {course.course_type === 'live' && (
+                                  <span
+                                    className="font-semibold shrink-0"
+                                    style={{
+                                      fontSize: 10,
+                                      padding: '1px 6px',
+                                      borderRadius: 999,
+                                      background: 'rgba(239, 68, 68, 0.12)',
+                                      color: '#ef4444',
+                                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                                    }}
+                                  >
+                                    🔴 LIVE
+                                  </span>
+                                )}
+                              </div>
+                              {course.course_type === 'live' && course.live_schedule && (
+                                <p className="text-xs text-(--ink-3) mt-0.5 truncate">📅 {course.live_schedule}</p>
+                              )}
+                            </div>
                           </div>
                         </td>
                         <td style={{ padding: '14px 20px' }}>
@@ -522,7 +558,30 @@ export default function CreatorStudioPage() {
                           {s?.rating != null ? s.rating.toFixed(1) : '—'}
                         </td>
                         <td style={{ padding: '14px 20px', textAlign: 'right' }}>
-                          <KebabMenu course={course} onDelete={handleDeleteClick} onDuplicate={handleDuplicate} t={t} />
+                          <div className="flex items-center justify-end gap-2">
+                            {course.course_type === 'live' && (
+                              <a
+                                href={`/live/${course.live_room_id || course.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                data-testid={`host-live-btn-${course.id}`}
+                                className="btn btn-sm btn-secondary flex items-center gap-1 shrink-0"
+                                style={{
+                                  height: 28,
+                                  padding: '0 8px',
+                                  fontSize: 11.5,
+                                  color: 'var(--danger)',
+                                  borderColor: 'rgba(239, 68, 68, 0.35)',
+                                }}
+                                title={t('creator.studio.table.hostLive')}
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                                <span>{t('creator.studio.table.hostLive')}</span>
+                                <ExternalLink size={11} />
+                              </a>
+                            )}
+                            <KebabMenu course={course} onDelete={handleDeleteClick} onDuplicate={handleDuplicate} t={t} />
+                          </div>
                         </td>
                       </tr>
                     )
