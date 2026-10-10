@@ -13,6 +13,7 @@ function makeSupabase(opts: {
   const selectChain = {
     eq: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue({ data: opts.selectData ?? null, error: opts.selectError ?? null }),
+    maybeSingle: vi.fn().mockResolvedValue({ data: opts.selectData ?? null, error: opts.selectError ?? null }),
   }
   const upsertChain = {
     select: vi.fn().mockReturnThis(),

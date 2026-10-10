@@ -53,7 +53,7 @@ export async function getUserReview(
     .select('id, course_id, reviewer_id, rating, title, body, created_at, updated_at')
     .eq('course_id', courseId)
     .eq('reviewer_id', reviewerId)
-    .single()
+    .maybeSingle()
 
   if (error) {
     // PGRST116 = no row found — not an error for our purposes
@@ -62,7 +62,7 @@ export async function getUserReview(
     }
     return { review: null, error: error as unknown as Error }
   }
-  return { review: data as Review, error: null }
+  return { review: (data as Review) ?? null, error: null }
 }
 
 export async function deleteReview(
