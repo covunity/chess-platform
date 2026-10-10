@@ -51,6 +51,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_live_sessions_room_name
   ON public.live_sessions (livekit_room_name);
 
 -- 3. Trigger for updated_at
+DROP TRIGGER IF EXISTS live_sessions_updated_at ON public.live_sessions;
 CREATE TRIGGER live_sessions_updated_at
   BEFORE UPDATE ON public.live_sessions
   FOR EACH ROW EXECUTE PROCEDURE public.set_updated_at();
@@ -59,23 +60,25 @@ CREATE TRIGGER live_sessions_updated_at
 ALTER TABLE public.live_sessions ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Creators can manage sessions of their own courses
+DROP POLICY IF EXISTS "Creators can manage own course live_sessions" ON public.live_sessions;
 CREATE POLICY "Creators can manage own course live_sessions"
   ON public.live_sessions
   FOR ALL
   USING (
     EXISTS (
       SELECT 1 FROM public.courses c
-      WHERE c.id = course_id AND c.creator_id = auth.uid()
+      WHERE c.id = live_sessions.course_id AND c.creator_id = auth.uid()
     )
   )
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM public.courses c
-      WHERE c.id = course_id AND c.creator_id = auth.uid()
+      WHERE c.id = live_sessions.course_id AND c.creator_id = auth.uid()
     )
   );
 
 -- Policy: Admins can view and manage all live_sessions
+DROP POLICY IF EXISTS "Admins can manage all live_sessions" ON public.live_sessions;
 CREATE POLICY "Admins can manage all live_sessions"
   ON public.live_sessions
   FOR ALL
@@ -93,6 +96,7 @@ CREATE POLICY "Admins can manage all live_sessions"
   );
 
 -- Policy: Enrolled learners can read non-draft sessions
+DROP POLICY IF EXISTS "Enrolled learners can view live_sessions" ON public.live_sessions;
 CREATE POLICY "Enrolled learners can view live_sessions"
   ON public.live_sessions
   FOR SELECT
@@ -105,6 +109,7 @@ CREATE POLICY "Enrolled learners can view live_sessions"
   );
 
 -- Policy: Public / prospective students can read non-draft sessions of published courses
+DROP POLICY IF EXISTS "Public can view live_sessions of published courses" ON public.live_sessions;
 CREATE POLICY "Public can view live_sessions of published courses"
   ON public.live_sessions
   FOR SELECT
