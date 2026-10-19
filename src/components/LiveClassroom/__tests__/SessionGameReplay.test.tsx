@@ -240,36 +240,46 @@ describe('TASK 9.3 — Session Chess Game Replay UI', () => {
 
       // Navigate forward: Next move (1. e4)
       fireEvent.click(screen.getByTestId('replay-next-btn'))
-      expect(screen.getByTestId('replay-step-indicator')).toHaveTextContent('1 / 4')
-      expect(board.getAttribute('data-fen')).toContain('rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1')
-      expect(board.getAttribute('data-lastmove')).toBe(JSON.stringify(['e2', 'e4']))
-      expect(screen.getByTestId('replay-move-0')).toHaveAttribute('aria-current', 'step')
+      await waitFor(() => {
+        expect(screen.getByTestId('replay-step-indicator')).toHaveTextContent('1 / 4')
+        expect(board.getAttribute('data-fen')).toContain('rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1')
+        expect(board.getAttribute('data-lastmove')).toBe(JSON.stringify(['e2', 'e4']))
+        expect(screen.getByTestId('replay-move-0')).toHaveAttribute('aria-current', 'step')
+      })
 
       // Navigate forward: Next move (1... e5)
       fireEvent.click(screen.getByTestId('replay-next-btn'))
-      expect(screen.getByTestId('replay-step-indicator')).toHaveTextContent('2 / 4')
-      expect(board.getAttribute('data-lastmove')).toBe(JSON.stringify(['e7', 'e5']))
-      expect(screen.getByTestId('replay-move-1')).toHaveAttribute('aria-current', 'step')
+      await waitFor(() => {
+        expect(screen.getByTestId('replay-step-indicator')).toHaveTextContent('2 / 4')
+        expect(board.getAttribute('data-lastmove')).toBe(JSON.stringify(['e7', 'e5']))
+        expect(screen.getByTestId('replay-move-1')).toHaveAttribute('aria-current', 'step')
+      })
 
       // Navigate backward: Previous move
       fireEvent.click(screen.getByTestId('replay-prev-btn'))
-      expect(screen.getByTestId('replay-step-indicator')).toHaveTextContent('1 / 4')
-      expect(board.getAttribute('data-lastmove')).toBe(JSON.stringify(['e2', 'e4']))
+      await waitFor(() => {
+        expect(screen.getByTestId('replay-step-indicator')).toHaveTextContent('1 / 4')
+        expect(board.getAttribute('data-lastmove')).toBe(JSON.stringify(['e2', 'e4']))
+      })
 
       // Navigate to Last move
       fireEvent.click(screen.getByTestId('replay-last-btn'))
-      expect(screen.getByTestId('replay-step-indicator')).toHaveTextContent('4 / 4')
-      expect(board.getAttribute('data-fen')).toContain('r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3')
-      expect(screen.getByTestId('replay-next-btn')).toBeDisabled()
-      expect(screen.getByTestId('replay-last-btn')).toBeDisabled()
+      await waitFor(() => {
+        expect(screen.getByTestId('replay-step-indicator')).toHaveTextContent('4 / 4')
+        expect(board.getAttribute('data-fen')).toContain('r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3')
+        expect(screen.getByTestId('replay-next-btn')).toBeDisabled()
+        expect(screen.getByTestId('replay-last-btn')).toBeDisabled()
+      })
 
       // Navigate to First move
       fireEvent.click(screen.getByTestId('replay-first-btn'))
-      expect(screen.getByTestId('replay-step-indicator')).toHaveTextContent('0 / 4')
-      expect(board).toHaveAttribute('data-fen', sampleGame1.starting_fen)
-      expect(board).toHaveAttribute('data-lastmove', '')
-      expect(screen.getByTestId('replay-first-btn')).toBeDisabled()
-      expect(screen.getByTestId('replay-prev-btn')).toBeDisabled()
+      await waitFor(() => {
+        expect(screen.getByTestId('replay-step-indicator')).toHaveTextContent('0 / 4')
+        expect(board).toHaveAttribute('data-fen', sampleGame1.starting_fen)
+        expect(board).toHaveAttribute('data-lastmove', '')
+        expect(screen.getByTestId('replay-first-btn')).toBeDisabled()
+        expect(screen.getByTestId('replay-prev-btn')).toBeDisabled()
+      })
     })
 
     it('jumps directly to specific move when clicked in move list', async () => {
@@ -286,14 +296,18 @@ describe('TASK 9.3 — Session Chess Game Replay UI', () => {
 
       // Click on move 2... Nc6 (index 3, step 4)
       fireEvent.click(screen.getByTestId('replay-move-3'))
-      expect(screen.getByTestId('replay-step-indicator')).toHaveTextContent('4 / 4')
+      await waitFor(() => {
+        expect(screen.getByTestId('replay-step-indicator')).toHaveTextContent('4 / 4')
+      })
 
       // Click on move 2. Nf3 (index 2, step 3)
       fireEvent.click(screen.getByTestId('replay-move-2'))
-      expect(screen.getByTestId('replay-step-indicator')).toHaveTextContent('3 / 4')
-      expect(screen.getByTestId('chessground-view').getAttribute('data-lastmove')).toBe(
-        JSON.stringify(['g1', 'f3'])
-      )
+      await waitFor(() => {
+        expect(screen.getByTestId('replay-step-indicator')).toHaveTextContent('3 / 4')
+        expect(screen.getByTestId('chessground-view').getAttribute('data-lastmove')).toBe(
+          JSON.stringify(['g1', 'f3'])
+        )
+      })
     })
 
     it('toggles board perspective with flip button', async () => {
