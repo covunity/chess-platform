@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { Clock, Plus, Trash2, Sparkles } from 'lucide-react'
 
 export interface WeeklySlot {
@@ -138,6 +138,16 @@ export function LiveSchedulePicker({
   const initialSlots = useMemo(() => parseScheduleStringToSlots(value), [])
   const [weeklySlots, setWeeklySlots] = useState<WeeklySlot[]>(initialSlots)
 
+  // Keep slots in sync if value is changed externally to a structured schedule
+  useEffect(() => {
+    if (value && value.trim()) {
+      const parsed = parseScheduleStringToSlots(value)
+      if (parsed.length > 0) {
+        setWeeklySlots(parsed)
+      }
+    }
+  }, [value])
+
   const handleWeeklyChange = (updated: WeeklySlot[]) => {
     setWeeklySlots(updated)
     const formatted = formatWeeklySlots(updated)
@@ -178,123 +188,120 @@ export function LiveSchedulePicker({
   }
 
   return (
-    <div className="flex flex-col gap-2.5">
-      {/* Primary Input */}
-      <div>
+    <div className="flex flex-col gap-3 w-full max-w-full overflow-hidden">
+      {/* Quick Presets Bar */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <span className="text-xs font-semibold text-(--ink-2) flex items-center gap-1.5">
+          <Sparkles size={13} className="text-amber-500 shrink-0" />
+          <span>Mẫu lịch nhanh:</span>
+        </span>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {SCHEDULE_PRESETS.map(p => (
+            <button
+              key={p.name}
+              type="button"
+              className="btn btn-sm text-[11px] py-0 px-2 h-6.5 font-medium bg-(--surface) hover:bg-(--surface-3) text-(--ink-1) border border-(--border) hover:border-(--border-strong) transition-all"
+              onClick={() => handleApplyPreset(p)}
+            >
+              {p.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* List of slots - each row is neatly sized and will NOT overflow */}
+      <div className="flex flex-col gap-2">
+        {weeklySlots.map((slot, index) => (
+          <div
+            key={slot.id}
+            className="flex items-center gap-2 p-2 rounded-(--r-sm) bg-(--surface) border border-(--border) hover:border-(--border-strong) transition-colors flex-wrap sm:flex-nowrap"
+          >
+            <span className="text-xs font-semibold text-(--ink-2) shrink-0" style={{ width: '52px' }}>
+              Buổi {index + 1}:
+            </span>
+
+            {/* Day selector - explicitly sized so it never pushes other elements out */}
+            <select
+              style={{ width: '115px', minWidth: '115px', maxWidth: '115px', height: '34px' }}
+              className="input text-xs py-1 px-2 shrink-0 cursor-pointer"
+              value={slot.day}
+              onChange={e => handleUpdateSlot(slot.id, { day: Number(e.target.value) })}
+            >
+              {DAYS_OF_WEEK.map(d => (
+                <option key={d.value} value={d.value}>
+                  {d.label}
+                </option>
+              ))}
+            </select>
+
+            {/* Time Range - explicitly constrained */}
+            <div className="flex items-center gap-1 text-xs text-(--ink-2) shrink-0">
+              <Clock size={13} className="text-(--ink-3) shrink-0 mr-0.5" />
+              <span className="text-(--ink-3)">Từ</span>
+              <input
+                type="time"
+                style={{ width: '100px', minWidth: '100px', maxWidth: '100px', height: '34px' }}
+                className="input text-xs py-1 px-1.5 font-mono"
+                value={slot.startTime}
+                onChange={e => handleUpdateSlot(slot.id, { startTime: e.target.value })}
+              />
+              <span className="text-(--ink-3)">đến</span>
+              <input
+                type="time"
+                style={{ width: '100px', minWidth: '100px', maxWidth: '100px', height: '34px' }}
+                className="input text-xs py-1 px-1.5 font-mono"
+                value={slot.endTime}
+                onChange={e => handleUpdateSlot(slot.id, { endTime: e.target.value })}
+              />
+            </div>
+
+            {/* Remove button */}
+            {weeklySlots.length > 1 && (
+              <button
+                type="button"
+                className="btn btn-sm btn-ghost p-1 text-(--ink-4) hover:text-red-500 hover:bg-red-500/10 rounded ml-auto shrink-0"
+                title="Xóa buổi này"
+                onClick={() => handleRemoveSlot(slot.id)}
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
+          </div>
+        ))}
+
+        {/* Add slot button & session counter */}
+        <div className="flex items-center justify-between pt-1">
+          <button
+            type="button"
+            className="btn btn-sm text-xs flex items-center gap-1.5 bg-(--surface) hover:bg-(--surface-3) text-(--ink-1) border border-(--border-strong) font-medium"
+            onClick={handleAddSlot}
+          >
+            <Plus size={13} />
+            <span>Thêm buổi học trong tuần</span>
+          </button>
+          {weeklySlots.length > 0 && (
+            <span className="text-[11px] text-(--ink-3)">
+              Tổng cộng: <strong className="text-(--ink-1)">{weeklySlots.length} buổi / tuần</strong>
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Resulting Schedule text input */}
+      <div className="pt-1">
+        <label htmlFor={inputId} className="block text-[11px] font-medium text-(--ink-3) mb-1">
+          Lịch học hiển thị cho học viên (tự động cập nhật theo các buổi trên, hoặc bạn có thể chỉnh sửa trực tiếp):
+        </label>
         <input
           id={inputId}
           data-testid={testId}
           type="text"
-          className="input w-full font-medium"
+          className="input text-xs w-full font-medium"
+          style={{ height: '36px', fontSize: '13px' }}
           placeholder={placeholder}
           value={value}
           onChange={e => onChange(e.target.value)}
         />
-      </div>
-
-      {/* Interactive Builder Container */}
-      <div className="rounded-(--r-sm) bg-(--surface-2) p-3 border border-(--border) flex flex-col gap-3">
-        {/* Quick Presets Bar */}
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <span className="text-xs font-semibold text-(--ink-2) flex items-center gap-1.5">
-            <Sparkles size={13} className="text-amber-500" />
-            <span>Mẫu lịch nhanh:</span>
-          </span>
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {SCHEDULE_PRESETS.map(p => (
-              <button
-                key={p.name}
-                type="button"
-                className="btn btn-sm text-[11px] py-0 px-2.5 h-6.5 font-medium bg-(--surface) hover:bg-(--surface-3) text-(--ink-1) border border-(--border) hover:border-(--border-strong) transition-all"
-                onClick={() => handleApplyPreset(p)}
-              >
-                {p.name}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Sessions List Header */}
-        <div className="flex items-center justify-between border-t border-(--border) pt-2">
-          <span className="text-xs font-medium text-(--ink-3)">
-            Tùy chỉnh các buổi học trong tuần:
-          </span>
-          {weeklySlots.length > 0 && (
-            <span className="text-[11px] text-(--ink-3)">
-              Đã chọn: <strong className="text-(--ink-1)">{weeklySlots.length} buổi / tuần</strong>
-            </span>
-          )}
-        </div>
-
-        {/* List of slots */}
-        <div className="flex flex-col gap-2">
-          {weeklySlots.map((slot, index) => (
-            <div
-              key={slot.id}
-              className="flex items-center gap-2 p-2 rounded-(--r-sm) bg-(--surface) border border-(--border) hover:border-(--border-strong) transition-colors flex-wrap sm:flex-nowrap"
-            >
-              <span className="text-xs font-semibold text-(--ink-2) w-14 shrink-0">
-                Buổi {index + 1}:
-              </span>
-
-              {/* Day selector */}
-              <select
-                className="input text-xs py-1 px-2 h-8 shrink-0 min-w-[105px]"
-                value={slot.day}
-                onChange={e => handleUpdateSlot(slot.id, { day: Number(e.target.value) })}
-              >
-                {DAYS_OF_WEEK.map(d => (
-                  <option key={d.value} value={d.value}>
-                    {d.label}
-                  </option>
-                ))}
-              </select>
-
-              {/* Time Range */}
-              <div className="flex items-center gap-1.5 text-xs text-(--ink-2) shrink-0">
-                <Clock size={13} className="text-(--ink-3)" />
-                <span>Từ</span>
-                <input
-                  type="time"
-                  className="input text-xs py-1 px-2 h-8 w-[92px] font-mono"
-                  value={slot.startTime}
-                  onChange={e => handleUpdateSlot(slot.id, { startTime: e.target.value })}
-                />
-                <span>đến</span>
-                <input
-                  type="time"
-                  className="input text-xs py-1 px-2 h-8 w-[92px] font-mono"
-                  value={slot.endTime}
-                  onChange={e => handleUpdateSlot(slot.id, { endTime: e.target.value })}
-                />
-              </div>
-
-              {/* Remove button */}
-              {weeklySlots.length > 1 && (
-                <button
-                  type="button"
-                  className="btn btn-sm btn-ghost p-1 text-(--ink-4) hover:text-red-500 ml-auto"
-                  title="Xóa buổi này"
-                  onClick={() => handleRemoveSlot(slot.id)}
-                >
-                  <Trash2 size={14} />
-                </button>
-              )}
-            </div>
-          ))}
-
-          {/* Add slot button */}
-          <div className="pt-0.5">
-            <button
-              type="button"
-              className="btn btn-sm text-xs flex items-center gap-1.5 bg-(--surface) hover:bg-(--surface-3) text-(--ink-1) border border-(--border-strong) font-medium"
-              onClick={handleAddSlot}
-            >
-              <Plus size={13} />
-              <span>Thêm buổi học trong tuần</span>
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   )
