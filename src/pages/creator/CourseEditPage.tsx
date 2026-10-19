@@ -1108,120 +1108,136 @@ export default function CourseEditPage() {
             {t('creator.courseEdit.courseInfo.link')}
           </button>
 
-          <button
-            type="button"
-            data-testid="sidebar-live-sessions-btn"
-            onClick={() => {
-              if (saveLessonRef.current) {
-                try { saveLessonRef.current() } catch (err) { console.error('Auto-save error on showLiveSessions:', err) }
-              }
-              setSelectedLesson(null)
-              setDisplayedLesson(null)
-              setShowCourseInfo(false)
-              setShowLiveSessions(true)
-            }}
-            className="group"
-            style={{
-              width: '100%',
-              textAlign: 'left',
-              padding: '8px 10px',
-              borderRadius: 'var(--r-sm)',
-              border: '1px solid',
-              borderColor: showLiveSessions ? 'var(--accent-border)' : 'var(--border)',
-              cursor: 'pointer',
-              fontSize: 13.5,
-              fontWeight: 500,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              background: showLiveSessions ? 'var(--accent-soft)' : 'var(--surface)',
-              color: showLiveSessions ? 'var(--accent-ink)' : 'var(--ink-2)',
-            }}
-          >
-            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
-            <span>Lịch học trực tuyến (Live)</span>
-          </button>
-        </div>
-
-        <div style={{ padding: '12px 16px 8px' }}>
-          <p
-            className="uppercase font-medium tracking-widest text-(--ink-3)"
-            style={{ fontSize: 10, letterSpacing: '0.1em' }}
-          >
-            {t('creator.courseEdit.curriculum')}
-          </p>
-        </div>
-
-        <div className="flex-1 overflow-y-auto">
-          {loading ? (
-            <p className="text-xs text-(--ink-3) px-4 py-2">…</p>
-          ) : (
-            chapters.map(chapter => (
-              <ChapterBlock
-                key={chapter.id}
-                chapter={chapter}
-                onDeleteChapter={ch => setConfirmDeleteChapter(ch)}
-                onOpenNewLessonDialog={chapterId => setNewLessonChapterId(chapterId)}
-                onDeleteLesson={l => setConfirmDeleteLesson(l)}
-                onOpenEditor={l => switchLesson(l)}
-                onUpdateLessonTitle={handleUpdateLessonTitle}
-                onUpdateChapterTitle={handleUpdateChapterTitle}
-                t={t}
-              />
-            ))
+          {courseType === 'live' && (
+            <button
+              type="button"
+              data-testid="sidebar-live-sessions-btn"
+              onClick={() => {
+                if (saveLessonRef.current) {
+                  try { saveLessonRef.current() } catch (err) { console.error('Auto-save error on showLiveSessions:', err) }
+                }
+                setSelectedLesson(null)
+                setDisplayedLesson(null)
+                setShowCourseInfo(false)
+                setShowLiveSessions(true)
+              }}
+              className="group"
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                padding: '8px 10px',
+                borderRadius: 'var(--r-sm)',
+                border: '1px solid',
+                borderColor: showLiveSessions ? 'var(--accent-border)' : 'var(--border)',
+                cursor: 'pointer',
+                fontSize: 13.5,
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                background: showLiveSessions ? 'var(--accent-soft)' : 'var(--surface)',
+                color: showLiveSessions ? 'var(--accent-ink)' : 'var(--ink-2)',
+              }}
+            >
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+              <span>Lịch học trực tuyến (Live)</span>
+            </button>
           )}
         </div>
 
-        <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)' }}>
-          {(() => {
-            const maxChapters = profile?.role === 'admin'
-              ? null
-              : (profile?.account_tier_id
-                ? (getTier(profile.account_tier_id)?.max_chapters_per_course ?? null)
-                : null)
-            const atLimit = maxChapters != null && chapters.length >= maxChapters
-            return (
-              <>
-                {maxChapters != null && (
-                  <p
-                    data-testid="chapter-counter"
-                    className="text-xs text-(--ink-3) mb-1"
-                    style={{ fontSize: 11 }}
-                  >
-                    {t('creator.courseEdit.chapterCounter', { current: chapters.length, max: maxChapters })}
-                  </p>
-                )}
-                <div className="relative group inline-block">
-                  <button
-                    type="button"
-                    data-testid="add-chapter-btn"
-                    className="btn btn-ghost btn-sm"
-                    style={{
-                      color: atLimit ? 'var(--ink-4)' : 'var(--accent-ink)',
-                      paddingLeft: 0,
-                      cursor: atLimit ? 'not-allowed' : undefined,
-                      opacity: atLimit ? 0.5 : undefined,
-                    }}
-                    disabled={atLimit}
-                    onClick={handleOpenAddChapterModal}
-                  >
-                    {t('creator.courseEdit.addChapter')}
-                  </button>
-                  {atLimit && maxChapters != null && (
-                    <div
-                      className="card absolute bottom-full mb-2 left-0 hidden group-hover:block"
-                      style={{ width: 220, padding: '8px 12px', zIndex: 20, pointerEvents: 'none' }}
-                    >
-                      <p className="text-xs text-(--ink-2)">
-                        {t('creator.courseEdit.chapterLimitReachedTooltip', { max: maxChapters })}
+        {courseType !== 'live' ? (
+          <>
+            <div style={{ padding: '12px 16px 8px' }}>
+              <p
+                className="uppercase font-medium tracking-widest text-(--ink-3)"
+                style={{ fontSize: 10, letterSpacing: '0.1em' }}
+              >
+                {t('creator.courseEdit.curriculum')}
+              </p>
+            </div>
+
+            <div className="flex-1 overflow-y-auto">
+              {loading ? (
+                <p className="text-xs text-(--ink-3) px-4 py-2">…</p>
+              ) : (
+                chapters.map(chapter => (
+                  <ChapterBlock
+                    key={chapter.id}
+                    chapter={chapter}
+                    onDeleteChapter={ch => setConfirmDeleteChapter(ch)}
+                    onOpenNewLessonDialog={chapterId => setNewLessonChapterId(chapterId)}
+                    onDeleteLesson={l => setConfirmDeleteLesson(l)}
+                    onOpenEditor={l => switchLesson(l)}
+                    onUpdateLessonTitle={handleUpdateLessonTitle}
+                    onUpdateChapterTitle={handleUpdateChapterTitle}
+                    t={t}
+                  />
+                ))
+              )}
+            </div>
+
+            <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)' }}>
+              {(() => {
+                const maxChapters = profile?.role === 'admin'
+                  ? null
+                  : (profile?.account_tier_id
+                    ? (getTier(profile.account_tier_id)?.max_chapters_per_course ?? null)
+                    : null)
+                const atLimit = maxChapters != null && chapters.length >= maxChapters
+                return (
+                  <>
+                    {maxChapters != null && (
+                      <p
+                        data-testid="chapter-counter"
+                        className="text-xs text-(--ink-3) mb-1"
+                        style={{ fontSize: 11 }}
+                      >
+                        {t('creator.courseEdit.chapterCounter', { current: chapters.length, max: maxChapters })}
                       </p>
+                    )}
+                    <div className="relative group inline-block">
+                      <button
+                        type="button"
+                        data-testid="add-chapter-btn"
+                        className="btn btn-ghost btn-sm"
+                        style={{
+                          color: atLimit ? 'var(--ink-4)' : 'var(--accent-ink)',
+                          paddingLeft: 0,
+                          cursor: atLimit ? 'not-allowed' : undefined,
+                          opacity: atLimit ? 0.5 : undefined,
+                        }}
+                        disabled={atLimit}
+                        onClick={handleOpenAddChapterModal}
+                      >
+                        {t('creator.courseEdit.addChapter')}
+                      </button>
+                      {atLimit && maxChapters != null && (
+                        <div
+                          className="card absolute bottom-full mb-2 left-0 hidden group-hover:block"
+                          style={{ width: 220, padding: '8px 12px', zIndex: 20, pointerEvents: 'none' }}
+                        >
+                          <p className="text-xs text-(--ink-2)">
+                            {t('creator.courseEdit.chapterLimitReachedTooltip', { max: maxChapters })}
+                          </p>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              </>
-            )
-          })()}
-        </div>
+                  </>
+                )
+              })()}
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 p-4 flex flex-col justify-between text-xs text-(--ink-3)">
+            <div className="rounded-(--r-sm) p-3 bg-(--surface) border border-(--border) text-(--ink-2) leading-relaxed">
+              <div className="flex items-center gap-1.5 font-semibold text-(--ink-1) mb-1.5">
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                <span>Khóa học trực tuyến (Live)</span>
+              </div>
+              Khóa học này được giảng dạy trực tiếp theo các buổi học. Bạn có thể lên lịch, bắt đầu buổi dạy và quản lý học viên tại mục <strong>Lịch học trực tuyến (Live)</strong>.
+            </div>
+          </div>
+        )}
 
       </aside>
 

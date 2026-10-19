@@ -498,7 +498,7 @@ export async function canPublishCourse(
 
   const { data: course } = await client
     .from('courses')
-    .select('title, description, thumbnail_url, price, status')
+    .select('title, description, thumbnail_url, price, status, course_type')
     .eq('id', courseId)
     .single()
 
@@ -510,22 +510,24 @@ export async function canPublishCourse(
   if (course.price == null) reasons.push('missing_price')
   if (course.status !== 'draft') reasons.push('status_not_draft')
 
-  const { data: chapterData } = await client
-    .from('chapters')
-    .select('id')
-    .eq('course_id', courseId)
+  if (course.course_type !== 'live') {
+    const { data: chapterData } = await client
+      .from('chapters')
+      .select('id')
+      .eq('course_id', courseId)
 
-  const chapterIds = ((chapterData ?? []) as { id: string }[]).map(ch => ch.id)
+    const chapterIds = ((chapterData ?? []) as { id: string }[]).map(ch => ch.id)
 
-  if (chapterIds.length === 0) {
-    reasons.push('no_chapters')
-  } else {
-    const { count } = await client
-      .from('lessons')
-      .select('*', { count: 'exact', head: true })
-      .in('chapter_id', chapterIds)
+    if (chapterIds.length === 0) {
+      reasons.push('no_chapters')
+    } else {
+      const { count } = await client
+        .from('lessons')
+        .select('*', { count: 'exact', head: true })
+        .in('chapter_id', chapterIds)
 
-    if ((count ?? 0) === 0) reasons.push('no_lessons')
+      if ((count ?? 0) === 0) reasons.push('no_lessons')
+    }
   }
 
   return { ready: reasons.length === 0, reasons }
