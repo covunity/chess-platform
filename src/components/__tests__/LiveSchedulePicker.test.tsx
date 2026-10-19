@@ -34,13 +34,12 @@ describe('LiveSchedulePicker formatting and parsing', () => {
   })
 
   it('parses standard schedule string into weekly slots', () => {
-    const parsed = parseScheduleStringToSlots('Thứ 3 & Thứ 5 hàng tuần (19:30 - 21:00)')
-    expect(parsed.mode).toBe('weekly')
-    expect(parsed.weeklySlots).toHaveLength(2)
-    expect(parsed.weeklySlots[0].day).toBe(3)
-    expect(parsed.weeklySlots[1].day).toBe(5)
-    expect(parsed.weeklySlots[0].startTime).toBe('19:30')
-    expect(parsed.weeklySlots[0].endTime).toBe('21:00')
+    const slots = parseScheduleStringToSlots('Thứ 3 & Thứ 5 hàng tuần (19:30 - 21:00)')
+    expect(slots).toHaveLength(2)
+    expect(slots[0].day).toBe(3)
+    expect(slots[1].day).toBe(5)
+    expect(slots[0].startTime).toBe('19:30')
+    expect(slots[0].endTime).toBe('21:00')
   })
 })
 
@@ -68,13 +67,13 @@ describe('LiveSchedulePicker UI interaction', () => {
     expect(screen.getByText('Buổi 3:')).toBeInTheDocument()
   })
 
-  it('switches to custom mode when clicking Nhập tự do', () => {
+  it('allows typing directly in the primary input', () => {
     const onChange = vi.fn()
-    render(<LiveSchedulePicker value="Thứ 3 & Thứ 5 (19:30 - 21:00)" onChange={onChange} />)
+    render(<LiveSchedulePicker value="" onChange={onChange} />)
 
-    const customTab = screen.getByText('Nhập tự do')
-    fireEvent.click(customTab)
+    const input = screen.getByTestId('live-schedule-input')
+    fireEvent.change(input, { target: { value: 'T2 và T4 19h' } })
 
-    expect(screen.getByPlaceholderText(/Thứ 3 & Thứ 5/)).toBeInTheDocument()
+    expect(onChange).toHaveBeenCalledWith('T2 và T4 19h')
   })
 })

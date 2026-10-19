@@ -9,6 +9,7 @@ import { useAccountTiers, computeFeeFloor } from '../../lib/accountTiers'
 import CourseTagsSelect from '../../components/CourseTagsSelect'
 import { fetchCoursePriceLimits, getLimitForLevel } from '../../lib/coursePriceLimits'
 import type { CoursePriceLimit } from '../../lib/coursePriceLimits'
+import { LiveSchedulePicker } from '../../components/LiveSchedulePicker'
 
 const MAX_TITLE = 200
 const MAX_TAGS = 10
@@ -190,14 +191,12 @@ export default function NewCoursePage() {
                   <label className="label" htmlFor="live-schedule">
                     {t('creator.newCourse.labelLiveSchedule')}
                   </label>
-                  <input
-                    id="live-schedule"
-                    data-testid="live-schedule-input"
-                    type="text"
-                    className="input"
+                  <LiveSchedulePicker
+                    inputId="live-schedule"
+                    testId="live-schedule-input"
                     placeholder={t('creator.newCourse.liveSchedulePlaceholder')}
                     value={liveSchedule}
-                    onChange={e => setLiveSchedule(e.target.value)}
+                    onChange={setLiveSchedule}
                   />
                 </div>
               </div>
