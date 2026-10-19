@@ -28,6 +28,7 @@ import type { CoursePriceLimit } from '../../lib/coursePriceLimits'
 import { Video, ChessKnight, Puzzle, Eye, ExternalLink, Copy, Check } from 'lucide-react'
 import { Switch } from '../../components/ui/switch'
 import LiveSessionsPanel from '../../components/creator/LiveSessionsPanel'
+import { LiveSchedulePicker } from '../../components/LiveSchedulePicker'
 
 function LessonTypeIcon({ type, size = 15 }: { type: LessonType; size?: number }) {
   const props = { size, strokeWidth: 2, 'aria-hidden': true as const }
@@ -1573,13 +1574,9 @@ export default function CourseEditPage() {
                 {/* Schedule */}
                 <div>
                   <label className="label" htmlFor="ci-live-schedule">{t('creator.courseEdit.courseInfo.liveScheduleLabel')}</label>
-                  <input
-                    id="ci-live-schedule"
-                    type="text"
-                    className="input"
-                    placeholder="Ví dụ: Thứ 3 & Thứ 5 hàng tuần (19:30 - 21:00)"
+                  <LiveSchedulePicker
                     value={liveSchedule}
-                    onChange={e => setLiveSchedule(e.target.value)}
+                    onChange={setLiveSchedule}
                   />
                 </div>
               </div>
