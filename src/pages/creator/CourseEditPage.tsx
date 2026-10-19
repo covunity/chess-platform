@@ -1469,7 +1469,10 @@ export default function CourseEditPage() {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+                    </span>
                     <span className="font-semibold text-sm text-(--ink-1)">
                       {t('creator.courseEdit.courseInfo.liveSettingsHeading')}
                     </span>
@@ -1478,8 +1481,7 @@ export default function CourseEditPage() {
                     href={`/live/${liveRoomId || courseId}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn btn-sm btn-secondary flex items-center gap-1.5"
-                    style={{ color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.35)' }}
+                    className="btn btn-sm flex items-center gap-1.5 transition-all bg-red-500/15 text-red-600 dark:text-red-300 border border-red-500/40 hover:bg-red-500/25 font-semibold"
                   >
                     <span>{t('creator.courseEdit.courseInfo.openLiveRoom')}</span>
                     <ExternalLink size={13} />
@@ -1489,28 +1491,40 @@ export default function CourseEditPage() {
                 {/* Live Status Control */}
                 <div>
                   <label className="label">{t('creator.courseEdit.courseInfo.liveStatusLabel')}</label>
-                  <div className="flex gap-2">
-                    {(['scheduled', 'live', 'ended'] as LiveCourseStatus[]).map(st => (
-                      <button
-                        key={st}
-                        type="button"
-                        data-testid={`live-status-btn-${st}`}
-                        onClick={() => setLiveStatus(st)}
-                        className="btn btn-sm"
-                        style={{
-                          background: liveStatus === st
-                            ? (st === 'live' ? 'var(--danger)' : 'var(--ink-1)')
-                            : 'var(--surface)',
-                          color: liveStatus === st ? '#fff' : 'var(--ink-2)',
-                          borderColor: liveStatus === st
-                            ? (st === 'live' ? 'var(--danger)' : 'var(--ink-1)')
-                            : 'var(--border)',
-                        }}
-                      >
-                        {st === 'live' && <span className="mr-1.5">🔴</span>}
-                        {t(`creator.courseEdit.courseInfo.status${st.charAt(0).toUpperCase() + st.slice(1)}`)}
-                      </button>
-                    ))}
+                  <div className="flex flex-wrap gap-2.5">
+                    {(['scheduled', 'live', 'ended'] as LiveCourseStatus[]).map(st => {
+                      const isSelected = liveStatus === st
+                      let btnClasses = 'btn btn-sm transition-all duration-150 '
+                      if (!isSelected) {
+                        btnClasses += 'bg-(--surface) text-(--ink-2) border border-(--border) hover:border-(--border-strong) hover:text-(--ink-1) font-medium'
+                      } else if (st === 'scheduled') {
+                        btnClasses += 'bg-sky-500/15 text-sky-700 dark:text-sky-300 border border-sky-500/50 font-semibold shadow-xs'
+                      } else if (st === 'live') {
+                        btnClasses += 'bg-red-500/20 text-red-700 dark:text-red-300 border border-red-500/55 font-semibold shadow-xs shadow-red-500/20'
+                      } else {
+                        btnClasses += 'bg-(--surface-3) text-(--ink-1) border border-(--border-strong) font-semibold shadow-xs'
+                      }
+
+                      return (
+                        <button
+                          key={st}
+                          type="button"
+                          data-testid={`live-status-btn-${st}`}
+                          onClick={() => setLiveStatus(st)}
+                          className={btnClasses}
+                        >
+                          {st === 'live' && (
+                            <span className="relative flex h-2 w-2 mr-1.5">
+                              {isSelected && (
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                              )}
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                            </span>
+                          )}
+                          {t(`creator.courseEdit.courseInfo.status${st.charAt(0).toUpperCase() + st.slice(1)}`)}
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
 
@@ -1521,12 +1535,12 @@ export default function CourseEditPage() {
                     <input
                       type="text"
                       readOnly
-                      className="input flex-1 font-mono text-sm opacity-80 cursor-default select-all"
+                      className="input flex-1 font-mono text-sm opacity-90 cursor-default select-all text-(--ink-1) bg-(--surface)"
                       value={`${window.location.origin}/live/${liveRoomId || courseId}`}
                     />
                     <button
                       type="button"
-                      className="btn btn-secondary btn-sm flex items-center gap-1.5"
+                      className="btn btn-sm flex items-center gap-1.5 font-medium transition-all bg-(--surface-3) text-(--ink-1) border border-(--border-strong) hover:bg-(--surface-1,var(--surface))"
                       onClick={() => {
                         const url = `${window.location.origin}/live/${liveRoomId || courseId}`
                         navigator.clipboard.writeText(url)
