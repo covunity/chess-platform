@@ -25,9 +25,10 @@ import { useAuth } from '../../context/AuthContext'
 import { useAccountTiers, computeFeeFloor } from '../../lib/accountTiers'
 import { fetchCoursePriceLimits, getLimitForLevel } from '../../lib/coursePriceLimits'
 import type { CoursePriceLimit } from '../../lib/coursePriceLimits'
-import { Video, ChessKnight, Puzzle, Eye, ExternalLink, Copy, Check } from 'lucide-react'
+import { Video, ChessKnight, Puzzle, Eye, ExternalLink, Copy, Check, BookOpen } from 'lucide-react'
 import { Switch } from '../../components/ui/switch'
 import LiveSessionsPanel from '../../components/creator/LiveSessionsPanel'
+import TeacherAssignmentsPanel from '../../components/creator/TeacherAssignmentsPanel'
 import { LiveSchedulePicker } from '../../components/LiveSchedulePicker'
 
 function LessonTypeIcon({ type, size = 15 }: { type: LessonType; size?: number }) {
@@ -620,6 +621,7 @@ export default function CourseEditPage() {
   const [priceLimits, setPriceLimits] = useState<CoursePriceLimit[]>([])
   const [showCourseInfo, setShowCourseInfo] = useState(false)
   const [showLiveSessions, setShowLiveSessions] = useState(false)
+  const [showAssignments, setShowAssignments] = useState(false)
   const [courseType, setCourseType] = useState<CourseType>('standard')
   const [liveRoomId, setLiveRoomId] = useState('')
   const [liveSchedule, setLiveSchedule] = useState('')
@@ -691,6 +693,7 @@ export default function CourseEditPage() {
     setSelectedLesson(lesson)
     setShowCourseInfo(false)
     setShowLiveSessions(false)
+    setShowAssignments(false)
     setIsLessonTransitioning(true)
     lessonTransitionRef.current = setTimeout(() => {
       setDisplayedLesson(lesson)
@@ -1082,6 +1085,7 @@ export default function CourseEditPage() {
               setSelectedLesson(null)
               setDisplayedLesson(null)
               setShowLiveSessions(false)
+              setShowAssignments(false)
               setShowCourseInfo(true)
             }}
             className="group"
@@ -1091,15 +1095,15 @@ export default function CourseEditPage() {
               padding: '8px 10px',
               borderRadius: 'var(--r-sm)',
               border: '1px solid',
-              borderColor: showCourseInfo && !selectedLesson && !showLiveSessions ? 'var(--accent-border)' : 'var(--border)',
+              borderColor: showCourseInfo && !selectedLesson && !showLiveSessions && !showAssignments ? 'var(--accent-border)' : 'var(--border)',
               cursor: 'pointer',
               fontSize: 13.5,
               fontWeight: 500,
               display: 'flex',
               alignItems: 'center',
               gap: 6,
-              background: showCourseInfo && !selectedLesson && !showLiveSessions ? 'var(--accent-soft)' : 'var(--surface)',
-              color: showCourseInfo && !selectedLesson && !showLiveSessions ? 'var(--accent-ink)' : 'var(--ink-2)',
+              background: showCourseInfo && !selectedLesson && !showLiveSessions && !showAssignments ? 'var(--accent-soft)' : 'var(--surface)',
+              color: showCourseInfo && !selectedLesson && !showLiveSessions && !showAssignments ? 'var(--accent-ink)' : 'var(--ink-2)',
             }}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0, opacity: 0.7 }}>
@@ -1120,6 +1124,7 @@ export default function CourseEditPage() {
                 setSelectedLesson(null)
                 setDisplayedLesson(null)
                 setShowCourseInfo(false)
+                setShowAssignments(false)
                 setShowLiveSessions(true)
               }}
               className="group"
@@ -1144,6 +1149,41 @@ export default function CourseEditPage() {
               <span>Lịch học trực tuyến (Live)</span>
             </button>
           )}
+
+          <button
+            type="button"
+            data-testid="sidebar-assignments-btn"
+            onClick={() => {
+              if (saveLessonRef.current) {
+                try { saveLessonRef.current() } catch (err) { console.error('Auto-save error on showAssignments:', err) }
+              }
+              setSelectedLesson(null)
+              setDisplayedLesson(null)
+              setShowCourseInfo(false)
+              setShowLiveSessions(false)
+              setShowAssignments(true)
+            }}
+            className="group"
+            style={{
+              width: '100%',
+              textAlign: 'left',
+              padding: '8px 10px',
+              borderRadius: 'var(--r-sm)',
+              border: '1px solid',
+              borderColor: showAssignments ? 'var(--accent-border)' : 'var(--border)',
+              cursor: 'pointer',
+              fontSize: 13.5,
+              fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              background: showAssignments ? 'var(--accent-soft)' : 'var(--surface)',
+              color: showAssignments ? 'var(--accent-ink)' : 'var(--ink-2)',
+            }}
+          >
+            <BookOpen size={13} className="shrink-0 opacity-70" />
+            <span>Quản lý bài tập</span>
+          </button>
         </div>
 
         {courseType !== 'live' ? (
@@ -1271,6 +1311,11 @@ export default function CourseEditPage() {
             courseId={courseId!}
             courseType={courseType}
             chapters={chapters}
+          />
+        ) : showAssignments ? (
+          <TeacherAssignmentsPanel
+            courseId={courseId!}
+            courseTitle={courseTitle}
           />
         ) : isLessonTransitioning ? (
           <LessonEditorSkeleton lessonType={selectedLesson?.type} />

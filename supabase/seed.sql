@@ -148,6 +148,33 @@ INSERT INTO public.users (id, email, name, role)
   )
   ON CONFLICT (id) DO UPDATE SET role = 'learner', name = 'Học Viên 2 (Linh)';
 
+-- ── Seed Student 3 user (clean test account) ──────────────────────────────────
+-- Email: student3@gambitly.demo | Password: password123
+INSERT INTO auth.users (
+  id, instance_id, email, encrypted_password, email_confirmed_at,
+  confirmation_token, recovery_token, email_change_token_new, email_change, reauthentication_token,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at, role, aud
+) VALUES (
+  '00000000-0000-0000-0000-000000000005',
+  '00000000-0000-0000-0000-000000000000',
+  'student3@gambitly.demo',
+  extensions.crypt('password123', extensions.gen_salt('bf')),
+  now(),
+  '', '', '', '', '',
+  '{"provider":"email","providers":["email"]}',
+  '{"name":"Học Viên 3"}',
+  now(), now(), 'authenticated', 'authenticated'
+) ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.users (id, email, name, role)
+  VALUES (
+    '00000000-0000-0000-0000-000000000005',
+    'student3@gambitly.demo',
+    'Học Viên 3',
+    'learner'
+  )
+  ON CONFLICT (id) DO UPDATE SET role = 'learner', name = 'Học Viên 3';
+
 -- ── Seed demo course ──────────────────────────────────────────────────────────
 INSERT INTO public.courses (
   id, creator_id, title, description, price, level, language, status

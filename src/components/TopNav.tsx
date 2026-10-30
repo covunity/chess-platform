@@ -116,6 +116,7 @@ export default function TopNav({ hideSearch = false }: { hideSearch?: boolean } 
             : profile?.role === 'creator'
               ? [{ to: '/creator', labelKey: 'nav.creatorStudio', end: false }]
               : [
+                  { to: '/online', labelKey: 'nav.online', end: false },
                   { to: '/practice', labelKey: 'nav.practice', end: false },
                   { to: '/dashboard', labelKey: 'nav.library', end: false },
                   { to: '/become-creator', labelKey: 'nav.becomeCreator', end: false },

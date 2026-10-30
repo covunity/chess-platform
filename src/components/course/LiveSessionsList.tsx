@@ -15,6 +15,7 @@ import {
   ArrowRight,
   Loader2,
   Eye,
+  Lock,
 } from 'lucide-react'
 import { listLiveSessions } from '../../lib/liveSessionApi'
 import { type LiveSession, type LiveSessionStatus } from '../../types/liveSession'
@@ -203,18 +204,34 @@ export default function LiveSessionsList({
                       <ArrowRight size={13} />
                     </button>
                   ) : session.status === 'SCHEDULED' ? (
-                    <button
-                      type="button"
-                      onClick={() => handleJoinSession(session.id)}
-                      className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors ${
-                        isEnrolled || isCourseCreator
-                          ? 'bg-(--accent-soft) text-(--accent-ink) hover:bg-(--accent) hover:text-white'
-                          : 'bg-(--surface-2) text-(--ink-2) border border-(--border) hover:border-(--accent)'
-                      }`}
-                    >
-                      <Video size={13} />
-                      <span>{isEnrolled || isCourseCreator ? 'Phòng học' : 'Xem chi tiết'}</span>
-                    </button>
+                    isCourseCreator ? (
+                      <button
+                        type="button"
+                        onClick={() => handleJoinSession(session.id)}
+                        className="px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors bg-(--accent-soft) text-(--accent-ink) hover:bg-(--accent) hover:text-white"
+                      >
+                        <Video size={13} />
+                        <span>Quản lý phòng</span>
+                      </button>
+                    ) : isEnrolled ? (
+                      <button
+                        type="button"
+                        disabled
+                        className="px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 bg-(--surface-2) text-(--ink-3) border border-(--border) cursor-not-allowed opacity-60 select-none"
+                        title="Chưa đến giờ học. Học viên chỉ có thể vào khi buổi học bắt đầu."
+                      >
+                        <Lock size={12} />
+                        <span>Chưa đến giờ</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => onEnrollOrPurchase()}
+                        className="px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors bg-(--surface-2) text-(--ink-2) border border-(--border) hover:border-(--accent)"
+                      >
+                        <span>Xem chi tiết</span>
+                      </button>
+                    )
                   ) : session.status === 'ENDED' && (isEnrolled || isCourseCreator) ? (
                     <button
                       type="button"

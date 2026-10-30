@@ -26,6 +26,7 @@ import NewCoursePage from './pages/creator/NewCoursePage'
 import CourseEditPage from './pages/creator/CourseEditPage'
 import PayoutSettingsPage from './pages/creator/PayoutSettingsPage'
 import HomePage from './pages/HomePage'
+import OnlineLearningPage from './pages/OnlineLearningPage'
 import CourseDetailPage from './pages/CourseDetailPage'
 import LessonPlayerPage from './pages/LessonPlayerPage'
 import PracticePage from './pages/PracticePage'
@@ -115,6 +116,7 @@ export default function App() {
         {/* Public section — with TopNav + Footer */}
         <Route element={<PublicShell />}>
           <Route path="/" element={<HomePage />} />
+          <Route path="/online" element={<OnlineLearningPage />} />
           <Route path="/practice" element={<PracticePage />} />
           <Route path="/dashboard" element={<LearnerDashboardPage />} />
           <Route path="/profile" element={<ProfilePage />} />

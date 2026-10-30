@@ -1293,8 +1293,7 @@ export default function CourseDetailPage() {
 
     if (isEnrolled) {
       if (course.course_type === 'live') {
-        const liveTarget = course.live_room_id || course.id
-        navigate(`/live/${liveTarget}`)
+        navigate('/online')
         return
       }
       const firstLesson = course.chapters[0]?.lessons[0]
@@ -1319,8 +1318,7 @@ export default function CourseDetailPage() {
         return
       }
       if (course.course_type === 'live') {
-        const liveTarget = course.live_room_id || course.id
-        navigate(`/live/${liveTarget}`)
+        navigate('/online')
         return
       }
       const lessonResult = await getFirstLesson(supabase, course.id)
@@ -1654,10 +1652,14 @@ export default function CourseDetailPage() {
                     flexShrink: 0,
                   }}
                 >
-                  {course.creator_name ? course.creator_name.split(' ').pop()?.[0] ?? 'C' : 'C'}
+                  {course.creator_name
+                    ? course.creator_name.replace(/[^\p{L}\p{N}\s]/gu, '').trim().split(/\s+/).pop()?.[0]?.toUpperCase() ?? course.creator_name.charAt(0).toUpperCase()
+                    : 'C'}
                 </div>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-1)' }}>{course.creator_name}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-1)' }}>
+                    {course.creator_name || t('courseDetail.anonymousCreator')}
+                  </div>
                   {course.creator_bio && (
                     <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>{course.creator_bio}</div>
                   )}

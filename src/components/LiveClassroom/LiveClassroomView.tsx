@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { LiveKitRoom, RoomAudioRenderer, useDataChannel } from '@livekit/components-react'
-import { Loader2, AlertCircle, RefreshCw, ArrowLeft, LogOut, StopCircle, Eye, BarChart2 } from 'lucide-react'
+import { Loader2, AlertCircle, RefreshCw, ArrowLeft, LogOut, StopCircle, Eye, BarChart2, Clock, Calendar } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { checkLiveClassroomAccess } from '../../lib/coursesApi'
 import { endLiveSession } from '../../lib/liveSessionApi'
@@ -246,6 +246,13 @@ export default function LiveClassroomView({
   } | null>(null)
   const [resolvedTeacherId, setResolvedTeacherId] = useState<string | undefined>(undefined)
   const [sessionTerminatedStatus, setSessionTerminatedStatus] = useState<'ENDED' | 'CANCELLED' | null>(null)
+  const [sessionNotStarted, setSessionNotStarted] = useState<{
+    sessionTitle?: string
+    courseTitle?: string
+    courseId?: string
+    scheduledStartAt?: string
+    scheduledEndAt?: string
+  } | null>(null)
   const [showTerminatedReplayModal, setShowTerminatedReplayModal] = useState(false)
   const [terminatedReplayBoardId, setTerminatedReplayBoardId] = useState<string | null>(null)
   const [showTerminatedAnalyticsModal, setShowTerminatedAnalyticsModal] = useState(false)
@@ -365,7 +372,13 @@ export default function LiveClassroomView({
                 setLoading(false)
                 return
               }
-              setError('Buổi học chưa diễn ra hoặc đã kết thúc. Chỉ buổi học có trạng thái ĐANG DIỄN RA (LIVE) mới có thể vào lớp.')
+              setSessionNotStarted({
+                sessionTitle: accessData.session_title,
+                courseTitle: accessData.course_title,
+                courseId: accessData.course_id,
+                scheduledStartAt: accessData.scheduled_start_at,
+                scheduledEndAt: accessData.scheduled_end_at,
+              })
               setLoading(false)
               return
             }
@@ -472,6 +485,7 @@ export default function LiveClassroomView({
     setError(null)
     setResolvedTeacherId(undefined)
     setSessionTerminatedStatus(null)
+    setSessionNotStarted(null)
     isTerminatedRef.current = false
 
     if (!authLoading && user) {
@@ -584,6 +598,58 @@ export default function LiveClassroomView({
               {t('liveClassroom.enrollBtn')}
             </Link>
           )}
+        </div>
+      </div>
+    )
+  }
+
+  // Session Not Started / Not Class Time State
+  if (sessionNotStarted) {
+    return (
+      <div
+        className="min-h-screen bg-(--bg) flex flex-col items-center justify-center p-6 max-w-lg mx-auto text-center"
+        data-testid="session-not-started-screen"
+      >
+        <div className="w-14 h-14 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4 text-amber-500">
+          <Clock className="w-7 h-7" />
+        </div>
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-xs font-bold text-amber-600 dark:text-amber-400 mb-3">
+          <span className="w-2 h-2 rounded-full bg-amber-500" />
+          CHƯA ĐẾN GIỜ HỌC
+        </div>
+        <h2 className="text-xl font-bold text-(--ink-1) mb-2">
+          Chưa đến giờ vào lớp học
+        </h2>
+        <p className="text-sm text-(--ink-2) mb-4 max-w-md">
+          {sessionNotStarted.sessionTitle
+            ? `Buổi học "${sessionNotStarted.sessionTitle}" chưa đến giờ diễn ra. Học viên vui lòng quay lại khi đến giờ học hoặc khi giảng viên bắt đầu buổi học nhé!`
+            : 'Buổi học trực tuyến chưa đến giờ diễn ra hoặc chưa được giảng viên bắt đầu. Học viên chỉ có thể vào lớp khi đến giờ học.'}
+        </p>
+        {sessionNotStarted.scheduledStartAt && (
+          <div className="w-full bg-(--surface-2) border border-(--border) rounded-lg p-3 text-xs text-(--ink-1) mb-6 text-left">
+            <span className="font-semibold text-(--ink-3) block mb-1">Thời gian học dự kiến:</span>
+            <div className="flex items-center gap-2 text-sm font-semibold text-(--accent)">
+              <Calendar className="w-4 h-4" />
+              <span>{new Date(sessionNotStarted.scheduledStartAt).toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+              <span>•</span>
+              <Clock className="w-4 h-4" />
+              <span>{new Date(sessionNotStarted.scheduledStartAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+          </div>
+        )}
+        <div className="flex items-center justify-center gap-3">
+          <Link
+            to="/online"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-semibold bg-(--accent) text-white hover:opacity-90 transition-opacity"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Về Cổng học trực tuyến
+          </Link>
+          <Link
+            to="/"
+            className="px-4 py-2 rounded-md text-xs font-semibold border border-(--border) text-(--ink-2) hover:bg-(--surface-2) transition-colors"
+          >
+            Về Trang chủ
+          </Link>
         </div>
       </div>
     )

@@ -85,7 +85,7 @@ export async function getCourseDetail(
         id, title, description, thumbnail_url, price, original_price, promo_ends_at,
         level, language, tags, creator_id, what_you_learn, prerequisites, created_at,
         course_type, live_room_id, live_schedule, live_status,
-        creator:creator_id ( name ),
+        creator:creator_id ( name, bio ),
         reviews ( id, rating, title, body, created_at, reviewer:reviewer_id ( name, avatar_url, bio ) ),
         enrollments ( id ),
         chapters ( id, title, position )
@@ -105,7 +105,7 @@ export async function getCourseDetail(
   const reviews = Array.isArray(row.reviews) ? (row.reviews as Array<Record<string, unknown>>) : []
   const enrollments = Array.isArray(row.enrollments) ? row.enrollments : []
   const rawChapters = Array.isArray(row.chapters) ? (row.chapters as Array<Record<string, unknown>>) : []
-  const creator = row.creator as { name?: string } | null
+  const creator = row.creator as { name?: string; bio?: string | null } | null
 
   // Map lesson listing rows by chapter_id
   const lessonRows = Array.isArray(lessonResult.data) ? (lessonResult.data as Array<Record<string, unknown>>) : []
@@ -176,7 +176,7 @@ export async function getCourseDetail(
       tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
       creator_id: row.creator_id as string,
       creator_name: creator?.name ?? null,
-      creator_bio: null,
+      creator_bio: creator?.bio ?? null,
       rating_avg,
       rating_count: ratings.length,
       lessons_count: allLessons.length,
@@ -343,6 +343,8 @@ export interface LiveClassroomAccessResult {
   session_id?: string
   session_title?: string
   session_status?: string
+  scheduled_start_at?: string
+  scheduled_end_at?: string
   livekit_room_name?: string
   allowed: boolean
   role?: 'teacher' | 'student' | 'assistant'

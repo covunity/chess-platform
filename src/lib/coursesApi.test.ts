@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { listPublishedCourses, listReviews } from './coursesApi'
+import { listPublishedCourses, listReviews, getCourseDetail } from './coursesApi'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 function makeSupabase(rows: unknown[] = [], error: unknown = null) {
@@ -200,5 +200,91 @@ describe('listReviews', () => {
     expect(error).not.toBeNull()
     expect(reviews).toHaveLength(0)
     expect(total).toBe(0)
+  })
+})
+
+describe('getCourseDetail', () => {
+  it('maps creator name and bio from creator join', async () => {
+    const courseRow = {
+      id: 'c1',
+      title: 'Khóa học cờ',
+      description: 'Mô tả',
+      thumbnail_url: null,
+      price: 0,
+      original_price: null,
+      promo_ends_at: null,
+      level: 'beginner',
+      language: 'vi',
+      tags: [],
+      creator_id: 'u1',
+      what_you_learn: [],
+      prerequisites: null,
+      created_at: '2026-01-01',
+      course_type: 'standard',
+      live_room_id: null,
+      live_schedule: null,
+      live_status: 'scheduled',
+      creator: { name: 'Thầy Dạy Cờ', bio: 'Đại kiện tướng quốc tế' },
+      reviews: [],
+      enrollments: [],
+      chapters: [],
+    }
+
+    const client = {
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: courseRow, error: null }),
+        }),
+      }),
+      rpc: vi.fn().mockResolvedValue({ data: [], error: null }),
+    } as unknown as SupabaseClient
+
+    const { course, error } = await getCourseDetail(client, 'c1')
+    expect(error).toBeNull()
+    expect(course?.creator_name).toBe('Thầy Dạy Cờ')
+    expect(course?.creator_bio).toBe('Đại kiện tướng quốc tế')
+  })
+
+  it('handles missing creator gracefully', async () => {
+    const courseRow = {
+      id: 'c1',
+      title: 'Khóa học cờ',
+      description: null,
+      thumbnail_url: null,
+      price: 0,
+      original_price: null,
+      promo_ends_at: null,
+      level: 'beginner',
+      language: 'vi',
+      tags: [],
+      creator_id: 'u1',
+      what_you_learn: [],
+      prerequisites: null,
+      created_at: '2026-01-01',
+      course_type: 'standard',
+      live_room_id: null,
+      live_schedule: null,
+      live_status: 'scheduled',
+      creator: null,
+      reviews: [],
+      enrollments: [],
+      chapters: [],
+    }
+
+    const client = {
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: courseRow, error: null }),
+        }),
+      }),
+      rpc: vi.fn().mockResolvedValue({ data: [], error: null }),
+    } as unknown as SupabaseClient
+
+    const { course, error } = await getCourseDetail(client, 'c1')
+    expect(error).toBeNull()
+    expect(course?.creator_name).toBeNull()
+    expect(course?.creator_bio).toBeNull()
   })
 })

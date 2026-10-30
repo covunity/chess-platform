@@ -14,6 +14,7 @@
     "greeting": "Hi {{name}}!",
     "themeOrLang": "Theme & Language",
     "browse": "Browse",
+    "online": "Live Classes",
     "practice": "Practice",
     "library": "My Learning",
     "notifications": "Notifications",
@@ -1263,6 +1264,7 @@
     "previewAsLearner": "Preview as learner",
     "creatorBannerTitle": "You are the author of this course.",
     "creatorBannerDesc": "This is learner preview mode. To edit, go to Creator Studio.",
+    "anonymousCreator": "Instructor",
     "reportCourse": "Report course",
     "courseReportDialog": {
       "heading": "Report course",

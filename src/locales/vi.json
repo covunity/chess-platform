@@ -3,6 +3,7 @@
     "title": "Covunity",
     "home": "Trang chủ",
     "browse": "Khám phá",
+    "online": "Trực tuyến",
     "practice": "Luyện tập",
     "library": "Quản lý học tập",
     "notifications": "Thông báo",
@@ -1262,6 +1263,7 @@
     "previewAsLearner": "Xem trước như học viên",
     "creatorBannerTitle": "Bạn là tác giả của khóa học này.",
     "creatorBannerDesc": "Đây là chế độ xem dành cho học viên. Để chỉnh sửa, vào Creator Studio.",
+    "anonymousCreator": "Giảng viên",
     "reportCourse": "Báo cáo khóa học",
     "courseReportDialog": {
       "heading": "Báo cáo khóa học",
