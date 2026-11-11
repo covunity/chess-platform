@@ -7,7 +7,7 @@ import { supabase } from '../../lib/supabase'
 import { checkLiveClassroomAccess } from '../../lib/coursesApi'
 import { endLiveSession } from '../../lib/liveSessionApi'
 import { useAuth } from '../../context/AuthContext'
-import { useLiveClassroomStore } from './useLiveClassroomStore'
+import { useLiveClassroomStore, liveClassroomStore } from './useLiveClassroomStore'
 import LectureMode from './LectureMode'
 import PracticeMode from './PracticeMode'
 import ClassroomMediaBar from './Media/ClassroomMediaBar'
@@ -232,7 +232,9 @@ export default function LiveClassroomView({
   const setMyRole = useLiveClassroomStore((s) => s.setMyRole)
   const myRole = useLiveClassroomStore((s) => s.myRole)
   const setTeacherId = useLiveClassroomStore((s) => s.setTeacherId)
-  const resetLiveClass = useLiveClassroomStore((s) => s.resetLiveClass)
+  const resetLiveClass = useCallback(() => {
+    liveClassroomStore.getState().resetLiveClass()
+  }, [])
 
   const [tokenData, setTokenData] = useState<TokenResponse | null>(null)
   const [loading, setLoading] = useState(true)
@@ -258,6 +260,25 @@ export default function LiveClassroomView({
   const [showTerminatedAnalyticsModal, setShowTerminatedAnalyticsModal] = useState(false)
   const isTerminatedRef = useRef<boolean>(false)
 
+  // Stable references to prevent background tab visibility changes, i18n churn, and benign re-renders from recreating callbacks
+  const userRef = useRef(user)
+  userRef.current = user
+  const profileRef = useRef(profile)
+  profileRef.current = profile
+  const tRef = useRef(t)
+  tRef.current = t
+  const isMountedRef = useRef(true)
+  const connectedSessionKeyRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+      connectedSessionKeyRef.current = null
+      liveClassroomStore.getState().resetLiveClass()
+    }
+  }, [])
+
   const handleSessionTerminated = useCallback(
     (status: 'ENDED' | 'CANCELLED') => {
       isTerminatedRef.current = true
@@ -273,6 +294,9 @@ export default function LiveClassroomView({
   }, [resetLiveClass, navigate])
 
   const handleRoomDisconnected = useCallback(() => {
+    // If component is unmounting or already gone, ignore disconnection event
+    if (!isMountedRef.current) return
+
     // Distinguish between user-initiated leave/disconnect and server/session termination:
     // When session is terminated, LiveKit disconnect/unmount must NOT navigate(-1).
     // The dedicated session-ended screen must remain visible.
@@ -331,14 +355,15 @@ export default function LiveClassroomView({
   // Fetch LiveKit token from Supabase Edge Function
   const fetchToken = useCallback(
     async (isCancelled?: () => boolean) => {
-      if (!user) return
+      const currentUser = userRef.current
+      if (!currentUser) return
       setLoading(true)
       setError(null)
       setAccessDenied(null)
 
       try {
         // 1. Check classroom access and enrollment status via RPC
-        const { access: accessData } = await checkLiveClassroomAccess(supabase, roomId, user.id)
+        const { access: accessData } = await checkLiveClassroomAccess(supabase, roomId, currentUser.id)
         if (isCancelled?.()) return
 
         if (accessData?.is_course_room) {
@@ -382,7 +407,7 @@ export default function LiveClassroomView({
               setLoading(false)
               return
             }
-            setError(accessData.reason || t('liveClassroom.connectionError'))
+            setError(accessData.reason || tRef.current('liveClassroom.connectionError'))
             setLoading(false)
             return
           }
@@ -392,7 +417,7 @@ export default function LiveClassroomView({
         let teacherId =
           accessData?.teacher_id ||
           accessData?.creator_id ||
-          (accessData?.is_creator ? user.id : undefined)
+          (accessData?.is_creator ? currentUser.id : undefined)
         if (!teacherId && accessData?.course_id) {
           const { data: courseRow } = await supabase
             .from('courses')
@@ -411,21 +436,22 @@ export default function LiveClassroomView({
         const requestedRole =
           accessData?.is_creator ? 'teacher' : (accessData?.role || preferredRole)
 
+        const currentProfile = profileRef.current
         const { data, error: invokeErr } = await supabase.functions.invoke<TokenResponse>(
           'livekit-token',
           {
             body: {
               roomId,
-              userId: user.id,
+              userId: currentUser.id,
               role: requestedRole,
-              name: profile?.name || user.email?.split('@')[0],
+              name: currentProfile?.name || currentUser.email?.split('@')[0],
             },
           }
         )
         if (isCancelled?.()) return
 
         if (invokeErr || !data?.token) {
-          let message = invokeErr?.message || t('liveClassroom.connectionError')
+          let message = invokeErr?.message || tRef.current('liveClassroom.connectionError')
           if (invokeErr && typeof invokeErr === 'object' && 'context' in invokeErr) {
             try {
               const res = (invokeErr as { context?: Response }).context
@@ -462,7 +488,7 @@ export default function LiveClassroomView({
       } catch (err: unknown) {
         if (!isCancelled?.()) {
           console.error('Failed to get LiveKit token:', err)
-          setError(err instanceof Error ? err.message : t('liveClassroom.connectionError'))
+          setError(err instanceof Error ? err.message : tRef.current('liveClassroom.connectionError'))
         }
       } finally {
         if (!isCancelled?.()) {
@@ -470,14 +496,31 @@ export default function LiveClassroomView({
         }
       }
     },
-    [user, profile, roomId, preferredRole, setMyRole, setTeacherId, t]
+    [roomId, preferredRole, setMyRole, setTeacherId]
   )
 
+  const fetchTokenRef = useRef(fetchToken)
+  fetchTokenRef.current = fetchToken
+
+  const currentUserId = user?.id
+
   useEffect(() => {
+    // Wait until initial auth loading is complete
+    if (authLoading) return
+
+    const sessionKey = `${currentUserId || 'anonymous'}::${roomId}`
+
+    // If already initialized / connected to this room with the same user identity,
+    // do NOT reset or tear down (e.g. browser tab focus/visibilitychange or token refresh)
+    if (connectedSessionKeyRef.current === sessionKey) {
+      return
+    }
+
     let isCancelled = false
     const cancelCheck = () => isCancelled
 
-    // State isolation: Reset store and local state immediately whenever roomId or user changes
+    // State isolation: Reset store and local state whenever roomId or user identity actually changes
+    connectedSessionKeyRef.current = sessionKey
     resetLiveClass()
     setTokenData(null)
     setCourseRoomInfo(null)
@@ -488,10 +531,11 @@ export default function LiveClassroomView({
     setSessionNotStarted(null)
     isTerminatedRef.current = false
 
-    if (!authLoading && user) {
-      fetchToken(cancelCheck)
-    } else if (!authLoading && !user) {
-      // Check if this room belongs to a course to give proper context
+    if (currentUserId) {
+      fetchTokenRef.current(cancelCheck)
+    } else {
+      // Check if this room belongs to a course to give proper context for unauthenticated visitors
+      setLoading(true)
       checkLiveClassroomAccess(supabase, roomId, null)
         .then(({ access: data }) => {
           if (isCancelled) return
@@ -514,9 +558,8 @@ export default function LiveClassroomView({
 
     return () => {
       isCancelled = true
-      resetLiveClass()
     }
-  }, [authLoading, user, fetchToken, roomId, resetLiveClass])
+  }, [authLoading, currentUserId, roomId, resetLiveClass])
 
   // Loading State
   if (authLoading || loading) {

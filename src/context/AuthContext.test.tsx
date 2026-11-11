@@ -150,4 +150,50 @@ describe('AuthContext', () => {
     expect(() => render(<TestConsumer />)).toThrow()
     spy.mockRestore()
   })
+
+  it('preserves user reference identity on onAuthStateChange if user data is identical (e.g. tab focus token refresh)', async () => {
+    let authCallback: (event: string, session: any) => void = () => {}
+    mockOnAuthStateChange.mockImplementation((cb: any) => {
+      authCallback = cb
+      return { data: { subscription: { unsubscribe: vi.fn() } } }
+    })
+
+    const initialUser = { id: 'u1', email: 'test@example.com', updated_at: '2026-11-11T00:00:00Z' }
+    mockGetSession.mockResolvedValue({
+      data: { session: { user: initialUser } },
+      error: null,
+    })
+
+    let capturedUser: any = null
+    let renderCount = 0
+    function UserTracker() {
+      const { user } = useAuth()
+      capturedUser = user
+      renderCount++
+      return <div data-testid="user-id">{user?.id}</div>
+    }
+
+    render(
+      <AuthProvider>
+        <UserTracker />
+      </AuthProvider>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('user-id').textContent).toBe('u1')
+    })
+
+    const firstUserRef = capturedUser
+    const initialRenderCount = renderCount
+
+    // Simulate Supabase visibilitychange / TOKEN_REFRESHED: creates a newly allocated user object
+    const newSessionUser = { id: 'u1', email: 'test@example.com', updated_at: '2026-11-11T00:00:00Z' }
+    act(() => {
+      authCallback('TOKEN_REFRESHED', { user: newSessionUser })
+    })
+
+    // User reference must remain identical, avoiding re-render
+    expect(capturedUser).toBe(firstUserRef)
+    expect(renderCount).toBe(initialRenderCount)
+  })
 })
